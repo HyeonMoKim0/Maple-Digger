@@ -1,0 +1,150 @@
+@Logic
+@ExecSpace("ClientOnly")
+script BlockProgramController extends Logic
+
+property ButtonComponent btnMoveE = "935a4d4a-d16e-467a-a163-1605d3b41025"
+property ButtonComponent btnMoveS = "03708ef5-1619-4faf-9a3b-c7ab78eb1516"
+property ButtonComponent btnHarvest = "94ee74c9-0d61-45d3-a14f-9b467e19fde0"
+property ButtonComponent btnPlant = "3a22ed13-0cd7-4355-ae01-d930630c8fb5"
+property ButtonComponent btnRun = "0d263c27-db63-467d-b64d-c2d2ca70967f"
+property ButtonComponent btnClear = "a7e17fb9-aae2-4773-8d0e-3946c9c42704"
+property TextComponent programText = "c61c8e7b-fb2f-45a2-94b7-e3af8d608e13"
+property Entity droneEntity = "7bc03a21-7192-4a61-a932-e7cc21c4d3ef"
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- Wires every palette/control button to its handler and resets the assembled program display.
+    self._T.program = {}
+    self._T.handlers = {}
+    self._T.handlers.moveE = self.btnMoveE.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ action = "move", dir = "E" }, "E") end)
+    self._T.handlers.moveS = self.btnMoveS.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ action = "move", dir = "S" }, "S") end)
+    self._T.handlers.harvest = self.btnHarvest.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ action = "harvest" }, "H") end)
+    self._T.handlers.plant = self.btnPlant.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ action = "plant", crop = "carrot" }, "P") end)
+    self._T.handlers.run = self.btnRun.Entity:ConnectEvent(ButtonClickEvent, self.OnRunClicked)
+    self._T.handlers.clear = self.btnClear.Entity:ConnectEvent(ButtonClickEvent, self.OnClearClicked)
+    self:RefreshDisplay()
+    log("[BlockProgram] UI ready - palette wired, program empty")
+end
+
+method void AddCommand(table command, string label)
+    -- Appends one block to the assembled program and refreshes the on-screen list.
+    table.insert(self._T.program, command)
+    self._T.labels = self._T.labels or {}
+    table.insert(self._T.labels, label)
+    self:RefreshDisplay()
+    log("[BlockProgram] added block '" .. label .. "' - program length=" .. #self._T.program)
+end
+
+method void RefreshDisplay()
+    -- Renders the current program as a comma-separated label string, or a placeholder when empty.
+    self._T.labels = self._T.labels or {}
+    if #self._T.labels == 0 then
+        self.programText.Text = "(empty - tap blocks to add)"
+    else
+        self.programText.Text = table.concat(self._T.labels, ", ")
+    end
+end
+
+method void OnRunClicked()
+    -- Sends the assembled program to the drone's Server RPC so it replaces the live command queue.
+    if #self._T.program == 0 then
+        log("[BlockProgram] Run pressed but program is empty - ignored")
+        return
+    end
+    log("[BlockProgram] Run pressed - sending " .. #self._T.program .. " commands to drone")
+    self.droneEntity.DroneController:RunProgram(self._T.program)
+end
+
+method void OnClearClicked()
+    -- Empties the assembled program and resets the display back to placeholder text.
+    self._T.program = {}
+    self._T.labels = {}
+    self:RefreshDisplay()
+    log("[BlockProgram] program cleared")
+end
+
+@ExecSpace("ClientOnly")
+method void ParseChatCommand(string text)
+    -- Converts a natural-language Korean sentence into block commands (scenario 3 NL parser) and runs them on the drone.
+    self._T.program = {}
+    self._T.labels = {}
+    local pendingDir = ""
+    local pendingCount = 0
+    for token in string.gmatch(text, "%S+") do
+        if string.find(token, "수확", 1, true) then
+            self:FlushMove(pendingDir, pendingCount)
+            pendingDir = ""
+            pendingCount = 0
+            self:AddCommand({ action = "harvest" }, "H")
+        elseif string.find(token, "심", 1, true) then
+            self:FlushMove(pendingDir, pendingCount)
+            pendingDir = ""
+            pendingCount = 0
+            self:AddCommand({ action = "plant", crop = "carrot" }, "P")
+        else
+            local dir = self:DetectDir(token)
+            local cnt = self:DetectCount(token)
+            if dir ~= "" then
+                if pendingDir ~= "" then
+                    self:FlushMove(pendingDir, pendingCount)
+                    pendingCount = 0
+                end
+                pendingDir = dir
+            elseif cnt > 0 then
+                if pendingDir ~= "" and pendingCount > 0 then
+                    self:FlushMove(pendingDir, pendingCount)
+                    pendingDir = ""
+                    pendingCount = 0
+                end
+                pendingCount = cnt
+            end
+        end
+    end
+    self:FlushMove(pendingDir, pendingCount)
+    log("[ChatParse] parsed '" .. text .. "' -> " .. #self._T.program .. " commands: " .. table.concat(self._T.labels, ", "))
+    self:OnRunClicked()
+end
+
+method void FlushMove(string dir, integer count)
+    -- Emits 'count' move blocks in the given compass direction (defaults to 1 when count is zero).
+    if dir == "" then return end
+    local n = count
+    if n <= 0 then n = 1 end
+    for i = 1, n do
+        self:AddCommand({ action = "move", dir = dir }, dir)
+    end
+end
+
+method string DetectDir(string token)
+    -- Maps a Korean direction word in the token to a compass code, or "" if none found.
+    if string.find(token, "오른", 1, true) or string.find(token, "동쪽", 1, true) then return "E" end
+    if string.find(token, "왼", 1, true) or string.find(token, "서쪽", 1, true) then return "W" end
+    if string.find(token, "아래", 1, true) or string.find(token, "남쪽", 1, true) then return "S" end
+    if string.find(token, "위", 1, true) or string.find(token, "북쪽", 1, true) then return "N" end
+    return ""
+end
+
+method integer DetectCount(string token)
+    -- Parses a count (1..9) from a digit or native Korean numeral in the token, or 0 if none.
+    local d = string.match(token, "(%d+)")
+    if d then return tonumber(d) end
+    if string.find(token, "다섯", 1, true) then return 5 end
+    if string.find(token, "하나", 1, true) or string.find(token, "한", 1, true) then return 1 end
+    if string.find(token, "둘", 1, true) or string.find(token, "두", 1, true) then return 2 end
+    if string.find(token, "셋", 1, true) or string.find(token, "세", 1, true) then return 3 end
+    if string.find(token, "넷", 1, true) or string.find(token, "네", 1, true) then return 4 end
+    return 0
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- Releases every button click connection registered in OnBeginPlay.
+    self.btnMoveE.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveE)
+    self.btnMoveS.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveS)
+    self.btnHarvest.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.harvest)
+    self.btnPlant.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.plant)
+    self.btnRun.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.run)
+    self.btnClear.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.clear)
+end
+
+end

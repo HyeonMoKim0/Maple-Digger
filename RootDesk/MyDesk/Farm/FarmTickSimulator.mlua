@@ -1,0 +1,37 @@
+@Component
+script FarmTickSimulator extends Component
+
+property number TickInterval = 0.4
+property table FarmState = {}
+
+@ExecSpace("ServerOnly")
+method void OnBeginPlay()
+    -- Seeds one sample cell and resets the tick accumulator for this play session.
+    self._T.tickAccumulator = 0
+    self._T.tickCount = 0
+    self.FarmState["3,3"] = { crop = "carrot", stage = 0, moisture = 0.5 }
+    log("[FarmTick] OnBeginPlay - cell (3,3) planted: crop=carrot stage=0")
+end
+
+@ExecSpace("ServerOnly")
+method void OnUpdate(number delta)
+    -- Accumulates real elapsed time and fires one simulation tick per TickInterval seconds.
+    self._T.tickAccumulator = self._T.tickAccumulator + delta
+    if self._T.tickAccumulator >= self.TickInterval then
+        self._T.tickAccumulator = self._T.tickAccumulator - self.TickInterval
+        self._T.tickCount = self._T.tickCount + 1
+        self:AdvanceTick()
+    end
+end
+
+@ExecSpace("ServerOnly")
+method void AdvanceTick()
+    -- Advances the sample cell's growth stage by one step per tick, capping at stage 3 (harvestable).
+    local cell = self.FarmState["3,3"]
+    if cell ~= nil and cell.stage < 3 then
+        cell.stage = cell.stage + 1
+        log("[FarmTick] tick " .. self._T.tickCount .. " - cell (3,3) crop=" .. cell.crop .. " stage=" .. cell.stage)
+    end
+end
+
+end

@@ -1,0 +1,51 @@
+Loaded 11 entities from ui/BlockProgramUI.ui
+Written 11 entities to ui/BlockProgramUI.ui
+[INFO   ] L011 /ui/BlockProgramUI/Panel
+        Pivot=(0.00,0.50) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/Title
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/BtnMoveE
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[WARNING] L007 /ui/BlockProgramUI/Panel/BtnMoveE
+        Button RectSize 340x52 below 88x88 mobile touch target
+        hint: Enlarge RectSize to at least 88x88 (Apple HIG) even if icon looks smaller.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/BtnMoveS
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[WARNING] L007 /ui/BlockProgramUI/Panel/BtnMoveS
+        Button RectSize 340x52 below 88x88 mobile touch target
+        hint: Enlarge RectSize to at least 88x88 (Apple HIG) even if icon looks smaller.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/BtnHarvest
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[WARNING] L007 /ui/BlockProgramUI/Panel/BtnHarvest
+        Button RectSize 340x52 below 88x88 mobile touch target
+        hint: Enlarge RectSize to at least 88x88 (Apple HIG) even if icon looks smaller.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/BtnPlant
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[WARNING] L007 /ui/BlockProgramUI/Panel/BtnPlant
+        Button RectSize 340x52 below 88x88 mobile touch target
+        hint: Enlarge RectSize to at least 88x88 (Apple HIG) even if icon looks smaller.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/ProgramLabel
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/ProgramText
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/BtnRun
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[WARNING] L007 /ui/BlockProgramUI/Panel/BtnRun
+        Button RectSize 164x52 below 88x88 mobile touch target
+        hint: Enlarge RectSize to at least 88x88 (Apple HIG) even if icon looks smaller.
+[INFO   ] L011 /ui/BlockProgramUI/Panel/BtnClear
+        Pivot=(0.00,1.00) differs from default (0.5, 0.5)
+        hint: Pivot affects rotation/scale origin and anchoredPosition reference point.
+[WARNING] L007 /ui/BlockProgramUI/Panel/BtnClear
+        Button RectSize 164x52 below 88x88 mobile touch target
+        hint: Enlarge RectSize to at least 88x88 (Apple HIG) even if icon looks smaller.
+WARN ui_lint: 6 warning(s)

@@ -1,0 +1,82 @@
+@Component
+script DroneController extends Component
+
+property number TickInterval = 0.4
+property table CommandQueue = {}
+
+@ExecSpace("ServerOnly")
+method void OnBeginPlay()
+    -- Places the drone at cell (0,0) and queues a sample move/harvest/plant sequence, one action per tick.
+    self._T.tickAccumulator = 0
+    self._T.cellX = 0
+    self._T.cellY = 0
+    self._T.cmdIndex = 1
+    self.CommandQueue = {
+        { action = "move", dir = "E" },
+        { action = "move", dir = "E" },
+        { action = "harvest" },
+        { action = "move", dir = "S" },
+        { action = "plant", crop = "carrot" },
+    }
+    self._T.tilemap = self.Entity.CurrentMap:GetFirstChildComponentByTypeName("RectTileMapComponent")
+    self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
+    log("[Drone] spawned at cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+end
+
+@ExecSpace("ServerOnly")
+method void OnUpdate(number delta)
+    -- Pops one command from the queue per TickInterval seconds, matching the reference game's one-action-per-tick cadence.
+    if self._T.cmdIndex > #self.CommandQueue then return end
+    self._T.tickAccumulator = self._T.tickAccumulator + delta
+    if self._T.tickAccumulator >= self.TickInterval then
+        self._T.tickAccumulator = self._T.tickAccumulator - self.TickInterval
+        self:RunNextCommand()
+    end
+end
+
+@ExecSpace("Server")
+method void RunProgram(table commands)
+    -- Replaces the active queue with a player-assembled program (from BlockProgramController) and restarts execution.
+    self.CommandQueue = commands
+    self._T.cmdIndex = 1
+    self._T.tickAccumulator = 0
+    log("[Drone] RunProgram received " .. #commands .. " commands - restarting queue")
+end
+
+@ExecSpace("ServerOnly")
+method void RunNextCommand()
+    -- Dispatches CommandQueue[cmdIndex] to the matching handler and logs the resulting state.
+    local cmd = self.CommandQueue[self._T.cmdIndex]
+    if cmd.action == "move" then
+        self:DoMove(cmd.dir)
+    elseif cmd.action == "harvest" then
+        log("[Drone] tick " .. self._T.cmdIndex .. " - harvest at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+    elseif cmd.action == "plant" then
+        log("[Drone] tick " .. self._T.cmdIndex .. " - plant " .. cmd.crop .. " at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+    end
+    self._T.cmdIndex = self._T.cmdIndex + 1
+end
+
+@ExecSpace("ServerOnly")
+method void DoMove(string dir)
+    -- Steps exactly one grid cell toward dir and teleports the Kinematicbody to that cell's world position.
+    local dx, dy = 0, 0
+    if dir == "E" then dx = 1
+    elseif dir == "W" then dx = -1
+    elseif dir == "N" then dy = 1
+    elseif dir == "S" then dy = -1
+    end
+    self._T.cellX = self._T.cellX + dx
+    self._T.cellY = self._T.cellY + dy
+    self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
+    log("[Drone] tick " .. self._T.cmdIndex .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+end
+
+@ExecSpace("ServerOnly")
+method Vector2 CellToWorld(integer cellX, integer cellY)
+    -- ToWorldPosition returns a Vector3, but the Kinematicbody's SetWorldPosition takes a Vector2 — drop z.
+    local world3 = self._T.tilemap:ToWorldPosition(Vector2Int(cellX, cellY))
+    return Vector2(world3.x, world3.y)
+end
+
+end
