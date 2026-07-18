@@ -1,22 +1,32 @@
 -- ACTIVE MINE RUNTIME CONTRACT
--- This component owns one worker's program/cell state, but it does not own a
--- timer. VeinTickSimulator calls AdvanceSimulationTick exactly once per server
--- simulation tick. The next phase replaces the flat queue with a validated
--- repeat/if interpreter while preserving this tick entry point.
+-- This component owns one worker's validated D2 stack interpreter and cell
+-- state, but it does not own a timer. VeinTickSimulator calls
+-- AdvanceSimulationTick exactly once per server simulation tick. D3 may fill
+-- the load/unload and cart-condition stubs; it must preserve this tick contract.
 @Component
 script WorkerController extends Component
 
 property table CommandQueue = {}
+property integer MaxProgramBlocks = 30
+property integer MaxProgramDepth = 3
+property integer MaxEvaluationsPerTick = 20
+
+@Sync
+property string ProgramState = "Idle"
 
 @ExecSpace("ServerOnly")
 method void OnBeginPlay()
+    -- Initializes the worker cell, interpreter state, and mine simulation registration.
     self._T.cellX = 0
     self._T.cellY = 0
-    self._T.cmdIndex = 1
     self._T.running = false
+    self._T.frames = {}
+    self._T.actionStep = 0
+    self._T.lastSimulationTick = 0
     self._T.tilemap = self.Entity.CurrentMap:GetFirstChildComponentByTypeName("RectTileMapComponent")
     self._T.mineState = self.Entity.CurrentMap.VeinTickSimulator
     self.CommandQueue = {}
+    self.ProgramState = "Idle"
 
     if self._T.tilemap == nil then
         log_error("[Worker] RectTileMapComponent not found")
@@ -34,6 +44,7 @@ end
 
 @ExecSpace("ServerOnly")
 method void OnEndPlay()
+    -- Unregisters the worker from the map-scoped simulation.
     if self._T.mineState ~= nil then
         self._T.mineState:UnregisterWorker(self)
     end
@@ -41,74 +52,239 @@ end
 
 @ExecSpace("Server")
 method void RunProgram(table commands)
-    if commands == nil or #commands == 0 then
-        self.CommandQueue = {}
-        self._T.cmdIndex = 1
-        self._T.running = false
+    -- Replaces the current run only with a server-validated D2 program.
+    -- A new request always replaces the old run. Invalid input leaves the
+    -- worker Idle so an untrusted client cannot preserve hidden execution.
+    self:ResetExecution()
+    if commands == nil or type(commands) ~= "table" or #commands == 0 then
         log("[Worker] empty program received - state=Idle")
         return
     end
+
+    if not self:ValidateProgram(commands) then
+        log("[Worker] program rejected: " .. tostring(self._T.validationError))
+        return
+    end
+
     self.CommandQueue = commands
-    self._T.cmdIndex = 1
+    self._T.frames = {
+        { list = commands, index = 1, remaining = 1, kind = "root" }
+    }
+    self._T.actionStep = 0
     self._T.running = true
-    log("[Worker] RunProgram received " .. #commands .. " commands - restarting queue")
+    self.ProgramState = "Running"
+    log("[Worker] RunProgram accepted blocks=" .. tostring(self._T.validationBlockCount) .. " - state=Running")
 end
 
 @ExecSpace("Server")
 method void StopProgram()
-    self.CommandQueue = {}
-    self._T.cmdIndex = 1
-    self._T.running = false
+    -- Stops the current interpreter and returns the synchronized state to Idle.
+    self:ResetExecution()
     log("[Worker] stopped by user")
 end
 
 @ExecSpace("ServerOnly")
 method void AdvanceSimulationTick(integer tick)
+    -- Advances control frames until one action executes or the evaluation budget is exhausted.
     if not self._T.running then return end
-    if self._T.cmdIndex > #self.CommandQueue then
-        self._T.running = false
-        return
-    end
-    -- CurrentTick belongs to VeinTickSimulator; cmdIndex is only this program's step.
-    -- Keep both values in logs so later interpreter work cannot confuse the two clocks.
     self._T.lastSimulationTick = tick
-    self:RunNextCommand()
+    local evaluations = 0
+
+    while self._T.running and evaluations < self.MaxEvaluationsPerTick do
+        if self._T.frames == nil or #self._T.frames == 0 then
+            self:FinishProgram()
+            return
+        end
+
+        local frame = self._T.frames[#self._T.frames]
+        if frame.index > #frame.list then
+            evaluations = evaluations + 1
+            if frame.kind == "repeat" and (frame.remaining == "inf" or frame.remaining > 1) then
+                if frame.remaining ~= "inf" then
+                    frame.remaining = frame.remaining - 1
+                end
+                frame.index = 1
+            else
+                table.remove(self._T.frames)
+            end
+        else
+            local command = frame.list[frame.index]
+            local commandType = command.type
+            if self:IsActionType(commandType) then
+                frame.index = frame.index + 1
+                self._T.actionStep = self._T.actionStep + 1
+                self:ExecuteAction(command)
+                return
+            elseif commandType == "repeat" then
+                evaluations = evaluations + 1
+                -- D2 invariant: advance the parent before entering its child.
+                frame.index = frame.index + 1
+                table.insert(self._T.frames, {
+                    list = command.body,
+                    index = 1,
+                    remaining = command.count,
+                    kind = "repeat",
+                })
+            elseif commandType == "if" then
+                evaluations = evaluations + 1
+                frame.index = frame.index + 1
+                if self:EvaluateCondition(command.cond) then
+                    table.insert(self._T.frames, {
+                        list = command.body,
+                        index = 1,
+                        remaining = 1,
+                        kind = "if",
+                    })
+                end
+            end
+        end
+    end
+
+    if self._T.running then
+        log("[Worker] eval limit hit simTick=" .. tostring(self._T.lastSimulationTick))
+    end
 end
 
 @ExecSpace("ServerOnly")
 method string GetProgramState()
-    if self._T.running then return "Running" end
-    return "Idle"
+    -- Returns the synchronized Idle or Running state.
+    return self.ProgramState
 end
 
 @ExecSpace("ServerOnly")
-method void RunNextCommand()
-    local cmd = self.CommandQueue[self._T.cmdIndex]
-    local actionType = cmd.type
+method void ResetExecution()
+    -- Clears every stack frame, queued command, and action counter.
+    self.CommandQueue = {}
+    self._T.frames = {}
+    self._T.actionStep = 0
+    self._T.running = false
+    self.ProgramState = "Idle"
+end
 
+@ExecSpace("ServerOnly")
+method void FinishProgram()
+    -- Finalizes a naturally completed program and records positive log evidence.
+    self:ResetExecution()
+    log("[Worker] program finished")
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsActionType(string commandType)
+    -- Reports whether a command consumes one simulation tick as a D2 action.
+    return commandType == "move" or commandType == "mine" or commandType == "load" or commandType == "unload"
+end
+
+@ExecSpace("ServerOnly")
+method void ExecuteAction(table command)
+    -- Dispatches one validated atomic action.
+    local actionType = command.type
     if actionType == "move" then
-        self:DoMove(cmd.dir)
+        self:DoMove(command.dir)
     elseif actionType == "mine" then
         self:DoMine()
     elseif actionType == "load" then
         -- PHASE 1 HANDOFF: replace this stub when worker inventory is introduced.
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - load stub at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - load stub at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
     elseif actionType == "unload" then
         -- PHASE 1 HANDOFF: unload must validate the depot cell before AddToDepot.
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - unload stub at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
-    else
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - unknown command type=" .. tostring(actionType))
-    end
-
-    self._T.cmdIndex = self._T.cmdIndex + 1
-    if self._T.cmdIndex > #self.CommandQueue then
-        self._T.running = false
-        log("[Worker] program finished")
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload stub at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
     end
 end
 
 @ExecSpace("ServerOnly")
+method boolean EvaluateCondition(string condition)
+    -- Evaluates D2 ore conditions and the reserved D3 cart stubs.
+    if condition == "ore_present" then
+        return self._T.mineState:HasOre(self._T.cellX, self._T.cellY)
+    elseif condition == "ore_absent" then
+        return not self._T.mineState:HasOre(self._T.cellX, self._T.cellY)
+    elseif condition == "cart_full" then
+        -- D3 activates real cart state. Reserved false stub for D2.
+        return false
+    elseif condition == "cart_empty" then
+        -- D3 activates real cart state. Reserved true stub for D2.
+        return true
+    end
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method boolean ValidateProgram(table program)
+    -- Resets validator counters and validates the full untrusted client program.
+    self._T.validationError = ""
+    self._T.validationBlockCount = 0
+    self._T.validationInfiniteCount = 0
+    return self:ValidateList(program, 0)
+end
+
+@ExecSpace("ServerOnly")
+method boolean ValidateList(table list, integer depth)
+    -- Recursively enforces block, depth, type, direction, condition, and repeat limits.
+    if type(list) ~= "table" then
+        self._T.validationError = "body must be a table"
+        return false
+    end
+    if depth > self.MaxProgramDepth then
+        self._T.validationError = "depth limit exceeded"
+        return false
+    end
+
+    for i = 1, #list do
+        local command = list[i]
+        if type(command) ~= "table" then
+            self._T.validationError = "block " .. tostring(i) .. " must be a table"
+            return false
+        end
+
+        self._T.validationBlockCount = self._T.validationBlockCount + 1
+        if self._T.validationBlockCount > self.MaxProgramBlocks then
+            self._T.validationError = "block limit exceeded"
+            return false
+        end
+
+        local commandType = command.type
+        if commandType == "move" then
+            if command.dir ~= "E" and command.dir ~= "W" and command.dir ~= "N" and command.dir ~= "S" then
+                self._T.validationError = "invalid dir=" .. tostring(command.dir)
+                return false
+            end
+        elseif commandType == "mine" or commandType == "load" or commandType == "unload" then
+            -- Action blocks have no additional D2 parameters.
+        elseif commandType == "repeat" then
+            local repeatCount = command.count
+            if repeatCount == "inf" then
+                if depth ~= 0 then
+                    self._T.validationError = "infinite repeat must be top-level"
+                    return false
+                end
+                self._T.validationInfiniteCount = self._T.validationInfiniteCount + 1
+                if self._T.validationInfiniteCount > 1 then
+                    self._T.validationError = "only one infinite repeat is allowed"
+                    return false
+                end
+            elseif type(repeatCount) ~= "number" or repeatCount < 2 or repeatCount > 99 or math.floor(repeatCount) ~= repeatCount then
+                self._T.validationError = "invalid repeat count=" .. tostring(repeatCount)
+                return false
+            end
+            if not self:ValidateList(command.body, depth + 1) then return false end
+        elseif commandType == "if" then
+            local condition = command.cond
+            if condition ~= "ore_present" and condition ~= "ore_absent" and condition ~= "cart_full" and condition ~= "cart_empty" then
+                self._T.validationError = "invalid condition=" .. tostring(condition)
+                return false
+            end
+            if not self:ValidateList(command.body, depth + 1) then return false end
+        else
+            self._T.validationError = "unknown type=" .. tostring(commandType)
+            return false
+        end
+    end
+    return true
+end
+
+@ExecSpace("ServerOnly")
 method void DoMove(string dir)
+    -- Moves one RectTile cell when the target tile is walkable.
     local dx, dy = 0, 0
     if dir == "E" then dx = 1
     elseif dir == "W" then dx = -1
@@ -129,33 +305,36 @@ method void DoMove(string dir)
     self._T.cellX = targetX
     self._T.cellY = targetY
     self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
-    log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+    log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
 end
 
 @ExecSpace("ServerOnly")
 method void DoMine()
+    -- Mines the current vein when ore remains and logs the resulting reserve stage.
     if not self._T.mineState:IsVein(self._T.cellX, self._T.cellY) then
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - no vein at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no vein at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
         return
     end
     if not self._T.mineState:HasOre(self._T.cellX, self._T.cellY) then
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
         return
     end
 
     local oreType = self._T.mineState:TryMine(self._T.cellX, self._T.cellY)
     local stage = self._T.mineState:GetReserveStage(self._T.cellX, self._T.cellY)
-    log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - mine " .. oreType .. " at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
+    log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
 end
 
 @ExecSpace("ServerOnly")
 method boolean IsCellWalkable(integer cellX, integer cellY)
+    -- Reports whether the requested RectTile cell exists and has a tile name.
     local tile = self._T.tilemap:GetTile(Vector2Int(cellX, cellY))
     return tile ~= nil and tile.Name ~= ""
 end
 
 @ExecSpace("ServerOnly")
 method Vector2 CellToWorld(integer cellX, integer cellY)
+    -- Converts a RectTile cell coordinate into a world-unit position.
     local world3 = self._T.tilemap:ToWorldPosition(Vector2Int(cellX, cellY))
     return Vector2(world3.x, world3.y)
 end

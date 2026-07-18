@@ -1,133 +1,414 @@
 -- ACTIVE CLIENT EDITOR
 -- Despite the legacy Farm folder path, this is the live client controller for
--- the mine UI. Keep program commands in the D2 `type` schema. It may assemble
--- programs locally, but only WorkerController is allowed to execute them.
+-- the mine UI. It assembles the nested D2 `type/body` schema and never executes
+-- commands locally; only WorkerController validates and runs the program.
 @Logic
 @ExecSpace("ClientOnly")
 script BlockProgramController extends Logic
 
-property ButtonComponent btnMoveE = "935a4d4a-d16e-467a-a163-1605d3b41025"
-property ButtonComponent btnMoveS = "03708ef5-1619-4faf-9a3b-c7ab78eb1516"
-property ButtonComponent btnMine = "94ee74c9-0d61-45d3-a14f-9b467e19fde0"
-property ButtonComponent btnLoad = "3a22ed13-0cd7-4355-ae01-d930630c8fb5"
-property ButtonComponent btnUnload = "04aa2ca0-7978-44d0-b3ad-3c9ccbc95c5c"
-property ButtonComponent btnRun = "0d263c27-db63-467d-b64d-c2d2ca70967f"
-property ButtonComponent btnClear = "a7e17fb9-aae2-4773-8d0e-3946c9c42704"
-property TextComponent programText = "c61c8e7b-fb2f-45a2-94b7-e3af8d608e13"
+property ButtonComponent btnMoveE = "a9da4124-530a-4170-b259-5909775f3481"
+property ButtonComponent btnMoveW = "6b47f230-0bb2-4528-93f9-0056f7fcf891"
+property ButtonComponent btnMoveN = "7d482fdf-29ad-4b9b-b629-9100dabea995"
+property ButtonComponent btnMoveS = "bf45e3f6-abf9-4b12-8992-5deb62b22535"
+property ButtonComponent btnMine = "d1aedf26-6301-4413-9af8-fdf373c9b93b"
+property ButtonComponent btnLoad = "cf049051-293c-4825-bb1a-0d2bab4801e6"
+property ButtonComponent btnUnload = "7b720fd0-ddef-4a90-a2f8-95a7e8fc5dcb"
+property ButtonComponent btnRepeat = "b18e993e-4ec7-4ef7-8eb4-34bfdd99527d"
+property ButtonComponent btnIfOre = "ecf11b75-f624-4cb2-99db-5e6d5b3cc017"
+property ButtonComponent btnEnd = "edafbf77-8061-4dcf-a4f2-94d6807482f1"
+property ButtonComponent btnRun = "c8de2465-2f5f-42c7-8fe0-e5511682bdec"
+property ButtonComponent btnStop = "3dab034e-6ad5-4bf7-a996-48e18ba6dbf6"
+property ButtonComponent btnClear = "c93c1752-f4df-4533-a7c4-fd54076c5183"
+-- UIBuilder text renderers on the program, feedback, and button entities.
+property TextGUIRendererComponent repeatButtonText = "b18e993e-4ec7-4ef7-8eb4-34bfdd99527d"
+property TextGUIRendererComponent runButtonText = "c8de2465-2f5f-42c7-8fe0-e5511682bdec"
+property TextGUIRendererComponent programText = "dcd7e02a-48e4-4350-bacd-b571ee0710f3"
+property TextGUIRendererInputComponent chatInput = "82c35bd9-3fb9-41ea-a73e-e5f5d49ddfba"
+property ButtonComponent btnConvert = "bf0948e9-fc7b-41ef-80f8-fdc6925bd2b2"
+property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
 property WorkerController workerController = "7bc03a21-7192-4a61-a932-e7cc21c4d3ef"
 
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
-    -- Wires every palette/control button to its handler and resets the assembled program display.
-    self._T.program = {}
+    -- Resets the editor and wires every D2 palette, control, and text-input event.
+    self:ResetEditor()
     self._T.handlers = {}
+    self._T.lastWorkerState = ""
     self._T.handlers.moveE = self.btnMoveE.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "E" }, "E") end)
+    self._T.handlers.moveW = self.btnMoveW.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "W" }, "W") end)
+    self._T.handlers.moveN = self.btnMoveN.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "N" }, "N") end)
     self._T.handlers.moveS = self.btnMoveS.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "S" }, "S") end)
     self._T.handlers.mine = self.btnMine.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "mine" }, "M") end)
     self._T.handlers.load = self.btnLoad.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "load" }, "L") end)
     self._T.handlers.unload = self.btnUnload.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "unload" }, "U") end)
+    self._T.handlers.repeatBlock = self.btnRepeat.Entity:ConnectEvent(ButtonClickEvent, self.OnRepeatClicked)
+    self._T.handlers.ifOre = self.btnIfOre.Entity:ConnectEvent(ButtonClickEvent, self.OnIfOreClicked)
+    self._T.handlers.endBlock = self.btnEnd.Entity:ConnectEvent(ButtonClickEvent, self.OnEndBlockClicked)
     self._T.handlers.run = self.btnRun.Entity:ConnectEvent(ButtonClickEvent, self.OnRunClicked)
+    self._T.handlers.stop = self.btnStop.Entity:ConnectEvent(ButtonClickEvent, self.OnStopClicked)
     self._T.handlers.clear = self.btnClear.Entity:ConnectEvent(ButtonClickEvent, self.OnClearClicked)
+    self._T.handlers.convert = self.btnConvert.Entity:ConnectEvent(ButtonClickEvent, self.OnConvertClicked)
+    self._T.handlers.submit = self.chatInput.Entity:ConnectEvent(TextInputSubmitEvent, function() self:OnConvertClicked() end)
+    self.chatInput.Text = ""
     self:RefreshDisplay()
-    log("[BlockProgram] UI ready - palette wired, program empty")
+    self:SetFeedback("문장을 입력하고 변환을 눌러 주세요.")
+    log("[BlockProgram] D2 UI ready - nested editor and text input wired")
 end
 
+@ExecSpace("ClientOnly")
 method void AddCommand(table command, string label)
-    -- Appends one block to the assembled program and refreshes the on-screen list.
-    table.insert(self._T.program, command)
-    self._T.labels = self._T.labels or {}
-    table.insert(self._T.labels, label)
+    -- Appends one command to the currently open program body.
+    local body = self._T.openBodies[#self._T.openBodies]
+    table.insert(body, command)
     self:RefreshDisplay()
-    log("[BlockProgram] added block '" .. label .. "' - program length=" .. #self._T.program)
+    log("[BlockProgram] added block '" .. label .. "' depth=" .. tostring(#self._T.openBodies - 1))
 end
 
+@ExecSpace("ClientOnly")
 method void RefreshDisplay()
-    -- Renders the current program as a comma-separated label string, or a placeholder when empty.
-    self._T.labels = self._T.labels or {}
-    if #self._T.labels == 0 then
-        self.programText.Text = "(empty - tap blocks to add)"
+    -- Renders the nested program into the review text area.
+    if #self._T.program == 0 then
+        self.programText.Text = "(비어 있음 - 블록을 눌러 추가)"
     else
-        self.programText.Text = table.concat(self._T.labels, ", ")
+        self.programText.Text = self:RenderList(self._T.program, 0)
     end
 end
 
+@ExecSpace("ClientOnly")
 method void OnRunClicked()
-    -- Sends the assembled program to the worker's Server RPC so it replaces the live command queue.
+    -- Closes open blocks and sends the reviewed program to the server worker.
     if #self._T.program == 0 then
         log("[BlockProgram] Run pressed but program is empty - ignored")
+        self:SetFeedback("실행할 블록이 없습니다.")
         return
     end
-    log("[BlockProgram] Run pressed - sending " .. #self._T.program .. " commands to worker")
+
+    if #self._T.openBodies > 1 then
+        self:CloseAllOpenBlocks()
+        self:SetFeedback("열린 제어 블록을 모두 닫고 실행했습니다.")
+    else
+        self:SetFeedback("프로그램을 일꾼에게 전송했습니다.")
+    end
+    log("[BlockProgram] Run pressed - sending nested program to worker")
     self.workerController:RunProgram(self._T.program)
 end
 
+@ExecSpace("ClientOnly")
+method void OnStopClicked()
+    -- Requests an immediate server-side interpreter stop.
+    self.workerController:StopProgram()
+    self:SetFeedback("정지 요청을 보냈습니다.")
+end
+
+@ExecSpace("ClientOnly")
 method void OnClearClicked()
-    -- Empties the assembled program and resets the display back to placeholder text.
-    self._T.program = {}
-    self._T.labels = {}
+    -- Clears every assembled block and resets nested editor state.
+    self:ResetEditor()
     self:RefreshDisplay()
+    self:SetFeedback("프로그램을 초기화했습니다.")
     log("[BlockProgram] program cleared")
 end
 
 @ExecSpace("ClientOnly")
-method void ParseChatCommand(string text)
-    -- Converts a natural-language Korean sentence into block commands (scenario 3 NL parser) and runs them on the drone.
+method void OnRepeatClicked()
+    -- Opens a repeat block or cycles the active repeat count through the approved presets.
+    local topControl = self._T.openControls[#self._T.openControls]
+    if topControl ~= nil and topControl.type == "repeat" then
+        topControl.count = self:NextRepeatCount(topControl.count)
+        self:RefreshRepeatButton(topControl.count)
+        self:RefreshDisplay()
+        self:SetFeedback("열린 반복 블록의 횟수를 변경했습니다.")
+        log("[BlockProgram] repeat count=" .. tostring(topControl.count))
+        return
+    end
+
+    local command = { type = "repeat", count = 2, body = {} }
+    self:AddCommand(command, "R×2")
+    table.insert(self._T.openControls, command)
+    table.insert(self._T.openBodies, command.body)
+    self:RefreshRepeatButton(command.count)
+    self:RefreshDisplay()
+    self:SetFeedback("반복 블록을 열었습니다. 다시 누르면 횟수가 바뀝니다.")
+end
+
+@ExecSpace("ClientOnly")
+method void OnIfOreClicked()
+    -- Opens an ore-present IF body at the current nesting point.
+    local command = { type = "if", cond = "ore_present", body = {} }
+    self:AddCommand(command, "IF광물")
+    table.insert(self._T.openControls, command)
+    table.insert(self._T.openBodies, command.body)
+    self:RefreshDisplay()
+    self:SetFeedback("IF 광물 블록을 열었습니다.")
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndBlockClicked()
+    -- Closes the most recently opened repeat or IF block.
+    if #self._T.openBodies <= 1 then
+        self:SetFeedback("닫을 제어 블록이 없습니다.")
+        return
+    end
+    table.remove(self._T.openBodies)
+    table.remove(self._T.openControls)
+    self:RefreshRepeatControlFromOpenStack()
+    self:RefreshDisplay()
+    self:SetFeedback("가장 최근 제어 블록을 닫았습니다.")
+end
+
+@ExecSpace("ClientOnly")
+method void CloseAllOpenBlocks()
+    -- Closes all unfinished control blocks before execution.
+    while #self._T.openBodies > 1 do
+        table.remove(self._T.openBodies)
+        table.remove(self._T.openControls)
+    end
+    self:RefreshRepeatButton(2)
+    self:RefreshDisplay()
+end
+
+@ExecSpace("ClientOnly")
+method void ResetEditor()
+    -- Reinitializes the root program and editor stacks.
     self._T.program = {}
-    self._T.labels = {}
+    self._T.openBodies = { self._T.program }
+    self._T.openControls = {}
+    self:RefreshRepeatButton(2)
+end
+
+@ExecSpace("ClientOnly")
+method any NextRepeatCount(any current)
+    -- Returns the next repeat preset in the 2, 3, 5, 10, infinity cycle.
+    if current == 2 then return 3 end
+    if current == 3 then return 5 end
+    if current == 5 then return 10 end
+    if current == 10 then return "inf" end
+    return 2
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshRepeatButton(any count)
+    -- Updates the repeat palette label to show the active preset.
+    if self.repeatButtonText == nil then return end
+    local label = tostring(count)
+    if count == "inf" then label = "∞" end
+    self.repeatButtonText.Text = "반복 R×" .. label
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshRepeatControlFromOpenStack()
+    -- Restores the repeat label from the nearest open repeat block.
+    local topControl = self._T.openControls[#self._T.openControls]
+    if topControl ~= nil and topControl.type == "repeat" then
+        self:RefreshRepeatButton(topControl.count)
+    else
+        self:RefreshRepeatButton(2)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void SetFeedback(string message)
+    -- Displays parser or editor feedback without starting execution.
+    self.feedbackText.Text = message
+end
+
+@ExecSpace("ClientOnly")
+method string RenderList(table list, integer depth)
+    -- Serializes a nested D2 block list into indented review text.
+    local rendered = ""
+    local indent = string.rep("  ", depth)
+    for i = 1, #list do
+        local command = list[i]
+        if command.type == "move" then
+            rendered = rendered .. indent .. command.dir .. "\n"
+        elseif command.type == "mine" then
+            rendered = rendered .. indent .. "M\n"
+        elseif command.type == "load" then
+            rendered = rendered .. indent .. "L\n"
+        elseif command.type == "unload" then
+            rendered = rendered .. indent .. "U\n"
+        elseif command.type == "repeat" then
+            local countLabel = tostring(command.count)
+            if command.count == "inf" then countLabel = "∞" end
+            rendered = rendered .. indent .. "R×" .. countLabel .. " [\n"
+            rendered = rendered .. self:RenderList(command.body, depth + 1)
+            rendered = rendered .. indent .. "]\n"
+        elseif command.type == "if" then
+            local conditionLabel = "광물 있음"
+            if command.cond == "ore_absent" then conditionLabel = "광물 없음" end
+            rendered = rendered .. indent .. "IF " .. conditionLabel .. " [\n"
+            rendered = rendered .. self:RenderList(command.body, depth + 1)
+            rendered = rendered .. indent .. "]\n"
+        end
+    end
+    return rendered
+end
+
+@ExecSpace("ClientOnly")
+method void ParseChatCommand(string text)
+    -- Converts supported Korean natural language into blocks without auto-running them.
+    self:ResetEditor()
+    if text == nil or text == "" then
+        self:RefreshDisplay()
+        self:SetFeedback("이해하지 못했어요. 예: 오른쪽으로 두 칸 가서 캐")
+        return
+    end
+
+    self._T.parsedActions = {}
+    self._T.unrecognized = {}
     local pendingDir = ""
     local pendingCount = 0
     for token in string.gmatch(text, "%S+") do
+        local recognized = false
         if string.find(token, "채굴", 1, true) or string.find(token, "캐", 1, true) then
-            self:FlushMove(pendingDir, pendingCount)
+            self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
             pendingDir = ""
             pendingCount = 0
-            self:AddCommand({ type = "mine" }, "M")
+            table.insert(self._T.parsedActions, { type = "mine" })
+            recognized = true
         elseif string.find(token, "실어", 1, true) or string.find(token, "싣", 1, true) or string.find(token, "담아", 1, true) then
-            self:FlushMove(pendingDir, pendingCount)
+            self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
             pendingDir = ""
             pendingCount = 0
-            self:AddCommand({ type = "load" }, "L")
+            table.insert(self._T.parsedActions, { type = "load" })
+            recognized = true
         elseif string.find(token, "내려", 1, true) or string.find(token, "비워", 1, true) then
-            self:FlushMove(pendingDir, pendingCount)
+            self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
             pendingDir = ""
             pendingCount = 0
-            self:AddCommand({ type = "unload" }, "U")
+            table.insert(self._T.parsedActions, { type = "unload" })
+            recognized = true
         else
             local dir = self:DetectDir(token)
             local cnt = self:DetectCount(token)
             if dir ~= "" then
                 if pendingDir ~= "" then
-                    self:FlushMove(pendingDir, pendingCount)
+                    self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
                     pendingCount = 0
                 end
                 pendingDir = dir
-            elseif cnt > 0 then
-                if pendingDir ~= "" and pendingCount > 0 then
-                    self:FlushMove(pendingDir, pendingCount)
-                    pendingDir = ""
-                    pendingCount = 0
-                end
+                recognized = true
+            elseif cnt > 0 and pendingDir ~= "" and not string.find(token, "번", 1, true) then
                 pendingCount = cnt
+                recognized = true
+            elseif self:IsControlOrFillerToken(token) then
+                recognized = true
             end
         end
+
+        if not recognized then
+            table.insert(self._T.unrecognized, token)
+        end
     end
-    self:FlushMove(pendingDir, pendingCount)
-    log("[ChatParse] parsed '" .. text .. "' -> " .. #self._T.program .. " commands: " .. table.concat(self._T.labels, ", "))
-    -- D2 UX contract: conversion only assembles blocks. The player reviews the
-    -- result and presses Run explicitly; never auto-execute from this parser.
-    log("[ChatParse] program ready - waiting for explicit Run")
+    self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
+
+    if #self._T.parsedActions == 0 then
+        self:RefreshDisplay()
+        self:SetFeedback("이해하지 못했어요. 예: 오른쪽으로 두 칸 가서 캐")
+        log("[ChatParse] no executable blocks parsed from '" .. text .. "'")
+        return
+    end
+
+    local program = self._T.parsedActions
+    local condition = self:DetectCondition(text)
+    if condition ~= "" then
+        program = { { type = "if", cond = condition, body = program } }
+    end
+
+    local repeatCount = self:DetectRepeatCount(text)
+    if repeatCount ~= nil then
+        program = { { type = "repeat", count = repeatCount, body = program } }
+    end
+
+    self._T.program = program
+    self._T.openBodies = { self._T.program }
+    self._T.openControls = {}
+    self:RefreshRepeatButton(2)
+    self:RefreshDisplay()
+
+    local blockCount = self:CountBlocks(self._T.program)
+    if #self._T.unrecognized > 0 then
+        self:SetFeedback("'" .. table.concat(self._T.unrecognized, " ") .. "'는 이해하지 못했어요. 나머지 " .. tostring(blockCount) .. "개 블록을 변환했습니다.")
+    else
+        self:SetFeedback(tostring(blockCount) .. "개 블록으로 변환했어요. 실행 전 내용을 확인하세요.")
+    end
+    log("[ChatParse] parsed '" .. text .. "' blocks=" .. tostring(blockCount) .. " - waiting for explicit Run")
 end
 
-method void FlushMove(string dir, integer count)
-    -- Emits 'count' move blocks in the given compass direction (defaults to 1 when count is zero).
+@ExecSpace("ClientOnly")
+method void OnConvertClicked()
+    -- Converts the current text-input value into a reviewable block program.
+    self:ParseChatCommand(self.chatInput.Text)
+end
+
+@ExecSpace("ClientOnly")
+method void FlushMoveToList(table target, string dir, integer count)
+    -- Expands one parsed direction/count pair into atomic move actions.
     if dir == "" then return end
     local n = count
     if n <= 0 then n = 1 end
     for i = 1, n do
-        self:AddCommand({ type = "move", dir = dir }, dir)
+        table.insert(target, { type = "move", dir = dir })
     end
 end
 
+@ExecSpace("ClientOnly")
+method string DetectCondition(string text)
+    -- Detects the supported ore-present or ore-absent condition phrase.
+    if string.find(text, "없으면", 1, true) then return "ore_absent" end
+    if string.find(text, "있으면", 1, true) then return "ore_present" end
+    return ""
+end
+
+@ExecSpace("ClientOnly")
+method any DetectRepeatCount(string text)
+    -- Detects a bounded repeat count or the infinite-repeat phrase.
+    if string.find(text, "계속", 1, true) or string.find(text, "끝까지", 1, true) then
+        return "inf"
+    end
+    if not string.find(text, "반복", 1, true) then return nil end
+
+    local digit = string.match(text, "(%d+)%s*번")
+    if digit ~= nil then
+        local count = tonumber(digit)
+        if count < 2 then count = 2 end
+        if count > 99 then count = 99 end
+        return count
+    end
+    if string.find(text, "열 번", 1, true) or string.find(text, "열번", 1, true) then return 10 end
+    if string.find(text, "다섯 번", 1, true) or string.find(text, "다섯번", 1, true) then return 5 end
+    if string.find(text, "세 번", 1, true) or string.find(text, "세번", 1, true) then return 3 end
+    if string.find(text, "두 번", 1, true) or string.find(text, "두번", 1, true) then return 2 end
+    return 2
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsControlOrFillerToken(string token)
+    -- Recognizes grammar words that should not be reported as unknown input.
+    if string.find(token, "광물", 1, true) then return true end
+    if string.find(token, "있으면", 1, true) or string.find(token, "없으면", 1, true) then return true end
+    if string.find(token, "반복", 1, true) or string.find(token, "계속", 1, true) or string.find(token, "끝까지", 1, true) then return true end
+    if string.find(token, "번", 1, true) or string.find(token, "칸", 1, true) then return true end
+    if string.find(token, "가서", 1, true) or string.find(token, "이동", 1, true) then return true end
+    if token == "하고" or token == "후" or token == "그리고" then return true end
+    return false
+end
+
+@ExecSpace("ClientOnly")
+method integer CountBlocks(table list)
+    -- Counts action and control blocks recursively for parser feedback.
+    local count = 0
+    for i = 1, #list do
+        local command = list[i]
+        count = count + 1
+        if command.type == "repeat" or command.type == "if" then
+            count = count + self:CountBlocks(command.body)
+        end
+    end
+    return count
+end
+
+@ExecSpace("ClientOnly")
 method string DetectDir(string token)
     -- Maps a Korean direction word in the token to a compass code, or "" if none found.
     if string.find(token, "오른", 1, true) or string.find(token, "동쪽", 1, true) then return "E" end
@@ -137,6 +418,7 @@ method string DetectDir(string token)
     return ""
 end
 
+@ExecSpace("ClientOnly")
 method integer DetectCount(string token)
     -- Parses a count (1..9) from a digit or native Korean numeral in the token, or 0 if none.
     local d = string.match(token, "(%d+)")
@@ -150,15 +432,40 @@ method integer DetectCount(string token)
 end
 
 @ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- Mirrors the synchronized worker run state into the Run button label.
+    if self.workerController == nil then return end
+    local state = self.workerController.ProgramState
+    if state == self._T.lastWorkerState then return end
+    self._T.lastWorkerState = state
+    if self.runButtonText ~= nil then
+        if state == "Running" then
+            self.runButtonText.Text = "재실행"
+        else
+            self.runButtonText.Text = "실행"
+        end
+    end
+    log("[BlockProgram] worker state=" .. tostring(state))
+end
+
+@ExecSpace("ClientOnly")
 method void OnEndPlay()
-    -- Releases every button click connection registered in OnBeginPlay.
+    -- Disconnects every UI event handler registered during begin play.
     self.btnMoveE.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveE)
+    self.btnMoveW.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveW)
+    self.btnMoveN.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveN)
     self.btnMoveS.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveS)
     self.btnMine.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.mine)
     self.btnLoad.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.load)
     self.btnUnload.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.unload)
+    self.btnRepeat.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.repeatBlock)
+    self.btnIfOre.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.ifOre)
+    self.btnEnd.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.endBlock)
     self.btnRun.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.run)
+    self.btnStop.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.stop)
     self.btnClear.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.clear)
+    self.btnConvert.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.convert)
+    self.chatInput.Entity:DisconnectEvent(TextInputSubmitEvent, self._T.handlers.submit)
 end
 
 end
