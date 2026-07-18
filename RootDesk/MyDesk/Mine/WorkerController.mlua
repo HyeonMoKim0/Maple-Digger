@@ -1,0 +1,163 @@
+-- ACTIVE MINE RUNTIME CONTRACT
+-- This component owns one worker's program/cell state, but it does not own a
+-- timer. VeinTickSimulator calls AdvanceSimulationTick exactly once per server
+-- simulation tick. The next phase replaces the flat queue with a validated
+-- repeat/if interpreter while preserving this tick entry point.
+@Component
+script WorkerController extends Component
+
+property table CommandQueue = {}
+
+@ExecSpace("ServerOnly")
+method void OnBeginPlay()
+    self._T.cellX = 0
+    self._T.cellY = 0
+    self._T.cmdIndex = 1
+    self._T.running = false
+    self._T.tilemap = self.Entity.CurrentMap:GetFirstChildComponentByTypeName("RectTileMapComponent")
+    self._T.mineState = self.Entity.CurrentMap.VeinTickSimulator
+    self.CommandQueue = {}
+
+    if self._T.tilemap == nil then
+        log_error("[Worker] RectTileMapComponent not found")
+        return
+    end
+    if self._T.mineState == nil then
+        log_error("[Worker] VeinTickSimulator not found on current map")
+        return
+    end
+
+    self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
+    self._T.mineState:RegisterWorker(self)
+    log("[Worker] spawned at cell (" .. self._T.cellX .. "," .. self._T.cellY .. ") state=Idle")
+end
+
+@ExecSpace("ServerOnly")
+method void OnEndPlay()
+    if self._T.mineState ~= nil then
+        self._T.mineState:UnregisterWorker(self)
+    end
+end
+
+@ExecSpace("Server")
+method void RunProgram(table commands)
+    if commands == nil or #commands == 0 then
+        self.CommandQueue = {}
+        self._T.cmdIndex = 1
+        self._T.running = false
+        log("[Worker] empty program received - state=Idle")
+        return
+    end
+    self.CommandQueue = commands
+    self._T.cmdIndex = 1
+    self._T.running = true
+    log("[Worker] RunProgram received " .. #commands .. " commands - restarting queue")
+end
+
+@ExecSpace("Server")
+method void StopProgram()
+    self.CommandQueue = {}
+    self._T.cmdIndex = 1
+    self._T.running = false
+    log("[Worker] stopped by user")
+end
+
+@ExecSpace("ServerOnly")
+method void AdvanceSimulationTick(integer tick)
+    if not self._T.running then return end
+    if self._T.cmdIndex > #self.CommandQueue then
+        self._T.running = false
+        return
+    end
+    -- CurrentTick belongs to VeinTickSimulator; cmdIndex is only this program's step.
+    -- Keep both values in logs so later interpreter work cannot confuse the two clocks.
+    self._T.lastSimulationTick = tick
+    self:RunNextCommand()
+end
+
+@ExecSpace("ServerOnly")
+method string GetProgramState()
+    if self._T.running then return "Running" end
+    return "Idle"
+end
+
+@ExecSpace("ServerOnly")
+method void RunNextCommand()
+    local cmd = self.CommandQueue[self._T.cmdIndex]
+    local actionType = cmd.type
+
+    if actionType == "move" then
+        self:DoMove(cmd.dir)
+    elseif actionType == "mine" then
+        self:DoMine()
+    elseif actionType == "load" then
+        -- PHASE 1 HANDOFF: replace this stub when worker inventory is introduced.
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - load stub at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+    elseif actionType == "unload" then
+        -- PHASE 1 HANDOFF: unload must validate the depot cell before AddToDepot.
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - unload stub at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+    else
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - unknown command type=" .. tostring(actionType))
+    end
+
+    self._T.cmdIndex = self._T.cmdIndex + 1
+    if self._T.cmdIndex > #self.CommandQueue then
+        self._T.running = false
+        log("[Worker] program finished")
+    end
+end
+
+@ExecSpace("ServerOnly")
+method void DoMove(string dir)
+    local dx, dy = 0, 0
+    if dir == "E" then dx = 1
+    elseif dir == "W" then dx = -1
+    elseif dir == "N" then dy = 1
+    elseif dir == "S" then dy = -1
+    else
+        log("[Worker] invalid move dir=" .. tostring(dir))
+        return
+    end
+
+    local targetX = self._T.cellX + dx
+    local targetY = self._T.cellY + dy
+    if not self:IsCellWalkable(targetX, targetY) then
+        log("[Worker] blocked " .. dir .. " at boundary target=(" .. targetX .. "," .. targetY .. ")")
+        return
+    end
+
+    self._T.cellX = targetX
+    self._T.cellY = targetY
+    self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
+    log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+end
+
+@ExecSpace("ServerOnly")
+method void DoMine()
+    if not self._T.mineState:IsVein(self._T.cellX, self._T.cellY) then
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - no vein at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        return
+    end
+    if not self._T.mineState:HasOre(self._T.cellX, self._T.cellY) then
+        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        return
+    end
+
+    local oreType = self._T.mineState:TryMine(self._T.cellX, self._T.cellY)
+    local stage = self._T.mineState:GetReserveStage(self._T.cellX, self._T.cellY)
+    log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.cmdIndex .. " - mine " .. oreType .. " at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsCellWalkable(integer cellX, integer cellY)
+    local tile = self._T.tilemap:GetTile(Vector2Int(cellX, cellY))
+    return tile ~= nil and tile.Name ~= ""
+end
+
+@ExecSpace("ServerOnly")
+method Vector2 CellToWorld(integer cellX, integer cellY)
+    local world3 = self._T.tilemap:ToWorldPosition(Vector2Int(cellX, cellY))
+    return Vector2(world3.x, world3.y)
+end
+
+end

@@ -1,0 +1,23 @@
+{
+  "Id": "",
+  "GameId": "",
+  "EntryKey": "directory://caeaa9bbe30c4fe29e33c1af9a0d92c3",
+  "ContentType": "x-mod/directory",
+  "Content": "",
+  "Usage": 0,
+  "UsePublish": 1,
+  "UseService": 0,
+  "CoreVersion": "26.5.0.0",
+  "StudioVersion": "",
+  "DynamicLoading": 0,
+  "ContentProto": {
+    "Use": "Json",
+    "Json": {
+      "entry_id": "directory://caeaa9bbe30c4fe29e33c1af9a0d92c3",
+      "name": "Mine",
+      "lock": false,
+      "folding": false,
+      "nameEditable": true
+    }
+  }
+}

@@ -1,0 +1,179 @@
+-- ACTIVE MINE RUNTIME CONTRACT
+-- This map-scoped component is the single server owner of simulation ticks,
+-- vein state, and the shared depot ledger. Workers must register here and act
+-- only through AdvanceSimulationTick; do not add an independent worker timer.
+@Component
+script VeinTickSimulator extends Component
+
+property number TickInterval = 0.4
+property integer CurrentTick = 0
+property integer MaxReserveStage = 3
+property integer StoneRecoverTicks = 5
+property integer DepotCellX = 0
+property integer DepotCellY = 0
+property table VeinState = {}
+property table Depot = {}
+
+@ExecSpace("ServerOnly")
+method void OnBeginPlay()
+    self._T.tickAccumulator = 0
+    self._T.workers = {}
+    self.CurrentTick = 0
+    self.VeinState = {}
+    self.Depot = { stone = 0 }
+
+    -- TEMPORARY LAYOUT SOURCE OF TRUTH
+    -- Do not duplicate these coordinates in another script or in visual markers.
+    -- When map-authored markers arrive, migrate this list and its visuals together.
+    self:AddVein(1, 0, "stone", self.MaxReserveStage, self.StoneRecoverTicks)
+    self:AddVein(2, 0, "stone", self.MaxReserveStage, self.StoneRecoverTicks)
+    self:AddVein(2, -1, "stone", self.MaxReserveStage, self.StoneRecoverTicks)
+    self:AddVein(3, -1, "stone", self.MaxReserveStage, self.StoneRecoverTicks)
+
+    log("[VeinTick] OnBeginPlay - veins=4 depot=(" .. self.DepotCellX .. "," .. self.DepotCellY .. ")")
+end
+
+@ExecSpace("ServerOnly")
+method void OnUpdate(number delta)
+    self._T.tickAccumulator = self._T.tickAccumulator + delta
+    while self._T.tickAccumulator >= self.TickInterval do
+        self._T.tickAccumulator = self._T.tickAccumulator - self.TickInterval
+        self.CurrentTick = self.CurrentTick + 1
+        -- Fixed order for every simulation tick: recover veins first, then let
+        -- registered workers execute one action. This order must stay stable.
+        self:AdvanceTick()
+        self:AdvanceWorkers()
+    end
+end
+
+@ExecSpace("ServerOnly")
+method void AdvanceTick()
+    local recoveredCount = 0
+    for key, vein in pairs(self.VeinState) do
+        vein.recoverElapsed = vein.recoverElapsed + 1
+        if vein.recoverElapsed >= vein.recoverTicks then
+            vein.recoverElapsed = 0
+            if vein.stage < self.MaxReserveStage then
+                vein.stage = vein.stage + 1
+                recoveredCount = recoveredCount + 1
+                log("[VeinTick] recovered cell " .. key .. " ore=" .. vein.ore .. " stage=" .. vein.stage)
+            end
+        end
+    end
+
+    if recoveredCount > 0 then
+        log("[VeinTick] tick " .. self.CurrentTick .. " - recovered cells=" .. recoveredCount)
+    end
+end
+
+@ExecSpace("ServerOnly")
+method void RegisterWorker(WorkerController worker)
+    if self._T.workers == nil then self._T.workers = {} end
+    for i = 1, #self._T.workers do
+        if self._T.workers[i] == worker then return end
+    end
+    table.insert(self._T.workers, worker)
+    log("[VeinTick] worker registered count=" .. #self._T.workers)
+end
+
+@ExecSpace("ServerOnly")
+method void UnregisterWorker(WorkerController worker)
+    if self._T.workers == nil then return end
+    for i = #self._T.workers, 1, -1 do
+        if self._T.workers[i] == worker then
+            table.remove(self._T.workers, i)
+            log("[VeinTick] worker unregistered count=" .. #self._T.workers)
+            return
+        end
+    end
+end
+
+@ExecSpace("ServerOnly")
+method void AdvanceWorkers()
+    if self._T.workers == nil then return end
+    for i = 1, #self._T.workers do
+        local worker = self._T.workers[i]
+        if worker ~= nil then
+            worker:AdvanceSimulationTick(self.CurrentTick)
+        end
+    end
+end
+
+@ExecSpace("ServerOnly")
+method void AddVein(integer cellX, integer cellY, string oreType, integer stage, integer recoverTicks)
+    local safeStage = stage
+    if safeStage < 0 then safeStage = 0 end
+    if safeStage > self.MaxReserveStage then safeStage = self.MaxReserveStage end
+
+    local safeRecoverTicks = recoverTicks
+    if safeRecoverTicks < 1 then safeRecoverTicks = 1 end
+
+    self.VeinState[self:CellKey(cellX, cellY)] = {
+        ore = oreType,
+        stage = safeStage,
+        recoverTicks = safeRecoverTicks,
+        recoverElapsed = 0,
+    }
+end
+
+@ExecSpace("ServerOnly")
+method string CellKey(integer cellX, integer cellY)
+    return tostring(cellX) .. "," .. tostring(cellY)
+end
+
+@ExecSpace("ServerOnly")
+method table GetVein(integer cellX, integer cellY)
+    return self.VeinState[self:CellKey(cellX, cellY)]
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsVein(integer cellX, integer cellY)
+    return self:GetVein(cellX, cellY) ~= nil
+end
+
+@ExecSpace("ServerOnly")
+method integer GetReserveStage(integer cellX, integer cellY)
+    local vein = self:GetVein(cellX, cellY)
+    if vein == nil then return 0 end
+    return vein.stage
+end
+
+@ExecSpace("ServerOnly")
+method boolean HasOre(integer cellX, integer cellY)
+    return self:GetReserveStage(cellX, cellY) >= 1
+end
+
+@ExecSpace("ServerOnly")
+method string TryMine(integer cellX, integer cellY)
+    local key = self:CellKey(cellX, cellY)
+    local vein = self.VeinState[key]
+    if vein == nil or vein.stage <= 0 then return "" end
+
+    vein.stage = vein.stage - 1
+    vein.recoverElapsed = 0
+    log("[VeinTick] mined cell " .. key .. " ore=" .. vein.ore .. " stage=" .. vein.stage)
+    return vein.ore
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsDepot(integer cellX, integer cellY)
+    return cellX == self.DepotCellX and cellY == self.DepotCellY
+end
+
+@ExecSpace("ServerOnly")
+method integer AddToDepot(string oreType, integer count)
+    if count <= 0 then return self:GetDepotCount(oreType) end
+    local current = self:GetDepotCount(oreType)
+    self.Depot[oreType] = current + count
+    log("[VeinTick] depot add ore=" .. oreType .. " count=" .. count .. " total=" .. self.Depot[oreType])
+    return self.Depot[oreType]
+end
+
+@ExecSpace("ServerOnly")
+method integer GetDepotCount(string oreType)
+    local count = self.Depot[oreType]
+    if count == nil then return 0 end
+    return count
+end
+
+end

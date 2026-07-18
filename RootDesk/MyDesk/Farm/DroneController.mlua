@@ -1,3 +1,7 @@
+-- LEGACY / DETACHED
+-- farm01 no longer references this component. Active runtime code lives in
+-- RootDesk/MyDesk/Mine/WorkerController.mlua. Do not extend this file; keep it
+-- only as a rollback reference until the old entry is removed through Maker.
 @Component
 script DroneController extends Component
 

@@ -1,25 +1,31 @@
+-- ACTIVE CLIENT EDITOR
+-- Despite the legacy Farm folder path, this is the live client controller for
+-- the mine UI. Keep program commands in the D2 `type` schema. It may assemble
+-- programs locally, but only WorkerController is allowed to execute them.
 @Logic
 @ExecSpace("ClientOnly")
 script BlockProgramController extends Logic
 
 property ButtonComponent btnMoveE = "935a4d4a-d16e-467a-a163-1605d3b41025"
 property ButtonComponent btnMoveS = "03708ef5-1619-4faf-9a3b-c7ab78eb1516"
-property ButtonComponent btnHarvest = "94ee74c9-0d61-45d3-a14f-9b467e19fde0"
-property ButtonComponent btnPlant = "3a22ed13-0cd7-4355-ae01-d930630c8fb5"
+property ButtonComponent btnMine = "94ee74c9-0d61-45d3-a14f-9b467e19fde0"
+property ButtonComponent btnLoad = "3a22ed13-0cd7-4355-ae01-d930630c8fb5"
+property ButtonComponent btnUnload = "04aa2ca0-7978-44d0-b3ad-3c9ccbc95c5c"
 property ButtonComponent btnRun = "0d263c27-db63-467d-b64d-c2d2ca70967f"
 property ButtonComponent btnClear = "a7e17fb9-aae2-4773-8d0e-3946c9c42704"
 property TextComponent programText = "c61c8e7b-fb2f-45a2-94b7-e3af8d608e13"
-property Entity droneEntity = "7bc03a21-7192-4a61-a932-e7cc21c4d3ef"
+property WorkerController workerController = "7bc03a21-7192-4a61-a932-e7cc21c4d3ef"
 
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- Wires every palette/control button to its handler and resets the assembled program display.
     self._T.program = {}
     self._T.handlers = {}
-    self._T.handlers.moveE = self.btnMoveE.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ action = "move", dir = "E" }, "E") end)
-    self._T.handlers.moveS = self.btnMoveS.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ action = "move", dir = "S" }, "S") end)
-    self._T.handlers.harvest = self.btnHarvest.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ action = "harvest" }, "H") end)
-    self._T.handlers.plant = self.btnPlant.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ action = "plant", crop = "carrot" }, "P") end)
+    self._T.handlers.moveE = self.btnMoveE.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "E" }, "E") end)
+    self._T.handlers.moveS = self.btnMoveS.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "S" }, "S") end)
+    self._T.handlers.mine = self.btnMine.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "mine" }, "M") end)
+    self._T.handlers.load = self.btnLoad.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "load" }, "L") end)
+    self._T.handlers.unload = self.btnUnload.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "unload" }, "U") end)
     self._T.handlers.run = self.btnRun.Entity:ConnectEvent(ButtonClickEvent, self.OnRunClicked)
     self._T.handlers.clear = self.btnClear.Entity:ConnectEvent(ButtonClickEvent, self.OnClearClicked)
     self:RefreshDisplay()
@@ -46,13 +52,13 @@ method void RefreshDisplay()
 end
 
 method void OnRunClicked()
-    -- Sends the assembled program to the drone's Server RPC so it replaces the live command queue.
+    -- Sends the assembled program to the worker's Server RPC so it replaces the live command queue.
     if #self._T.program == 0 then
         log("[BlockProgram] Run pressed but program is empty - ignored")
         return
     end
-    log("[BlockProgram] Run pressed - sending " .. #self._T.program .. " commands to drone")
-    self.droneEntity.DroneController:RunProgram(self._T.program)
+    log("[BlockProgram] Run pressed - sending " .. #self._T.program .. " commands to worker")
+    self.workerController:RunProgram(self._T.program)
 end
 
 method void OnClearClicked()
@@ -71,16 +77,21 @@ method void ParseChatCommand(string text)
     local pendingDir = ""
     local pendingCount = 0
     for token in string.gmatch(text, "%S+") do
-        if string.find(token, "수확", 1, true) then
+        if string.find(token, "채굴", 1, true) or string.find(token, "캐", 1, true) then
             self:FlushMove(pendingDir, pendingCount)
             pendingDir = ""
             pendingCount = 0
-            self:AddCommand({ action = "harvest" }, "H")
-        elseif string.find(token, "심", 1, true) then
+            self:AddCommand({ type = "mine" }, "M")
+        elseif string.find(token, "실어", 1, true) or string.find(token, "싣", 1, true) or string.find(token, "담아", 1, true) then
             self:FlushMove(pendingDir, pendingCount)
             pendingDir = ""
             pendingCount = 0
-            self:AddCommand({ action = "plant", crop = "carrot" }, "P")
+            self:AddCommand({ type = "load" }, "L")
+        elseif string.find(token, "내려", 1, true) or string.find(token, "비워", 1, true) then
+            self:FlushMove(pendingDir, pendingCount)
+            pendingDir = ""
+            pendingCount = 0
+            self:AddCommand({ type = "unload" }, "U")
         else
             local dir = self:DetectDir(token)
             local cnt = self:DetectCount(token)
@@ -102,7 +113,9 @@ method void ParseChatCommand(string text)
     end
     self:FlushMove(pendingDir, pendingCount)
     log("[ChatParse] parsed '" .. text .. "' -> " .. #self._T.program .. " commands: " .. table.concat(self._T.labels, ", "))
-    self:OnRunClicked()
+    -- D2 UX contract: conversion only assembles blocks. The player reviews the
+    -- result and presses Run explicitly; never auto-execute from this parser.
+    log("[ChatParse] program ready - waiting for explicit Run")
 end
 
 method void FlushMove(string dir, integer count)
@@ -111,7 +124,7 @@ method void FlushMove(string dir, integer count)
     local n = count
     if n <= 0 then n = 1 end
     for i = 1, n do
-        self:AddCommand({ action = "move", dir = dir }, dir)
+        self:AddCommand({ type = "move", dir = dir }, dir)
     end
 end
 
@@ -141,8 +154,9 @@ method void OnEndPlay()
     -- Releases every button click connection registered in OnBeginPlay.
     self.btnMoveE.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveE)
     self.btnMoveS.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveS)
-    self.btnHarvest.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.harvest)
-    self.btnPlant.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.plant)
+    self.btnMine.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.mine)
+    self.btnLoad.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.load)
+    self.btnUnload.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.unload)
     self.btnRun.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.run)
     self.btnClear.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.clear)
 end
