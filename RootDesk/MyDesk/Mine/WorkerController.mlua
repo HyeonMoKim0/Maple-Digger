@@ -10,15 +10,40 @@ property table CommandQueue = {}
 property integer MaxProgramBlocks = 30
 property integer MaxProgramDepth = 3
 property integer MaxEvaluationsPerTick = 20
+property table Cart = {}
+property integer StartCellX = 0
+property integer StartCellY = 0
+
+@Sync
+property integer WorkerIndex = 1
+
+@Sync
+property integer CellX = 0
+
+@Sync
+property integer CellY = 0
 
 @Sync
 property string ProgramState = "Idle"
 
+@Sync
+property string PendingOre = ""
+
+@Sync
+property integer CartCount = 0
+
+@Sync
+property integer CartCapacity = 20
+
 @ExecSpace("ServerOnly")
 method void OnBeginPlay()
     -- Initializes the worker cell, interpreter state, and mine simulation registration.
-    self._T.cellX = 0
-    self._T.cellY = 0
+    -- D4 instance boundary: every worker owns its starting/current cell.
+    -- Map model overrides set these values; overlap is intentionally allowed.
+    self._T.cellX = self.StartCellX
+    self._T.cellY = self.StartCellY
+    self.CellX = self._T.cellX
+    self.CellY = self._T.cellY
     self._T.running = false
     self._T.frames = {}
     self._T.actionStep = 0
@@ -27,19 +52,24 @@ method void OnBeginPlay()
     self._T.mineState = self.Entity.CurrentMap.VeinTickSimulator
     self.CommandQueue = {}
     self.ProgramState = "Idle"
+    self.PendingOre = ""
+    self.CartCount = 0
+    self.Cart = { stone = 0 }
 
     if self._T.tilemap == nil then
-        log_error("[Worker] RectTileMapComponent not found")
+        log_error(self:WorkerTag() .. " RectTileMapComponent not found")
         return
     end
     if self._T.mineState == nil then
-        log_error("[Worker] VeinTickSimulator not found on current map")
+        log_error(self:WorkerTag() .. " VeinTickSimulator not found on current map")
         return
     end
 
+    self.CartCapacity = self._T.mineState.CartCapacity
+
     self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
     self._T.mineState:RegisterWorker(self)
-    log("[Worker] spawned at cell (" .. self._T.cellX .. "," .. self._T.cellY .. ") state=Idle")
+    log(self:WorkerTag() .. " spawned at cell (" .. self._T.cellX .. "," .. self._T.cellY .. ") state=Idle")
 end
 
 @ExecSpace("ServerOnly")
@@ -57,12 +87,12 @@ method void RunProgram(table commands)
     -- worker Idle so an untrusted client cannot preserve hidden execution.
     self:ResetExecution()
     if commands == nil or type(commands) ~= "table" or #commands == 0 then
-        log("[Worker] empty program received - state=Idle")
+        log(self:WorkerTag() .. " empty program received - state=Idle")
         return
     end
 
     if not self:ValidateProgram(commands) then
-        log("[Worker] program rejected: " .. tostring(self._T.validationError))
+        log(self:WorkerTag() .. " program rejected: " .. tostring(self._T.validationError))
         return
     end
 
@@ -73,14 +103,14 @@ method void RunProgram(table commands)
     self._T.actionStep = 0
     self._T.running = true
     self.ProgramState = "Running"
-    log("[Worker] RunProgram accepted blocks=" .. tostring(self._T.validationBlockCount) .. " - state=Running")
+    log(self:WorkerTag() .. " RunProgram accepted blocks=" .. tostring(self._T.validationBlockCount) .. " - state=Running")
 end
 
 @ExecSpace("Server")
 method void StopProgram()
     -- Stops the current interpreter and returns the synchronized state to Idle.
     self:ResetExecution()
-    log("[Worker] stopped by user")
+    log(self:WorkerTag() .. " stopped by user")
 end
 
 @ExecSpace("ServerOnly")
@@ -141,7 +171,7 @@ method void AdvanceSimulationTick(integer tick)
     end
 
     if self._T.running then
-        log("[Worker] eval limit hit simTick=" .. tostring(self._T.lastSimulationTick))
+        log(self:WorkerTag() .. " eval limit hit simTick=" .. tostring(self._T.lastSimulationTick))
     end
 end
 
@@ -149,6 +179,12 @@ end
 method string GetProgramState()
     -- Returns the synchronized Idle or Running state.
     return self.ProgramState
+end
+
+@ExecSpace("ServerOnly")
+method string WorkerTag()
+    -- Stable per-instance prefix keeps two-worker runtime logs distinguishable.
+    return "[Worker " .. tostring(self.WorkerIndex) .. "]"
 end
 
 @ExecSpace("ServerOnly")
@@ -165,7 +201,7 @@ end
 method void FinishProgram()
     -- Finalizes a naturally completed program and records positive log evidence.
     self:ResetExecution()
-    log("[Worker] program finished")
+    log(self:WorkerTag() .. " program finished")
 end
 
 @ExecSpace("ServerOnly")
@@ -183,11 +219,9 @@ method void ExecuteAction(table command)
     elseif actionType == "mine" then
         self:DoMine()
     elseif actionType == "load" then
-        -- PHASE 1 HANDOFF: replace this stub when worker inventory is introduced.
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - load stub at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        self:DoLoad()
     elseif actionType == "unload" then
-        -- PHASE 1 HANDOFF: unload must validate the depot cell before AddToDepot.
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload stub at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        self:DoUnload()
     end
 end
 
@@ -199,11 +233,9 @@ method boolean EvaluateCondition(string condition)
     elseif condition == "ore_absent" then
         return not self._T.mineState:HasOre(self._T.cellX, self._T.cellY)
     elseif condition == "cart_full" then
-        -- D3 activates real cart state. Reserved false stub for D2.
-        return false
+        return self.CartCount >= self.CartCapacity
     elseif condition == "cart_empty" then
-        -- D3 activates real cart state. Reserved true stub for D2.
-        return true
+        return self.CartCount == 0
     end
     return false
 end
@@ -291,38 +323,99 @@ method void DoMove(string dir)
     elseif dir == "N" then dy = 1
     elseif dir == "S" then dy = -1
     else
-        log("[Worker] invalid move dir=" .. tostring(dir))
+        log(self:WorkerTag() .. " invalid move dir=" .. tostring(dir))
         return
     end
 
     local targetX = self._T.cellX + dx
     local targetY = self._T.cellY + dy
     if not self:IsCellWalkable(targetX, targetY) then
-        log("[Worker] blocked " .. dir .. " at boundary target=(" .. targetX .. "," .. targetY .. ")")
+        log(self:WorkerTag() .. " blocked " .. dir .. " at boundary target=(" .. targetX .. "," .. targetY .. ")")
         return
     end
 
     self._T.cellX = targetX
     self._T.cellY = targetY
+    self.CellX = targetX
+    self.CellY = targetY
     self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
-    log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
 end
 
 @ExecSpace("ServerOnly")
 method void DoMine()
-    -- Mines the current vein when ore remains and logs the resulting reserve stage.
+    -- Atomically checks the hand before consuming a reserve stage.
+    if self.PendingOre ~= "" then
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand full ore=" .. self.PendingOre)
+        return
+    end
     if not self._T.mineState:IsVein(self._T.cellX, self._T.cellY) then
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no vein at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no vein at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
         return
     end
     if not self._T.mineState:HasOre(self._T.cellX, self._T.cellY) then
-        log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
         return
     end
 
     local oreType = self._T.mineState:TryMine(self._T.cellX, self._T.cellY)
+    if oreType == "" then
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        return
+    end
+    self.PendingOre = oreType
     local stage = self._T.mineState:GetReserveStage(self._T.cellX, self._T.cellY)
-    log("[Worker] simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
+    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " -> hand at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
+    if self._T.mineState.AutoLoadOnMine then self:DoLoad() end
+end
+
+@ExecSpace("ServerOnly")
+method void DoLoad()
+    -- Moves the hand item into this worker's cart without losing it on failure.
+    if self.PendingOre == "" then
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand empty")
+        return
+    end
+    local loadCount = self._T.mineState.MineYield
+    if self.CartCount + loadCount > self.CartCapacity then
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - cart full count=" .. self.CartCount)
+        return
+    end
+    local oreType = self.PendingOre
+    local oreCount = self.Cart[oreType]
+    if oreCount == nil then oreCount = 0 end
+    self.Cart[oreType] = oreCount + loadCount
+    self.CartCount = self.CartCount + loadCount
+    self.PendingOre = ""
+    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - load " .. oreType .. " cart=" .. self.CartCount .. "/" .. self.CartCapacity)
+end
+
+@ExecSpace("ServerOnly")
+method void DoUnload()
+    -- Deposits every cart stack only at the configured depot cell.
+    if not self._T.mineState:IsDepot(self._T.cellX, self._T.cellY) then
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - not at depot")
+        return
+    end
+    if self.CartCount <= 0 then
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - cart empty")
+        return
+    end
+    local unloaded = self.CartCount
+    for oreType, count in pairs(self.Cart) do
+        if count > 0 then self._T.mineState:AddToDepot(oreType, count) end
+    end
+    self.Cart = { stone = 0 }
+    self.CartCount = 0
+    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload count=" .. unloaded .. " depotStone=" .. self._T.mineState.DepotStone)
+end
+
+@ExecSpace("ServerOnly")
+method void ResetInventory()
+    -- Session-local reset used by restart flows and deterministic verification.
+    self.PendingOre = ""
+    self.Cart = { stone = 0 }
+    self.CartCount = 0
 end
 
 @ExecSpace("ServerOnly")

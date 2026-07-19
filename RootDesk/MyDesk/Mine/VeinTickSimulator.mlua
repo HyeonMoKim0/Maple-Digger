@@ -9,18 +9,27 @@ property number TickInterval = 0.4
 property integer CurrentTick = 0
 property integer MaxReserveStage = 3
 property integer StoneRecoverTicks = 5
+property integer MineYield = 1
+property integer CartCapacity = 20
+property integer HandCapacity = 1
+property boolean AutoLoadOnMine = false
 property integer DepotCellX = 0
 property integer DepotCellY = 0
 property table VeinState = {}
 property table Depot = {}
 
+@Sync
+property integer DepotStone = 0
+
 @ExecSpace("ServerOnly")
 method void OnBeginPlay()
+    -- Initializes the map-scoped vein ledger, shared depot, and worker registry.
     self._T.tickAccumulator = 0
     self._T.workers = {}
     self.CurrentTick = 0
     self.VeinState = {}
     self.Depot = { stone = 0 }
+    self.DepotStone = 0
 
     -- TEMPORARY LAYOUT SOURCE OF TRUTH
     -- Do not duplicate these coordinates in another script or in visual markers.
@@ -35,6 +44,7 @@ end
 
 @ExecSpace("ServerOnly")
 method void OnUpdate(number delta)
+    -- Advances the deterministic server simulation at the configured fixed interval.
     self._T.tickAccumulator = self._T.tickAccumulator + delta
     while self._T.tickAccumulator >= self.TickInterval do
         self._T.tickAccumulator = self._T.tickAccumulator - self.TickInterval
@@ -48,6 +58,7 @@ end
 
 @ExecSpace("ServerOnly")
 method void AdvanceTick()
+    -- Applies one recovery step to every authored vein before workers act.
     local recoveredCount = 0
     for key, vein in pairs(self.VeinState) do
         vein.recoverElapsed = vein.recoverElapsed + 1
@@ -68,6 +79,7 @@ end
 
 @ExecSpace("ServerOnly")
 method void RegisterWorker(WorkerController worker)
+    -- Adds a worker once while preserving deterministic registration order.
     if self._T.workers == nil then self._T.workers = {} end
     for i = 1, #self._T.workers do
         if self._T.workers[i] == worker then return end
@@ -78,6 +90,7 @@ end
 
 @ExecSpace("ServerOnly")
 method void UnregisterWorker(WorkerController worker)
+    -- Removes a worker that is leaving the map or ending play.
     if self._T.workers == nil then return end
     for i = #self._T.workers, 1, -1 do
         if self._T.workers[i] == worker then
@@ -90,6 +103,7 @@ end
 
 @ExecSpace("ServerOnly")
 method void AdvanceWorkers()
+    -- Gives each registered worker at most one action opportunity this tick.
     if self._T.workers == nil then return end
     for i = 1, #self._T.workers do
         local worker = self._T.workers[i]
@@ -101,6 +115,7 @@ end
 
 @ExecSpace("ServerOnly")
 method void AddVein(integer cellX, integer cellY, string oreType, integer stage, integer recoverTicks)
+    -- Adds or replaces one vein entry after clamping its tuning values.
     local safeStage = stage
     if safeStage < 0 then safeStage = 0 end
     if safeStage > self.MaxReserveStage then safeStage = self.MaxReserveStage end
@@ -118,21 +133,25 @@ end
 
 @ExecSpace("ServerOnly")
 method string CellKey(integer cellX, integer cellY)
+    -- Produces the stable dictionary key used by all vein operations.
     return tostring(cellX) .. "," .. tostring(cellY)
 end
 
 @ExecSpace("ServerOnly")
 method table GetVein(integer cellX, integer cellY)
+    -- Returns the vein state at a cell or nil when the cell is not a vein.
     return self.VeinState[self:CellKey(cellX, cellY)]
 end
 
 @ExecSpace("ServerOnly")
 method boolean IsVein(integer cellX, integer cellY)
+    -- Reports whether a vein entry exists at the requested cell.
     return self:GetVein(cellX, cellY) ~= nil
 end
 
 @ExecSpace("ServerOnly")
 method integer GetReserveStage(integer cellX, integer cellY)
+    -- Returns the current reserve stage, treating non-vein cells as empty.
     local vein = self:GetVein(cellX, cellY)
     if vein == nil then return 0 end
     return vein.stage
@@ -140,11 +159,13 @@ end
 
 @ExecSpace("ServerOnly")
 method boolean HasOre(integer cellX, integer cellY)
+    -- Reports whether the requested vein currently has a mineable stage.
     return self:GetReserveStage(cellX, cellY) >= 1
 end
 
 @ExecSpace("ServerOnly")
 method string TryMine(integer cellX, integer cellY)
+    -- Atomically consumes one reserve stage and returns its ore type on success.
     local key = self:CellKey(cellX, cellY)
     local vein = self.VeinState[key]
     if vein == nil or vein.stage <= 0 then return "" end
@@ -157,20 +178,24 @@ end
 
 @ExecSpace("ServerOnly")
 method boolean IsDepot(integer cellX, integer cellY)
+    -- Reports whether a cell is the single shared session depot.
     return cellX == self.DepotCellX and cellY == self.DepotCellY
 end
 
 @ExecSpace("ServerOnly")
 method integer AddToDepot(string oreType, integer count)
+    -- Adds a positive amount to the shared depot and synchronizes stone totals.
     if count <= 0 then return self:GetDepotCount(oreType) end
     local current = self:GetDepotCount(oreType)
     self.Depot[oreType] = current + count
+    if oreType == "stone" then self.DepotStone = self.Depot[oreType] end
     log("[VeinTick] depot add ore=" .. oreType .. " count=" .. count .. " total=" .. self.Depot[oreType])
     return self.Depot[oreType]
 end
 
 @ExecSpace("ServerOnly")
 method integer GetDepotCount(string oreType)
+    -- Returns a depot stack count without exposing nil to callers.
     local count = self.Depot[oreType]
     if count == nil then return 0 end
     return count

@@ -694,12 +694,12 @@
           "revision": 1,
           "origin": {
             "type": "Model",
-            "entry_id": "drone",
+            "entry_id": "worker",
             "sub_entity_id": null,
             "root_entity_id": "7bc03a21-7192-4a61-a932-e7cc21c4d3ef",
             "replaced_model_id": null
           },
-          "modelId": "drone",
+          "modelId": "worker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
@@ -756,7 +756,97 @@
             },
             {
               "@type": "script.WorkerController",
+              "Enable": true,
+              "StartCellX": 0,
+              "StartCellY": 0,
+              "WorkerIndex": 1
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "3209e3d2-8d7e-4245-95fe-1b725bb9544f",
+        "path": "/maps/farm01/Worker02",
+        "componentNames": "MOD.Core.TransformComponent,MOD.Core.SpriteRendererComponent,MOD.Core.MovementComponent,MOD.Core.KinematicbodyComponent,script.WorkerController",
+        "jsonString": {
+          "name": "Worker02",
+          "path": "/maps/farm01/Worker02",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 4,
+          "pathConstraints": "///",
+          "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "worker",
+            "sub_entity_id": null,
+            "root_entity_id": "3209e3d2-8d7e-4245-95fe-1b725bb9544f",
+            "replaced_model_id": null
+          },
+          "modelId": "worker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 0.0,
+                "y": 1.0,
+                "z": 0.0
+              },
+              "QuaternionRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "Scale": {
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+              },
               "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "ActionSheet": {},
+              "DrawMode": 0,
+              "EndFrameIndex": 2147483647,
+              "FlipX": false,
+              "FlipY": false,
+              "OrderInLayer": 2,
+              "PlayRate": 1.0,
+              "RenderSetting": 0,
+              "SpriteRUID": "3e76c89ae8e7477ca871f5bbcd6f6f29",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.55,
+                "g": 0.8,
+                "b": 1.0,
+                "a": 1.0
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.MovementComponent",
+              "InputSpeed": 3.0,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.KinematicbodyComponent",
+              "MoveVelocity": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.WorkerController",
+              "Enable": true,
+              "StartCellX": 0,
+              "StartCellY": 1,
+              "WorkerIndex": 2
             }
           ],
           "@version": 1

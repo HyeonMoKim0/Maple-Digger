@@ -1,0 +1,129 @@
+-- ACTIVE CLIENT HUD
+-- Shows only synchronized server state. Inventory/depot mutations remain in
+-- WorkerController and VeinTickSimulator so the client cannot grant resources.
+@Logic
+script MineInventoryController extends Logic
+
+property WorkerController workerController = "7bc03a21-7192-4a61-a932-e7cc21c4d3ef"
+property VeinTickSimulator mineState = "83de308d-98c5-4c42-9888-5506ea78244f"
+
+-- UIBuilder replaces these placeholders with generated entity UUIDs.
+property TextGUIRendererComponent depotText = "9395e38a-0b37-4c6e-ba68-ebd554c90fd3"
+property TextGUIRendererComponent cartText = "ada2db0e-12dc-4412-82d0-e94425ced00c"
+property TextGUIRendererComponent handText = "936aa37c-c3da-4dcd-83a6-390a45b2ad4e"
+property TextGUIRendererComponent inventoryStoneText = "00b765d6-de3f-47e3-a1fd-e6a7dab02bcd"
+property ButtonComponent btnInventory = "7e830fdf-624e-4d91-83d9-d6e2d321c96f"
+property ButtonComponent btnClose = "6bf38474-c9e7-44b4-847d-36fb7fac3bb9"
+property Entity inventoryPanel = "3434f74e-d21b-4493-a1f7-9406a7796a4c"
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- Initializes cached HUD state, popup visibility, and UI event handlers.
+    self._T.handlers = {}
+    self._T.lastDepotStone = -1
+    self._T.lastCartCount = -1
+    self._T.lastCartCapacity = -1
+    self._T.lastPendingOre = "__unset__"
+    self._T.lastWorkerIndex = -1
+
+    if self.inventoryPanel ~= nil then self.inventoryPanel.Enable = false end
+    if self.btnInventory ~= nil then
+        self._T.handlers.inventory = self.btnInventory.Entity:ConnectEvent(ButtonClickEvent, self.OnInventoryClicked)
+    end
+    if self.btnClose ~= nil then
+        self._T.handlers.close = self.btnClose.Entity:ConnectEvent(ButtonClickEvent, self.OnCloseClicked)
+    end
+
+    self:RefreshUI(true)
+    log("[MineInventoryUI] PC HUD ready")
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- Polls synchronized values while RefreshUI suppresses unchanged redraws.
+    self:RefreshUI(false)
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshUI(boolean force)
+    -- Renders the selected worker's hand/cart and the shared depot when changed.
+    local worker = self:GetSelectedWorker()
+    if worker == nil or self.mineState == nil then return end
+
+    local depotStone = self.mineState.DepotStone
+    local workerIndex = self:GetSelectedWorkerIndex()
+    local cartCount = worker.CartCount
+    local cartCapacity = worker.CartCapacity
+    local pendingOre = worker.PendingOre
+
+    if not force and workerIndex == self._T.lastWorkerIndex and depotStone == self._T.lastDepotStone and cartCount == self._T.lastCartCount and cartCapacity == self._T.lastCartCapacity and pendingOre == self._T.lastPendingOre then
+        return
+    end
+
+    self._T.lastWorkerIndex = workerIndex
+    self._T.lastDepotStone = depotStone
+    self._T.lastCartCount = cartCount
+    self._T.lastCartCapacity = cartCapacity
+    self._T.lastPendingOre = pendingOre
+
+    if self.depotText ~= nil then self.depotText.Text = "창고 돌: " .. tostring(depotStone) end
+    if self.cartText ~= nil then self.cartText.Text = "일꾼 " .. tostring(workerIndex) .. " 수레: " .. tostring(cartCount) .. " / " .. tostring(cartCapacity) end
+    if self.handText ~= nil then
+        if pendingOre == "" then
+            self.handText.Text = "일꾼 " .. tostring(workerIndex) .. " 손: 비어 있음"
+        else
+            self.handText.Text = "일꾼 " .. tostring(workerIndex) .. " 손: " .. self:OreLabel(pendingOre)
+        end
+    end
+    if self.inventoryStoneText ~= nil then self.inventoryStoneText.Text = "돌  " .. tostring(depotStone) end
+end
+
+@ExecSpace("ClientOnly")
+method WorkerController GetSelectedWorker()
+    -- The program editor owns target selection; the HUD mirrors that target.
+    local selected = _BlockProgramController:GetSelectedWorker()
+    if selected ~= nil then return selected end
+    return self.workerController
+end
+
+@ExecSpace("ClientOnly")
+method integer GetSelectedWorkerIndex()
+    -- Mirrors the editor selection and normalizes it to one of two worker slots.
+    local selectedIndex = _BlockProgramController:GetSelectedWorkerIndex()
+    if selectedIndex == 2 then return 2 end
+    return 1
+end
+
+@ExecSpace("ClientOnly")
+method string OreLabel(string oreType)
+    -- Converts the serialized ore key into its localized display label.
+    if oreType == "stone" then return "돌" end
+    return oreType
+end
+
+@ExecSpace("ClientOnly")
+method void OnInventoryClicked()
+    -- Toggles the inventory popup and forces a fresh value render when opened.
+    if self.inventoryPanel == nil then return end
+    self.inventoryPanel.Enable = not self.inventoryPanel.Enable
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnCloseClicked()
+    -- Closes the inventory popup without mutating any server-owned state.
+    if self.inventoryPanel ~= nil then self.inventoryPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- Disconnects every UI event handler created during begin play.
+    if self.btnInventory ~= nil and self._T.handlers.inventory ~= nil then
+        self.btnInventory.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.inventory)
+    end
+    if self.btnClose ~= nil and self._T.handlers.close ~= nil then
+        self.btnClose.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.close)
+    end
+end
+
+end

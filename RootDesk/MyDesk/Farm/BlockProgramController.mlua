@@ -3,8 +3,10 @@
 -- the mine UI. It assembles the nested D2 `type/body` schema and never executes
 -- commands locally; only WorkerController validates and runs the program.
 @Logic
-@ExecSpace("ClientOnly")
 script BlockProgramController extends Logic
+
+property integer MaxProgramBlocks = 30
+property integer MaxProgramDepth = 3
 
 property ButtonComponent btnMoveE = "a9da4124-530a-4170-b259-5909775f3481"
 property ButtonComponent btnMoveW = "6b47f230-0bb2-4528-93f9-0056f7fcf891"
@@ -14,19 +16,29 @@ property ButtonComponent btnMine = "d1aedf26-6301-4413-9af8-fdf373c9b93b"
 property ButtonComponent btnLoad = "cf049051-293c-4825-bb1a-0d2bab4801e6"
 property ButtonComponent btnUnload = "7b720fd0-ddef-4a90-a2f8-95a7e8fc5dcb"
 property ButtonComponent btnRepeat = "b18e993e-4ec7-4ef7-8eb4-34bfdd99527d"
+property ButtonComponent btnRepeatCount = "792785ab-3d61-4a96-8ba1-ab1892c4785e"
 property ButtonComponent btnIfOre = "ecf11b75-f624-4cb2-99db-5e6d5b3cc017"
+property ButtonComponent btnCondition = "b8ebfcf3-7135-4eca-9e05-6884c867e13a"
 property ButtonComponent btnEnd = "edafbf77-8061-4dcf-a4f2-94d6807482f1"
 property ButtonComponent btnRun = "c8de2465-2f5f-42c7-8fe0-e5511682bdec"
 property ButtonComponent btnStop = "3dab034e-6ad5-4bf7-a996-48e18ba6dbf6"
 property ButtonComponent btnClear = "c93c1752-f4df-4533-a7c4-fd54076c5183"
 -- UIBuilder text renderers on the program, feedback, and button entities.
 property TextGUIRendererComponent repeatButtonText = "b18e993e-4ec7-4ef7-8eb4-34bfdd99527d"
+property TextGUIRendererComponent repeatCountButtonText = "792785ab-3d61-4a96-8ba1-ab1892c4785e"
+property TextGUIRendererComponent conditionButtonText = "b8ebfcf3-7135-4eca-9e05-6884c867e13a"
 property TextGUIRendererComponent runButtonText = "c8de2465-2f5f-42c7-8fe0-e5511682bdec"
 property TextGUIRendererComponent programText = "dcd7e02a-48e4-4350-bacd-b571ee0710f3"
 property TextGUIRendererInputComponent chatInput = "82c35bd9-3fb9-41ea-a73e-e5f5d49ddfba"
 property ButtonComponent btnConvert = "bf0948e9-fc7b-41ef-80f8-fdc6925bd2b2"
 property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
+property ButtonComponent btnWorker1 = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
+property ButtonComponent btnWorker2 = "5c92d01b-6cce-4010-a6e9-d4252d1815ef"
+property TextGUIRendererComponent worker1ButtonText = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
+property TextGUIRendererComponent worker2ButtonText = "5c92d01b-6cce-4010-a6e9-d4252d1815ef"
 property WorkerController workerController = "7bc03a21-7192-4a61-a932-e7cc21c4d3ef"
+property WorkerController workerController2 = "3209e3d2-8d7e-4245-95fe-1b725bb9544f"
+property integer SelectedWorkerIndex = 1
 
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
@@ -42,22 +54,40 @@ method void OnBeginPlay()
     self._T.handlers.load = self.btnLoad.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "load" }, "L") end)
     self._T.handlers.unload = self.btnUnload.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "unload" }, "U") end)
     self._T.handlers.repeatBlock = self.btnRepeat.Entity:ConnectEvent(ButtonClickEvent, self.OnRepeatClicked)
+    self._T.handlers.repeatCount = self.btnRepeatCount.Entity:ConnectEvent(ButtonClickEvent, self.OnRepeatCountClicked)
     self._T.handlers.ifOre = self.btnIfOre.Entity:ConnectEvent(ButtonClickEvent, self.OnIfOreClicked)
+    self._T.handlers.condition = self.btnCondition.Entity:ConnectEvent(ButtonClickEvent, self.OnConditionClicked)
     self._T.handlers.endBlock = self.btnEnd.Entity:ConnectEvent(ButtonClickEvent, self.OnEndBlockClicked)
     self._T.handlers.run = self.btnRun.Entity:ConnectEvent(ButtonClickEvent, self.OnRunClicked)
     self._T.handlers.stop = self.btnStop.Entity:ConnectEvent(ButtonClickEvent, self.OnStopClicked)
     self._T.handlers.clear = self.btnClear.Entity:ConnectEvent(ButtonClickEvent, self.OnClearClicked)
     self._T.handlers.convert = self.btnConvert.Entity:ConnectEvent(ButtonClickEvent, self.OnConvertClicked)
     self._T.handlers.submit = self.chatInput.Entity:ConnectEvent(TextInputSubmitEvent, function() self:OnConvertClicked() end)
+    if self.btnWorker1 ~= nil then
+        self._T.handlers.worker1 = self.btnWorker1.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker1Clicked)
+    end
+    if self.btnWorker2 ~= nil then
+        self._T.handlers.worker2 = self.btnWorker2.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker2Clicked)
+    end
     self.chatInput.Text = ""
+    self.SelectedWorkerIndex = 1
+    self:RefreshWorkerButtons()
     self:RefreshDisplay()
     self:SetFeedback("문장을 입력하고 변환을 눌러 주세요.")
-    log("[BlockProgram] D2 UI ready - nested editor and text input wired")
+    log("[BlockProgram] D4 UI ready - two worker targets wired")
 end
 
 @ExecSpace("ClientOnly")
 method void AddCommand(table command, string label)
     -- Appends one command to the currently open program body.
+    if self:CountBlocks(self._T.program) >= self.MaxProgramBlocks then
+        self:SetFeedback("프로그램은 최대 30블록까지 만들 수 있습니다.")
+        return
+    end
+    if (command.type == "repeat" or command.type == "if") and #self._T.openBodies - 1 >= self.MaxProgramDepth then
+        self:SetFeedback("제어 블록은 최대 3단계까지 중첩할 수 있습니다.")
+        return
+    end
     local body = self._T.openBodies[#self._T.openBodies]
     table.insert(body, command)
     self:RefreshDisplay()
@@ -89,15 +119,81 @@ method void OnRunClicked()
     else
         self:SetFeedback("프로그램을 일꾼에게 전송했습니다.")
     end
-    log("[BlockProgram] Run pressed - sending nested program to worker")
-    self.workerController:RunProgram(self._T.program)
+    if not self:ValidateClientProgram(self._T.program) then
+        self:SetFeedback("실행할 수 없는 프로그램입니다: " .. tostring(self._T.clientValidationError))
+        log("[BlockProgram] client validation rejected: " .. tostring(self._T.clientValidationError))
+        return
+    end
+    local worker = self:GetSelectedWorker()
+    if worker == nil then
+        self:SetFeedback("선택한 일꾼을 찾을 수 없습니다.")
+        return
+    end
+    log("[BlockProgram] Run pressed - sending nested program to worker " .. tostring(self.SelectedWorkerIndex))
+    worker:RunProgram(self._T.program)
 end
 
 @ExecSpace("ClientOnly")
 method void OnStopClicked()
     -- Requests an immediate server-side interpreter stop.
-    self.workerController:StopProgram()
-    self:SetFeedback("정지 요청을 보냈습니다.")
+    local worker = self:GetSelectedWorker()
+    if worker == nil then
+        self:SetFeedback("선택한 일꾼을 찾을 수 없습니다.")
+        return
+    end
+    worker:StopProgram()
+    self:SetFeedback("일꾼 " .. tostring(self.SelectedWorkerIndex) .. "에게 정지 요청을 보냈습니다.")
+end
+
+@ExecSpace("ClientOnly")
+method WorkerController GetSelectedWorker()
+    -- D4 single source of truth shared by the editor and inventory HUD.
+    if self.SelectedWorkerIndex == 2 and self.workerController2 ~= nil then
+        return self.workerController2
+    end
+    return self.workerController
+end
+
+@ExecSpace("ClientOnly")
+method integer GetSelectedWorkerIndex()
+    -- Returns the editor's selected worker slot for HUD synchronization.
+    return self.SelectedWorkerIndex
+end
+
+@ExecSpace("ClientOnly")
+method void OnWorker1Clicked()
+    -- Selects the first worker as the Run and Stop target.
+    self:SelectWorker(1)
+end
+
+@ExecSpace("ClientOnly")
+method void OnWorker2Clicked()
+    -- Selects the second worker as the Run and Stop target.
+    self:SelectWorker(2)
+end
+
+@ExecSpace("ClientOnly")
+method void SelectWorker(integer workerIndex)
+    -- Applies a valid worker selection and refreshes every dependent label.
+    if workerIndex ~= 1 and workerIndex ~= 2 then return end
+    self.SelectedWorkerIndex = workerIndex
+    self._T.lastWorkerState = ""
+    self:RefreshWorkerButtons()
+    self:SetFeedback("일꾼 " .. tostring(workerIndex) .. "을(를) 선택했습니다.")
+    log("[BlockProgram] selected worker=" .. tostring(workerIndex))
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshWorkerButtons()
+    -- Marks only the currently selected worker button with a check symbol.
+    if self.worker1ButtonText ~= nil then
+        if self.SelectedWorkerIndex == 1 then self.worker1ButtonText.Text = "일꾼 1 ✓"
+        else self.worker1ButtonText.Text = "일꾼 1" end
+    end
+    if self.worker2ButtonText ~= nil then
+        if self.SelectedWorkerIndex == 2 then self.worker2ButtonText.Text = "일꾼 2 ✓"
+        else self.worker2ButtonText.Text = "일꾼 2" end
+    end
 end
 
 @ExecSpace("ClientOnly")
@@ -111,35 +207,63 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnRepeatClicked()
-    -- Opens a repeat block or cycles the active repeat count through the approved presets.
-    local topControl = self._T.openControls[#self._T.openControls]
-    if topControl ~= nil and topControl.type == "repeat" then
-        topControl.count = self:NextRepeatCount(topControl.count)
-        self:RefreshRepeatButton(topControl.count)
-        self:RefreshDisplay()
-        self:SetFeedback("열린 반복 블록의 횟수를 변경했습니다.")
-        log("[BlockProgram] repeat count=" .. tostring(topControl.count))
-        return
-    end
-
-    local command = { type = "repeat", count = 2, body = {} }
-    self:AddCommand(command, "R×2")
+    -- Always opens a new repeat so repeat-in-repeat remains authorable.
+    local count = self._T.repeatPreset
+    if #self._T.openBodies > 1 and count == "inf" then count = 2 end
+    local command = { type = "repeat", count = count, body = {} }
+    local beforeCount = self:CountBlocks(self._T.program)
+    self:AddCommand(command, "R×" .. tostring(count))
+    if self:CountBlocks(self._T.program) == beforeCount then return end
     table.insert(self._T.openControls, command)
     table.insert(self._T.openBodies, command.body)
-    self:RefreshRepeatButton(command.count)
     self:RefreshDisplay()
-    self:SetFeedback("반복 블록을 열었습니다. 다시 누르면 횟수가 바뀝니다.")
+    self:SetFeedback("반복 블록을 열었습니다. 횟수 버튼으로 값을 바꿀 수 있습니다.")
+end
+
+@ExecSpace("ClientOnly")
+method void OnRepeatCountClicked()
+    -- Cycles the nearest open repeat without consuming the repeat-add action.
+    local topControl = self._T.openControls[#self._T.openControls]
+    local current = self._T.repeatPreset
+    if topControl ~= nil and topControl.type == "repeat" then current = topControl.count end
+    local nextCount = self:NextRepeatCount(current)
+    if topControl ~= nil and topControl.type == "repeat" and #self._T.openBodies > 2 and nextCount == "inf" then
+        nextCount = 2
+    end
+    self._T.repeatPreset = nextCount
+    if topControl ~= nil and topControl.type == "repeat" then
+        topControl.count = nextCount
+        self:RefreshDisplay()
+    end
+    self:RefreshRepeatButton(nextCount)
+    self:SetFeedback("반복 횟수를 변경했습니다.")
+    log("[BlockProgram] repeat count=" .. tostring(nextCount))
 end
 
 @ExecSpace("ClientOnly")
 method void OnIfOreClicked()
-    -- Opens an ore-present IF body at the current nesting point.
-    local command = { type = "if", cond = "ore_present", body = {} }
-    self:AddCommand(command, "IF광물")
+    -- Opens an IF body using the currently selected D3 condition.
+    local command = { type = "if", cond = self._T.conditionPreset, body = {} }
+    local beforeCount = self:CountBlocks(self._T.program)
+    self:AddCommand(command, "IF " .. self:ConditionLabel(command.cond))
+    if self:CountBlocks(self._T.program) == beforeCount then return end
     table.insert(self._T.openControls, command)
     table.insert(self._T.openBodies, command.body)
     self:RefreshDisplay()
-    self:SetFeedback("IF 광물 블록을 열었습니다.")
+    self:SetFeedback("IF " .. self:ConditionLabel(command.cond) .. " 블록을 열었습니다.")
+end
+
+@ExecSpace("ClientOnly")
+method void OnConditionClicked()
+    -- Cycles the condition used by the next IF block.
+    local current = self._T.conditionPreset
+    if current == "ore_present" then current = "ore_absent"
+    elseif current == "ore_absent" then current = "cart_full"
+    elseif current == "cart_full" then current = "cart_empty"
+    else current = "ore_present" end
+    self._T.conditionPreset = current
+    self:RefreshConditionButton()
+    self:SetFeedback("IF 조건을 " .. self:ConditionLabel(current) .. "으로 변경했습니다.")
 end
 
 @ExecSpace("ClientOnly")
@@ -163,6 +287,7 @@ method void CloseAllOpenBlocks()
         table.remove(self._T.openBodies)
         table.remove(self._T.openControls)
     end
+    self._T.repeatPreset = 2
     self:RefreshRepeatButton(2)
     self:RefreshDisplay()
 end
@@ -173,7 +298,10 @@ method void ResetEditor()
     self._T.program = {}
     self._T.openBodies = { self._T.program }
     self._T.openControls = {}
+    self._T.repeatPreset = 2
+    self._T.conditionPreset = "ore_present"
     self:RefreshRepeatButton(2)
+    self:RefreshConditionButton()
 end
 
 @ExecSpace("ClientOnly")
@@ -189,10 +317,10 @@ end
 @ExecSpace("ClientOnly")
 method void RefreshRepeatButton(any count)
     -- Updates the repeat palette label to show the active preset.
-    if self.repeatButtonText == nil then return end
+    if self.repeatCountButtonText == nil then return end
     local label = tostring(count)
     if count == "inf" then label = "∞" end
-    self.repeatButtonText.Text = "반복 R×" .. label
+    self.repeatCountButtonText.Text = "횟수 ×" .. label
 end
 
 @ExecSpace("ClientOnly")
@@ -200,10 +328,95 @@ method void RefreshRepeatControlFromOpenStack()
     -- Restores the repeat label from the nearest open repeat block.
     local topControl = self._T.openControls[#self._T.openControls]
     if topControl ~= nil and topControl.type == "repeat" then
+        self._T.repeatPreset = topControl.count
         self:RefreshRepeatButton(topControl.count)
     else
+        self._T.repeatPreset = 2
         self:RefreshRepeatButton(2)
     end
+end
+
+@ExecSpace("ClientOnly")
+method string ConditionLabel(string condition)
+    -- Converts a serialized condition key into its Korean UI label.
+    if condition == "ore_absent" then return "광물 없음" end
+    if condition == "cart_full" then return "수레 가득" end
+    if condition == "cart_empty" then return "수레 비어 있음" end
+    return "광물 있음"
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshConditionButton()
+    -- Mirrors the active condition preset into the condition button label.
+    if self.conditionButtonText == nil then return end
+    self.conditionButtonText.Text = "조건: " .. self:ConditionLabel(self._T.conditionPreset)
+end
+
+@ExecSpace("ClientOnly")
+method boolean ValidateClientProgram(table program)
+    -- Mirrors the server limits so invalid programs fail before an RPC.
+    self._T.clientValidationError = ""
+    self._T.clientValidationBlockCount = 0
+    self._T.clientValidationInfiniteCount = 0
+    return self:ValidateClientList(program, 0)
+end
+
+@ExecSpace("ClientOnly")
+method boolean ValidateClientList(table list, integer depth)
+    -- Recursively mirrors the authoritative server program validation rules.
+    if type(list) ~= "table" then
+        self._T.clientValidationError = "body must be a table"
+        return false
+    end
+    if depth > self.MaxProgramDepth then
+        self._T.clientValidationError = "depth limit exceeded"
+        return false
+    end
+    for i = 1, #list do
+        local command = list[i]
+        if type(command) ~= "table" then
+            self._T.clientValidationError = "invalid block"
+            return false
+        end
+        self._T.clientValidationBlockCount = self._T.clientValidationBlockCount + 1
+        if self._T.clientValidationBlockCount > self.MaxProgramBlocks then
+            self._T.clientValidationError = "block limit exceeded"
+            return false
+        end
+        if command.type == "move" then
+            if command.dir ~= "E" and command.dir ~= "W" and command.dir ~= "N" and command.dir ~= "S" then
+                self._T.clientValidationError = "invalid direction"
+                return false
+            end
+        elseif command.type == "mine" or command.type == "load" or command.type == "unload" then
+        elseif command.type == "repeat" then
+            if command.count == "inf" then
+                if depth ~= 0 then
+                    self._T.clientValidationError = "infinite repeat must be top-level"
+                    return false
+                end
+                self._T.clientValidationInfiniteCount = self._T.clientValidationInfiniteCount + 1
+                if self._T.clientValidationInfiniteCount > 1 then
+                    self._T.clientValidationError = "only one infinite repeat is allowed"
+                    return false
+                end
+            elseif type(command.count) ~= "number" or command.count < 2 or command.count > 99 or math.floor(command.count) ~= command.count then
+                self._T.clientValidationError = "invalid repeat count"
+                return false
+            end
+            if not self:ValidateClientList(command.body, depth + 1) then return false end
+        elseif command.type == "if" then
+            if command.cond ~= "ore_present" and command.cond ~= "ore_absent" and command.cond ~= "cart_full" and command.cond ~= "cart_empty" then
+                self._T.clientValidationError = "invalid condition"
+                return false
+            end
+            if not self:ValidateClientList(command.body, depth + 1) then return false end
+        else
+            self._T.clientValidationError = "unknown block type"
+            return false
+        end
+    end
+    return true
 end
 
 @ExecSpace("ClientOnly")
@@ -234,8 +447,7 @@ method string RenderList(table list, integer depth)
             rendered = rendered .. self:RenderList(command.body, depth + 1)
             rendered = rendered .. indent .. "]\n"
         elseif command.type == "if" then
-            local conditionLabel = "광물 있음"
-            if command.cond == "ore_absent" then conditionLabel = "광물 없음" end
+            local conditionLabel = self:ConditionLabel(command.cond)
             rendered = rendered .. indent .. "IF " .. conditionLabel .. " [\n"
             rendered = rendered .. self:RenderList(command.body, depth + 1)
             rendered = rendered .. indent .. "]\n"
@@ -256,6 +468,13 @@ method void ParseChatCommand(string text)
 
     self._T.parsedActions = {}
     self._T.unrecognized = {}
+    self._T.parseTruncated = false
+    local condition = self:DetectCondition(text)
+    local repeatCount = self:DetectRepeatCount(text)
+    local reservedControls = 0
+    if condition ~= "" then reservedControls = reservedControls + 1 end
+    if repeatCount ~= nil then reservedControls = reservedControls + 1 end
+    self._T.parseBudget = self.MaxProgramBlocks - reservedControls
     local pendingDir = ""
     local pendingCount = 0
     for token in string.gmatch(text, "%S+") do
@@ -264,19 +483,19 @@ method void ParseChatCommand(string text)
             self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
             pendingDir = ""
             pendingCount = 0
-            table.insert(self._T.parsedActions, { type = "mine" })
+            self:TryAppendParsedAction({ type = "mine" })
             recognized = true
         elseif string.find(token, "실어", 1, true) or string.find(token, "싣", 1, true) or string.find(token, "담아", 1, true) then
             self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
             pendingDir = ""
             pendingCount = 0
-            table.insert(self._T.parsedActions, { type = "load" })
+            self:TryAppendParsedAction({ type = "load" })
             recognized = true
         elseif string.find(token, "내려", 1, true) or string.find(token, "비워", 1, true) then
             self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
             pendingDir = ""
             pendingCount = 0
-            table.insert(self._T.parsedActions, { type = "unload" })
+            self:TryAppendParsedAction({ type = "unload" })
             recognized = true
         else
             local dir = self:DetectDir(token)
@@ -310,12 +529,10 @@ method void ParseChatCommand(string text)
     end
 
     local program = self._T.parsedActions
-    local condition = self:DetectCondition(text)
     if condition ~= "" then
         program = { { type = "if", cond = condition, body = program } }
     end
 
-    local repeatCount = self:DetectRepeatCount(text)
     if repeatCount ~= nil then
         program = { { type = "repeat", count = repeatCount, body = program } }
     end
@@ -327,7 +544,9 @@ method void ParseChatCommand(string text)
     self:RefreshDisplay()
 
     local blockCount = self:CountBlocks(self._T.program)
-    if #self._T.unrecognized > 0 then
+    if self._T.parseTruncated then
+        self:SetFeedback("최대 30블록까지만 변환했습니다. 실행 전 내용을 확인하세요.")
+    elseif #self._T.unrecognized > 0 then
         self:SetFeedback("'" .. table.concat(self._T.unrecognized, " ") .. "'는 이해하지 못했어요. 나머지 " .. tostring(blockCount) .. "개 블록을 변환했습니다.")
     else
         self:SetFeedback(tostring(blockCount) .. "개 블록으로 변환했어요. 실행 전 내용을 확인하세요.")
@@ -347,14 +566,34 @@ method void FlushMoveToList(table target, string dir, integer count)
     if dir == "" then return end
     local n = count
     if n <= 0 then n = 1 end
-    for i = 1, n do
+    local remaining = self._T.parseBudget - #target
+    if remaining <= 0 then
+        self._T.parseTruncated = true
+        return
+    end
+    local safeCount = math.min(n, remaining)
+    for i = 1, safeCount do
         table.insert(target, { type = "move", dir = dir })
     end
+    if safeCount < n then self._T.parseTruncated = true end
+end
+
+@ExecSpace("ClientOnly")
+method boolean TryAppendParsedAction(table command)
+    -- Appends one parsed action without exceeding the shared 30-block budget.
+    if #self._T.parsedActions >= self._T.parseBudget then
+        self._T.parseTruncated = true
+        return false
+    end
+    table.insert(self._T.parsedActions, command)
+    return true
 end
 
 @ExecSpace("ClientOnly")
 method string DetectCondition(string text)
-    -- Detects the supported ore-present or ore-absent condition phrase.
+    -- Detects D2 ore phrases and D3 cart-state phrases.
+    if string.find(text, "가득 차면", 1, true) or string.find(text, "가득차면", 1, true) then return "cart_full" end
+    if string.find(text, "수레가 비면", 1, true) or string.find(text, "수레 비면", 1, true) or string.find(text, "비어 있으면", 1, true) then return "cart_empty" end
     if string.find(text, "없으면", 1, true) then return "ore_absent" end
     if string.find(text, "있으면", 1, true) then return "ore_present" end
     return ""
@@ -387,6 +626,8 @@ method boolean IsControlOrFillerToken(string token)
     -- Recognizes grammar words that should not be reported as unknown input.
     if string.find(token, "광물", 1, true) then return true end
     if string.find(token, "있으면", 1, true) or string.find(token, "없으면", 1, true) then return true end
+    if string.find(token, "가득", 1, true) or string.find(token, "차면", 1, true) or string.find(token, "수레", 1, true) then return true end
+    if string.find(token, "비면", 1, true) or string.find(token, "비어", 1, true) then return true end
     if string.find(token, "반복", 1, true) or string.find(token, "계속", 1, true) or string.find(token, "끝까지", 1, true) then return true end
     if string.find(token, "번", 1, true) or string.find(token, "칸", 1, true) then return true end
     if string.find(token, "가서", 1, true) or string.find(token, "이동", 1, true) then return true end
@@ -434,8 +675,9 @@ end
 @ExecSpace("ClientOnly")
 method void OnUpdate(number delta)
     -- Mirrors the synchronized worker run state into the Run button label.
-    if self.workerController == nil then return end
-    local state = self.workerController.ProgramState
+    local worker = self:GetSelectedWorker()
+    if worker == nil then return end
+    local state = worker.ProgramState
     if state == self._T.lastWorkerState then return end
     self._T.lastWorkerState = state
     if self.runButtonText ~= nil then
@@ -445,7 +687,7 @@ method void OnUpdate(number delta)
             self.runButtonText.Text = "실행"
         end
     end
-    log("[BlockProgram] worker state=" .. tostring(state))
+    log("[BlockProgram] worker=" .. tostring(self.SelectedWorkerIndex) .. " state=" .. tostring(state))
 end
 
 @ExecSpace("ClientOnly")
@@ -459,13 +701,21 @@ method void OnEndPlay()
     self.btnLoad.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.load)
     self.btnUnload.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.unload)
     self.btnRepeat.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.repeatBlock)
+    self.btnRepeatCount.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.repeatCount)
     self.btnIfOre.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.ifOre)
+    self.btnCondition.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.condition)
     self.btnEnd.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.endBlock)
     self.btnRun.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.run)
     self.btnStop.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.stop)
     self.btnClear.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.clear)
     self.btnConvert.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.convert)
     self.chatInput.Entity:DisconnectEvent(TextInputSubmitEvent, self._T.handlers.submit)
+    if self.btnWorker1 ~= nil and self._T.handlers.worker1 ~= nil then
+        self.btnWorker1.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker1)
+    end
+    if self.btnWorker2 ~= nil and self._T.handlers.worker2 ~= nil then
+        self.btnWorker2.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker2)
+    end
 end
 
 end
