@@ -38,6 +38,8 @@
 | 5 | 자연어 → 블록 변환 | 클라 | `BlockProgramController.ParseChatCommand` | **전용 텍스트창·명시적 실행 UX 구현 완료** |
 | 6 | 자원·인벤토리 | 서버(원장) + 클라(HUD) | `WorkerController` + `VeinTickSimulator` + `MineInventoryController` | **D3 구현·검증 완료** |
 | 7 | 일꾼 외형·다중 배정 | 서버+클라 | `Worker.model` + 기존 컨트롤러 확장 (D4) | **D4-A 다중 배정 검증 완료 / 랜덤 외형 미착수** |
+| 8 | 맵 레이아웃 데이터화 | 서버+맵 | `MineLayoutConfig` + `VeinTickSimulator` (D6) | **기획·기능 명세 완료 / 구현 미착수** |
+| 9 | 비주얼·사운드 피드백 | 클라 표시 + 서버 이벤트 | marker/visual/sound controller (D5) | **기획·기능 명세 완료 / 구현 미착수** |
 
 ### 서버 ↔ 클라 경계 (RPC 계약)
 
@@ -72,6 +74,7 @@
 | ④ | 자원·인벤토리 (채굴→운반→창고) | D3 | ✅ D3 §9 R1~R8 검증 완료 |
 | ⑤a | 일꾼 랜덤 외형 + 다중 일꾼 프로그램 배정 | D4 | 🟡 2명 독립 실행·선택·공용 창고 검증 완료, 랜덤 외형 남음 |
 | ⑤b | 비주얼·사운드 폴리싱 | D5 | 리소스 체크리스트 소진 |
+| ⑤b-선행 | 맵 레이아웃 데이터화 | D6 / F6 | 광맥·창고·시작점이 map-authored 단일 기준으로 로드됨 |
 
 ## 6. 고정 설계 결정 (변경 시 팀 합의 필요)
 
