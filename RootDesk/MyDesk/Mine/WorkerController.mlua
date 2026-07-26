@@ -65,6 +65,14 @@ method void OnBeginPlay()
         return
     end
 
+    local configuredStart = self._T.mineState:GetWorkerStart(self.WorkerIndex)
+    if configuredStart ~= nil then
+        self._T.cellX = configuredStart.cellX
+        self._T.cellY = configuredStart.cellY
+        self.CellX = self._T.cellX
+        self.CellY = self._T.cellY
+    end
+
     self.CartCapacity = self._T.mineState.CartCapacity
 
     self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))

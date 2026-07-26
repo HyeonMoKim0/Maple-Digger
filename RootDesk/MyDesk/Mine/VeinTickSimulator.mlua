@@ -15,11 +15,26 @@ property integer HandCapacity = 1
 property boolean AutoLoadOnMine = false
 property integer DepotCellX = 0
 property integer DepotCellY = 0
+property string MineId = "beginner_mine"
+property integer LayoutVersion = 2
+-- These tables are map-authored configuration injection points. They remain
+-- empty in the existing prototype map, where the explicit fallback layout
+-- below preserves the validated beginner-mine route.
+property table DepotDefinitions = {}
+property table VeinDefinitions = {}
+property table WorkerStarts = {}
+property table SpecialVeinCandidates = {}
 property table VeinState = {}
 property table Depot = {}
 
 @Sync
 property integer DepotStone = 0
+
+@Sync
+property integer DepotIron = 0
+
+@Sync
+property integer DepotGold = 0
 
 @ExecSpace("ServerOnly")
 method void OnBeginPlay()
@@ -27,19 +42,15 @@ method void OnBeginPlay()
     self._T.tickAccumulator = 0
     self._T.workers = {}
     self.CurrentTick = 0
-    self.VeinState = {}
-    self.Depot = { stone = 0 }
     self.DepotStone = 0
+    self.DepotIron = 0
+    self.DepotGold = 0
+    if not self:LoadLayout() then
+        log_error("[VeinTick] layout rejected mineId=" .. self.MineId .. " reason=" .. tostring(self._T.layoutError))
+        return
+    end
 
-    -- TEMPORARY LAYOUT SOURCE OF TRUTH
-    -- Do not duplicate these coordinates in another script or in visual markers.
-    -- When map-authored markers arrive, migrate this list and its visuals together.
-    self:AddVein(1, 0, "stone", self.MaxReserveStage, self.StoneRecoverTicks)
-    self:AddVein(2, 0, "stone", self.MaxReserveStage, self.StoneRecoverTicks)
-    self:AddVein(2, -1, "stone", self.MaxReserveStage, self.StoneRecoverTicks)
-    self:AddVein(3, -1, "stone", self.MaxReserveStage, self.StoneRecoverTicks)
-
-    log("[VeinTick] OnBeginPlay - veins=4 depot=(" .. self.DepotCellX .. "," .. self.DepotCellY .. ")")
+    log("[VeinTick] layout loaded mineId=" .. self.MineId .. " veins=" .. tostring(self._T.veinCount) .. " depot=(" .. self.DepotCellX .. "," .. self.DepotCellY .. ")")
 end
 
 @ExecSpace("ServerOnly")
@@ -111,6 +122,137 @@ method void AdvanceWorkers()
             worker:AdvanceSimulationTick(self.CurrentTick)
         end
     end
+end
+
+@ExecSpace("ServerOnly")
+method boolean LoadLayout()
+    -- Creates a session-only runtime ledger from map-provided layout tables.
+    -- The fallback exists only so the already-authored farm01 prototype remains
+    -- playable until MapBuilder writes the v2 properties into each map.
+    self._T.layoutError = ""
+    self._T.workerStarts = {}
+    self._T.veinCount = 0
+    self.VeinState = {}
+    self.Depot = {}
+
+    if self.LayoutVersion ~= 2 then
+        self._T.layoutError = "unsupported layoutVersion=" .. tostring(self.LayoutVersion)
+        return false
+    end
+    if self.MineId == nil or self.MineId == "" then
+        self._T.layoutError = "missing mineId"
+        return false
+    end
+
+    local depots = self.DepotDefinitions
+    if depots == nil or #depots == 0 then depots = self:GetFallbackDepotDefinitions() end
+    if #depots ~= 1 then
+        self._T.layoutError = "expected exactly one depot"
+        return false
+    end
+    local depot = depots[1]
+    if depot == nil or depot.cellX == nil or depot.cellY == nil then
+        self._T.layoutError = "invalid depot definition"
+        return false
+    end
+    self.DepotCellX = depot.cellX
+    self.DepotCellY = depot.cellY
+
+    local veinDefinitions = self.VeinDefinitions
+    if veinDefinitions == nil or #veinDefinitions == 0 then veinDefinitions = self:GetFallbackVeinDefinitions() end
+    if #veinDefinitions == 0 then
+        self._T.layoutError = "missing vein definitions"
+        return false
+    end
+    local occupied = {}
+    local ids = {}
+    for i = 1, #veinDefinitions do
+        local definition = veinDefinitions[i]
+        if definition == nil or definition.id == nil or definition.id == "" then
+            self._T.layoutError = "vein " .. tostring(i) .. " missing id"
+            return false
+        end
+        if ids[definition.id] then
+            self._T.layoutError = "duplicate vein id=" .. definition.id
+            return false
+        end
+        if definition.cellX == nil or definition.cellY == nil or definition.oreType == nil or definition.oreType == "" then
+            self._T.layoutError = "invalid vein id=" .. definition.id
+            return false
+        end
+        if definition.oreType ~= "stone" and definition.oreType ~= "iron" and definition.oreType ~= "gold" then
+            self._T.layoutError = "unsupported oreType=" .. definition.oreType
+            return false
+        end
+        local key = self:CellKey(definition.cellX, definition.cellY)
+        if occupied[key] then
+            self._T.layoutError = "overlapping veins at " .. key
+            return false
+        end
+        if definition.cellX == self.DepotCellX and definition.cellY == self.DepotCellY then
+            self._T.layoutError = "vein overlaps depot id=" .. definition.id
+            return false
+        end
+        ids[definition.id] = true
+        occupied[key] = true
+        local initialStage = definition.initialStage
+        if initialStage == nil then initialStage = self.MaxReserveStage end
+        local recoverTicks = definition.recoverTicks
+        if recoverTicks == nil then recoverTicks = self.StoneRecoverTicks end
+        self:AddVein(definition.cellX, definition.cellY, definition.oreType, initialStage, recoverTicks)
+        self._T.veinCount = self._T.veinCount + 1
+    end
+
+    local starts = self.WorkerStarts
+    if starts == nil or #starts == 0 then starts = self:GetFallbackWorkerStarts() end
+    for i = 1, #starts do
+        local start = starts[i]
+        if start == nil or start.workerIndex == nil or start.cellX == nil or start.cellY == nil then
+            self._T.layoutError = "invalid worker start=" .. tostring(i)
+            return false
+        end
+        if start.workerIndex < 1 or start.workerIndex > 5 then
+            self._T.layoutError = "workerIndex out of range=" .. tostring(start.workerIndex)
+            return false
+        end
+        if self._T.workerStarts[start.workerIndex] ~= nil then
+            self._T.layoutError = "duplicate workerIndex=" .. tostring(start.workerIndex)
+            return false
+        end
+        self._T.workerStarts[start.workerIndex] = { cellX = start.cellX, cellY = start.cellY }
+    end
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method table GetWorkerStart(integer workerIndex)
+    -- Workers always respawn at the target map's configured start cell. Current
+    -- runtime position and interpreter frames are intentionally not persisted.
+    if self._T.workerStarts == nil then return nil end
+    return self._T.workerStarts[workerIndex]
+end
+
+@ExecSpace("ServerOnly")
+method table GetFallbackDepotDefinitions()
+    return { { id = "depot-main", cellX = 0, cellY = 0 } }
+end
+
+@ExecSpace("ServerOnly")
+method table GetFallbackVeinDefinitions()
+    return {
+        { id = "vein-stone-01", cellX = 1, cellY = 0, oreType = "stone", initialStage = 3, recoverTicks = 5 },
+        { id = "vein-stone-02", cellX = 2, cellY = 0, oreType = "stone", initialStage = 3, recoverTicks = 5 },
+        { id = "vein-stone-03", cellX = 2, cellY = -1, oreType = "stone", initialStage = 3, recoverTicks = 5 },
+        { id = "vein-stone-04", cellX = 3, cellY = -1, oreType = "stone", initialStage = 3, recoverTicks = 5 },
+    }
+end
+
+@ExecSpace("ServerOnly")
+method table GetFallbackWorkerStarts()
+    return {
+        { workerIndex = 1, cellX = 0, cellY = 0 },
+        { workerIndex = 2, cellX = 0, cellY = 1 },
+    }
 end
 
 @ExecSpace("ServerOnly")
@@ -189,6 +331,8 @@ method integer AddToDepot(string oreType, integer count)
     local current = self:GetDepotCount(oreType)
     self.Depot[oreType] = current + count
     if oreType == "stone" then self.DepotStone = self.Depot[oreType] end
+    if oreType == "iron" then self.DepotIron = self.Depot[oreType] end
+    if oreType == "gold" then self.DepotGold = self.Depot[oreType] end
     log("[VeinTick] depot add ore=" .. oreType .. " count=" .. count .. " total=" .. self.Depot[oreType])
     return self.Depot[oreType]
 end
