@@ -13,6 +13,7 @@ property integer MineYield = 1
 property integer CartCapacity = 20
 property integer HandCapacity = 1
 property boolean AutoLoadOnMine = false
+property integer RequiredWorkerStartCount = 5
 property integer DepotCellX = 0
 property integer DepotCellY = 0
 property string MineId = "beginner_mine"
@@ -24,6 +25,12 @@ property table DepotDefinitions = {}
 property table VeinDefinitions = {}
 property table WorkerStarts = {}
 property table SpecialVeinCandidates = {}
+-- Map component table overrides arrive empty in Maker Play.  Keep the legacy
+-- fields for backward compatibility, but load authored layout JSON strings.
+property string DepotDefinitionsJson = ""
+property string VeinDefinitionsJson = ""
+property string WorkerStartsJson = ""
+property string SpecialVeinCandidatesJson = ""
 property table VeinState = {}
 property table Depot = {}
 
@@ -41,16 +48,21 @@ method void OnBeginPlay()
     -- Initializes the map-scoped vein ledger, shared depot, and worker registry.
     self._T.tickAccumulator = 0
     self._T.workers = {}
+    self._T.tilemap = self.Entity:GetFirstChildComponentByTypeName("RectTileMapComponent")
     self.CurrentTick = 0
     self.DepotStone = 0
     self.DepotIron = 0
     self.DepotGold = 0
+    if self._T.tilemap == nil then
+        log_error("[VeinTick] RectTileMapComponent not found")
+        return
+    end
     if not self:LoadLayout() then
         log_error("[VeinTick] layout rejected mineId=" .. self.MineId .. " reason=" .. tostring(self._T.layoutError))
         return
     end
 
-    log("[VeinTick] layout loaded mineId=" .. self.MineId .. " veins=" .. tostring(self._T.veinCount) .. " depot=(" .. self.DepotCellX .. "," .. self.DepotCellY .. ")")
+    log("[VeinTick] layout loaded mineId=" .. self.MineId .. " veins=" .. tostring(self._T.veinCount) .. " starts=" .. tostring(self._T.startCount) .. " specialCandidates=" .. tostring(self._T.specialCandidateCount) .. " depot=(" .. self.DepotCellX .. "," .. self.DepotCellY .. ")")
 end
 
 @ExecSpace("ServerOnly")
@@ -132,6 +144,9 @@ method boolean LoadLayout()
     self._T.layoutError = ""
     self._T.workerStarts = {}
     self._T.veinCount = 0
+    self._T.startCount = 0
+    self._T.specialCandidateCount = 0
+    self._T.specialVeinCandidates = {}
     self.VeinState = {}
     self.Depot = {}
 
@@ -144,22 +159,32 @@ method boolean LoadLayout()
         return false
     end
 
-    local depots = self.DepotDefinitions
-    if depots == nil or #depots == 0 then depots = self:GetFallbackDepotDefinitions() end
+    local depots = self:DecodeLayoutTable(self.DepotDefinitionsJson, "depot definitions")
+    if depots == nil then
+        if self._T.layoutError ~= "" then return false end
+        depots = self:GetFallbackDepotDefinitions()
+    end
     if #depots ~= 1 then
         self._T.layoutError = "expected exactly one depot"
         return false
     end
     local depot = depots[1]
-    if depot == nil or depot.cellX == nil or depot.cellY == nil then
+    if depot == nil or depot.id == nil or depot.id == "" or depot.cellX == nil or depot.cellY == nil then
         self._T.layoutError = "invalid depot definition"
+        return false
+    end
+    if not self:IsWalkableCell(depot.cellX, depot.cellY) then
+        self._T.layoutError = "depot is not on a walkable tile"
         return false
     end
     self.DepotCellX = depot.cellX
     self.DepotCellY = depot.cellY
 
-    local veinDefinitions = self.VeinDefinitions
-    if veinDefinitions == nil or #veinDefinitions == 0 then veinDefinitions = self:GetFallbackVeinDefinitions() end
+    local veinDefinitions = self:DecodeLayoutTable(self.VeinDefinitionsJson, "vein definitions")
+    if veinDefinitions == nil then
+        if self._T.layoutError ~= "" then return false end
+        veinDefinitions = self:GetFallbackVeinDefinitions()
+    end
     if #veinDefinitions == 0 then
         self._T.layoutError = "missing vein definitions"
         return false
@@ -184,6 +209,18 @@ method boolean LoadLayout()
             self._T.layoutError = "unsupported oreType=" .. definition.oreType
             return false
         end
+        if not self:IsWalkableCell(definition.cellX, definition.cellY) then
+            self._T.layoutError = "vein is not on a walkable tile id=" .. definition.id
+            return false
+        end
+        if definition.initialStage ~= nil and (definition.initialStage < 0 or definition.initialStage > self.MaxReserveStage) then
+            self._T.layoutError = "invalid initialStage id=" .. definition.id
+            return false
+        end
+        if definition.recoverTicks ~= nil and definition.recoverTicks < 1 then
+            self._T.layoutError = "invalid recoverTicks id=" .. definition.id
+            return false
+        end
         local key = self:CellKey(definition.cellX, definition.cellY)
         if occupied[key] then
             self._T.layoutError = "overlapping veins at " .. key
@@ -203,8 +240,11 @@ method boolean LoadLayout()
         self._T.veinCount = self._T.veinCount + 1
     end
 
-    local starts = self.WorkerStarts
-    if starts == nil or #starts == 0 then starts = self:GetFallbackWorkerStarts() end
+    local starts = self:DecodeLayoutTable(self.WorkerStartsJson, "worker starts")
+    if starts == nil then
+        if self._T.layoutError ~= "" then return false end
+        starts = self:GetFallbackWorkerStarts()
+    end
     for i = 1, #starts do
         local start = starts[i]
         if start == nil or start.workerIndex == nil or start.cellX == nil or start.cellY == nil then
@@ -219,9 +259,76 @@ method boolean LoadLayout()
             self._T.layoutError = "duplicate workerIndex=" .. tostring(start.workerIndex)
             return false
         end
+        if not self:IsWalkableCell(start.cellX, start.cellY) then
+            self._T.layoutError = "worker start is not on a walkable tile index=" .. tostring(start.workerIndex)
+            return false
+        end
         self._T.workerStarts[start.workerIndex] = { cellX = start.cellX, cellY = start.cellY }
+        self._T.startCount = self._T.startCount + 1
+    end
+    for workerIndex = 1, self.RequiredWorkerStartCount do
+        if self._T.workerStarts[workerIndex] == nil then
+            self._T.layoutError = "missing worker start index=" .. tostring(workerIndex)
+            return false
+        end
+    end
+
+    local specialCandidates = self:DecodeLayoutTable(self.SpecialVeinCandidatesJson, "special candidates")
+    if specialCandidates == nil then
+        if self._T.layoutError ~= "" then return false end
+        specialCandidates = {}
+    end
+    local specialIds = {}
+    local specialCells = {}
+    for i = 1, #specialCandidates do
+        local candidate = specialCandidates[i]
+        if candidate == nil or candidate.id == nil or candidate.id == "" or candidate.cellX == nil or candidate.cellY == nil then
+            self._T.layoutError = "invalid special candidate=" .. tostring(i)
+            return false
+        end
+        if specialIds[candidate.id] then
+            self._T.layoutError = "duplicate special candidate id=" .. candidate.id
+            return false
+        end
+        local key = self:CellKey(candidate.cellX, candidate.cellY)
+        if occupied[key] or (candidate.cellX == self.DepotCellX and candidate.cellY == self.DepotCellY) then
+            self._T.layoutError = "special candidate overlaps occupied cell id=" .. candidate.id
+            return false
+        end
+        if specialCells[key] then
+            self._T.layoutError = "duplicate special candidate cell id=" .. candidate.id
+            return false
+        end
+        if not self:IsWalkableCell(candidate.cellX, candidate.cellY) then
+            self._T.layoutError = "special candidate is not on a walkable tile id=" .. candidate.id
+            return false
+        end
+        specialIds[candidate.id] = true
+        specialCells[key] = true
+        self._T.specialCandidateCount = self._T.specialCandidateCount + 1
+        table.insert(self._T.specialVeinCandidates, candidate)
     end
     return true
+end
+
+@ExecSpace("ServerOnly")
+method table DecodeLayoutTable(string json, string label)
+    -- Returns nil only when the map intentionally has no JSON configuration.
+    if json == nil or json == "" then return nil end
+    local decoded = _HttpService:JSONDecode(json)
+    if type(decoded) ~= "table" then
+        self._T.layoutError = "invalid " .. label .. " json"
+        return nil
+    end
+    return decoded
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsWalkableCell(integer cellX, integer cellY)
+    -- Static layout coordinates must point at a painted RectTile cell.
+    if self._T.tilemap == nil then return false end
+    local tile = self._T.tilemap:GetTile(Vector2Int(cellX, cellY))
+    return tile ~= nil and tile.Name ~= ""
 end
 
 @ExecSpace("ServerOnly")
@@ -252,6 +359,9 @@ method table GetFallbackWorkerStarts()
     return {
         { workerIndex = 1, cellX = 0, cellY = 0 },
         { workerIndex = 2, cellX = 0, cellY = 1 },
+        { workerIndex = 3, cellX = -1, cellY = 0 },
+        { workerIndex = 4, cellX = -1, cellY = 1 },
+        { workerIndex = 5, cellX = -2, cellY = 0 },
     }
 end
 

@@ -14,13 +14,13 @@
 
 | 시스템 | 구현 | 위치 | 주의사항 |
 |---|---|---|---|
-| 광맥·틱·창고 기반 | 맵 `@Component` | `RootDesk/MyDesk/Mine/VeinTickSimulator.mlua` | 0.4초 회복 후 등록 일꾼 실행. `farm01`은 설정 테이블이 비어 있어 4개 돌 광맥·Depot·2 시작점 fallback을 사용; 3맵 데이터·marker·특별 광맥은 미구현 |
+| 광맥·틱·창고 기반 | 맵 `@Component` | `RootDesk/MyDesk/Mine/VeinTickSimulator.mlua` | 0.4초 회복 후 등록 일꾼 실행. `farm01`은 `beginner_mine` JSON 레이아웃으로 돌 광맥 4개·Depot 1개·일꾼 시작점 1~5·특별 광맥 후보 3개를 검증한다. 특별 광맥 스폰·marker·3맵은 후속 구현 |
 | 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램 |
 | 일꾼 공용 모델 | `.model` | `RootDesk/MyDesk/Models/Farm/Worker.model` | modelId `worker`, RectTile용 `KinematicbodyComponent`와 `WorkerController` 포함. `Drone.model`은 레거시 원본 |
 | 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. D4-A에서 일꾼 선택의 단일 기준도 담당 |
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + 일꾼 1/2 선택 버튼 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. 선택 일꾼 손·수레 + 세션 Depot 합계; AccountStorage·판매·자동 판매는 미구현 |
-| 실행 맵 | `.map` | `map/farm01.map` | RectTile, Worker01 `(0,0)`·Worker02 `(0,1)`, 같은 셀 겹침 허용. `deep_mine`/`gem_mine` 맵과 선택/전환은 미구현 |
+| 실행 맵 | `.map` | `map/farm01.map` | RectTile, Worker01 `(0,0)`·Worker02 `(0,1)`가 실제 배치되어 있으며 1~5의 유효 시작 셀도 설정됐다. 같은 셀 겹침 허용. `deep_mine`/`gem_mine`, marker, 선택/전환은 미구현 |
 
 ## 기록
 
@@ -46,6 +46,13 @@
 - 등록된 두 일꾼은 매 틱 각각 최대 1액션을 실행하며, 셀 겹침을 허용하고 창고만 공유한다.
 - 당시의 2일꾼 배정 프로토타입과 빌드/구조를 Maker에서 검증했다. 이후 D4 W1~W8은 1→5 일꾼·영구 저장·외형을 포함하도록 확장되었으므로 아직 완료로 표기하지 않는다.
 - 다음 개발은 D4-B다. 기존 대형 스프라이트는 임시 상태이며 랜덤 아바타 조합·획득 흐름으로 교체해야 한다.
+
+### 2026-07-27 — F6 초보 광산 레이아웃 기준선
+
+- `farm01`에 `beginner_mine`의 Depot 1개, 돌 광맥 4개, WorkerIndex 1~5 시작점, 특별 광맥 후보 3개를 명시적으로 기록했다.
+- MSW Play에서 `[VeinTick] layout loaded mineId=beginner_mine veins=4 starts=5 specialCandidates=3 depot=(0,0)` 로그와 WorkerIndex 5의 시작 셀 `(-2,0)` 조회를 확인했다.
+- 맵 컴포넌트의 중첩 `table` 프로퍼티는 Play에서 빈 테이블로 들어오는 동작을 확인했다. 따라서 레이아웃 목록은 `_HttpService:JSONDecode`로 읽는 JSON 문자열 프로퍼티를 정식 저장 형식으로 사용한다.
+- 이 단계는 marker 연결·특별 광맥 스폰·깊은/보석 광산을 구현하지 않는다. 해당 항목은 F6의 다음 작업 단위다.
 
 ## 커밋 전 작업 경계
 
