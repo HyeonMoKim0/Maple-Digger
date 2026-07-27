@@ -1,0 +1,134 @@
+@Component
+script AccountProfileService extends Component
+
+property string StorageKey = "maple-digger.account.v1"
+property integer SchemaVersion = 1
+property integer AutoSaveSeconds = 300
+property boolean IsLoaded = false
+property boolean IsDirty = false
+property integer SaveGeneration = 0
+
+@ExecSpace("ServerOnly")
+method void OnBeginPlay()
+    self._T.profile = self:CreateDefaultProfile()
+    self._T.autoSaveTimer = 0
+
+    if self.Entity.PlayerComponent == nil then
+        log_error("[AccountProfile] missing PlayerComponent")
+        return
+    end
+
+    local profileCode = self.Entity.PlayerComponent.ProfileCode
+    if profileCode == nil or profileCode == "" then
+        log_error("[AccountProfile] missing ProfileCode")
+        return
+    end
+
+    self._T.storage = _DataStorageService:GetUserDataStorage(profileCode)
+    self:LoadProfile()
+    self._T.autoSaveTimer = _TimerService:SetTimerRepeat(function()
+        self:SaveProfileAsync()
+    end, self.AutoSaveSeconds, self.AutoSaveSeconds)
+end
+
+@ExecSpace("ServerOnly")
+method void OnEndPlay()
+    if self._T.autoSaveTimer ~= nil and self._T.autoSaveTimer ~= 0 then
+        _TimerService:ClearTimer(self._T.autoSaveTimer)
+        self._T.autoSaveTimer = 0
+    end
+    self:SaveProfileAndWait()
+end
+
+@ExecSpace("ServerOnly")
+method table CreateDefaultProfile()
+    return {
+        schemaVersion = self.SchemaVersion,
+        credits = 0,
+        unlocksJson = "{}",
+        programLibraryJson = "{}",
+        workerAppearanceJson = "{}",
+        statsJson = "{}",
+    }
+end
+
+@ExecSpace("ServerOnly")
+method void LoadProfile()
+    local errorCode, raw = self._T.storage:GetAndWait(self.StorageKey)
+    if errorCode == 1000002 or raw == nil or raw == "" then
+        self.IsLoaded = true
+        log("[AccountProfile] new profile ready")
+        return
+    end
+    if errorCode ~= 0 then
+        log_error("[AccountProfile] load failed error=" .. tostring(errorCode))
+        return
+    end
+
+    local decoded = _HttpService:JSONDecode(raw)
+    if type(decoded) ~= "table" then
+        log_error("[AccountProfile] invalid saved JSON; using defaults")
+        self.IsLoaded = true
+        return
+    end
+
+    self._T.profile = self:NormalizeProfile(decoded)
+    self.IsLoaded = true
+    log("[AccountProfile] profile loaded schema=" .. tostring(self._T.profile.schemaVersion) .. " credits=" .. tostring(self._T.profile.credits))
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeProfile(table profile)
+    local normalized = self:CreateDefaultProfile()
+    normalized.schemaVersion = self.SchemaVersion
+    normalized.credits = profile.credits or normalized.credits
+    normalized.unlocksJson = profile.unlocksJson or normalized.unlocksJson
+    normalized.programLibraryJson = profile.programLibraryJson or normalized.programLibraryJson
+    normalized.workerAppearanceJson = profile.workerAppearanceJson or normalized.workerAppearanceJson
+    normalized.statsJson = profile.statsJson or normalized.statsJson
+    return normalized
+end
+
+@ExecSpace("ServerOnly")
+method table GetProfile()
+    return self._T.profile
+end
+
+@ExecSpace("ServerOnly")
+method void MarkProfileDirty()
+    if not self.IsLoaded then return end
+    self.IsDirty = true
+    self.SaveGeneration = self.SaveGeneration + 1
+end
+
+@ExecSpace("ServerOnly")
+method void SaveProfileAsync()
+    if not self.IsLoaded or not self.IsDirty then return end
+    local savedGeneration = self.SaveGeneration
+    local encoded = _HttpService:JSONEncode(self._T.profile)
+    self._T.storage:SetAsync(self.StorageKey, encoded, function(errorCode)
+        if errorCode ~= 0 then
+            log_warning("[AccountProfile] autosave failed error=" .. tostring(errorCode))
+            return
+        end
+        if self.SaveGeneration == savedGeneration then
+            self.IsDirty = false
+        end
+        log("[AccountProfile] autosave complete")
+    end)
+end
+
+@ExecSpace("ServerOnly")
+method void SaveProfileAndWait()
+    if not self.IsLoaded or not self.IsDirty then return end
+    local encoded = _HttpService:JSONEncode(self._T.profile)
+    local errorCode = self._T.storage:SetAndWait(self.StorageKey, encoded)
+    if errorCode ~= 0 then
+        log_error("[AccountProfile] final save failed error=" .. tostring(errorCode))
+        return
+    end
+    self.IsDirty = false
+    log("[AccountProfile] final save complete")
+end
+
+end
