@@ -20,7 +20,7 @@
 | 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. 신규 프로필은 Worker01만 실행 대상이며, 구매한 Worker02~05도 독립 선택한다. |
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. Worker01 손·수레 + 세션 Depot 합계를 표시하며, 계정 광물·판매 설정·광산 선택은 별도 F7-B UI가 담당한다. |
-| 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v7 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물은 하역 즉시 컬렉션 등록·10단계 패시브·11회째부터 수동/자동 판매까지 구현했으며, 맵 강화는 미구현이다. |
+| 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v7 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물은 하역 즉시 컬렉션 등록·10단계 패시브·11회째부터 수동/자동 판매까지 구현했으며, 맵 강화는 미구현이다(계약은 `docs/13` §5). 프로필에 `mineLevels` 필드가 아직 없어 맵 강화 착수 시 v8 마이그레이션이 필요하다. |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. 1~5 시작 셀은 향후 일꾼 구매 확장을 위한 데이터로 유지한다. marker와 서버 맵 전환은 구현됐고 F5 시각/사운드 표현은 미구현 |
 
 ## 기록
@@ -58,7 +58,7 @@
 ## 커밋 전 작업 경계
 
 - 게임 기능 커밋에는 `RootDesk/MyDesk/`, `map/`, `ui/`, `docs/`, 이 기록 파일만 포함한다.
-- `.agents/`, `.claude/`, `.codex/`, `.cursor/`, `AGENTS.md`, `skills-lock.json`은 개발 도구·로컬 설정 범위이므로 게임 기능 커밋과 분리한다.
+- `.agents/`, `.claude/`, `.codex/`, `.cursor/`, `.mswai/`, `AGENTS.md`, `skills-lock.json`은 개발 도구·로컬 설정 범위이므로 게임 기능 커밋과 분리한다.
 - `RootDesk/MyDesk/Mine.directory`는 Maker 폴더 메타데이터의 줄바꿈 차이뿐이므로 제외한다.
 - PC 1920×1080 런타임에서 명령 패널·광산 HUD·Maker 시스템 버튼이 겹치지 않음을 확인했다.
 - UI lint의 모바일 터치 높이 경고 4건은 PC 우선 MVP에서는 비차단으로 두고, 모바일 대응 단계에서 88px 이상으로 확장한다.
@@ -123,6 +123,22 @@
 - Worker01의 `Cart`·`CartCount`·`CartCapacity`·`PendingOre`와 `lastMineId`만 저장한다. 광맥 stage, 특별 광맥, 현재 셀, 프로그램 실행 frame은 세션 전용으로 저장하지 않는다.
 - `MineTransitionService`는 이동 전에 profile 저장을 완료해야만 일꾼 정지·세션 초기화·맵 이동을 수행한다. 이동 뒤와 재접속 뒤에는 Worker01 상태를 복구한다.
 - Maker Play 검증: v2→v3 변환, 수레 `stone=2/iron=1`과 손 `gold`를 가진 상태의 `farm01 → deep_mine` 전환, Play 재시작 뒤 `deep_mine` 자동 복귀와 `cart=3/20 hand=gold` 복구를 확인했다. 검증 후 개발 프로필은 `farm01`, 빈 수레·빈 손으로 되돌렸다.
+
+### 2026-07-29 — 2차 검수와 맵 강화 계약 정합화
+
+- `6a4ab91`에서 F7-B v7 희귀 광물까지 커밋됐다. 인수인계 문서의 "미커밋 작업 트리" 전제는 해소했다.
+- 서버 거래 테스트로 희귀 광물 규칙 전량을 검증했다. 10단계 전 자동 판매 거부, 1개씩 11회 하역(`coll=1..10` → 11회째 `store=1`), 배치 10+1 경로, 희귀 돌 10단계에서 수레 20→26, 희귀 금 10단계에서 돌 100개 판매 `goldGain=130`·`tokenGain=5`, 희귀 돌/철/금 수동 판매 50/200/600 Gold, 보관 0에서의 추가 판매 거부, 10단계 뒤 자동 판매 허용을 확인했다. 검증 뒤 개발 프로필을 기준 상태(Gold 0, 컬렉션·보관 0, 수레 20, Worker01 1명, `farm01`)로 원복하고 저장까지 확인했다.
+- 수레 용량 보너스는 `floor(기본 × 단계 × 3 / 100)`의 **버림** 방식이라 단계마다 +1칸씩 오르지 않는다. 관측값 20, 21, 21, 22, 23, 23, 24, 24, 25, 26. UI는 이 비선형성을 그대로 보여야 한다.
+- Play 화면 검수에서 결함 2건을 확인했다. `광산 선택` 버튼이 블록 편집기 헤더를 가리고, HUD `광산 현황`에 골드·크리스탈·토큰이 없다(D3 §7·D5 §4 필수 표시 위반). 상세는 `docs/16` §7.3.
+- `mouse_input`이 엔진 관리 UI(`ButtonComponent`)를 클릭하지 못함을 실측으로 확인했다. 버튼 회귀 검수는 자동화 불가로 확정하고 `docs/16` §9에 근거를 남겼다.
+- 맵 강화(F7-B 잔여 범위)의 구현 계약을 `docs/13` §5에 작성했다. 저장 스키마 v8, 효과 4종의 계산식, 희귀 확률의 만분율 승격, 서버 API, 수용 테스트 B8~B18을 포함한다. **구현은 아직 시작하지 않았다.**
+- 카드 근거가 없던 세부 4건은 사용자 결정으로 `docs/11` **C197~C200**에 확정했다.
+  - C197: 맵 레벨을 **0~10**으로 정정(해금 직후 0, 총 10회 강화, 만렙 주 효과 +30% / 부 +10%). `cartUpgradeLevel` 0~15와 같은 0-based 관례다. D7·D0·D1의 "1~10" 표기를 모두 갱신했다.
+  - C198: 맵 회복 효과와 희귀 철 패시브는 **가산 합성**.
+  - C199: `yield` 효과는 **확률로 손에 1개 추가 지급**. 이에 따라 D3 §4의 손 1칸 계약을 조건부 2칸으로 확장하고, 희귀로 승격된 채굴은 추가 지급에서 제외했다(C196 보호). v8에 손 개수 필드가 필요하다.
+  - C200: 특별 광맥 스폰 대기 하한 60틱 유지.
+- **이 세션은 문서만 바꿨다.** `RootDesk/`, `map/`, `ui/` 아래 게임 파일은 한 줄도 수정하지 않았으므로 런타임 동작은 `6a4ab91`과 동일하다.
+- 다음 작업과 열린 질문은 `docs/17-Claude-인수인계.md` **§0 이어가기 지점**에 있다. 1순위는 F5에 HUD 표시 계약을 작성한 뒤 `docs/16` §7.3의 D-1·D-2를 수정하는 것이다.
 
 ### 2026-07-29 — F7-A 손상 복구·동시 접속 잠금
 
