@@ -4,9 +4,6 @@
 @Logic
 script MineInventoryController extends Logic
 
-property WorkerController workerController = "7bc03a21-7192-4a61-a932-e7cc21c4d3ef"
-property VeinTickSimulator mineState = "83de308d-98c5-4c42-9888-5506ea78244f"
-
 -- UIBuilder replaces these placeholders with generated entity UUIDs.
 property TextGUIRendererComponent depotText = "9395e38a-0b37-4c6e-ba68-ebd554c90fd3"
 property TextGUIRendererComponent cartText = "ada2db0e-12dc-4412-82d0-e94425ced00c"
@@ -50,11 +47,12 @@ end
 method void RefreshUI(boolean force)
     -- Renders the selected worker's hand/cart and the shared depot when changed.
     local worker = self:GetSelectedWorker()
-    if worker == nil or self.mineState == nil then return end
+    local mineState = self:GetCurrentMineState()
+    if worker == nil or mineState == nil then return end
 
-    local depotStone = self.mineState.DepotStone
-    local depotIron = self.mineState.DepotIron
-    local depotGold = self.mineState.DepotGold
+    local depotStone = mineState.DepotStone
+    local depotIron = mineState.DepotIron
+    local depotGold = mineState.DepotGold
     local workerIndex = self:GetSelectedWorkerIndex()
     local cartCount = worker.CartCount
     local cartCapacity = worker.CartCapacity
@@ -89,14 +87,22 @@ method WorkerController GetSelectedWorker()
     -- The program editor owns target selection; the HUD mirrors that target.
     local selected = _BlockProgramController:GetSelectedWorker()
     if selected ~= nil then return selected end
-    return self.workerController
+    return nil
+end
+
+@ExecSpace("ClientOnly")
+method VeinTickSimulator GetCurrentMineState()
+    -- Resolves the active map's synchronized depot after a player map change.
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return nil end
+    ---@type VeinTickSimulator
+    local mineState = player.CurrentMap:GetComponent("script.VeinTickSimulator")
+    return mineState
 end
 
 @ExecSpace("ClientOnly")
 method integer GetSelectedWorkerIndex()
-    -- Mirrors the editor selection and normalizes it to one of two worker slots.
-    local selectedIndex = _BlockProgramController:GetSelectedWorkerIndex()
-    if selectedIndex == 2 then return 2 end
+    -- The MVP exposes only Worker01 until F7-B worker purchase is implemented.
     return 1
 end
 

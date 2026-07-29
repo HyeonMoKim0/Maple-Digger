@@ -1,0 +1,155 @@
+-- ECONOMY AUTHORITY
+-- Account resource credit and sale rules execute only on the server. The UI can
+-- request a sale but never computes a balance, price, token, or protection rule.
+@Logic
+script EconomyService extends Logic
+
+property integer StoneSellPrice = 1
+property integer IronSellPrice = 5
+property integer GoldOreSellPrice = 20
+property integer TokenOreThreshold = 20
+
+@ExecSpace("ServerOnly")
+method void CreditOreFromMine(Entity mineMap, string oreType, integer count)
+    -- Credits the sole MVP player on a mine map when a worker unloads an ore stack.
+    if mineMap == nil or mineMap.MapComponent == nil or count <= 0 then return end
+    local users = _UserService:GetUsersByMapComponent(mineMap.MapComponent)
+    if users == nil or #users ~= 1 then
+        log_warning("[Economy] ore credit skipped reason=expected-one-user ore=" .. oreType)
+        return
+    end
+    ---@type AccountProfileService
+    local profile = users[1]:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then
+        log_warning("[Economy] ore credit skipped reason=profile-not-ready ore=" .. oreType)
+        return
+    end
+    profile:CreditOre(oreType, count)
+    self:TryAutomaticSale(profile, oreType)
+end
+
+@ExecSpace("ServerOnly")
+method integer GetOreBalance(table data, string oreType)
+    if oreType == "stone" then return data.stone end
+    if oreType == "iron" then return data.iron end
+    if oreType == "gold" then return data.goldOre end
+    return 0
+end
+
+@ExecSpace("ServerOnly")
+method integer GetMandatoryProtection(table data, string oreType)
+    local protectedStone = 0
+    local protectedIron = 0
+    if not data.deepMineUnlocked then
+        protectedStone = 120
+    elseif not data.gemMineUnlocked then
+        protectedStone = 200
+        protectedIron = 60
+    end
+    if oreType == "stone" then return protectedStone end
+    if oreType == "iron" then return protectedIron end
+    return 0
+end
+
+@ExecSpace("ServerOnly")
+method integer GetEffectiveProtection(table data, string oreType)
+    local configured = 0
+    if type(data.saleSettings) == "table" and type(data.saleSettings[oreType]) == "table" then
+        configured = data.saleSettings[oreType].protectedAmount or 0
+    end
+    return math.max(self:GetMandatoryProtection(data, oreType), configured)
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsSellableOre(string oreType)
+    return oreType == "stone" or oreType == "iron" or oreType == "gold"
+end
+
+@ExecSpace("ServerOnly")
+method boolean CommitSale(AccountProfileService profile, integer stoneSold, integer ironSold, integer goldOreSold, string source)
+    local data = profile:GetProfile()
+    local stoneProgress = data.stoneTokenProgress + stoneSold
+    local ironProgress = data.ironTokenProgress + ironSold
+    local tokenGain = 0
+    if not data.deepMineUnlocked then
+        tokenGain = math.floor(stoneProgress / self.TokenOreThreshold)
+        stoneProgress = stoneProgress % self.TokenOreThreshold
+    elseif not data.gemMineUnlocked then
+        tokenGain = math.floor(ironProgress / self.TokenOreThreshold)
+        ironProgress = ironProgress % self.TokenOreThreshold
+    end
+    local goldGain = stoneSold * self.StoneSellPrice + ironSold * self.IronSellPrice + goldOreSold * self.GoldOreSellPrice
+    if goldGain <= 0 and tokenGain <= 0 then
+        return false
+    end
+    local applied = profile:ApplySale(stoneSold, ironSold, goldOreSold, goldGain, tokenGain, stoneProgress, ironProgress)
+    if applied then
+        profile:SetTransactionMessage(source .. " 판매 완료: 골드 +" .. tostring(goldGain) .. ", 토큰 +" .. tostring(tokenGain))
+        log("[Economy] sale source=" .. source .. " stone=" .. tostring(stoneSold) .. " iron=" .. tostring(ironSold) .. " goldOre=" .. tostring(goldOreSold) .. " goldGain=" .. tostring(goldGain) .. " tokenGain=" .. tostring(tokenGain))
+    end
+    return applied
+end
+
+@ExecSpace("ServerOnly")
+method boolean SellOre(Entity player, string oreType, integer requestedAmount, boolean includeProtected)
+    if player == nil or not self:IsSellableOre(oreType) or requestedAmount <= 0 then return false end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return false end
+    local data = profile:GetProfile()
+    local balance = self:GetOreBalance(data, oreType)
+    if requestedAmount > balance then
+        profile:SetTransactionMessage("보유 수량보다 많이 판매할 수 없습니다.")
+        return false
+    end
+    local protectedAmount = self:GetEffectiveProtection(data, oreType)
+    local safeAmount = math.max(0, balance - protectedAmount)
+    if requestedAmount > safeAmount and not includeProtected then
+        profile:SetTransactionMessage("보호 수량이 포함됩니다. 보호분 포함 판매를 명시적으로 선택해 주세요.")
+        return false
+    end
+    local stoneSold = 0
+    local ironSold = 0
+    local goldOreSold = 0
+    if oreType == "stone" then stoneSold = requestedAmount
+    elseif oreType == "iron" then ironSold = requestedAmount
+    else goldOreSold = requestedAmount end
+    return self:CommitSale(profile, stoneSold, ironSold, goldOreSold, "수동")
+end
+
+@ExecSpace("ServerOnly")
+method boolean SellAllWithProtection(Entity player)
+    -- Sells every regular ore amount above configured and progression-required protection.
+    if player == nil then return false end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return false end
+    local data = profile:GetProfile()
+    local stoneSold = math.max(0, data.stone - self:GetEffectiveProtection(data, "stone"))
+    local ironSold = math.max(0, data.iron - self:GetEffectiveProtection(data, "iron"))
+    local goldOreSold = math.max(0, data.goldOre - self:GetEffectiveProtection(data, "gold"))
+    if stoneSold <= 0 and ironSold <= 0 and goldOreSold <= 0 then
+        profile:SetTransactionMessage("보호 수량 외에 판매할 광물이 없습니다.")
+        return false
+    end
+    return self:CommitSale(profile, stoneSold, ironSold, goldOreSold, "보호")
+end
+
+@ExecSpace("ServerOnly")
+method boolean TryAutomaticSale(AccountProfileService profile, string oreType)
+    if profile == nil or not self:IsSellableOre(oreType) or not profile.IsLoaded then return false end
+    local data = profile:GetProfile()
+    local setting = data.saleSettings[oreType]
+    if setting == nil or setting.autoSell ~= true then return false end
+    local amount = math.max(0, self:GetOreBalance(data, oreType) - self:GetEffectiveProtection(data, oreType))
+    if amount <= 0 then return false end
+    local stoneSold = 0
+    local ironSold = 0
+    local goldOreSold = 0
+    if oreType == "stone" then stoneSold = amount
+    elseif oreType == "iron" then ironSold = amount
+    else goldOreSold = amount end
+    return self:CommitSale(profile, stoneSold, ironSold, goldOreSold, "자동")
+end
+
+end
