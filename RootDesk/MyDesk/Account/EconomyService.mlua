@@ -8,6 +8,9 @@ property integer StoneSellPrice = 1
 property integer IronSellPrice = 5
 property integer GoldOreSellPrice = 20
 property integer TokenOreThreshold = 20
+property integer RareStoneSellPrice = 50
+property integer RareIronSellPrice = 200
+property integer RareGoldSellPrice = 600
 
 @ExecSpace("ServerOnly")
 method void CreditOreFromMine(Entity mineMap, string oreType, integer count)
@@ -22,6 +25,10 @@ method void CreditOreFromMine(Entity mineMap, string oreType, integer count)
     local profile = users[1]:GetComponent("script.AccountProfileService")
     if profile == nil or not profile.IsLoaded then
         log_warning("[Economy] ore credit skipped reason=profile-not-ready ore=" .. oreType)
+        return
+    end
+    if oreType == "rare_stone" or oreType == "rare_iron" or oreType == "rare_gold" then
+        if profile:RegisterRareOre(oreType, count) then self:TryAutomaticRareSale(profile, oreType) end
         return
     end
     profile:CreditOre(oreType, count)
@@ -66,6 +73,29 @@ method boolean IsSellableOre(string oreType)
 end
 
 @ExecSpace("ServerOnly")
+method boolean IsSellableRareOre(string oreType)
+    return oreType == "rare_stone" or oreType == "rare_iron" or oreType == "rare_gold"
+end
+
+@ExecSpace("ServerOnly")
+method integer GetRareSellPrice(string oreType)
+    if oreType == "rare_stone" then return self.RareStoneSellPrice end
+    if oreType == "rare_iron" then return self.RareIronSellPrice end
+    if oreType == "rare_gold" then return self.RareGoldSellPrice end
+    return 0
+end
+
+@ExecSpace("ServerOnly")
+method integer CalculateRegularSaleGold(table data, integer stoneSold, integer ironSold, integer goldOreSold)
+    -- Rare-gold collection modifies the total transaction, not an individual
+    -- per-unit price, so low-price stone sales still receive the advertised bonus.
+    local baseGold = stoneSold * self.StoneSellPrice + ironSold * self.IronSellPrice + goldOreSold * self.GoldOreSellPrice
+    local rareGoldLevel = 0
+    if type(data.rareCollection) == "table" then rareGoldLevel = data.rareCollection.rare_gold or 0 end
+    return math.floor(baseGold * (100 + rareGoldLevel * 3) / 100)
+end
+
+@ExecSpace("ServerOnly")
 method boolean CommitSale(AccountProfileService profile, integer stoneSold, integer ironSold, integer goldOreSold, string source)
     local data = profile:GetProfile()
     local stoneProgress = data.stoneTokenProgress + stoneSold
@@ -78,7 +108,7 @@ method boolean CommitSale(AccountProfileService profile, integer stoneSold, inte
         tokenGain = math.floor(ironProgress / self.TokenOreThreshold)
         ironProgress = ironProgress % self.TokenOreThreshold
     end
-    local goldGain = stoneSold * self.StoneSellPrice + ironSold * self.IronSellPrice + goldOreSold * self.GoldOreSellPrice
+    local goldGain = self:CalculateRegularSaleGold(data, stoneSold, ironSold, goldOreSold)
     if goldGain <= 0 and tokenGain <= 0 then
         return false
     end
@@ -136,6 +166,26 @@ method boolean SellAllWithProtection(Entity player)
 end
 
 @ExecSpace("ServerOnly")
+method boolean SellRareOre(Entity player, string oreType, integer requestedAmount)
+    if player == nil or not self:IsSellableRareOre(oreType) or requestedAmount <= 0 then return false end
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return false end
+    local data = profile:GetProfile()
+    local level = data.rareCollection[oreType] or 0
+    local stored = data.rareStorage[oreType] or 0
+    if level < 10 then
+        profile:SetTransactionMessage("희귀 광물 컬렉션 10단계 뒤에만 판매할 수 있습니다.")
+        return false
+    end
+    if requestedAmount > stored then
+        profile:SetTransactionMessage("보관 중인 희귀 광물 수량보다 많이 판매할 수 없습니다.")
+        return false
+    end
+    local goldGain = requestedAmount * self:GetRareSellPrice(oreType)
+    return profile:ApplyRareSale(oreType, requestedAmount, goldGain)
+end
+
+@ExecSpace("ServerOnly")
 method boolean TryAutomaticSale(AccountProfileService profile, string oreType)
     if profile == nil or not self:IsSellableOre(oreType) or not profile.IsLoaded then return false end
     local data = profile:GetProfile()
@@ -150,6 +200,19 @@ method boolean TryAutomaticSale(AccountProfileService profile, string oreType)
     elseif oreType == "iron" then ironSold = amount
     else goldOreSold = amount end
     return self:CommitSale(profile, stoneSold, ironSold, goldOreSold, "자동")
+end
+
+@ExecSpace("ServerOnly")
+method boolean TryAutomaticRareSale(AccountProfileService profile, string oreType)
+    if profile == nil or not self:IsSellableRareOre(oreType) or not profile.IsLoaded then return false end
+    local data = profile:GetProfile()
+    if (data.rareCollection[oreType] or 0) < 10 then return false end
+    local setting = data.rareSaleSettings[oreType]
+    if setting == nil or setting.autoSell ~= true then return false end
+    local amount = data.rareStorage[oreType] or 0
+    if amount <= 0 then return false end
+    local goldGain = amount * self:GetRareSellPrice(oreType)
+    return profile:ApplyRareSale(oreType, amount, goldGain)
 end
 
 end

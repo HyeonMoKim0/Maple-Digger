@@ -20,7 +20,7 @@
 | 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. 신규 프로필은 Worker01만 실행 대상이며, 구매한 Worker02~05도 독립 선택한다. |
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. Worker01 손·수레 + 세션 Depot 합계를 표시하며, 계정 광물·판매 설정·광산 선택은 별도 F7-B UI가 담당한다. |
-| 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v6 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물 판매·맵 강화는 미구현 |
+| 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v7 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물은 하역 즉시 컬렉션 등록·10단계 패시브·11회째부터 수동/자동 판매까지 구현했으며, 맵 강화는 미구현이다. |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. 1~5 시작 셀은 향후 일꾼 구매 확장을 위한 데이터로 유지한다. marker와 서버 맵 전환은 구현됐고 F5 시각/사운드 표현은 미구현 |
 
 ## 기록
@@ -103,6 +103,13 @@
 - `ProgressionService`는 현재 광산의 대표 광물(초급 돌, 깊은 철, 보석 금광석)과 `Gold 20 × 1.25^(다음 레벨-1)`의 반올림값, 대표 광물 `5 × 다음 레벨` 비용을 서버에서 계산한다. 저장 성공 뒤에만 비용 차감·용량 증가·실행 중인 일꾼의 수레 용량을 갱신한다.
 - `MineSelectUI`의 수레 강화 패널은 보유 일꾼별 20→50칸 현황, 현재 광산 기준 다음 비용, 강화 요청을 표시한다. 패널의 버튼·표시는 UIBuilder로 작성했다.
 - Maker Play 검증: 재화 부족 시 차감 없이 거절, Gold 20/돌 5로 Worker01 `20→22` 강화, `farm01 → deep_mine` 전환과 Play 재시작 뒤 22칸 복구, 50칸 최대치 거절을 확인했다. 종료 저장이 런타임 용량만 기록해 강화 레벨과 어긋날 수 있던 문제를 발견해, 종료·전환 캡처 때 용량과 레벨을 함께 동기화하도록 수정했다. 검증 뒤 v6 기본 프로필(Worker01 1명, Gold 0, `farm01`, 수레 20)로 복원했다.
+
+### 2026-07-29 — F7-B v7 희귀 광물 컬렉션·판매
+
+- 희귀 돌·철·금은 Depot 하역 시 일반 계정 광물 원장 대신 `rareCollection`에 즉시 등록한다. 종류별 처음 10개는 컬렉션 단계로만 반영되고, 11개째부터 `rareStorage`에 보관한다.
+- 컬렉션 패시브는 희귀 돌 수레 용량, 희귀 철 광맥 회복 속도, 희귀 금 일반 광물 판매 골드에 단계당 +3%를 적용한다. 희귀 확률은 맵 강화 책임으로 남긴다.
+- 희귀 판매는 서버에서 컬렉션 10단계와 보관 수량을 모두 검증한다. 10단계 전에는 수동 판매와 자동 판매 설정을 모두 거부하고, 이후 희귀 돌 50 Gold·희귀 철 200 Gold·희귀 금 600 Gold로 처리한다.
+- `MineSelectUI`에는 일반 판매 패널에서 여는 별도 희귀 판매 팝업을 UIBuilder로 연결했다. 팝업은 희귀 종류별 수동 판매와 자동 판매 토글, 잠금·보관·설정 상태를 표시한다. Maker Play에서 v6→v7 마이그레이션과 UI Logic 초기화를 확인했으며, 서버 주입 테스트로 잠금 거부(`false`)와 희귀 돌 2개 자동 판매(`+100 Gold`)를 검증한 뒤 개발 프로필을 원복했다. 실제 화면 배치의 시각 검수와 전체 직접 조작 회귀는 `docs/16-사용자-검수-체크리스트.md`에서 관리한다.
 
 ### 2026-07-29 — 현황 정합화·단일 시작 일꾼
 

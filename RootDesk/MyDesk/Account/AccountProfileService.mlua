@@ -5,7 +5,7 @@ property string StorageKey = "maple-digger.account.v1"
 property string BackupStorageKey = "maple-digger.account.backup.v1"
 property string RecoveryArchiveStorageKey = "maple-digger.account.recovery-archive.v1"
 property string SessionLockStorageKey = "maple-digger.account.session-lock.v1"
-property integer SchemaVersion = 6
+property integer SchemaVersion = 7
 property integer AutoSaveSeconds = 300
 property integer SessionLockLeaseSeconds = 90
 property integer SessionLockRefreshSeconds = 30
@@ -27,6 +27,33 @@ property integer Iron = 0
 
 @Sync
 property integer GoldOre = 0
+
+@Sync
+property integer RareStoneCollectionLevel = 0
+
+@Sync
+property integer RareIronCollectionLevel = 0
+
+@Sync
+property integer RareGoldCollectionLevel = 0
+
+@Sync
+property integer RareStoneStored = 0
+
+@Sync
+property integer RareIronStored = 0
+
+@Sync
+property integer RareGoldStored = 0
+
+@Sync
+property boolean RareStoneAutoSell = false
+
+@Sync
+property boolean RareIronAutoSell = false
+
+@Sync
+property boolean RareGoldAutoSell = false
 
 @Sync
 property boolean StoneAutoSell = false
@@ -166,6 +193,13 @@ method table CreateDefaultProfile()
         gemMineUnlocked = false,
         stoneTokenProgress = 0,
         ironTokenProgress = 0,
+        rareCollection = { rare_stone = 0, rare_iron = 0, rare_gold = 0 },
+        rareStorage = { rare_stone = 0, rare_iron = 0, rare_gold = 0 },
+        rareSaleSettings = {
+            rare_stone = { autoSell = false },
+            rare_iron = { autoSell = false },
+            rare_gold = { autoSell = false },
+        },
         saleSettings = {
             stone = { autoSell = false, protectedAmount = 0 },
             iron = { autoSell = false, protectedAmount = 0 },
@@ -226,7 +260,7 @@ method table CreateWorkerRecord(integer workerIndex)
         owned = true,
         cartUpgradeLevel = 0,
         cartCapacity = 20,
-        cart = { stone = 0, iron = 0, gold = 0 },
+        cart = { stone = 0, iron = 0, gold = 0, rare_stone = 0, rare_iron = 0, rare_gold = 0 },
         cartCount = 0,
         pendingOre = "",
         lastValidProgramId = "default-worker-" .. suffix,
@@ -461,8 +495,11 @@ method table NormalizeProfile(table profile)
     normalized.stoneTokenProgress = profile.stoneTokenProgress or normalized.stoneTokenProgress
     normalized.ironTokenProgress = profile.ironTokenProgress or normalized.ironTokenProgress
     normalized.saleSettings = self:NormalizeSaleSettings(profile.saleSettings)
+    normalized.rareCollection = self:NormalizeRareCounts(profile.rareCollection)
+    normalized.rareStorage = self:NormalizeRareStorage(profile.rareStorage)
+    normalized.rareSaleSettings = self:NormalizeRareSaleSettings(profile.rareSaleSettings)
     if self:IsKnownMineMap(profile.lastMineId) then normalized.lastMineId = profile.lastMineId end
-    normalized.workers = self:NormalizeWorkers(profile.workers)
+    normalized.workers = self:NormalizeWorkers(profile.workers, normalized.rareCollection.rare_stone)
     normalized.unlocksJson = profile.unlocksJson or normalized.unlocksJson
     normalized.programLibraryJson = profile.programLibraryJson or normalized.programLibraryJson
     normalized.workerAppearanceJson = profile.workerAppearanceJson or normalized.workerAppearanceJson
@@ -475,7 +512,7 @@ method table NormalizeSaleSettings(any source)
     local settings = self:CreateDefaultProfile().saleSettings
     if type(source) ~= "table" then return settings end
     for oreType, record in pairs(source) do
-        if self:IsKnownOre(oreType) and type(record) == "table" then
+        if self:IsRegularOre(oreType) and type(record) == "table" then
             settings[oreType].autoSell = record.autoSell == true
             if type(record.protectedAmount) == "number" then
                 settings[oreType].protectedAmount = math.max(0, math.floor(record.protectedAmount))
@@ -486,7 +523,43 @@ method table NormalizeSaleSettings(any source)
 end
 
 @ExecSpace("ServerOnly")
-method table NormalizeWorkers(any workers)
+method table NormalizeRareCounts(any source)
+    local counts = { rare_stone = 0, rare_iron = 0, rare_gold = 0 }
+    if type(source) ~= "table" then return counts end
+    for oreType, count in pairs(source) do
+        if self:IsRareOre(oreType) and type(count) == "number" then
+            counts[oreType] = math.max(0, math.min(10, math.floor(count)))
+        end
+    end
+    return counts
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeRareStorage(any source)
+    local counts = { rare_stone = 0, rare_iron = 0, rare_gold = 0 }
+    if type(source) ~= "table" then return counts end
+    for oreType, count in pairs(source) do
+        if self:IsRareOre(oreType) and type(count) == "number" then
+            counts[oreType] = math.max(0, math.floor(count))
+        end
+    end
+    return counts
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeRareSaleSettings(any source)
+    local settings = self:CreateDefaultProfile().rareSaleSettings
+    if type(source) ~= "table" then return settings end
+    for oreType, record in pairs(source) do
+        if self:IsRareOre(oreType) and type(record) == "table" then
+            settings[oreType].autoSell = record.autoSell == true
+        end
+    end
+    return settings
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeWorkers(any workers, integer rareStoneLevel)
     -- Owned workers are contiguous 1..5. Runtime entities and interpreter frames
     -- remain session-only, but each worker's cart and selected program reference persist.
     if type(workers) ~= "table" or type(workers[1]) ~= "table" then
@@ -524,8 +597,9 @@ method table NormalizeWorkers(any workers)
             end
         end
         record.cartCount = self:CountCart(record.cart)
-        if record.cartCount > record.cartCapacity then
-            record.cart = { stone = 0, iron = 0, gold = 0 }
+        local effectiveCapacity = record.cartCapacity + math.floor(record.cartCapacity * rareStoneLevel * 3 / 100)
+        if record.cartCount > effectiveCapacity then
+            record.cart = { stone = 0, iron = 0, gold = 0, rare_stone = 0, rare_iron = 0, rare_gold = 0 }
             record.cartCount = 0
             record.pendingOre = ""
             log_warning("[AccountProfile] invalid saved worker cart cleared index=" .. tostring(workerIndex))
@@ -537,8 +611,18 @@ method table NormalizeWorkers(any workers)
 end
 
 @ExecSpace("ServerOnly")
-method boolean IsKnownOre(string oreType)
+method boolean IsRegularOre(string oreType)
     return oreType == "stone" or oreType == "iron" or oreType == "gold"
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsRareOre(string oreType)
+    return oreType == "rare_stone" or oreType == "rare_iron" or oreType == "rare_gold"
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsKnownOre(string oreType)
+    return self:IsRegularOre(oreType) or self:IsRareOre(oreType)
 end
 
 @ExecSpace("ServerOnly")
@@ -570,6 +654,15 @@ method void SyncRuntimeState()
     self.Stone = self._T.profile.stone
     self.Iron = self._T.profile.iron
     self.GoldOre = self._T.profile.goldOre
+    self.RareStoneCollectionLevel = self._T.profile.rareCollection.rare_stone
+    self.RareIronCollectionLevel = self._T.profile.rareCollection.rare_iron
+    self.RareGoldCollectionLevel = self._T.profile.rareCollection.rare_gold
+    self.RareStoneStored = self._T.profile.rareStorage.rare_stone
+    self.RareIronStored = self._T.profile.rareStorage.rare_iron
+    self.RareGoldStored = self._T.profile.rareStorage.rare_gold
+    self.RareStoneAutoSell = self._T.profile.rareSaleSettings.rare_stone.autoSell
+    self.RareIronAutoSell = self._T.profile.rareSaleSettings.rare_iron.autoSell
+    self.RareGoldAutoSell = self._T.profile.rareSaleSettings.rare_gold.autoSell
     self.StoneAutoSell = self._T.profile.saleSettings.stone.autoSell
     self.IronAutoSell = self._T.profile.saleSettings.iron.autoSell
     self.GoldOreAutoSell = self._T.profile.saleSettings.gold.autoSell
@@ -591,7 +684,9 @@ end
 method integer GetWorkerCartCapacity(integer workerIndex)
     local record = self._T.profile.workers[workerIndex]
     if record == nil then return 20 end
-    return math.max(20, math.min(50, math.floor(record.cartCapacity or 20)))
+    local baseCapacity = math.max(20, math.min(50, math.floor(record.cartCapacity or 20)))
+    local bonus = math.floor(baseCapacity * self._T.profile.rareCollection.rare_stone * 3 / 100)
+    return baseCapacity + bonus
 end
 
 @ExecSpace("ServerOnly")
@@ -649,9 +744,11 @@ method void CaptureCurrentWorkerState()
         local worker = self:GetWorkerByIndex(workerIndex)
         local record = self._T.profile.workers[workerIndex]
         if worker ~= nil and record ~= nil then
-            record.cartCapacity = math.max(20, math.min(50, math.floor(worker.CartCapacity)))
+            -- Runtime capacity includes the rare-stone collection bonus.  Only the
+            -- base upgrade capacity belongs in persistent worker progression.
+            record.cartCapacity = math.max(20, math.min(50, math.floor(record.cartCapacity or 20)))
             record.cartUpgradeLevel = math.max(0, math.min(15, math.floor((record.cartCapacity - 20) / 2)))
-            record.cart = { stone = 0, iron = 0, gold = 0 }
+            record.cart = { stone = 0, iron = 0, gold = 0, rare_stone = 0, rare_iron = 0, rare_gold = 0 }
             for oreType, count in pairs(worker.Cart) do
                 if self:IsKnownOre(oreType) and type(count) == "number" and count > 0 then
                     record.cart[oreType] = math.floor(count)
@@ -694,7 +791,7 @@ method boolean RestoreOwnedWorker(integer workerIndex)
         worker = spawned:GetComponent("script.WorkerController")
     end
     if worker == nil then return false end
-    worker:ConfigureFromProfile(workerIndex, record.cartCapacity, record.cart, record.pendingOre)
+    worker:ConfigureFromProfile(workerIndex, self:GetWorkerCartCapacity(workerIndex), record.cart, record.pendingOre)
     return true
 end
 
@@ -773,9 +870,10 @@ method boolean PurchaseCartUpgrade(integer workerIndex, integer goldCost, string
         return false
     end
     local worker = self:GetWorkerByIndex(workerIndex)
-    if worker ~= nil then worker:ApplyCartCapacity(record.cartCapacity) end
-    self:SetTransactionMessage("일꾼 " .. tostring(workerIndex) .. " 수레 강화: " .. tostring(record.cartCapacity) .. "칸")
-    log("[AccountProfile] cart upgraded worker=" .. tostring(workerIndex) .. " level=" .. tostring(record.cartUpgradeLevel) .. " capacity=" .. tostring(record.cartCapacity))
+    local effectiveCapacity = self:GetWorkerCartCapacity(workerIndex)
+    if worker ~= nil then worker:ApplyCartCapacity(effectiveCapacity) end
+    self:SetTransactionMessage("일꾼 " .. tostring(workerIndex) .. " 수레 강화: 기본 " .. tostring(record.cartCapacity) .. "칸 / 적용 " .. tostring(effectiveCapacity) .. "칸")
+    log("[AccountProfile] cart upgraded worker=" .. tostring(workerIndex) .. " level=" .. tostring(record.cartUpgradeLevel) .. " baseCapacity=" .. tostring(record.cartCapacity) .. " effectiveCapacity=" .. tostring(effectiveCapacity))
     return true
 end
 
@@ -834,6 +932,91 @@ method void CreditOre(string oreType, integer count)
     self:SyncRuntimeState()
     self:MarkProfileDirty()
     log("[AccountProfile] credited ore=" .. oreType .. " count=" .. tostring(count))
+end
+
+@ExecSpace("ServerOnly")
+method boolean RegisterRareOre(string oreType, integer count)
+    -- A rare stack is registered only when it reaches the account warehouse.
+    -- The first ten registrations advance the permanent collection; later
+    -- stacks remain sellable inventory and never grant an extra passive.
+    if count <= 0 or not self:IsRareOre(oreType) or not self:CanWriteProfile() then return false end
+    local profile = self._T.profile
+    local snapshot = _HttpService:JSONEncode(profile)
+    local level = profile.rareCollection[oreType] or 0
+    local collectionGain = math.min(count, math.max(0, 10 - level))
+    local storedGain = count - collectionGain
+    profile.rareCollection[oreType] = level + collectionGain
+    if storedGain > 0 then
+        profile.rareStorage[oreType] = (profile.rareStorage[oreType] or 0) + storedGain
+    end
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(_HttpService:JSONDecode(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("희귀 광물 등록 저장에 실패했습니다.")
+        return false
+    end
+    if oreType == "rare_stone" and collectionGain > 0 then
+        self:ApplyRareStoneCartBonus()
+    end
+    self:SetTransactionMessage("희귀 광물 등록: " .. oreType .. " 컬렉션 +" .. tostring(collectionGain) .. ", 보관 +" .. tostring(storedGain))
+    log("[AccountProfile] rare registered ore=" .. oreType .. " collectionGain=" .. tostring(collectionGain) .. " storedGain=" .. tostring(storedGain))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method void ApplyRareStoneCartBonus()
+    -- Reapply derived runtime capacity after a collection level changes or rolls back.
+    for workerIndex = 1, #self._T.profile.workers do
+        local worker = self:GetWorkerByIndex(workerIndex)
+        if worker ~= nil then
+            worker:ApplyCartCapacity(self:GetWorkerCartCapacity(workerIndex))
+        end
+    end
+end
+
+@ExecSpace("ServerOnly")
+method boolean UpdateRareAutoSell(string oreType, boolean autoSell)
+    if not self:IsRareOre(oreType) or not self:CanWriteProfile() then return false end
+    if (self._T.profile.rareCollection[oreType] or 0) < 10 then
+        self:SetTransactionMessage("희귀 컬렉션 10단계를 달성한 뒤 자동 판매를 설정할 수 있습니다.")
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(self._T.profile)
+    self._T.profile.rareSaleSettings[oreType].autoSell = autoSell
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if self:SaveProfileAndWait() then
+        self:SetTransactionMessage("희귀 광물 자동 판매 설정: " .. oreType .. " = " .. tostring(autoSell))
+        return true
+    end
+    self._T.profile = self:NormalizeProfile(_HttpService:JSONDecode(snapshot))
+    self:SyncRuntimeState()
+    self:SetTransactionMessage("희귀 광물 판매 설정 저장에 실패했습니다.")
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method boolean ApplyRareSale(string oreType, integer amount, integer goldGain)
+    if not self:IsRareOre(oreType) or amount <= 0 or goldGain <= 0 or not self:CanWriteProfile() then return false end
+    local profile = self._T.profile
+    if (profile.rareCollection[oreType] or 0) < 10 then return false end
+    if (profile.rareStorage[oreType] or 0) < amount then return false end
+    local snapshot = _HttpService:JSONEncode(profile)
+    profile.rareStorage[oreType] = profile.rareStorage[oreType] - amount
+    profile.gold = profile.gold + goldGain
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if self:SaveProfileAndWait() then
+        self:SetTransactionMessage("희귀 광물 판매 완료: 골드 +" .. tostring(goldGain))
+        log("[AccountProfile] rare sale ore=" .. oreType .. " amount=" .. tostring(amount) .. " gold=" .. tostring(goldGain))
+        return true
+    end
+    self._T.profile = self:NormalizeProfile(_HttpService:JSONDecode(snapshot))
+    self:SyncRuntimeState()
+    self:SetTransactionMessage("희귀 광물 판매 저장에 실패했습니다.")
+    return false
 end
 
 @ExecSpace("ServerOnly")
@@ -905,6 +1088,18 @@ end
 method boolean RequestSaleSetting(string oreType, boolean autoSell, integer protectedAmount)
     local updated = self:UpdateSaleSetting(oreType, autoSell, protectedAmount)
     if updated and autoSell then _EconomyService:TryAutomaticSale(self, oreType) end
+    return updated
+end
+
+@ExecSpace("Server")
+method boolean RequestRareSale(string oreType, integer requestedAmount)
+    return _EconomyService:SellRareOre(self.Entity, oreType, requestedAmount)
+end
+
+@ExecSpace("Server")
+method boolean RequestRareSaleSetting(string oreType, boolean autoSell)
+    local updated = self:UpdateRareAutoSell(oreType, autoSell)
+    if updated and autoSell then _EconomyService:TryAutomaticRareSale(self, oreType) end
     return updated
 end
 

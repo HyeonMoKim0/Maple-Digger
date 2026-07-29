@@ -31,8 +31,18 @@ property ButtonComponent btnToggleProtected = "e802e753-5484-40b5-b941-04c34ec1d
 property ButtonComponent btnSaveProtection = "3635c978-5a77-4118-8d49-519629327e6f"
 property ButtonComponent btnToggleAutoSell = "20ce51cb-b8b0-4ded-949d-74050165cb39"
 property TextGUIRendererComponent saleSummaryText = "1764b8f3-caf1-407a-b19c-754d038bc501"
+property ButtonComponent btnRareOpen = "3ab7dc8e-ddfc-43ce-a503-c174cc6fb8c4"
+property Entity rarePanel = "1e5dbbfb-0671-4eb3-84c5-d39b45ad9ecd"
+property ButtonComponent btnRareClose = "f64125f4-938c-4639-8684-d5d5190311c2"
 property ButtonComponent btnBuyWorker = "3595093e-2707-4992-8d2c-43b2f5a64c6a"
 property TextGUIRendererComponent workerStatusText = "8d793449-ab64-4ccf-b43c-76e1f9b73324"
+property ButtonComponent btnRareStone = "49556e19-68aa-4d27-bed5-a716026ab9ac"
+property ButtonComponent btnRareIron = "e13c8f6c-0241-441e-a836-e39de5567820"
+property ButtonComponent btnRareGold = "e8bb96b2-72b5-484e-bf9c-d0513240da82"
+property ButtonComponent btnRareStoneAuto = "2374bf6c-d566-42f9-9068-2de8a37bb5ff"
+property ButtonComponent btnRareIronAuto = "e75afb27-f64b-4bb5-b938-62bf496847dd"
+property ButtonComponent btnRareGoldAuto = "a4a3f45e-1293-451c-aa1e-3c27078c7ec5"
+property TextGUIRendererComponent rareSummaryText = "974f63d6-180f-4fb6-b496-ea4c485e3681"
 property ButtonComponent btnCartOpen = "467843b6-73f5-425b-9b94-2f0cd0f0a89d"
 property Entity cartPanel = "2ddf0bf0-6b16-4e5a-8422-56f1685cbf55"
 property ButtonComponent btnCartClose = "fad448d9-9044-4c6c-925f-353d66eaea43"
@@ -54,6 +64,7 @@ method void OnBeginPlay()
     self._T.cartWorkerIndex = 1
     if self.selectPanel ~= nil then self.selectPanel.Enable = false end
     if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     if self.cartPanel ~= nil then self.cartPanel.Enable = false end
     self:ConnectButton("open", self.btnOpen, self.OnOpenClicked)
     self:ConnectButton("close", self.btnClose, self.OnCloseClicked)
@@ -73,7 +84,15 @@ method void OnBeginPlay()
     self:ConnectButton("toggleProtected", self.btnToggleProtected, self.OnToggleProtectedClicked)
     self:ConnectButton("saveProtection", self.btnSaveProtection, self.OnSaveProtectionClicked)
     self:ConnectButton("toggleAutoSell", self.btnToggleAutoSell, self.OnToggleAutoSellClicked)
+    self:ConnectButton("rareOpen", self.btnRareOpen, self.OnRareOpenClicked)
+    self:ConnectButton("rareClose", self.btnRareClose, self.OnRareCloseClicked)
     self:ConnectButton("buyWorker", self.btnBuyWorker, self.OnBuyWorkerClicked)
+    self:ConnectButton("rareStone", self.btnRareStone, self.OnRareStoneClicked)
+    self:ConnectButton("rareIron", self.btnRareIron, self.OnRareIronClicked)
+    self:ConnectButton("rareGold", self.btnRareGold, self.OnRareGoldClicked)
+    self:ConnectButton("rareStoneAuto", self.btnRareStoneAuto, self.OnRareStoneAutoClicked)
+    self:ConnectButton("rareIronAuto", self.btnRareIronAuto, self.OnRareIronAutoClicked)
+    self:ConnectButton("rareGoldAuto", self.btnRareGoldAuto, self.OnRareGoldAutoClicked)
     self:ConnectButton("cartOpen", self.btnCartOpen, self.OnCartOpenClicked)
     self:ConnectButton("cartClose", self.btnCartClose, self.OnCartCloseClicked)
     self:ConnectButton("cartWorker1", self.btnCartWorker1, self.OnCartWorker1Clicked)
@@ -110,7 +129,8 @@ end
 method void RefreshUI(boolean force)
     local profile = self:GetProfile()
     if profile == nil then return end
-    local state = tostring(profile.Gold) .. ":" .. tostring(profile.MineTokens) .. ":" .. tostring(profile.Stone) .. ":" .. tostring(profile.Iron) .. ":" .. tostring(profile.GoldOre) .. ":" .. tostring(profile.OwnedWorkerCount) .. ":" .. tostring(profile.Worker1CartCapacity) .. ":" .. tostring(profile.Worker2CartCapacity) .. ":" .. tostring(profile.Worker3CartCapacity) .. ":" .. tostring(profile.Worker4CartCapacity) .. ":" .. tostring(profile.Worker5CartCapacity) .. ":" .. tostring(profile.StoneAutoSell) .. ":" .. tostring(profile.IronAutoSell) .. ":" .. tostring(profile.GoldOreAutoSell) .. ":" .. tostring(profile.StoneProtectedAmount) .. ":" .. tostring(profile.IronProtectedAmount) .. ":" .. tostring(profile.GoldOreProtectedAmount) .. ":" .. tostring(profile.DeepMineUnlocked) .. ":" .. tostring(profile.GemMineUnlocked) .. ":" .. profile.LastTransactionMessage .. ":" .. profile.RecoveryStatus
+    local state = tostring(profile.Gold) .. ":" .. tostring(profile.MineTokens) .. ":" .. tostring(profile.Stone) .. ":" .. tostring(profile.Iron) .. ":" .. tostring(profile.GoldOre) .. ":" .. tostring(profile.RareStoneCollectionLevel) .. ":" .. tostring(profile.RareIronCollectionLevel) .. ":" .. tostring(profile.RareGoldCollectionLevel) .. ":" .. tostring(profile.RareStoneStored) .. ":" .. tostring(profile.RareIronStored) .. ":" .. tostring(profile.RareGoldStored) .. ":" .. tostring(profile.OwnedWorkerCount) .. ":" .. tostring(profile.Worker1CartCapacity) .. ":" .. tostring(profile.Worker2CartCapacity) .. ":" .. tostring(profile.Worker3CartCapacity) .. ":" .. tostring(profile.Worker4CartCapacity) .. ":" .. tostring(profile.Worker5CartCapacity) .. ":" .. tostring(profile.StoneAutoSell) .. ":" .. tostring(profile.IronAutoSell) .. ":" .. tostring(profile.GoldOreAutoSell) .. ":" .. tostring(profile.StoneProtectedAmount) .. ":" .. tostring(profile.IronProtectedAmount) .. ":" .. tostring(profile.GoldOreProtectedAmount) .. ":" .. tostring(profile.DeepMineUnlocked) .. ":" .. tostring(profile.GemMineUnlocked) .. ":" .. profile.LastTransactionMessage .. ":" .. profile.RecoveryStatus
+    state = state .. ":" .. tostring(profile.RareStoneAutoSell) .. ":" .. tostring(profile.RareIronAutoSell) .. ":" .. tostring(profile.RareGoldAutoSell)
     if not force and state == self._T.lastState then return end
     self._T.lastState = state
 
@@ -132,7 +152,9 @@ method void RefreshUI(boolean force)
         end
     end
     if self.workerStatusText ~= nil then self.workerStatusText.Text = self:GetWorkerPurchaseStatus(profile) end
+    if self.rareSummaryText ~= nil then self.rareSummaryText.Text = "희귀 컬렉션  돌 " .. tostring(profile.RareStoneCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareStoneStored) .. ") · 철 " .. tostring(profile.RareIronCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareIronStored) .. ") · 금 " .. tostring(profile.RareGoldCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareGoldStored) .. ")" end
     if self.cartSummaryText ~= nil then self.cartSummaryText.Text = self:GetCartSummary(profile) end
+    if self.rareSummaryText ~= nil then self.rareSummaryText.Text = self:GetRareSummary(profile) end
     self:RefreshSaleSummary(profile)
 end
 
@@ -236,17 +258,22 @@ end
 @ExecSpace("ClientOnly")
 method void OnOpenClicked()
     if self.selectPanel ~= nil then self.selectPanel.Enable = true end
+    if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     self:RefreshUI(true)
 end
 
 @ExecSpace("ClientOnly")
 method void OnCloseClicked()
     if self.selectPanel ~= nil then self.selectPanel.Enable = false end
+    if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.rarePanel ~= nil then self.rarePanel.Enable = false end
 end
 
 @ExecSpace("ClientOnly")
 method void OnSellClicked()
     if self.salePanel ~= nil then self.salePanel.Enable = true end
+    if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     self:SelectOre(self._T.selectedOre)
     if self.saleAmountInput ~= nil then self.saleAmountInput.Text = "1" end
 end
@@ -254,6 +281,19 @@ end
 @ExecSpace("ClientOnly")
 method void OnSaleCloseClicked()
     if self.salePanel ~= nil then self.salePanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OnRareOpenClicked()
+    if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.rarePanel ~= nil then self.rarePanel.Enable = true end
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnRareCloseClicked()
+    if self.rarePanel ~= nil then self.rarePanel.Enable = false end
+    if self.salePanel ~= nil then self.salePanel.Enable = true end
 end
 
 @ExecSpace("ClientOnly")
@@ -356,6 +396,61 @@ method void OnBuyWorkerClicked()
 end
 
 @ExecSpace("ClientOnly")
+method void OnRareStoneClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestRareSale("rare_stone", 1) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnRareIronClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestRareSale("rare_iron", 1) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnRareGoldClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestRareSale("rare_gold", 1) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnRareStoneAutoClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestRareSaleSetting("rare_stone", not profile.RareStoneAutoSell) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnRareIronAutoClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestRareSaleSetting("rare_iron", not profile.RareIronAutoSell) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnRareGoldAutoClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestRareSaleSetting("rare_gold", not profile.RareGoldAutoSell) end
+end
+
+@ExecSpace("ClientOnly")
+method string GetRareSummary(AccountProfileService profile)
+    local stoneStatus = "잠금"
+    local ironStatus = "잠금"
+    local goldStatus = "잠금"
+    if profile.RareStoneCollectionLevel >= 10 then stoneStatus = "판매 가능" end
+    if profile.RareIronCollectionLevel >= 10 then ironStatus = "판매 가능" end
+    if profile.RareGoldCollectionLevel >= 10 then goldStatus = "판매 가능" end
+
+    local stoneAuto = "꺼짐"
+    local ironAuto = "꺼짐"
+    local goldAuto = "꺼짐"
+    if profile.RareStoneAutoSell then stoneAuto = "켜짐" end
+    if profile.RareIronAutoSell then ironAuto = "켜짐" end
+    if profile.RareGoldAutoSell then goldAuto = "켜짐" end
+
+    return "희귀 컬렉션: 돌 " .. tostring(profile.RareStoneCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareStoneStored) .. ") · 철 " .. tostring(profile.RareIronCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareIronStored) .. ") · 금 " .. tostring(profile.RareGoldCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareGoldStored) .. ")\n10단계 전 판매·자동 판매 잠금 | 돌 " .. stoneStatus .. "/" .. stoneAuto .. " · 철 " .. ironStatus .. "/" .. ironAuto .. " · 금 " .. goldStatus .. "/" .. goldAuto
+end
+
+@ExecSpace("ClientOnly")
 method void OnCartOpenClicked()
     if self.cartPanel ~= nil then self.cartPanel.Enable = true end
     self._T.cartWorkerIndex = 1
@@ -428,7 +523,15 @@ method void OnEndPlay()
     self:DisconnectButton("toggleProtected", self.btnToggleProtected)
     self:DisconnectButton("saveProtection", self.btnSaveProtection)
     self:DisconnectButton("toggleAutoSell", self.btnToggleAutoSell)
+    self:DisconnectButton("rareOpen", self.btnRareOpen)
+    self:DisconnectButton("rareClose", self.btnRareClose)
     self:DisconnectButton("buyWorker", self.btnBuyWorker)
+    self:DisconnectButton("rareStone", self.btnRareStone)
+    self:DisconnectButton("rareIron", self.btnRareIron)
+    self:DisconnectButton("rareGold", self.btnRareGold)
+    self:DisconnectButton("rareStoneAuto", self.btnRareStoneAuto)
+    self:DisconnectButton("rareIronAuto", self.btnRareIronAuto)
+    self:DisconnectButton("rareGoldAuto", self.btnRareGoldAuto)
 end
 
 @ExecSpace("ClientOnly")

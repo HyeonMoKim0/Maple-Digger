@@ -21,6 +21,9 @@ property integer LayoutVersion = 2
 property integer SpecialVeinSpawnTicks = 750
 property integer SpecialVeinMaxActive = 3
 property integer SpecialVeinSpawnBatch = 2
+property integer RareDropChancePercent = 1
+property integer SpecialRareDropChancePercent = 5
+property integer RareDropTestPercent = -1
 -- These tables are map-authored configuration injection points. They remain
 -- empty in the existing prototype map, where the explicit fallback layout
 -- below preserves the validated beginner-mine route.
@@ -90,7 +93,7 @@ method void AdvanceTick()
     -- Applies one recovery step to every authored vein before workers act.
     local recoveredCount = 0
     for key, vein in pairs(self.VeinState) do
-        vein.recoverElapsed = vein.recoverElapsed + 1
+        vein.recoverElapsed = vein.recoverElapsed + self:GetRareIronRecoveryMultiplier()
         if vein.recoverElapsed >= vein.recoverTicks then
             vein.recoverElapsed = 0
             if vein.stage < self.MaxReserveStage then
@@ -515,6 +518,29 @@ method boolean HasOre(integer cellX, integer cellY)
 end
 
 @ExecSpace("ServerOnly")
+method number GetRareIronRecoveryMultiplier()
+    -- This MVP has one active player per mine map. The passive changes recovery
+    -- speed continuously, avoiding integer-tick rounding that would erase early levels.
+    if self.Entity.MapComponent == nil then return 1.0 end
+    local users = _UserService:GetUsersByMapComponent(self.Entity.MapComponent)
+    if users == nil or #users ~= 1 then return 1.0 end
+    local profile = users[1]:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return 1.0 end
+    return 1.0 + profile.RareIronCollectionLevel * 0.03
+end
+
+@ExecSpace("ServerOnly")
+method boolean RollRareDrop(boolean isSpecial)
+    local chance = self.RareDropChancePercent
+    if isSpecial then chance = self.SpecialRareDropChancePercent end
+    if self.RareDropTestPercent >= 0 then chance = self.RareDropTestPercent end
+    chance = math.max(0, math.min(100, chance))
+    if chance <= 0 then return false end
+    if chance >= 100 then return true end
+    return _UtilLogic:RandomIntegerRange(1, 100) <= chance
+end
+
+@ExecSpace("ServerOnly")
 method string TryMine(integer cellX, integer cellY)
     -- Atomically consumes one reserve stage and returns its ore type on success.
     local key = self:CellKey(cellX, cellY)
@@ -523,8 +549,12 @@ method string TryMine(integer cellX, integer cellY)
 
     vein.stage = vein.stage - 1
     vein.recoverElapsed = 0
-    log("[VeinTick] mined cell " .. key .. " ore=" .. vein.ore .. " stage=" .. vein.stage)
-    return vein.ore
+    local deliveredOre = vein.ore
+    if self:RollRareDrop(vein.isSpecial == true) then
+        deliveredOre = "rare_" .. vein.ore
+    end
+    log("[VeinTick] mined cell " .. key .. " ore=" .. deliveredOre .. " stage=" .. vein.stage)
+    return deliveredOre
 end
 
 @ExecSpace("ServerOnly")

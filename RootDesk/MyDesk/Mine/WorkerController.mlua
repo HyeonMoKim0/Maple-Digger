@@ -134,12 +134,14 @@ method void ConfigureFromProfile(integer workerIndex, integer cartCapacity, tabl
     -- and authored start cell only after the spawn lifecycle has completed.
     self:ResetExecution()
     self.WorkerIndex = workerIndex
-    local configuredCapacity = math.max(20, math.min(50, cartCapacity))
+    -- The 20→50 upgrade cap applies to base capacity only. Rare-stone
+    -- collection is a separate account bonus and can raise this runtime cap.
+    local configuredCapacity = math.max(20, math.min(100, cartCapacity))
     self.CartCapacity = configuredCapacity
-    self.Cart = { stone = 0, iron = 0, gold = 0 }
+    self.Cart = { stone = 0, iron = 0, gold = 0, rare_stone = 0, rare_iron = 0, rare_gold = 0 }
     if type(cart) == "table" then
         for oreType, count in pairs(cart) do
-            if (oreType == "stone" or oreType == "iron" or oreType == "gold") and type(count) == "number" and count > 0 then
+            if (oreType == "stone" or oreType == "iron" or oreType == "gold" or oreType == "rare_stone" or oreType == "rare_iron" or oreType == "rare_gold") and type(count) == "number" and count > 0 then
                 self.Cart[oreType] = math.floor(count)
             end
         end
@@ -147,13 +149,13 @@ method void ConfigureFromProfile(integer workerIndex, integer cartCapacity, tabl
     self.CartCount = 0
     for _, count in pairs(self.Cart) do self.CartCount = self.CartCount + count end
     if self.CartCount > self.CartCapacity then
-        self.Cart = { stone = 0, iron = 0, gold = 0 }
+        self.Cart = { stone = 0, iron = 0, gold = 0, rare_stone = 0, rare_iron = 0, rare_gold = 0 }
         self.CartCount = 0
         pendingOre = ""
         log_warning(self:WorkerTag() .. " profile cart exceeded capacity and was cleared")
     end
     self.PendingOre = ""
-    if pendingOre == "stone" or pendingOre == "iron" or pendingOre == "gold" then self.PendingOre = pendingOre end
+    if pendingOre == "stone" or pendingOre == "iron" or pendingOre == "gold" or pendingOre == "rare_stone" or pendingOre == "rare_iron" or pendingOre == "rare_gold" then self.PendingOre = pendingOre end
     if self._T.mineState ~= nil then
         local configuredStart = self._T.mineState:GetWorkerStart(workerIndex)
         if configuredStart ~= nil then
@@ -171,7 +173,7 @@ end
 method boolean ApplyCartCapacity(integer cartCapacity)
     -- A purchased upgrade must preserve the currently running program, location,
     -- hand, and cart stacks; only the capacity limit changes.
-    local nextCapacity = math.max(20, math.min(50, cartCapacity))
+    local nextCapacity = math.max(20, math.min(100, cartCapacity))
     if nextCapacity < self.CartCount then return false end
     self.CartCapacity = nextCapacity
     log(self:WorkerTag() .. " cart capacity upgraded=" .. tostring(self.CartCapacity))
@@ -470,7 +472,7 @@ method void DoUnload()
     for oreType, count in pairs(self.Cart) do
         if count > 0 then self._T.mineState:AddToDepot(oreType, count) end
     end
-    self.Cart = { stone = 0 }
+    self.Cart = { stone = 0, rare_stone = 0 }
     self.CartCount = 0
     log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload count=" .. unloaded .. " depotStone=" .. self._T.mineState.DepotStone)
 end
@@ -479,7 +481,7 @@ end
 method void ResetInventory()
     -- Session-local reset used by restart flows and deterministic verification.
     self.PendingOre = ""
-    self.Cart = { stone = 0 }
+    self.Cart = { stone = 0, rare_stone = 0 }
     self.CartCount = 0
 end
 
