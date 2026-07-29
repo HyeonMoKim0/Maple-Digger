@@ -1,0 +1,1802 @@
+{
+  "Id": "",
+  "GameId": "",
+  "EntryKey": "map://deep_mine",
+  "ContentType": "x-mod/map",
+  "Content": "",
+  "Usage": 0,
+  "UsePublish": 1,
+  "UseService": 0,
+  "CoreVersion": "26.5.0.0",
+  "StudioVersion": "0.1.0.0",
+  "DynamicLoading": 0,
+  "ContentProto": {
+    "Use": "Binary",
+    "Entities": [
+      {
+        "id": "2cf67e7d-d98c-4c7f-a5d1-f6143b59ea24",
+        "path": "/maps/deep_mine",
+        "componentNames": "MOD.Core.MapComponent,MOD.Core.FootholdComponent,script.VeinTickSimulator",
+        "jsonString": {
+          "name": "deep_mine",
+          "path": "/maps/deep_mine",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 0,
+          "pathConstraints": "//",
+          "revision": 1,
+          "modelId": null,
+          "@components": [
+            {
+              "@type": "MOD.Core.MapComponent",
+              "IsInstanceMap": false,
+              "TileMapMode": 1,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.FootholdComponent",
+              "FootholdsByLayer": {},
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinTickSimulator",
+              "Enable": true,
+              "MineId": "deep_mine",
+              "LayoutVersion": 2,
+              "RequiredWorkerStartCount": 5,
+              "SpecialVeinSpawnTicks": 750,
+              "SpecialVeinMaxActive": 3,
+              "SpecialVeinSpawnBatch": 2,
+              "DepotDefinitionsJson": "[{\"id\":\"depot-main\",\"cellX\":0,\"cellY\":0,\"markerId\":\"depot-main-marker\"}]",
+              "VeinDefinitionsJson": "[{\"id\":\"vein-stone-01\",\"cellX\":1,\"cellY\":0,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-01-marker\"},{\"id\":\"vein-stone-02\",\"cellX\":2,\"cellY\":-1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-02-marker\"},{\"id\":\"vein-stone-03\",\"cellX\":3,\"cellY\":1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-03-marker\"},{\"id\":\"vein-iron-01\",\"cellX\":6,\"cellY\":0,\"oreType\":\"iron\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-iron-01-marker\"},{\"id\":\"vein-iron-02\",\"cellX\":7,\"cellY\":-2,\"oreType\":\"iron\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-iron-02-marker\"},{\"id\":\"vein-iron-03\",\"cellX\":8,\"cellY\":1,\"oreType\":\"iron\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-iron-03-marker\"},{\"id\":\"vein-iron-04\",\"cellX\":10,\"cellY\":-1,\"oreType\":\"iron\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-iron-04-marker\"}]",
+              "WorkerStartsJson": "[{\"workerIndex\":1,\"cellX\":0,\"cellY\":0},{\"workerIndex\":2,\"cellX\":0,\"cellY\":1},{\"workerIndex\":3,\"cellX\":-1,\"cellY\":0},{\"workerIndex\":4,\"cellX\":-1,\"cellY\":1},{\"workerIndex\":5,\"cellX\":-2,\"cellY\":0}]",
+              "SpecialVeinCandidatesJson": "[{\"id\":\"special-slot-01\",\"cellX\":5,\"cellY\":2,\"oreType\":\"iron\",\"recoverTicks\":5,\"markerId\":\"special-slot-01-marker\"},{\"id\":\"special-slot-02\",\"cellX\":7,\"cellY\":1,\"oreType\":\"iron\",\"recoverTicks\":5,\"markerId\":\"special-slot-02-marker\"},{\"id\":\"special-slot-03\",\"cellX\":9,\"cellY\":0,\"oreType\":\"iron\",\"recoverTicks\":5,\"markerId\":\"special-slot-03-marker\"},{\"id\":\"special-slot-04\",\"cellX\":10,\"cellY\":-3,\"oreType\":\"iron\",\"recoverTicks\":5,\"markerId\":\"special-slot-04-marker\"}]"
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "9bb6f0a3-417a-4a0f-95b9-b4f47203f43b",
+        "path": "/maps/deep_mine/Background",
+        "componentNames": "MOD.Core.BackgroundComponent",
+        "jsonString": {
+          "name": "Background",
+          "path": "/maps/deep_mine/Background",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 0,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": null,
+          "@components": [
+            {
+              "@type": "MOD.Core.BackgroundComponent",
+              "SolidColor": {
+                "r": 0.17,
+                "g": 0.22,
+                "b": 0.28,
+                "a": 1
+              },
+              "TemplateRUID": "794ad8421e2543d8a6d2c70307637450",
+              "Type": 2,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "f317cb03-70dc-486f-a34b-40b2ed000c23",
+        "path": "/maps/deep_mine/MapleMapLayer",
+        "componentNames": "MOD.Core.MapLayerComponent",
+        "jsonString": {
+          "name": "MapleMapLayer",
+          "path": "/maps/deep_mine/MapleMapLayer",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 1,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "maplemaplayer",
+          "@components": [
+            {
+              "@type": "MOD.Core.MapLayerComponent",
+              "IsVisible": true,
+              "LayerSortOrder": 0,
+              "Locked": false,
+              "MapLayerName": "Layer1",
+              "Thumbnail": "",
+              "Enable": true
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "maplemaplayer",
+            "sub_entity_id": null,
+            "root_entity_id": "f317cb03-70dc-486f-a34b-40b2ed000c23",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "42a61ea0-6f58-474c-8c3e-d2fb2e3c8125",
+        "path": "/maps/deep_mine/RectTileMap",
+        "componentNames": "MOD.Core.TransformComponent,MOD.Core.RectTileMapComponent",
+        "jsonString": {
+          "name": "RectTileMap",
+          "path": "/maps/deep_mine/RectTileMap",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 2,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "recttilemap",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 1000
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.RectTileMapComponent",
+              "SortingLayer": "MapLayer0",
+              "TileSetRUID": "tileset://a5aaa9bc-0684-4c21-b803-73fbcbf0ac74",
+              "Enable": true,
+              "tileMap": [
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -3,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -2,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -1,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 0,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 1,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 2,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 3,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 4,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 5,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 6,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 7,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 8,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 9,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 10,
+                    "y": 2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -3,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -2,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -1,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 0,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 1,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 2,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 3,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 4,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 5,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 6,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 7,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 8,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 9,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 10,
+                    "y": 1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -3,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -2,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -1,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 0,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 1,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 2,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 3,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 4,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 5,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 6,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 7,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 8,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 9,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 10,
+                    "y": 0
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -3,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -2,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -1,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 0,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 1,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 2,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 3,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 4,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 5,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 6,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 7,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 8,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 9,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 10,
+                    "y": -1
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -3,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -2,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -1,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 0,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 1,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 2,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 3,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 4,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 5,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 6,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 7,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 8,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 9,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 10,
+                    "y": -2
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -3,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -2,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -1,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 0,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 1,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 2,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 3,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 4,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 5,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 6,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 7,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 8,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 9,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 10,
+                    "y": -3
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -3,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -2,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -1,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 0,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 1,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 2,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 3,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 4,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 5,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 6,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 7,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 8,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 9,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 10,
+                    "y": -4
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -3,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -2,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": -1,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 0,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 1,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 2,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 3,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 4,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 5,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 6,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 7,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 8,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 9,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                },
+                {
+                  "type": 0,
+                  "position": {
+                    "x": 10,
+                    "y": -5
+                  },
+                  "tileIndex": 0
+                }
+              ]
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "recttilemap",
+            "sub_entity_id": null,
+            "root_entity_id": "42a61ea0-6f58-474c-8c3e-d2fb2e3c8125",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "2821c65e-01ba-4504-b920-6a350a06d729",
+        "path": "/maps/deep_mine/Worker01",
+        "componentNames": "MOD.Core.TransformComponent,MOD.Core.SpriteRendererComponent,MOD.Core.MovementComponent,MOD.Core.KinematicbodyComponent,script.WorkerController",
+        "jsonString": {
+          "name": "Worker01",
+          "path": "/maps/deep_mine/Worker01",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 0,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "worker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "SpriteRUID": "3e76c89ae8e7477ca871f5bbcd6f6f29",
+              "Color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "DrawMode": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "PlayRate": 1,
+              "OrderInLayer": 2,
+              "StartFrameIndex": 0,
+              "EndFrameIndex": 2147483647,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.MovementComponent",
+              "Enable": true,
+              "InputSpeed": 3
+            },
+            {
+              "@type": "MOD.Core.KinematicbodyComponent",
+              "MoveVelocity": {
+                "x": 0,
+                "y": 0
+              },
+              "RealMoveVelocity": {
+                "x": 0,
+                "y": 0
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.WorkerController",
+              "Enable": true,
+              "WorkerIndex": 1,
+              "StartCellX": 0,
+              "StartCellY": 0
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "worker",
+            "sub_entity_id": null,
+            "root_entity_id": "2821c65e-01ba-4504-b920-6a350a06d729",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "5110e2ff-92f5-43ae-af63-44eb27085614",
+        "path": "/maps/deep_mine/DepotMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "DepotMarker",
+          "path": "/maps/deep_mine/DepotMarker",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 2,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "depot-main-marker",
+              "MarkerKind": "depot"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "5110e2ff-92f5-43ae-af63-44eb27085614",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "25a3fd52-fbf1-414b-84af-dde494f962e5",
+        "path": "/maps/deep_mine/VeinMarker01",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "VeinMarker01",
+          "path": "/maps/deep_mine/VeinMarker01",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 3,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 1,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-stone-01-marker",
+              "MarkerKind": "normal"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "25a3fd52-fbf1-414b-84af-dde494f962e5",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "297327dc-e766-47de-805f-131541506dc7",
+        "path": "/maps/deep_mine/VeinMarker02",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "VeinMarker02",
+          "path": "/maps/deep_mine/VeinMarker02",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 4,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 2,
+                "y": -1,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-stone-02-marker",
+              "MarkerKind": "normal"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "297327dc-e766-47de-805f-131541506dc7",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "80c74b9b-3d3f-45a0-a69a-d0b32e49fe0d",
+        "path": "/maps/deep_mine/VeinMarker03",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "VeinMarker03",
+          "path": "/maps/deep_mine/VeinMarker03",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 5,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 3,
+                "y": 1,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-stone-03-marker",
+              "MarkerKind": "normal"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "80c74b9b-3d3f-45a0-a69a-d0b32e49fe0d",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "4330bb4d-cdc0-4924-961b-766afb713d37",
+        "path": "/maps/deep_mine/VeinMarker04",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "VeinMarker04",
+          "path": "/maps/deep_mine/VeinMarker04",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 6,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 6,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-iron-01-marker",
+              "MarkerKind": "normal"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "4330bb4d-cdc0-4924-961b-766afb713d37",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "45819ba7-90e2-4edd-962c-d32e983557aa",
+        "path": "/maps/deep_mine/VeinMarker05",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "VeinMarker05",
+          "path": "/maps/deep_mine/VeinMarker05",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 7,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 7,
+                "y": -2,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-iron-02-marker",
+              "MarkerKind": "normal"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "45819ba7-90e2-4edd-962c-d32e983557aa",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "9e24e1e5-5483-43a4-b6ce-365db5182c49",
+        "path": "/maps/deep_mine/VeinMarker06",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "VeinMarker06",
+          "path": "/maps/deep_mine/VeinMarker06",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 8,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 8,
+                "y": 1,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-iron-03-marker",
+              "MarkerKind": "normal"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "9e24e1e5-5483-43a4-b6ce-365db5182c49",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "8aa56dee-e604-4430-906b-7712360970be",
+        "path": "/maps/deep_mine/VeinMarker07",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "VeinMarker07",
+          "path": "/maps/deep_mine/VeinMarker07",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 9,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 10,
+                "y": -1,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-iron-04-marker",
+              "MarkerKind": "normal"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "8aa56dee-e604-4430-906b-7712360970be",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "32003dbb-1e96-4624-82ec-3798258eef19",
+        "path": "/maps/deep_mine/SpecialMarker01",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "SpecialMarker01",
+          "path": "/maps/deep_mine/SpecialMarker01",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 10,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 5,
+                "y": 2,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "special-slot-01-marker",
+              "MarkerKind": "special"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "32003dbb-1e96-4624-82ec-3798258eef19",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "f87894da-8faa-4700-b439-b8d5ad0bcd02",
+        "path": "/maps/deep_mine/SpecialMarker02",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "SpecialMarker02",
+          "path": "/maps/deep_mine/SpecialMarker02",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 11,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 7,
+                "y": 1,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "special-slot-02-marker",
+              "MarkerKind": "special"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "f87894da-8faa-4700-b439-b8d5ad0bcd02",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "e5855d74-c854-471a-ab91-a89852d143f0",
+        "path": "/maps/deep_mine/SpecialMarker03",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "SpecialMarker03",
+          "path": "/maps/deep_mine/SpecialMarker03",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 12,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 9,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "special-slot-03-marker",
+              "MarkerKind": "special"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "e5855d74-c854-471a-ab91-a89852d143f0",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "25a25775-97ae-4fcc-bb04-8e1efaa36b14",
+        "path": "/maps/deep_mine/SpecialMarker04",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "jsonString": {
+          "name": "SpecialMarker04",
+          "path": "/maps/deep_mine/SpecialMarker04",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 13,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 10,
+                "y": -3,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "special-slot-04-marker",
+              "MarkerKind": "special"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "25a25775-97ae-4fcc-bb04-8e1efaa36b14",
+            "replaced_model_id": null
+          }
+        }
+      }
+    ]
+  }
+}

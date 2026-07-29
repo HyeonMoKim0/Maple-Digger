@@ -1,0 +1,65 @@
+-- MAP TRANSITION AUTHORITY
+-- This world-scoped service owns the server-side handoff between static mine
+-- maps. Economy/unlock UI may request it later, but it never grants an unlock.
+@Logic
+script MineTransitionService extends Logic
+
+property string BeginnerMapName = "farm01"
+property string DeepMineMapName = "deep_mine"
+property string GemMineMapName = "gem_mine"
+
+@ExecSpace("ServerOnly")
+method boolean TransitionPlayerToMine(Entity player, string targetMapName)
+    -- Stops every source-map worker, resets its session state, and moves one player.
+    if player == nil or player.PlayerComponent == nil then
+        log_error("[MineTransition] rejected reason=missing-player")
+        return false
+    end
+    if not self:IsKnownMineMap(targetMapName) then
+        log_error("[MineTransition] rejected reason=unknown-target target=" .. tostring(targetMapName))
+        return false
+    end
+    local sourceMap = player.CurrentMap
+    if sourceMap == nil then
+        log_error("[MineTransition] rejected reason=missing-source target=" .. targetMapName)
+        return false
+    end
+    if sourceMap.Name == targetMapName then
+        log("[MineTransition] skipped reason=already-in-target target=" .. targetMapName)
+        return true
+    end
+
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile:PrepareMineTransition(targetMapName) then
+        log_error("[MineTransition] rejected reason=profile-save target=" .. targetMapName)
+        return false
+    end
+
+    local stoppedCount = 0
+    local workers = sourceMap:GetChildComponentsByTypeName("script.WorkerController", false)
+    for _, component in ipairs(workers) do
+        ---@type WorkerController
+        local worker = component
+        worker:StopForMapTransition()
+        stoppedCount = stoppedCount + 1
+    end
+
+    ---@type VeinTickSimulator
+    local sourceMine = sourceMap:GetComponent("script.VeinTickSimulator")
+    if sourceMine ~= nil then sourceMine:ResetSessionForMapTransition() end
+    log("[MineTransition] source=" .. sourceMap.Name .. " target=" .. targetMapName .. " stoppedWorkers=" .. tostring(stoppedCount))
+    player.PlayerComponent:MoveToMapPosition(targetMapName, Vector2(0, 0))
+    _TimerService:SetTimerOnce(function()
+        profile:RestoreCurrentWorkerState()
+    end, 0.5)
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsKnownMineMap(string mapName)
+    -- Restricts movement to the three authored static mine maps.
+    return mapName == self.BeginnerMapName or mapName == self.DeepMineMapName or mapName == self.GemMineMapName
+end
+
+end

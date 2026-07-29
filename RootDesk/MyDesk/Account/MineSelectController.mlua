@@ -1,0 +1,440 @@
+-- F7-B CLIENT MINE SELECTOR
+-- This UI only renders synchronized account state and sends requests through
+-- AccountProfileService. Costs, sales, unlocks, and movement stay server-owned.
+@Logic
+script MineSelectController extends Logic
+
+property Entity selectPanel = "20cb4dbc-1e9a-42f4-a237-549a3a3edf41"
+property ButtonComponent btnOpen = "94c58c02-b4ac-4901-b9b7-0f02e69568c9"
+property ButtonComponent btnClose = "825b75ee-fb22-4fad-8408-1de384b07a4c"
+property ButtonComponent btnSell = "21647cc6-ca6e-460f-aa6f-0ffcbf9bb385"
+property ButtonComponent btnBeginner = "54711815-5537-4bd1-8264-33fc12fdbec8"
+property ButtonComponent btnDeep = "ca11aa60-d838-48f3-bb72-215d57ce08a1"
+property ButtonComponent btnGem = "a8f1b7c8-d870-4044-bfe9-766610322ba8"
+property TextGUIRendererComponent resourceText = "92a7aa15-4a6d-44ce-95ee-23c2786b6452"
+property TextGUIRendererComponent deepText = "082a4413-d92e-4c74-818c-fbf0149ef560"
+property TextGUIRendererComponent gemText = "364fda59-3a44-454f-89d4-a476eccc0c53"
+property TextGUIRendererComponent feedbackText = "615d1852-39b4-4c8b-bf71-2dcd86ea3144"
+property Entity salePanel = "821b31af-cac8-4a66-aa90-24e024f48392"
+property ButtonComponent btnSaleClose = "9c5394e7-deac-4f6b-a8f5-cb099cdce3ee"
+property ButtonComponent btnOreStone = "d876c4ed-bd2b-4461-b25a-e93a5cc534c3"
+property ButtonComponent btnOreIron = "a7b5e659-c7dd-43ce-bbd9-33e5009a9e59"
+property ButtonComponent btnOreGold = "6b1a5af9-d13d-4a66-95b9-a047ed0b838a"
+property TextInputComponent saleAmountInput = "35a53a3e-b413-4f1c-acab-6f67795f97a1"
+property TextInputComponent protectedAmountInput = "11ee646a-5d19-469f-949b-65106eebe749"
+property ButtonComponent btnQuickOne = "17fb7222-327e-45c9-8f31-e3592659a17a"
+property ButtonComponent btnQuickTen = "f179fa04-2b7b-4493-811c-8df7f4fb77b3"
+property ButtonComponent btnQuickHundred = "4cb338a6-780e-4a9f-99da-8d62d96b6a3a"
+property ButtonComponent btnQuickAll = "6c8f9913-59c7-4613-8ec8-399c092b8c53"
+property ButtonComponent btnSellSelected = "78f6afd5-aa5d-45c6-9ef3-268d1a37f83e"
+property ButtonComponent btnToggleProtected = "e802e753-5484-40b5-b941-04c34ec1d023"
+property ButtonComponent btnSaveProtection = "3635c978-5a77-4118-8d49-519629327e6f"
+property ButtonComponent btnToggleAutoSell = "20ce51cb-b8b0-4ded-949d-74050165cb39"
+property TextGUIRendererComponent saleSummaryText = "1764b8f3-caf1-407a-b19c-754d038bc501"
+property ButtonComponent btnBuyWorker = "3595093e-2707-4992-8d2c-43b2f5a64c6a"
+property TextGUIRendererComponent workerStatusText = "8d793449-ab64-4ccf-b43c-76e1f9b73324"
+property ButtonComponent btnCartOpen = "467843b6-73f5-425b-9b94-2f0cd0f0a89d"
+property Entity cartPanel = "2ddf0bf0-6b16-4e5a-8422-56f1685cbf55"
+property ButtonComponent btnCartClose = "fad448d9-9044-4c6c-925f-353d66eaea43"
+property ButtonComponent btnCartWorker1 = "c9d87a4e-ad97-46d6-b5be-5dd7e4f98ea6"
+property ButtonComponent btnCartWorker2 = "e7b052b6-fa61-457b-8c89-e6cbb2db27b4"
+property ButtonComponent btnCartWorker3 = "26e77396-6738-45ea-b225-72cd37602140"
+property ButtonComponent btnCartWorker4 = "68b01220-83bb-47a6-8b64-524aec3e2323"
+property ButtonComponent btnCartWorker5 = "22a4e518-aaa1-4b95-8938-98a34550a4ba"
+property ButtonComponent btnCartUpgrade = "dff1aaae-2536-4fc1-b8eb-6734a9403f85"
+property TextComponent cartSummaryText = "6845ae6a-932f-4bac-8509-fb3a6b323fcb"
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    self._T.handlers = {}
+    self._T.lastState = ""
+    self._T.selectedOre = "stone"
+    self._T.includeProtected = false
+    self._T.localSaleHint = ""
+    self._T.cartWorkerIndex = 1
+    if self.selectPanel ~= nil then self.selectPanel.Enable = false end
+    if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.cartPanel ~= nil then self.cartPanel.Enable = false end
+    self:ConnectButton("open", self.btnOpen, self.OnOpenClicked)
+    self:ConnectButton("close", self.btnClose, self.OnCloseClicked)
+    self:ConnectButton("sell", self.btnSell, self.OnSellClicked)
+    self:ConnectButton("beginner", self.btnBeginner, self.OnBeginnerClicked)
+    self:ConnectButton("deep", self.btnDeep, self.OnDeepClicked)
+    self:ConnectButton("gem", self.btnGem, self.OnGemClicked)
+    self:ConnectButton("saleClose", self.btnSaleClose, self.OnSaleCloseClicked)
+    self:ConnectButton("oreStone", self.btnOreStone, self.OnOreStoneClicked)
+    self:ConnectButton("oreIron", self.btnOreIron, self.OnOreIronClicked)
+    self:ConnectButton("oreGold", self.btnOreGold, self.OnOreGoldClicked)
+    self:ConnectButton("quickOne", self.btnQuickOne, self.OnQuickOneClicked)
+    self:ConnectButton("quickTen", self.btnQuickTen, self.OnQuickTenClicked)
+    self:ConnectButton("quickHundred", self.btnQuickHundred, self.OnQuickHundredClicked)
+    self:ConnectButton("quickAll", self.btnQuickAll, self.OnQuickAllClicked)
+    self:ConnectButton("sellSelected", self.btnSellSelected, self.OnSellSelectedClicked)
+    self:ConnectButton("toggleProtected", self.btnToggleProtected, self.OnToggleProtectedClicked)
+    self:ConnectButton("saveProtection", self.btnSaveProtection, self.OnSaveProtectionClicked)
+    self:ConnectButton("toggleAutoSell", self.btnToggleAutoSell, self.OnToggleAutoSellClicked)
+    self:ConnectButton("buyWorker", self.btnBuyWorker, self.OnBuyWorkerClicked)
+    self:ConnectButton("cartOpen", self.btnCartOpen, self.OnCartOpenClicked)
+    self:ConnectButton("cartClose", self.btnCartClose, self.OnCartCloseClicked)
+    self:ConnectButton("cartWorker1", self.btnCartWorker1, self.OnCartWorker1Clicked)
+    self:ConnectButton("cartWorker2", self.btnCartWorker2, self.OnCartWorker2Clicked)
+    self:ConnectButton("cartWorker3", self.btnCartWorker3, self.OnCartWorker3Clicked)
+    self:ConnectButton("cartWorker4", self.btnCartWorker4, self.OnCartWorker4Clicked)
+    self:ConnectButton("cartWorker5", self.btnCartWorker5, self.OnCartWorker5Clicked)
+    self:ConnectButton("cartUpgrade", self.btnCartUpgrade, self.OnCartUpgradeClicked)
+    self:RefreshUI(true)
+    log("[MineSelectUI] F7-B selector ready")
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    self:RefreshUI(false)
+end
+
+@ExecSpace("ClientOnly")
+method void ConnectButton(string key, ButtonComponent button, any callback)
+    if button == nil then return end
+    self._T.handlers[key] = button.Entity:ConnectEvent(ButtonClickEvent, callback)
+end
+
+@ExecSpace("ClientOnly")
+method AccountProfileService GetProfile()
+    local player = _UserService.LocalPlayer
+    if player == nil then return nil end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    return profile
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshUI(boolean force)
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local state = tostring(profile.Gold) .. ":" .. tostring(profile.MineTokens) .. ":" .. tostring(profile.Stone) .. ":" .. tostring(profile.Iron) .. ":" .. tostring(profile.GoldOre) .. ":" .. tostring(profile.OwnedWorkerCount) .. ":" .. tostring(profile.Worker1CartCapacity) .. ":" .. tostring(profile.Worker2CartCapacity) .. ":" .. tostring(profile.Worker3CartCapacity) .. ":" .. tostring(profile.Worker4CartCapacity) .. ":" .. tostring(profile.Worker5CartCapacity) .. ":" .. tostring(profile.StoneAutoSell) .. ":" .. tostring(profile.IronAutoSell) .. ":" .. tostring(profile.GoldOreAutoSell) .. ":" .. tostring(profile.StoneProtectedAmount) .. ":" .. tostring(profile.IronProtectedAmount) .. ":" .. tostring(profile.GoldOreProtectedAmount) .. ":" .. tostring(profile.DeepMineUnlocked) .. ":" .. tostring(profile.GemMineUnlocked) .. ":" .. profile.LastTransactionMessage .. ":" .. profile.RecoveryStatus
+    if not force and state == self._T.lastState then return end
+    self._T.lastState = state
+
+    if self.resourceText ~= nil then
+        self.resourceText.Text = "골드 " .. tostring(profile.Gold) .. "  |  토큰 " .. tostring(profile.MineTokens) .. "\n돌 " .. tostring(profile.Stone) .. "  철 " .. tostring(profile.Iron) .. "  금광석 " .. tostring(profile.GoldOre)
+    end
+    if self.deepText ~= nil then
+        if profile.DeepMineUnlocked then self.deepText.Text = "깊은 광산  ·  해금됨"
+        else self.deepText.Text = "깊은 광산  ·  180 골드 / 토큰 6 / 돌 120" end
+    end
+    if self.gemText ~= nil then
+        if profile.GemMineUnlocked then self.gemText.Text = "보석 광산  ·  해금됨"
+        else self.gemText.Text = "보석 광산  ·  700 골드 / 토큰 10 / 돌 200 / 철 60" end
+    end
+    if self.feedbackText ~= nil then
+        if profile.LastTransactionMessage ~= "" then self.feedbackText.Text = profile.LastTransactionMessage
+        elseif profile.RecoveryStatus ~= "" then self.feedbackText.Text = profile.RecoveryStatus
+        else self.feedbackText.Text = "광물은 다음 광산 해금에 필요한 수량만 자동 보호됩니다."
+        end
+    end
+    if self.workerStatusText ~= nil then self.workerStatusText.Text = self:GetWorkerPurchaseStatus(profile) end
+    if self.cartSummaryText ~= nil then self.cartSummaryText.Text = self:GetCartSummary(profile) end
+    self:RefreshSaleSummary(profile)
+end
+
+@ExecSpace("ClientOnly")
+method integer GetCartCapacity(AccountProfileService profile, integer workerIndex)
+    if workerIndex == 1 then return profile.Worker1CartCapacity end
+    if workerIndex == 2 then return profile.Worker2CartCapacity end
+    if workerIndex == 3 then return profile.Worker3CartCapacity end
+    if workerIndex == 4 then return profile.Worker4CartCapacity end
+    return profile.Worker5CartCapacity
+end
+
+@ExecSpace("ClientOnly")
+method string GetCartOreLabel()
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return "광물" end
+    if player.CurrentMap.Name == "farm01" then return "돌" end
+    if player.CurrentMap.Name == "deep_mine" then return "철" end
+    if player.CurrentMap.Name == "gem_mine" then return "금광석" end
+    return "광물"
+end
+
+@ExecSpace("ClientOnly")
+method string GetCartSummary(AccountProfileService profile)
+    local workerIndex = self._T.cartWorkerIndex
+    local capacity = self:GetCartCapacity(profile, workerIndex)
+    local level = math.max(0, math.floor((capacity - 20) / 2))
+    if workerIndex > profile.OwnedWorkerCount then
+        return "일꾼 " .. tostring(workerIndex) .. "은 아직 고용되지 않았습니다.\n현재 적재량: " .. tostring(capacity) .. "칸"
+    end
+    if level >= 15 then
+        return "일꾼 " .. tostring(workerIndex) .. "  ·  적재량 " .. tostring(capacity) .. " / 50칸\n최대 강화 완료"
+    end
+    local nextLevel = level + 1
+    local rawGoldCost = 20
+    for index = 2, nextLevel do rawGoldCost = rawGoldCost * 1.25 end
+    local goldCost = math.floor(rawGoldCost + 0.5)
+    return "일꾼 " .. tostring(workerIndex) .. "  ·  적재량 " .. tostring(capacity) .. " / 50칸\n다음 강화: 골드 " .. tostring(goldCost) .. " / " .. self:GetCartOreLabel() .. " " .. tostring(5 * nextLevel) .. "  (+2칸)"
+end
+
+@ExecSpace("ClientOnly")
+method string GetWorkerPurchaseStatus(AccountProfileService profile)
+    local owned = profile.OwnedWorkerCount
+    if owned >= 5 then return "일꾼 " .. tostring(owned) .. " / 5  ·  모두 고용함" end
+    if owned == 1 then return "일꾼 1 / 5  ·  다음: 60 골드" end
+    if owned == 2 then return "일꾼 2 / 5  ·  다음: 깊은 광산 + 200 골드 / 돌 80" end
+    if owned == 3 then return "일꾼 3 / 5  ·  다음: 보석 광산 + 650 골드 / 돌 160 / 철 50" end
+    return "일꾼 4 / 5  ·  다음: 1,600 골드 / 돌 300 / 철 120 / 금광석 30"
+end
+
+@ExecSpace("ClientOnly")
+method integer GetSelectedBalance(AccountProfileService profile)
+    if self._T.selectedOre == "stone" then return profile.Stone end
+    if self._T.selectedOre == "iron" then return profile.Iron end
+    return profile.GoldOre
+end
+
+@ExecSpace("ClientOnly")
+method integer GetSelectedProtection(AccountProfileService profile)
+    if self._T.selectedOre == "stone" then return profile.StoneProtectedAmount end
+    if self._T.selectedOre == "iron" then return profile.IronProtectedAmount end
+    return profile.GoldOreProtectedAmount
+end
+
+@ExecSpace("ClientOnly")
+method boolean GetSelectedAutoSell(AccountProfileService profile)
+    if self._T.selectedOre == "stone" then return profile.StoneAutoSell end
+    if self._T.selectedOre == "iron" then return profile.IronAutoSell end
+    return profile.GoldOreAutoSell
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshSaleSummary(AccountProfileService profile)
+    if self.saleSummaryText == nil then return end
+    local autoLabel = "끔"
+    if self:GetSelectedAutoSell(profile) then autoLabel = "켬" end
+    local protectionLabel = "해제"
+    if self._T.includeProtected then protectionLabel = "포함" end
+    self.saleSummaryText.Text = "선택: " .. self._T.selectedOre .. "  |  보유 " .. tostring(self:GetSelectedBalance(profile)) .. "  |  설정 보호 " .. tostring(self:GetSelectedProtection(profile)) .. "\n자동판매 " .. autoLabel .. "  |  보호분 판매 " .. protectionLabel
+end
+
+@ExecSpace("ClientOnly")
+method integer ReadNonNegative(TextInputComponent input, integer fallback)
+    if input == nil then return fallback end
+    local parsed = tonumber(input.Text)
+    if parsed == nil then return fallback end
+    return math.max(0, math.floor(parsed))
+end
+
+@ExecSpace("ClientOnly")
+method void SelectOre(string oreType)
+    self._T.selectedOre = oreType
+    self._T.includeProtected = false
+    local profile = self:GetProfile()
+    if profile ~= nil and self.protectedAmountInput ~= nil then
+        self.protectedAmountInput.Text = tostring(self:GetSelectedProtection(profile))
+    end
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnOpenClicked()
+    if self.selectPanel ~= nil then self.selectPanel.Enable = true end
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnCloseClicked()
+    if self.selectPanel ~= nil then self.selectPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OnSellClicked()
+    if self.salePanel ~= nil then self.salePanel.Enable = true end
+    self:SelectOre(self._T.selectedOre)
+    if self.saleAmountInput ~= nil then self.saleAmountInput.Text = "1" end
+end
+
+@ExecSpace("ClientOnly")
+method void OnSaleCloseClicked()
+    if self.salePanel ~= nil then self.salePanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OnOreStoneClicked()
+    self:SelectOre("stone")
+end
+
+@ExecSpace("ClientOnly")
+method void OnOreIronClicked()
+    self:SelectOre("iron")
+end
+
+@ExecSpace("ClientOnly")
+method void OnOreGoldClicked()
+    self:SelectOre("gold")
+end
+
+@ExecSpace("ClientOnly")
+method void SetSaleAmount(integer amount)
+    if self.saleAmountInput ~= nil then self.saleAmountInput.Text = tostring(math.max(0, amount)) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnQuickOneClicked()
+    self:SetSaleAmount(1)
+end
+
+@ExecSpace("ClientOnly")
+method void OnQuickTenClicked()
+    self:SetSaleAmount(10)
+end
+
+@ExecSpace("ClientOnly")
+method void OnQuickHundredClicked()
+    self:SetSaleAmount(100)
+end
+
+@ExecSpace("ClientOnly")
+method void OnQuickAllClicked()
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    self:SetSaleAmount(self:GetSelectedBalance(profile))
+end
+
+@ExecSpace("ClientOnly")
+method void OnToggleProtectedClicked()
+    self._T.includeProtected = not self._T.includeProtected
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnSellSelectedClicked()
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local amount = self:ReadNonNegative(self.saleAmountInput, 0)
+    if amount <= 0 then
+        self._T.localSaleHint = "판매 수량은 1 이상이어야 합니다."
+        self:RefreshUI(true)
+        return
+    end
+    profile:RequestSellOre(self._T.selectedOre, amount, self._T.includeProtected)
+end
+
+@ExecSpace("ClientOnly")
+method void OnSaveProtectionClicked()
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local protectedAmount = self:ReadNonNegative(self.protectedAmountInput, self:GetSelectedProtection(profile))
+    profile:RequestSaleSetting(self._T.selectedOre, self:GetSelectedAutoSell(profile), protectedAmount)
+end
+
+@ExecSpace("ClientOnly")
+method void OnToggleAutoSellClicked()
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local protectedAmount = self:ReadNonNegative(self.protectedAmountInput, self:GetSelectedProtection(profile))
+    profile:RequestSaleSetting(self._T.selectedOre, not self:GetSelectedAutoSell(profile), protectedAmount)
+end
+
+@ExecSpace("ClientOnly")
+method void OnBeginnerClicked()
+    self:RequestEntry("farm01")
+end
+
+@ExecSpace("ClientOnly")
+method void OnDeepClicked()
+    self:RequestEntry("deep_mine")
+end
+
+@ExecSpace("ClientOnly")
+method void OnGemClicked()
+    self:RequestEntry("gem_mine")
+end
+
+@ExecSpace("ClientOnly")
+method void OnBuyWorkerClicked()
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    profile:RequestWorkerPurchase()
+end
+
+@ExecSpace("ClientOnly")
+method void OnCartOpenClicked()
+    if self.cartPanel ~= nil then self.cartPanel.Enable = true end
+    self._T.cartWorkerIndex = 1
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnCartCloseClicked()
+    if self.cartPanel ~= nil then self.cartPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void SelectCartWorker(integer workerIndex)
+    self._T.cartWorkerIndex = workerIndex
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnCartWorker1Clicked()
+    self:SelectCartWorker(1)
+end
+@ExecSpace("ClientOnly")
+method void OnCartWorker2Clicked()
+    self:SelectCartWorker(2)
+end
+@ExecSpace("ClientOnly")
+method void OnCartWorker3Clicked()
+    self:SelectCartWorker(3)
+end
+@ExecSpace("ClientOnly")
+method void OnCartWorker4Clicked()
+    self:SelectCartWorker(4)
+end
+@ExecSpace("ClientOnly")
+method void OnCartWorker5Clicked()
+    self:SelectCartWorker(5)
+end
+
+@ExecSpace("ClientOnly")
+method void OnCartUpgradeClicked()
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    profile:RequestCartUpgrade(self._T.cartWorkerIndex)
+end
+
+@ExecSpace("ClientOnly")
+method void RequestEntry(string targetMapName)
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    profile:RequestMineEntry(targetMapName)
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    self:DisconnectButton("open", self.btnOpen)
+    self:DisconnectButton("close", self.btnClose)
+    self:DisconnectButton("sell", self.btnSell)
+    self:DisconnectButton("beginner", self.btnBeginner)
+    self:DisconnectButton("deep", self.btnDeep)
+    self:DisconnectButton("gem", self.btnGem)
+    self:DisconnectButton("saleClose", self.btnSaleClose)
+    self:DisconnectButton("oreStone", self.btnOreStone)
+    self:DisconnectButton("oreIron", self.btnOreIron)
+    self:DisconnectButton("oreGold", self.btnOreGold)
+    self:DisconnectButton("quickOne", self.btnQuickOne)
+    self:DisconnectButton("quickTen", self.btnQuickTen)
+    self:DisconnectButton("quickHundred", self.btnQuickHundred)
+    self:DisconnectButton("quickAll", self.btnQuickAll)
+    self:DisconnectButton("sellSelected", self.btnSellSelected)
+    self:DisconnectButton("toggleProtected", self.btnToggleProtected)
+    self:DisconnectButton("saveProtection", self.btnSaveProtection)
+    self:DisconnectButton("toggleAutoSell", self.btnToggleAutoSell)
+    self:DisconnectButton("buyWorker", self.btnBuyWorker)
+end
+
+@ExecSpace("ClientOnly")
+method void DisconnectButton(string key, ButtonComponent button)
+    if button == nil or self._T.handlers[key] == nil then return end
+    button.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers[key])
+end
+
+end

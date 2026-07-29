@@ -1,0 +1,135 @@
+-- PROGRESSION AUTHORITY
+-- Mine unlock costs and entry ordering are server-owned. This service delegates
+-- the actual map handoff to MineTransitionService only after a saved unlock.
+@Logic
+script ProgressionService extends Logic
+
+property integer DeepMineGoldCost = 180
+property integer DeepMineTokenCost = 6
+property integer DeepMineStoneCost = 120
+property integer GemMineGoldCost = 700
+property integer GemMineTokenCost = 10
+property integer GemMineStoneCost = 200
+property integer GemMineIronCost = 60
+property integer Worker2GoldCost = 60
+property integer Worker3GoldCost = 200
+property integer Worker3StoneCost = 80
+property integer Worker4GoldCost = 650
+property integer Worker4StoneCost = 160
+property integer Worker4IronCost = 50
+property integer Worker5GoldCost = 1600
+property integer Worker5StoneCost = 300
+property integer Worker5IronCost = 120
+property integer Worker5GoldOreCost = 30
+
+@ExecSpace("ServerOnly")
+method boolean RequestMineEntry(Entity player, string targetMapName)
+    -- Validates progression, saves any first-time unlock, then starts the F6 transition.
+    if player == nil then return false end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return false end
+    if targetMapName == "farm01" then
+        return _MineTransitionService:TransitionPlayerToMine(player, targetMapName)
+    end
+    if targetMapName == "deep_mine" then
+        if not profile.DeepMineUnlocked then
+            if not profile:SpendAndUnlock("deep_mine", self.DeepMineGoldCost, self.DeepMineTokenCost, self.DeepMineStoneCost, 0) then
+                profile:SetTransactionMessage("깊은 광산 해금 조건이 부족합니다.")
+                return false
+            end
+        end
+        return _MineTransitionService:TransitionPlayerToMine(player, targetMapName)
+    end
+    if targetMapName == "gem_mine" then
+        if not profile.DeepMineUnlocked then
+            profile:SetTransactionMessage("깊은 광산을 먼저 해금해야 합니다.")
+            return false
+        end
+        if not profile.GemMineUnlocked then
+            if not profile:SpendAndUnlock("gem_mine", self.GemMineGoldCost, self.GemMineTokenCost, self.GemMineStoneCost, self.GemMineIronCost) then
+                profile:SetTransactionMessage("보석 광산 해금 조건이 부족합니다.")
+                return false
+            end
+        end
+        return _MineTransitionService:TransitionPlayerToMine(player, targetMapName)
+    end
+    profile:SetTransactionMessage("알 수 없는 광산입니다.")
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestWorkerPurchase(Entity player)
+    -- One profile owns the ordered worker roster. Prerequisites are checked before
+    -- any currency is deducted, and AccountProfileService persists the transaction.
+    if player == nil then return false end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return false end
+    local nextWorkerIndex = #profile:GetProfile().workers + 1
+    if nextWorkerIndex == 2 then
+        return profile:PurchaseNextWorker(self.Worker2GoldCost, 0, 0, 0)
+    end
+    if nextWorkerIndex == 3 then
+        if not profile.DeepMineUnlocked then
+            profile:SetTransactionMessage("일꾼 3은 깊은 광산 해금 뒤 고용할 수 있습니다.")
+            return false
+        end
+        return profile:PurchaseNextWorker(self.Worker3GoldCost, self.Worker3StoneCost, 0, 0)
+    end
+    if nextWorkerIndex == 4 then
+        if not profile.GemMineUnlocked then
+            profile:SetTransactionMessage("일꾼 4는 보석 광산 해금 뒤 고용할 수 있습니다.")
+            return false
+        end
+        return profile:PurchaseNextWorker(self.Worker4GoldCost, self.Worker4StoneCost, self.Worker4IronCost, 0)
+    end
+    if nextWorkerIndex == 5 then
+        if not profile.GemMineUnlocked then
+            profile:SetTransactionMessage("일꾼 5는 보석 광산 해금 뒤 고용할 수 있습니다.")
+            return false
+        end
+        return profile:PurchaseNextWorker(self.Worker5GoldCost, self.Worker5StoneCost, self.Worker5IronCost, self.Worker5GoldOreCost)
+    end
+    profile:SetTransactionMessage("이미 최대 5명의 일꾼을 보유하고 있습니다.")
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestCartUpgrade(Entity player, integer workerIndex)
+    if player == nil then return false end
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return false end
+    if workerIndex < 1 or workerIndex > profile.OwnedWorkerCount then
+        profile:SetTransactionMessage("보유한 일꾼만 수레를 강화할 수 있습니다.")
+        return false
+    end
+
+    local record = profile:GetProfile().workers[workerIndex]
+    if record == nil then return false end
+    local currentLevel = math.max(0, math.min(15, math.floor(record.cartUpgradeLevel or 0)))
+    if currentLevel >= 15 then
+        profile:SetTransactionMessage("수레 적재량이 최대입니다. (50칸)")
+        return false
+    end
+
+    local mine = player.CurrentMap
+    if mine == nil then return false end
+    local oreType = ""
+    if mine.Name == "farm01" then oreType = "stone"
+    elseif mine.Name == "deep_mine" then oreType = "iron"
+    elseif mine.Name == "gem_mine" then oreType = "gold"
+    else
+        profile:SetTransactionMessage("현재 광산에서는 수레를 강화할 수 없습니다.")
+        return false
+    end
+
+    local nextLevel = currentLevel + 1
+    local rawGoldCost = 20
+    for index = 2, nextLevel do rawGoldCost = rawGoldCost * 1.25 end
+    local goldCost = math.floor(rawGoldCost + 0.5)
+    local oreCost = 5 * nextLevel
+    return profile:PurchaseCartUpgrade(workerIndex, goldCost, oreType, oreCost)
+end
+
+end

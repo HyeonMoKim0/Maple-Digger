@@ -1,0 +1,90 @@
+-- F7-A CLIENT RECOVERY PROMPT
+-- This UI only displays synchronized account safety state and forwards an
+-- explicit player choice. Profile decoding, backup writes, and session locks
+-- remain server-owned in AccountProfileService.
+@Logic
+script AccountRecoveryController extends Logic
+
+property Entity recoveryPanel = "650b374c-717b-4042-a369-5f867fa24d95"
+property TextGUIRendererComponent titleText = "414e1ad3-f28c-46ec-9163-2b7121c707c1"
+property TextGUIRendererComponent messageText = "6904cb68-750d-49ff-bb81-afbbd8ec6160"
+property ButtonComponent btnRecover = "d65961d8-2757-4a41-9b34-7997a88277f0"
+property ButtonComponent btnAbandon = "ae07b182-5e62-4105-849e-d5e1673698da"
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    self._T.handlers = {}
+    self._T.lastState = ""
+    if self.recoveryPanel ~= nil then self.recoveryPanel.Enable = false end
+    if self.btnRecover ~= nil then
+        self._T.handlers.recover = self.btnRecover.Entity:ConnectEvent(ButtonClickEvent, self.OnRecoverClicked)
+    end
+    if self.btnAbandon ~= nil then
+        self._T.handlers.abandon = self.btnAbandon.Entity:ConnectEvent(ButtonClickEvent, self.OnAbandonClicked)
+    end
+    self:RefreshUI(true)
+    log("[AccountRecoveryUI] ready")
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    self:RefreshUI(false)
+end
+
+@ExecSpace("ClientOnly")
+method AccountProfileService GetProfile()
+    local player = _UserService.LocalPlayer
+    if player == nil then return nil end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    return profile
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshUI(boolean force)
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local state = tostring(profile.RecoveryPending) .. ":" .. tostring(profile.RecoveryCanRestore) .. ":" .. tostring(profile.SessionAccessDenied) .. ":" .. profile.RecoveryStatus .. ":" .. profile.SessionMessage
+    if not force and state == self._T.lastState then return end
+    self._T.lastState = state
+
+    local showRecovery = profile.RecoveryPending
+    local showLock = profile.SessionAccessDenied
+    if self.recoveryPanel ~= nil then self.recoveryPanel.Enable = showRecovery or showLock end
+    if self.titleText ~= nil then
+        if showLock then self.titleText.Text = "다른 기기에서 플레이 중입니다"
+        else self.titleText.Text = "계정 복구가 필요합니다" end
+    end
+    if self.messageText ~= nil then
+        if showLock then self.messageText.Text = profile.SessionMessage
+        else self.messageText.Text = profile.RecoveryStatus end
+    end
+    if self.btnRecover ~= nil then self.btnRecover.Entity.Enable = showRecovery and profile.RecoveryCanRestore end
+    if self.btnAbandon ~= nil then self.btnAbandon.Entity.Enable = showRecovery end
+end
+
+@ExecSpace("ClientOnly")
+method void OnRecoverClicked()
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    profile:RequestRecoveryRestore()
+end
+
+@ExecSpace("ClientOnly")
+method void OnAbandonClicked()
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    profile:RequestRecoveryAbandon()
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    if self.btnRecover ~= nil and self._T.handlers.recover ~= nil then
+        self.btnRecover.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.recover)
+    end
+    if self.btnAbandon ~= nil and self._T.handlers.abandon ~= nil then
+        self.btnAbandon.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.abandon)
+    end
+end
+
+end

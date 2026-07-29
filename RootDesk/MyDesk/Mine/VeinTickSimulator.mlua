@@ -18,6 +18,9 @@ property integer DepotCellX = 0
 property integer DepotCellY = 0
 property string MineId = "beginner_mine"
 property integer LayoutVersion = 2
+property integer SpecialVeinSpawnTicks = 750
+property integer SpecialVeinMaxActive = 3
+property integer SpecialVeinSpawnBatch = 2
 -- These tables are map-authored configuration injection points. They remain
 -- empty in the existing prototype map, where the explicit fallback layout
 -- below preserves the validated beginner-mine route.
@@ -48,6 +51,9 @@ method void OnBeginPlay()
     -- Initializes the map-scoped vein ledger, shared depot, and worker registry.
     self._T.tickAccumulator = 0
     self._T.workers = {}
+    self._T.markers = {}
+    self._T.activeSpecialVeins = {}
+    self._T.nextSpecialCandidateIndex = 1
     self._T.tilemap = self.Entity:GetFirstChildComponentByTypeName("RectTileMapComponent")
     self.CurrentTick = 0
     self.DepotStone = 0
@@ -98,6 +104,10 @@ method void AdvanceTick()
     if recoveredCount > 0 then
         log("[VeinTick] tick " .. self.CurrentTick .. " - recovered cells=" .. recoveredCount)
     end
+
+    if self.SpecialVeinSpawnTicks > 0 and self.CurrentTick % self.SpecialVeinSpawnTicks == 0 then
+        self:TrySpawnSpecialVeins()
+    end
 end
 
 @ExecSpace("ServerOnly")
@@ -125,6 +135,22 @@ method void UnregisterWorker(WorkerController worker)
 end
 
 @ExecSpace("ServerOnly")
+method void RegisterMarker(string markerId, string markerKind)
+    -- Registers a map-authored marker so its stable ID can be checked in Play logs.
+    if markerId == nil or markerId == "" then
+        log_error("[VeinTick] marker missing id kind=" .. tostring(markerKind))
+        return
+    end
+    if self._T.markers == nil then self._T.markers = {} end
+    if self._T.markers[markerId] ~= nil then
+        log_error("[VeinTick] duplicate marker id=" .. markerId)
+        return
+    end
+    self._T.markers[markerId] = markerKind
+    log("[VeinTick] marker registered id=" .. markerId .. " kind=" .. markerKind)
+end
+
+@ExecSpace("ServerOnly")
 method void AdvanceWorkers()
     -- Gives each registered worker at most one action opportunity this tick.
     if self._T.workers == nil then return end
@@ -147,6 +173,8 @@ method boolean LoadLayout()
     self._T.startCount = 0
     self._T.specialCandidateCount = 0
     self._T.specialVeinCandidates = {}
+    self._T.activeSpecialVeins = {}
+    self._T.nextSpecialCandidateIndex = 1
     self.VeinState = {}
     self.Depot = {}
 
@@ -201,7 +229,7 @@ method boolean LoadLayout()
             self._T.layoutError = "duplicate vein id=" .. definition.id
             return false
         end
-        if definition.cellX == nil or definition.cellY == nil or definition.oreType == nil or definition.oreType == "" then
+        if definition.cellX == nil or definition.cellY == nil or definition.oreType == nil or definition.oreType == "" or definition.markerId == nil or definition.markerId == "" then
             self._T.layoutError = "invalid vein id=" .. definition.id
             return false
         end
@@ -282,7 +310,7 @@ method boolean LoadLayout()
     local specialCells = {}
     for i = 1, #specialCandidates do
         local candidate = specialCandidates[i]
-        if candidate == nil or candidate.id == nil or candidate.id == "" or candidate.cellX == nil or candidate.cellY == nil then
+        if candidate == nil or candidate.id == nil or candidate.id == "" or candidate.markerId == nil or candidate.markerId == "" or candidate.cellX == nil or candidate.cellY == nil then
             self._T.layoutError = "invalid special candidate=" .. tostring(i)
             return false
         end
@@ -309,6 +337,77 @@ method boolean LoadLayout()
         table.insert(self._T.specialVeinCandidates, candidate)
     end
     return true
+end
+
+@ExecSpace("ServerOnly")
+method integer TrySpawnSpecialVeins()
+    -- Creates session-only special veins from unused authored candidates at a fixed tick cadence.
+    if self._T.specialVeinCandidates == nil or #self._T.specialVeinCandidates == 0 then
+        log("[VeinTick] special spawn skipped reason=no-candidates")
+        return 0
+    end
+    if self._T.activeSpecialVeins == nil then self._T.activeSpecialVeins = {} end
+
+    local activeCount = 0
+    for _, active in pairs(self._T.activeSpecialVeins) do
+        if active then activeCount = activeCount + 1 end
+    end
+    local slots = self.SpecialVeinMaxActive - activeCount
+    if slots <= 0 then
+        log("[VeinTick] special spawn skipped reason=max-active count=" .. activeCount)
+        return 0
+    end
+
+    local targetCount = self.SpecialVeinSpawnBatch
+    if targetCount < 1 then targetCount = 1 end
+    if targetCount > slots then targetCount = slots end
+
+    local spawned = 0
+    local candidateCount = #self._T.specialVeinCandidates
+    for offset = 0, candidateCount - 1 do
+        if spawned >= targetCount then break end
+        local index = ((self._T.nextSpecialCandidateIndex - 1 + offset) % candidateCount) + 1
+        local candidate = self._T.specialVeinCandidates[index]
+        if candidate ~= nil and not self._T.activeSpecialVeins[candidate.id] then
+            local oreType = candidate.oreType
+            if oreType == nil or oreType == "" then oreType = "stone" end
+            local recoverTicks = candidate.recoverTicks
+            if recoverTicks == nil or recoverTicks < 1 then recoverTicks = self.StoneRecoverTicks end
+            local key = self:CellKey(candidate.cellX, candidate.cellY)
+            self.VeinState[key] = {
+                ore = oreType,
+                stage = self.MaxReserveStage,
+                recoverTicks = recoverTicks,
+                recoverElapsed = 0,
+                isSpecial = true,
+                specialId = candidate.id,
+            }
+            self._T.activeSpecialVeins[candidate.id] = true
+            spawned = spawned + 1
+            log("[VeinTick] special spawned id=" .. candidate.id .. " marker=" .. candidate.markerId .. " ore=" .. oreType .. " cell=" .. key)
+        end
+    end
+    self._T.nextSpecialCandidateIndex = ((self._T.nextSpecialCandidateIndex - 1 + spawned) % candidateCount) + 1
+    if spawned == 0 then
+        log("[VeinTick] special spawn skipped reason=no-unused-candidate")
+    end
+    return spawned
+end
+
+@ExecSpace("ServerOnly")
+method table GetSpecialVeinState()
+    -- Returns active special vein IDs for later marker and HUD presentation layers.
+    return self._T.activeSpecialVeins
+end
+
+@ExecSpace("ServerOnly")
+method void ResetSessionForMapTransition()
+    -- Rebuilds this map's session-only veins and specials after every exit.
+    if self:LoadLayout() then
+        log("[VeinTick] session reset mineId=" .. self.MineId)
+    else
+        log_error("[VeinTick] session reset rejected mineId=" .. self.MineId .. " reason=" .. tostring(self._T.layoutError))
+    end
 end
 
 @ExecSpace("ServerOnly")
@@ -443,6 +542,7 @@ method integer AddToDepot(string oreType, integer count)
     if oreType == "stone" then self.DepotStone = self.Depot[oreType] end
     if oreType == "iron" then self.DepotIron = self.Depot[oreType] end
     if oreType == "gold" then self.DepotGold = self.Depot[oreType] end
+    _EconomyService:CreditOreFromMine(self.Entity, oreType, count)
     log("[VeinTick] depot add ore=" .. oreType .. " count=" .. count .. " total=" .. self.Depot[oreType])
     return self.Depot[oreType]
 end

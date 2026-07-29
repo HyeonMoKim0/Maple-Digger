@@ -1,0 +1,20 @@
+-- MAP-AUTHORED MINE MARKER CONTRACT
+-- Markers carry stable logical IDs for layout validation and later F5 visuals.
+@Component
+script VeinMarker extends Component
+
+property string MarkerId = ""
+property string MarkerKind = "normal"
+
+@ExecSpace("ServerOnly")
+method void OnBeginPlay()
+    -- Registers this map-local marker with the current mine's server simulator.
+    local mine = self.Entity.CurrentMap.VeinTickSimulator
+    if mine == nil then
+        log_error("[VeinMarker] simulator missing id=" .. self.MarkerId)
+        return
+    end
+    mine:RegisterMarker(self.MarkerId, self.MarkerKind)
+end
+
+end

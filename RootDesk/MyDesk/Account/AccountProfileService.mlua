@@ -2,49 +2,177 @@
 script AccountProfileService extends Component
 
 property string StorageKey = "maple-digger.account.v1"
-property integer SchemaVersion = 1
+property string BackupStorageKey = "maple-digger.account.backup.v1"
+property string RecoveryArchiveStorageKey = "maple-digger.account.recovery-archive.v1"
+property string SessionLockStorageKey = "maple-digger.account.session-lock.v1"
+property integer SchemaVersion = 6
 property integer AutoSaveSeconds = 300
+property integer SessionLockLeaseSeconds = 90
+property integer SessionLockRefreshSeconds = 30
 property boolean IsLoaded = false
 property boolean IsDirty = false
 property integer SaveGeneration = 0
+
+@Sync
+property integer Gold = 0
+
+@Sync
+property integer MineTokens = 0
+
+@Sync
+property integer Stone = 0
+
+@Sync
+property integer Iron = 0
+
+@Sync
+property integer GoldOre = 0
+
+@Sync
+property boolean StoneAutoSell = false
+
+@Sync
+property boolean IronAutoSell = false
+
+@Sync
+property boolean GoldOreAutoSell = false
+
+@Sync
+property integer StoneProtectedAmount = 0
+
+@Sync
+property integer IronProtectedAmount = 0
+
+@Sync
+property integer GoldOreProtectedAmount = 0
+
+@Sync
+property boolean DeepMineUnlocked = false
+
+@Sync
+property boolean GemMineUnlocked = false
+
+@Sync
+property string LastTransactionMessage = ""
+
+@Sync
+property string LastMineId = "farm01"
+
+@Sync
+property integer OwnedWorkerCount = 1
+
+@Sync
+property integer Worker1CartCapacity = 20
+
+@Sync
+property integer Worker2CartCapacity = 20
+
+@Sync
+property integer Worker3CartCapacity = 20
+
+@Sync
+property integer Worker4CartCapacity = 20
+
+@Sync
+property integer Worker5CartCapacity = 20
+
+@Sync
+property string RecoveryStatus = ""
+
+@Sync
+property boolean RecoveryPending = false
+
+@Sync
+property boolean RecoveryCanRestore = false
+
+@Sync
+property boolean SessionAccessDenied = false
+
+@Sync
+property string SessionMessage = ""
 
 @ExecSpace("ServerOnly")
 method void OnBeginPlay()
     self._T.profile = self:CreateDefaultProfile()
     self._T.autoSaveTimer = 0
+    self._T.restoreTimer = 0
+    self._T.restoredMapName = ""
+    self._T.lockRefreshTimer = 0
+    self._T.lockHeld = false
+    self._T.lockToken = ""
+    self._T.lockRaw = ""
+    -- Player-scoped DataStorage becomes available just after entity begin-play.
+    self._T.initializeTimer = _TimerService:SetTimerOnce(function()
+        self:InitializeProfileStorage()
+    end, 1.0)
+end
 
+@ExecSpace("ServerOnly")
+method void InitializeProfileStorage()
     if self.Entity.PlayerComponent == nil then
         log_error("[AccountProfile] missing PlayerComponent")
         return
     end
 
-    local profileCode = self.Entity.PlayerComponent.ProfileCode
-    if profileCode == nil or profileCode == "" then
-        log_error("[AccountProfile] missing ProfileCode")
+    -- UserDataStorage is keyed by the account UserId; ProfileCode is only a player-profile label.
+    local userId = self.Entity.PlayerComponent.UserId
+    if userId == nil or userId == "" then
+        log_error("[AccountProfile] missing PlayerComponent.UserId")
         return
     end
 
-    self._T.storage = _DataStorageService:GetUserDataStorage(profileCode)
+    self._T.storage = _DataStorageService:GetUserDataStorage(userId)
+    log("[AccountProfile] storage ready user=" .. tostring(userId))
+    if not self:AcquireSessionLock() then return end
     self:LoadProfile()
-    self._T.autoSaveTimer = _TimerService:SetTimerRepeat(function()
-        self:SaveProfileAsync()
-    end, self.AutoSaveSeconds, self.AutoSaveSeconds)
+    self:StartSessionTimers()
 end
 
 @ExecSpace("ServerOnly")
 method void OnEndPlay()
+    if self._T.initializeTimer ~= nil and self._T.initializeTimer ~= 0 then
+        _TimerService:ClearTimer(self._T.initializeTimer)
+        self._T.initializeTimer = 0
+    end
     if self._T.autoSaveTimer ~= nil and self._T.autoSaveTimer ~= 0 then
         _TimerService:ClearTimer(self._T.autoSaveTimer)
         self._T.autoSaveTimer = 0
     end
-    self:SaveProfileAndWait()
+    if self._T.restoreTimer ~= nil and self._T.restoreTimer ~= 0 then
+        _TimerService:ClearTimer(self._T.restoreTimer)
+        self._T.restoreTimer = 0
+    end
+    if self._T.lockRefreshTimer ~= nil and self._T.lockRefreshTimer ~= 0 then
+        _TimerService:ClearTimer(self._T.lockRefreshTimer)
+        self._T.lockRefreshTimer = 0
+    end
+    if self:CanWriteProfile() then
+        self:CaptureCurrentWorkerState()
+        self:SaveProfileAndWait()
+    end
+    self:ReleaseSessionLock()
 end
 
 @ExecSpace("ServerOnly")
 method table CreateDefaultProfile()
     return {
         schemaVersion = self.SchemaVersion,
-        credits = 0,
+        gold = 0,
+        mineTokens = 0,
+        stone = 0,
+        iron = 0,
+        goldOre = 0,
+        deepMineUnlocked = false,
+        gemMineUnlocked = false,
+        stoneTokenProgress = 0,
+        ironTokenProgress = 0,
+        saleSettings = {
+            stone = { autoSell = false, protectedAmount = 0 },
+            iron = { autoSell = false, protectedAmount = 0 },
+            gold = { autoSell = false, protectedAmount = 0 },
+        },
+        lastMineId = "farm01",
+        workers = { self:CreateWorkerRecord(1) },
         unlocksJson = "{}",
         programLibraryJson = "{}",
         workerAppearanceJson = "{}",
@@ -57,31 +185,284 @@ method void LoadProfile()
     local errorCode, raw = self._T.storage:GetAndWait(self.StorageKey)
     if errorCode == 1000002 or raw == nil or raw == "" then
         self.IsLoaded = true
+        self:SyncRuntimeState()
+        self:MarkProfileDirty()
+        self:SaveProfileAndWait()
         log("[AccountProfile] new profile ready")
         return
     end
     if errorCode ~= 0 then
         log_error("[AccountProfile] load failed error=" .. tostring(errorCode))
+        self:BeginRecovery("계정 데이터를 읽지 못했습니다.", "")
         return
     end
 
-    local decoded = _HttpService:JSONDecode(raw)
+    local decoded = self:DecodeJsonSafely(raw)
     if type(decoded) ~= "table" then
-        log_error("[AccountProfile] invalid saved JSON; using defaults")
-        self.IsLoaded = true
+        log_error("[AccountProfile] invalid saved JSON; waiting for recovery choice")
+        self:BeginRecovery("현재 계정 데이터를 읽을 수 없습니다.", raw)
         return
     end
 
+    local loadedSchemaVersion = decoded.schemaVersion or 1
     self._T.profile = self:NormalizeProfile(decoded)
     self.IsLoaded = true
-    log("[AccountProfile] profile loaded schema=" .. tostring(self._T.profile.schemaVersion) .. " credits=" .. tostring(self._T.profile.credits))
+    self:SyncRuntimeState()
+    if loadedSchemaVersion ~= self.SchemaVersion then
+        self:MarkProfileDirty()
+        self:SaveProfileAndWait()
+        log("[AccountProfile] profile migrated from schema=" .. tostring(loadedSchemaVersion) .. " to=" .. tostring(self.SchemaVersion))
+    end
+    self:EnsureBackupFromRaw(raw)
+    log("[AccountProfile] profile loaded schema=" .. tostring(self._T.profile.schemaVersion) .. " gold=" .. tostring(self._T.profile.gold))
+end
+
+@ExecSpace("ServerOnly")
+method table CreateWorkerRecord(integer workerIndex)
+    local suffix = tostring(workerIndex)
+    if workerIndex < 10 then suffix = "0" .. suffix end
+    return {
+        id = "worker-" .. suffix,
+        owned = true,
+        cartUpgradeLevel = 0,
+        cartCapacity = 20,
+        cart = { stone = 0, iron = 0, gold = 0 },
+        cartCount = 0,
+        pendingOre = "",
+        lastValidProgramId = "default-worker-" .. suffix,
+    }
+end
+
+@ExecSpace("ServerOnly")
+method void StartSessionTimers()
+    -- Timers start only after a profile is usable and this session owns its lease.
+    if not self:CanWriteProfile() then return end
+    self._T.autoSaveTimer = _TimerService:SetTimerRepeat(function()
+        self:SaveProfileAsync()
+    end, self.AutoSaveSeconds, self.AutoSaveSeconds)
+    self._T.lockRefreshTimer = _TimerService:SetTimerRepeat(function()
+        self:RefreshSessionLock()
+    end, self.SessionLockRefreshSeconds, self.SessionLockRefreshSeconds)
+    self._T.restoreTimer = _TimerService:SetTimerOnce(function()
+        self:RestoreLastMineAndWorker()
+    end, 0.5)
+end
+
+@ExecSpace("ServerOnly")
+method boolean CanWriteProfile()
+    return self.IsLoaded and self._T.lockHeld and not self.RecoveryPending and not self.SessionAccessDenied
+end
+
+@ExecSpace("ServerOnly")
+method integer CurrentLockClock()
+    -- DateTime elapsed is server UTC based, so lease comparisons do not trust client time.
+    return DateTime.UtcNow.Elapsed
+end
+
+@ExecSpace("ServerOnly")
+method string BuildLockValue(string token)
+    return _HttpService:JSONEncode({
+        token = token,
+        expiresAt = self:CurrentLockClock() + self.SessionLockLeaseSeconds * 1000,
+    })
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsActiveLock(string raw)
+    if raw == nil or raw == "" then return false end
+    local decoded = self:DecodeJsonSafely(raw)
+    return type(decoded) == "table" and type(decoded.token) == "string" and decoded.token ~= "" and type(decoded.expiresAt) == "number" and decoded.expiresAt > self:CurrentLockClock()
+end
+
+@ExecSpace("ServerOnly")
+method any DecodeJsonSafely(string raw)
+    local ok, decoded = pcall(function()
+        return _HttpService:JSONDecode(raw)
+    end)
+    if not ok then return nil end
+    return decoded
+end
+
+@ExecSpace("ServerOnly")
+method boolean AcquireSessionLock()
+    local errorCode, current = self._T.storage:GetAndWait(self.SessionLockStorageKey)
+    local lockMissing = errorCode == 1000002 or current == nil
+    if lockMissing then current = "" end
+    if errorCode ~= 0 and errorCode ~= 1000002 then
+        self.SessionAccessDenied = true
+        self.SessionMessage = "계정 잠금을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."
+        self:SetRecoveryStatus(self.SessionMessage)
+        log_error("[AccountProfile] lock read failed error=" .. tostring(errorCode))
+        return false
+    end
+    if self:IsActiveLock(current) then
+        self.SessionAccessDenied = true
+        self.SessionMessage = "다른 기기에서 플레이 중입니다. 잠시 후 다시 시도해 주세요."
+        self:SetRecoveryStatus(self.SessionMessage)
+        log_warning("[AccountProfile] session denied reason=active-lock")
+        return false
+    end
+    self._T.lockToken = _UtilLogic:NewGuid()
+    local nextRaw = self:BuildLockValue(self._T.lockToken)
+    local updateError = 0
+    if lockMissing then
+        -- UpdateAndWait cannot create a missing key, so bootstrap the first lease.
+        -- Later acquisition/refresh/release operations use compare-and-set.
+        updateError = self._T.storage:SetAndWait(self.SessionLockStorageKey, nextRaw)
+    else
+        updateError = self._T.storage:UpdateAndWait(self.SessionLockStorageKey, current, nextRaw)
+    end
+    if updateError ~= 0 then
+        self.SessionAccessDenied = true
+        self.SessionMessage = "다른 접속이 먼저 계정을 열었습니다. 다시 시도해 주세요."
+        self:SetRecoveryStatus(self.SessionMessage)
+        log_warning("[AccountProfile] session denied reason=lock-race error=" .. tostring(updateError))
+        return false
+    end
+    self._T.lockHeld = true
+    self._T.lockRaw = nextRaw
+    self.SessionAccessDenied = false
+    self.SessionMessage = ""
+    log("[AccountProfile] session lock acquired")
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method void RefreshSessionLock()
+    if not self._T.lockHeld then return end
+    local nextRaw = self:BuildLockValue(self._T.lockToken)
+    local errorCode = self._T.storage:UpdateAndWait(self.SessionLockStorageKey, self._T.lockRaw, nextRaw)
+    if errorCode ~= 0 then
+        self._T.lockHeld = false
+        self.SessionAccessDenied = true
+        self.SessionMessage = "계정 세션 잠금을 유지하지 못했습니다. 다시 접속해 주세요."
+        self:SetRecoveryStatus(self.SessionMessage)
+        log_error("[AccountProfile] session lock refresh failed error=" .. tostring(errorCode))
+        return
+    end
+    self._T.lockRaw = nextRaw
+end
+
+@ExecSpace("ServerOnly")
+method void ReleaseSessionLock()
+    if not self._T.lockHeld then return end
+    local errorCode = self._T.storage:UpdateAndWait(self.SessionLockStorageKey, self._T.lockRaw, "")
+    if errorCode ~= 0 then
+        log_warning("[AccountProfile] session lock release failed error=" .. tostring(errorCode))
+    else
+        log("[AccountProfile] session lock released")
+    end
+    self._T.lockHeld = false
+    self._T.lockRaw = ""
+end
+
+@ExecSpace("ServerOnly")
+method void EnsureBackupFromRaw(string raw)
+    -- Existing v3 users may predate the backup key; seed it once without extra writes later.
+    local errorCode, backupRaw = self._T.storage:GetAndWait(self.BackupStorageKey)
+    if errorCode == 1000002 or backupRaw == nil or backupRaw == "" then
+        local backupError = self._T.storage:SetAndWait(self.BackupStorageKey, raw)
+        if backupError ~= 0 then log_warning("[AccountProfile] backup seed failed error=" .. tostring(backupError)) end
+    elseif errorCode ~= 0 then
+        log_warning("[AccountProfile] backup read failed error=" .. tostring(errorCode))
+    end
+end
+
+@ExecSpace("ServerOnly")
+method void BeginRecovery(string reason, string corruptRaw)
+    self.IsLoaded = false
+    self.RecoveryPending = true
+    self.RecoveryCanRestore = false
+    self.SessionAccessDenied = false
+    self.SessionMessage = ""
+    self._T.corruptRaw = corruptRaw
+    self._T.recoveryBackupRaw = ""
+    local errorCode, backupRaw = self._T.storage:GetAndWait(self.BackupStorageKey)
+    if errorCode == 0 and backupRaw ~= nil and type(self:DecodeJsonSafely(backupRaw)) == "table" then
+        self._T.recoveryBackupRaw = backupRaw
+        self.RecoveryCanRestore = true
+        self:SetRecoveryStatus(reason .. " 마지막 정상 저장본을 복구할 수 있습니다.")
+    else
+        self:SetRecoveryStatus(reason .. " 복구 가능한 저장본이 없습니다.")
+    end
+    log_warning("[AccountProfile] recovery pending canRestore=" .. tostring(self.RecoveryCanRestore))
+end
+
+@ExecSpace("ServerOnly")
+method boolean RestoreFromBackup()
+    if not self.RecoveryPending or not self.RecoveryCanRestore then return false end
+    local decoded = self:DecodeJsonSafely(self._T.recoveryBackupRaw)
+    if type(decoded) ~= "table" then return false end
+    self._T.profile = self:NormalizeProfile(decoded)
+    self.IsLoaded = true
+    self.RecoveryPending = false
+    self.RecoveryCanRestore = false
+    self:SetRecoveryStatus("마지막 정상 저장본을 복구했습니다.")
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self.IsLoaded = false
+        self.RecoveryPending = true
+        self.RecoveryCanRestore = true
+        self:SetRecoveryStatus("복구본 저장에 실패했습니다. 다시 시도해 주세요.")
+        return false
+    end
+    self:StartSessionTimers()
+    log("[AccountProfile] recovery restored")
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean AbandonCorruptProfile()
+    if not self.RecoveryPending then return false end
+    local profile = self:CreateDefaultProfile()
+    local encoded = _HttpService:JSONEncode(profile)
+    local values = { [self.StorageKey] = encoded }
+    if self._T.recoveryBackupRaw ~= nil and self._T.recoveryBackupRaw ~= "" then
+        values[self.RecoveryArchiveStorageKey] = self._T.recoveryBackupRaw
+    end
+    local errorCode = self._T.storage:TransactSetAndWait(values)
+    if errorCode ~= 0 then
+        self:SetRecoveryStatus("새 계정을 저장하지 못했습니다. 다시 시도해 주세요.")
+        return false
+    end
+    self._T.profile = profile
+    self.IsLoaded = true
+    self.RecoveryPending = false
+    self.RecoveryCanRestore = false
+    self:SetRecoveryStatus("손상된 저장 후보를 포기하고 새 계정을 시작합니다.")
+    self:SyncRuntimeState()
+    self:StartSessionTimers()
+    log("[AccountProfile] corrupt candidate abandoned")
+    return true
+end
+
+@ExecSpace("Server")
+method boolean RequestRecoveryRestore()
+    return self:RestoreFromBackup()
+end
+
+@ExecSpace("Server")
+method boolean RequestRecoveryAbandon()
+    return self:AbandonCorruptProfile()
 end
 
 @ExecSpace("ServerOnly")
 method table NormalizeProfile(table profile)
     local normalized = self:CreateDefaultProfile()
     normalized.schemaVersion = self.SchemaVersion
-    normalized.credits = profile.credits or normalized.credits
+    normalized.gold = profile.gold or profile.credits or normalized.gold
+    normalized.mineTokens = profile.mineTokens or normalized.mineTokens
+    normalized.stone = profile.stone or normalized.stone
+    normalized.iron = profile.iron or normalized.iron
+    normalized.goldOre = profile.goldOre or normalized.goldOre
+    normalized.deepMineUnlocked = profile.deepMineUnlocked or normalized.deepMineUnlocked
+    normalized.gemMineUnlocked = profile.gemMineUnlocked or normalized.gemMineUnlocked
+    normalized.stoneTokenProgress = profile.stoneTokenProgress or normalized.stoneTokenProgress
+    normalized.ironTokenProgress = profile.ironTokenProgress or normalized.ironTokenProgress
+    normalized.saleSettings = self:NormalizeSaleSettings(profile.saleSettings)
+    if self:IsKnownMineMap(profile.lastMineId) then normalized.lastMineId = profile.lastMineId end
+    normalized.workers = self:NormalizeWorkers(profile.workers)
     normalized.unlocksJson = profile.unlocksJson or normalized.unlocksJson
     normalized.programLibraryJson = profile.programLibraryJson or normalized.programLibraryJson
     normalized.workerAppearanceJson = profile.workerAppearanceJson or normalized.workerAppearanceJson
@@ -90,23 +471,473 @@ method table NormalizeProfile(table profile)
 end
 
 @ExecSpace("ServerOnly")
+method table NormalizeSaleSettings(any source)
+    local settings = self:CreateDefaultProfile().saleSettings
+    if type(source) ~= "table" then return settings end
+    for oreType, record in pairs(source) do
+        if self:IsKnownOre(oreType) and type(record) == "table" then
+            settings[oreType].autoSell = record.autoSell == true
+            if type(record.protectedAmount) == "number" then
+                settings[oreType].protectedAmount = math.max(0, math.floor(record.protectedAmount))
+            end
+        end
+    end
+    return settings
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeWorkers(any workers)
+    -- Owned workers are contiguous 1..5. Runtime entities and interpreter frames
+    -- remain session-only, but each worker's cart and selected program reference persist.
+    if type(workers) ~= "table" or type(workers[1]) ~= "table" then
+        return { self:CreateWorkerRecord(1) }
+    end
+    local normalized = {}
+    for workerIndex = 1, 5 do
+        local source = workers[workerIndex]
+        if type(source) ~= "table" or source.owned == false then break end
+        local record = self:CreateWorkerRecord(workerIndex)
+        if type(source.cartUpgradeLevel) == "number" then
+            record.cartUpgradeLevel = math.max(0, math.min(15, math.floor(source.cartUpgradeLevel)))
+        elseif type(source.cartCapacity) == "number" then
+            record.cartUpgradeLevel = math.max(0, math.min(15, math.floor((source.cartCapacity - 20) / 2)))
+        end
+        record.cartCapacity = 20 + record.cartUpgradeLevel * 2
+        if type(source.cartCapacity) == "number" then
+            local savedCapacity = math.max(20, math.min(50, math.floor(source.cartCapacity)))
+            if savedCapacity > record.cartCapacity then
+                record.cartUpgradeLevel = math.max(0, math.min(15, math.floor((savedCapacity - 20) / 2)))
+                record.cartCapacity = 20 + record.cartUpgradeLevel * 2
+            end
+        end
+        if type(source.pendingOre) == "string" and self:IsKnownOre(source.pendingOre) then
+            record.pendingOre = source.pendingOre
+        end
+        if type(source.lastValidProgramId) == "string" and source.lastValidProgramId ~= "" then
+            record.lastValidProgramId = source.lastValidProgramId
+        end
+        if type(source.cart) == "table" then
+            for oreType, count in pairs(source.cart) do
+                if self:IsKnownOre(oreType) and type(count) == "number" and count > 0 then
+                    record.cart[oreType] = math.floor(count)
+                end
+            end
+        end
+        record.cartCount = self:CountCart(record.cart)
+        if record.cartCount > record.cartCapacity then
+            record.cart = { stone = 0, iron = 0, gold = 0 }
+            record.cartCount = 0
+            record.pendingOre = ""
+            log_warning("[AccountProfile] invalid saved worker cart cleared index=" .. tostring(workerIndex))
+        end
+        table.insert(normalized, record)
+    end
+    if #normalized == 0 then table.insert(normalized, self:CreateWorkerRecord(1)) end
+    return normalized
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsKnownOre(string oreType)
+    return oreType == "stone" or oreType == "iron" or oreType == "gold"
+end
+
+@ExecSpace("ServerOnly")
+method integer CountCart(table cart)
+    local total = 0
+    for oreType, count in pairs(cart) do
+        if self:IsKnownOre(oreType) and type(count) == "number" and count > 0 then
+            total = total + math.floor(count)
+        end
+    end
+    return total
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsKnownMineMap(any mapName)
+    return mapName == "farm01" or mapName == "deep_mine" or mapName == "gem_mine"
+end
+
+@ExecSpace("ServerOnly")
 method table GetProfile()
     return self._T.profile
 end
 
 @ExecSpace("ServerOnly")
+method void SyncRuntimeState()
+    -- Mirrors only player-visible progression data; authoritative values stay in the profile.
+    self.Gold = self._T.profile.gold
+    self.MineTokens = self._T.profile.mineTokens
+    self.Stone = self._T.profile.stone
+    self.Iron = self._T.profile.iron
+    self.GoldOre = self._T.profile.goldOre
+    self.StoneAutoSell = self._T.profile.saleSettings.stone.autoSell
+    self.IronAutoSell = self._T.profile.saleSettings.iron.autoSell
+    self.GoldOreAutoSell = self._T.profile.saleSettings.gold.autoSell
+    self.StoneProtectedAmount = self._T.profile.saleSettings.stone.protectedAmount
+    self.IronProtectedAmount = self._T.profile.saleSettings.iron.protectedAmount
+    self.GoldOreProtectedAmount = self._T.profile.saleSettings.gold.protectedAmount
+    self.DeepMineUnlocked = self._T.profile.deepMineUnlocked
+    self.GemMineUnlocked = self._T.profile.gemMineUnlocked
+    self.LastMineId = self._T.profile.lastMineId
+    self.OwnedWorkerCount = #self._T.profile.workers
+    self.Worker1CartCapacity = self:GetWorkerCartCapacity(1)
+    self.Worker2CartCapacity = self:GetWorkerCartCapacity(2)
+    self.Worker3CartCapacity = self:GetWorkerCartCapacity(3)
+    self.Worker4CartCapacity = self:GetWorkerCartCapacity(4)
+    self.Worker5CartCapacity = self:GetWorkerCartCapacity(5)
+end
+
+@ExecSpace("ServerOnly")
+method integer GetWorkerCartCapacity(integer workerIndex)
+    local record = self._T.profile.workers[workerIndex]
+    if record == nil then return 20 end
+    return math.max(20, math.min(50, math.floor(record.cartCapacity or 20)))
+end
+
+@ExecSpace("ServerOnly")
+method boolean UpdateSaleSetting(string oreType, boolean autoSell, integer protectedAmount)
+    if not self:CanWriteProfile() or not self:IsKnownOre(oreType) then return false end
+    if protectedAmount < 0 then return false end
+    local snapshot = _HttpService:JSONEncode(self._T.profile)
+    local record = self._T.profile.saleSettings[oreType]
+    record.autoSell = autoSell
+    record.protectedAmount = math.floor(protectedAmount)
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if self:SaveProfileAndWait() then
+        self:SetTransactionMessage("판매 설정 저장: " .. oreType .. " 보호 " .. tostring(record.protectedAmount) .. ", 자동 " .. tostring(record.autoSell))
+        return true
+    end
+    self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+    self:SyncRuntimeState()
+    self:SetTransactionMessage("판매 설정 저장에 실패했습니다.")
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method void SetRecoveryStatus(string status)
+    self.RecoveryStatus = status
+end
+
+@ExecSpace("ServerOnly")
+method any GetCurrentWorker()
+    return self:GetWorkerByIndex(1)
+end
+
+@ExecSpace("ServerOnly")
+method string WorkerEntityName(integer workerIndex)
+    local suffix = tostring(workerIndex)
+    if workerIndex < 10 then suffix = "0" .. suffix end
+    return "Worker" .. suffix
+end
+
+@ExecSpace("ServerOnly")
+method any GetWorkerByIndex(integer workerIndex)
+    local map = self.Entity.CurrentMap
+    if map == nil then return nil end
+    local workerEntity = map:GetChildByName(self:WorkerEntityName(workerIndex), false)
+    if workerEntity == nil then return nil end
+    ---@type WorkerController
+    return workerEntity:GetComponent("script.WorkerController")
+end
+
+@ExecSpace("ServerOnly")
+method void CaptureCurrentWorkerState()
+    -- Persists each owned worker's hand/cart; position and interpreter frames remain session-only.
+    if not self:CanWriteProfile() then return end
+    for workerIndex = 1, #self._T.profile.workers do
+        local worker = self:GetWorkerByIndex(workerIndex)
+        local record = self._T.profile.workers[workerIndex]
+        if worker ~= nil and record ~= nil then
+            record.cartCapacity = math.max(20, math.min(50, math.floor(worker.CartCapacity)))
+            record.cartUpgradeLevel = math.max(0, math.min(15, math.floor((record.cartCapacity - 20) / 2)))
+            record.cart = { stone = 0, iron = 0, gold = 0 }
+            for oreType, count in pairs(worker.Cart) do
+                if self:IsKnownOre(oreType) and type(count) == "number" and count > 0 then
+                    record.cart[oreType] = math.floor(count)
+                end
+            end
+            record.cartCount = self:CountCart(record.cart)
+            record.pendingOre = ""
+            if self:IsKnownOre(worker.PendingOre) then record.pendingOre = worker.PendingOre end
+        end
+    end
+    self:MarkProfileDirty()
+end
+
+@ExecSpace("ServerOnly")
+method boolean RestoreCurrentWorkerState()
+    if not self:CanWriteProfile() then return false end
+    local restoredCount = 0
+    for workerIndex = 1, #self._T.profile.workers do
+        if self:RestoreOwnedWorker(workerIndex) then restoredCount = restoredCount + 1 end
+    end
+    if restoredCount <= 0 then return false end
+    self:SetRecoveryStatus("저장된 일꾼 " .. tostring(restoredCount) .. "명의 수레 상태를 복구했습니다.")
+    log("[AccountProfile] owned workers restored count=" .. tostring(restoredCount))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RestoreOwnedWorker(integer workerIndex)
+    local record = self._T.profile.workers[workerIndex]
+    if record == nil then return false end
+    local worker = self:GetWorkerByIndex(workerIndex)
+    if worker == nil and workerIndex > 1 then
+        local map = self.Entity.CurrentMap
+        if map == nil then return false end
+        local spawned = _SpawnService:SpawnByModelId("worker", self:WorkerEntityName(workerIndex), Vector3(0, 0, 0), map)
+        if spawned == nil then
+            log_error("[AccountProfile] worker spawn failed index=" .. tostring(workerIndex))
+            return false
+        end
+        worker = spawned:GetComponent("script.WorkerController")
+    end
+    if worker == nil then return false end
+    worker:ConfigureFromProfile(workerIndex, record.cartCapacity, record.cart, record.pendingOre)
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean PurchaseNextWorker(integer goldCost, integer stoneCost, integer ironCost, integer goldOreCost)
+    if not self:CanWriteProfile() then return false end
+    local profile = self._T.profile
+    local workerIndex = #profile.workers + 1
+    if workerIndex > 5 then
+        self:SetTransactionMessage("이미 최대 5명의 일꾼을 보유하고 있습니다.")
+        return false
+    end
+    if profile.gold < goldCost or profile.stone < stoneCost or profile.iron < ironCost or profile.goldOre < goldOreCost then
+        self:SetTransactionMessage("일꾼 구매 재화가 부족합니다.")
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(profile)
+    profile.gold = profile.gold - goldCost
+    profile.stone = profile.stone - stoneCost
+    profile.iron = profile.iron - ironCost
+    profile.goldOre = profile.goldOre - goldOreCost
+    table.insert(profile.workers, self:CreateWorkerRecord(workerIndex))
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("일꾼 구매 저장에 실패했습니다.")
+        return false
+    end
+    local spawned = self:RestoreOwnedWorker(workerIndex)
+    if spawned then
+        self:SetTransactionMessage("일꾼 " .. tostring(workerIndex) .. " 고용 완료")
+    else
+        self:SetTransactionMessage("일꾼 " .. tostring(workerIndex) .. " 고용 완료: 다음 광산 진입 시 배치됩니다.")
+    end
+    log("[AccountProfile] worker purchased index=" .. tostring(workerIndex) .. " spawned=" .. tostring(spawned))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean PurchaseCartUpgrade(integer workerIndex, integer goldCost, string oreType, integer oreCost)
+    if not self:CanWriteProfile() or workerIndex < 1 or oreCost < 0 or goldCost < 0 then return false end
+    local profile = self._T.profile
+    local record = profile.workers[workerIndex]
+    if record == nil then
+        self:SetTransactionMessage("보유하지 않은 일꾼은 수레를 강화할 수 없습니다.")
+        return false
+    end
+    if record.cartUpgradeLevel >= 15 or record.cartCapacity >= 50 then
+        self:SetTransactionMessage("일꾼 " .. tostring(workerIndex) .. "의 수레는 최대 용량입니다.")
+        return false
+    end
+    local oreBalance = 0
+    if oreType == "stone" then oreBalance = profile.stone
+    elseif oreType == "iron" then oreBalance = profile.iron
+    elseif oreType == "gold" then oreBalance = profile.goldOre
+    else return false end
+    if profile.gold < goldCost or oreBalance < oreCost then
+        self:SetTransactionMessage("수레 강화 재화가 부족합니다.")
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(profile)
+    profile.gold = profile.gold - goldCost
+    if oreType == "stone" then profile.stone = profile.stone - oreCost
+    elseif oreType == "iron" then profile.iron = profile.iron - oreCost
+    else profile.goldOre = profile.goldOre - oreCost end
+    record.cartUpgradeLevel = record.cartUpgradeLevel + 1
+    record.cartCapacity = 20 + record.cartUpgradeLevel * 2
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("수레 강화 저장에 실패했습니다.")
+        return false
+    end
+    local worker = self:GetWorkerByIndex(workerIndex)
+    if worker ~= nil then worker:ApplyCartCapacity(record.cartCapacity) end
+    self:SetTransactionMessage("일꾼 " .. tostring(workerIndex) .. " 수레 강화: " .. tostring(record.cartCapacity) .. "칸")
+    log("[AccountProfile] cart upgraded worker=" .. tostring(workerIndex) .. " level=" .. tostring(record.cartUpgradeLevel) .. " capacity=" .. tostring(record.cartCapacity))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method void RestoreLastMineAndWorker()
+    -- Startup recovery moves only to a known authored mine, then applies the saved Worker01 state.
+    if not self:CanWriteProfile() then return end
+    local currentMap = self.Entity.CurrentMap
+    if currentMap == nil then return end
+    local targetMine = self._T.profile.lastMineId
+    if self:IsKnownMineMap(targetMine) and currentMap.Name ~= targetMine and self.Entity.PlayerComponent ~= nil then
+        self.Entity.PlayerComponent:MoveToMapPosition(targetMine, Vector2(0, 0))
+        self._T.restoreTimer = _TimerService:SetTimerOnce(function()
+            self:RestoreCurrentWorkerState()
+        end, 0.5)
+        return
+    end
+    self:RestoreCurrentWorkerState()
+end
+
+@ExecSpace("ServerOnly")
+method boolean PrepareMineTransition(string targetMapName)
+    -- Commits hand/cart and next map before movement. A failed save blocks the transition.
+    if not self:CanWriteProfile() or not self:IsKnownMineMap(targetMapName) then return false end
+    local snapshot = _HttpService:JSONEncode(self._T.profile)
+    self:CaptureCurrentWorkerState()
+    self._T.profile.lastMineId = targetMapName
+    self:SyncRuntimeState()
+    if self:SaveProfileAndWait() then
+        self:SetRecoveryStatus("광산 이동 상태를 저장했습니다.")
+        return true
+    end
+    self._T.profile = self:NormalizeProfile(_HttpService:JSONDecode(snapshot))
+    self:SyncRuntimeState()
+    self:SetRecoveryStatus("광산 이동 저장에 실패했습니다.")
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method void SetTransactionMessage(string message)
+    -- Provides one synchronized result line for the client progression panel.
+    self.LastTransactionMessage = message
+end
+
+@ExecSpace("ServerOnly")
+method void CreditOre(string oreType, integer count)
+    -- Adds delivered ore to the account ledger and defers persistence to the autosave batch.
+    if count <= 0 or not self:CanWriteProfile() then return end
+    if oreType == "stone" then self._T.profile.stone = self._T.profile.stone + count
+    elseif oreType == "iron" then self._T.profile.iron = self._T.profile.iron + count
+    elseif oreType == "gold" then self._T.profile.goldOre = self._T.profile.goldOre + count
+    else
+        log_error("[AccountProfile] credit rejected ore=" .. tostring(oreType))
+        return
+    end
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    log("[AccountProfile] credited ore=" .. oreType .. " count=" .. tostring(count))
+end
+
+@ExecSpace("ServerOnly")
+method boolean ApplySale(integer stoneSold, integer ironSold, integer goldOreSold, integer goldGain, integer tokenGain, integer stoneTokenProgress, integer ironTokenProgress)
+    -- Commits a validated sale atomically, restoring in-memory values if saving fails.
+    if not self:CanWriteProfile() then return false end
+    local profile = self._T.profile
+    if stoneSold < 0 or ironSold < 0 or goldOreSold < 0 or goldGain < 0 or tokenGain < 0 then return false end
+    if profile.stone < stoneSold or profile.iron < ironSold or profile.goldOre < goldOreSold then return false end
+    local snapshot = _HttpService:JSONEncode(profile)
+    profile.stone = profile.stone - stoneSold
+    profile.iron = profile.iron - ironSold
+    profile.goldOre = profile.goldOre - goldOreSold
+    profile.gold = profile.gold + goldGain
+    profile.mineTokens = profile.mineTokens + tokenGain
+    profile.stoneTokenProgress = stoneTokenProgress
+    profile.ironTokenProgress = ironTokenProgress
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if self:SaveProfileAndWait() then
+        self:SetTransactionMessage("판매 완료: 골드 +" .. tostring(goldGain) .. ", 토큰 +" .. tostring(tokenGain))
+        return true
+    end
+    self._T.profile = self:NormalizeProfile(_HttpService:JSONDecode(snapshot))
+    self:SyncRuntimeState()
+    self:SetTransactionMessage("판매 저장에 실패했습니다.")
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method boolean SpendAndUnlock(string mineId, integer goldCost, integer tokenCost, integer stoneCost, integer ironCost)
+    -- Deducts one configured mine-unlock cost and persists the resulting flag as one transaction.
+    if not self:CanWriteProfile() then return false end
+    local profile = self._T.profile
+    if profile.gold < goldCost or profile.mineTokens < tokenCost or profile.stone < stoneCost or profile.iron < ironCost then return false end
+    if mineId ~= "deep_mine" and mineId ~= "gem_mine" then return false end
+    local snapshot = _HttpService:JSONEncode(profile)
+    profile.gold = profile.gold - goldCost
+    profile.mineTokens = profile.mineTokens - tokenCost
+    profile.stone = profile.stone - stoneCost
+    profile.iron = profile.iron - ironCost
+    if mineId == "deep_mine" then profile.deepMineUnlocked = true end
+    if mineId == "gem_mine" then profile.gemMineUnlocked = true end
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if self:SaveProfileAndWait() then
+        self:SetTransactionMessage("광산 해금 완료: " .. mineId)
+        return true
+    end
+    self._T.profile = self:NormalizeProfile(_HttpService:JSONDecode(snapshot))
+    self:SyncRuntimeState()
+    self:SetTransactionMessage("해금 저장에 실패했습니다.")
+    return false
+end
+
+@ExecSpace("Server")
+method boolean RequestSellAll()
+    -- Routes the local player's sell request to the server-only economy authority.
+    return _EconomyService:SellAllWithProtection(self.Entity)
+end
+
+@ExecSpace("Server")
+method boolean RequestSellOre(string oreType, integer requestedAmount, boolean includeProtected)
+    -- The client chooses only an ore, amount, and explicit protection override.
+    return _EconomyService:SellOre(self.Entity, oreType, requestedAmount, includeProtected)
+end
+
+@ExecSpace("Server")
+method boolean RequestSaleSetting(string oreType, boolean autoSell, integer protectedAmount)
+    local updated = self:UpdateSaleSetting(oreType, autoSell, protectedAmount)
+    if updated and autoSell then _EconomyService:TryAutomaticSale(self, oreType) end
+    return updated
+end
+
+@ExecSpace("Server")
+method boolean RequestMineEntry(string targetMapName)
+    -- Routes the local player's mine selection to the server-only progression authority.
+    return _ProgressionService:RequestMineEntry(self.Entity, targetMapName)
+end
+
+@ExecSpace("Server")
+method boolean RequestWorkerPurchase()
+    return _ProgressionService:RequestWorkerPurchase(self.Entity)
+end
+
+@ExecSpace("Server")
+method boolean RequestCartUpgrade(integer workerIndex)
+    return _ProgressionService:RequestCartUpgrade(self.Entity, workerIndex)
+end
+
+@ExecSpace("ServerOnly")
 method void MarkProfileDirty()
-    if not self.IsLoaded then return end
+    if not self:CanWriteProfile() then return end
     self.IsDirty = true
     self.SaveGeneration = self.SaveGeneration + 1
 end
 
 @ExecSpace("ServerOnly")
 method void SaveProfileAsync()
-    if not self.IsLoaded or not self.IsDirty then return end
+    if not self:CanWriteProfile() or not self.IsDirty then return end
     local savedGeneration = self.SaveGeneration
     local encoded = _HttpService:JSONEncode(self._T.profile)
-    self._T.storage:SetAsync(self.StorageKey, encoded, function(errorCode)
+    local values = { [self.StorageKey] = encoded, [self.BackupStorageKey] = encoded }
+    self._T.storage:BatchSetAsync(values, function(errorCode, successKeys)
         if errorCode ~= 0 then
             log_warning("[AccountProfile] autosave failed error=" .. tostring(errorCode))
             return
@@ -119,16 +950,18 @@ method void SaveProfileAsync()
 end
 
 @ExecSpace("ServerOnly")
-method void SaveProfileAndWait()
-    if not self.IsLoaded or not self.IsDirty then return end
+method boolean SaveProfileAndWait()
+    if not self:CanWriteProfile() or not self.IsDirty then return self:CanWriteProfile() end
     local encoded = _HttpService:JSONEncode(self._T.profile)
-    local errorCode = self._T.storage:SetAndWait(self.StorageKey, encoded)
+    local values = { [self.StorageKey] = encoded, [self.BackupStorageKey] = encoded }
+    local errorCode = self._T.storage:TransactSetAndWait(values)
     if errorCode ~= 0 then
         log_error("[AccountProfile] final save failed error=" .. tostring(errorCode))
-        return
+        return false
     end
     self.IsDirty = false
     log("[AccountProfile] final save complete")
+    return true
 end
 
 end

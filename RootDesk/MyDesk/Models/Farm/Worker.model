@@ -42,34 +42,7 @@
             "$type": "MODNativeType",
             "type": "System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
           },
-          "Value": 3.0
-        },
-        {
-          "TargetType": "script.WorkerController",
-          "Name": "WorkerIndex",
-          "ValueType": {
-            "$type": "MODNativeType",
-            "type": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-          },
-          "Value": 1
-        },
-        {
-          "TargetType": "script.WorkerController",
-          "Name": "StartCellX",
-          "ValueType": {
-            "$type": "MODNativeType",
-            "type": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-          },
-          "Value": 0
-        },
-        {
-          "TargetType": "script.WorkerController",
-          "Name": "StartCellY",
-          "ValueType": {
-            "$type": "MODNativeType",
-            "type": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
-          },
-          "Value": 0
+          "Value": 3
         }
       ],
       "EventLinks": [],

@@ -33,11 +33,15 @@ property TextGUIRendererInputComponent chatInput = "82c35bd9-3fb9-41ea-a73e-e5f5
 property ButtonComponent btnConvert = "bf0948e9-fc7b-41ef-80f8-fdc6925bd2b2"
 property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
 property ButtonComponent btnWorker1 = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
-property ButtonComponent btnWorker2 = "5c92d01b-6cce-4010-a6e9-d4252d1815ef"
 property TextGUIRendererComponent worker1ButtonText = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
-property TextGUIRendererComponent worker2ButtonText = "5c92d01b-6cce-4010-a6e9-d4252d1815ef"
-property WorkerController workerController = "7bc03a21-7192-4a61-a932-e7cc21c4d3ef"
-property WorkerController workerController2 = "3209e3d2-8d7e-4245-95fe-1b725bb9544f"
+property ButtonComponent btnWorker2 = "f08a6c90-b376-411e-b6c9-859d694bb530"
+property ButtonComponent btnWorker3 = "a0ca4259-731b-4cc1-bcbd-d23e4e02aff5"
+property ButtonComponent btnWorker4 = "d7a3b959-0a71-4742-9b94-fbd4f7135bce"
+property ButtonComponent btnWorker5 = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
+property TextGUIRendererComponent worker2ButtonText = "f08a6c90-b376-411e-b6c9-859d694bb530"
+property TextGUIRendererComponent worker3ButtonText = "a0ca4259-731b-4cc1-bcbd-d23e4e02aff5"
+property TextGUIRendererComponent worker4ButtonText = "d7a3b959-0a71-4742-9b94-fbd4f7135bce"
+property TextGUIRendererComponent worker5ButtonText = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
 property integer SelectedWorkerIndex = 1
 
 @ExecSpace("ClientOnly")
@@ -66,15 +70,16 @@ method void OnBeginPlay()
     if self.btnWorker1 ~= nil then
         self._T.handlers.worker1 = self.btnWorker1.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker1Clicked)
     end
-    if self.btnWorker2 ~= nil then
-        self._T.handlers.worker2 = self.btnWorker2.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker2Clicked)
-    end
+    if self.btnWorker2 ~= nil then self._T.handlers.worker2 = self.btnWorker2.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker2Clicked) end
+    if self.btnWorker3 ~= nil then self._T.handlers.worker3 = self.btnWorker3.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker3Clicked) end
+    if self.btnWorker4 ~= nil then self._T.handlers.worker4 = self.btnWorker4.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker4Clicked) end
+    if self.btnWorker5 ~= nil then self._T.handlers.worker5 = self.btnWorker5.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker5Clicked) end
     self.chatInput.Text = ""
     self.SelectedWorkerIndex = 1
     self:RefreshWorkerButtons()
     self:RefreshDisplay()
     self:SetFeedback("문장을 입력하고 변환을 눌러 주세요.")
-    log("[BlockProgram] D4 UI ready - two worker targets wired")
+    log("[BlockProgram] MVP UI ready - Worker01 target wired")
 end
 
 @ExecSpace("ClientOnly")
@@ -147,11 +152,17 @@ end
 
 @ExecSpace("ClientOnly")
 method WorkerController GetSelectedWorker()
-    -- D4 single source of truth shared by the editor and inventory HUD.
-    if self.SelectedWorkerIndex == 2 and self.workerController2 ~= nil then
-        return self.workerController2
-    end
-    return self.workerController
+    -- Resolves the active mine worker after each map transition instead of
+    -- retaining a farm01 UUID that becomes invalid on another mine map.
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return nil end
+    local suffix = tostring(self.SelectedWorkerIndex)
+    if self.SelectedWorkerIndex < 10 then suffix = "0" .. suffix end
+    local workerEntity = player.CurrentMap:GetChildByName("Worker" .. suffix, false)
+    if workerEntity == nil then return nil end
+    ---@type WorkerController
+    local worker = workerEntity:GetComponent("script.WorkerController")
+    return worker
 end
 
 @ExecSpace("ClientOnly")
@@ -168,14 +179,34 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnWorker2Clicked()
-    -- Selects the second worker as the Run and Stop target.
     self:SelectWorker(2)
 end
 
 @ExecSpace("ClientOnly")
+method void OnWorker3Clicked()
+    self:SelectWorker(3)
+end
+
+@ExecSpace("ClientOnly")
+method void OnWorker4Clicked()
+    self:SelectWorker(4)
+end
+
+@ExecSpace("ClientOnly")
+method void OnWorker5Clicked()
+    self:SelectWorker(5)
+end
+
+@ExecSpace("ClientOnly")
 method void SelectWorker(integer workerIndex)
-    -- Applies a valid worker selection and refreshes every dependent label.
-    if workerIndex ~= 1 and workerIndex ~= 2 then return end
+    if workerIndex < 1 or workerIndex > 5 then return end
+    local player = _UserService.LocalPlayer
+    if player == nil then return end
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or workerIndex > profile.OwnedWorkerCount then
+        self:SetFeedback("아직 고용하지 않은 일꾼입니다.")
+        return
+    end
     self.SelectedWorkerIndex = workerIndex
     self._T.lastWorkerState = ""
     self:RefreshWorkerButtons()
@@ -185,14 +216,28 @@ end
 
 @ExecSpace("ClientOnly")
 method void RefreshWorkerButtons()
-    -- Marks only the currently selected worker button with a check symbol.
-    if self.worker1ButtonText ~= nil then
-        if self.SelectedWorkerIndex == 1 then self.worker1ButtonText.Text = "일꾼 1 ✓"
-        else self.worker1ButtonText.Text = "일꾼 1" end
+    local owned = 1
+    local player = _UserService.LocalPlayer
+    if player ~= nil then
+        local profile = player:GetComponent("script.AccountProfileService")
+        if profile ~= nil then owned = profile.OwnedWorkerCount end
     end
-    if self.worker2ButtonText ~= nil then
-        if self.SelectedWorkerIndex == 2 then self.worker2ButtonText.Text = "일꾼 2 ✓"
-        else self.worker2ButtonText.Text = "일꾼 2" end
+    self:SetWorkerButtonLabel(self.worker1ButtonText, 1, owned)
+    self:SetWorkerButtonLabel(self.worker2ButtonText, 2, owned)
+    self:SetWorkerButtonLabel(self.worker3ButtonText, 3, owned)
+    self:SetWorkerButtonLabel(self.worker4ButtonText, 4, owned)
+    self:SetWorkerButtonLabel(self.worker5ButtonText, 5, owned)
+end
+
+@ExecSpace("ClientOnly")
+method void SetWorkerButtonLabel(TextGUIRendererComponent label, integer workerIndex, integer owned)
+    if label == nil then return end
+    if workerIndex > owned then
+        label.Text = "일꾼 " .. tostring(workerIndex) .. " (미보유)"
+    elseif self.SelectedWorkerIndex == workerIndex then
+        label.Text = "일꾼 " .. tostring(workerIndex) .. " ✓"
+    else
+        label.Text = "일꾼 " .. tostring(workerIndex)
     end
 end
 
@@ -713,9 +758,10 @@ method void OnEndPlay()
     if self.btnWorker1 ~= nil and self._T.handlers.worker1 ~= nil then
         self.btnWorker1.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker1)
     end
-    if self.btnWorker2 ~= nil and self._T.handlers.worker2 ~= nil then
-        self.btnWorker2.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker2)
-    end
+    if self.btnWorker2 ~= nil and self._T.handlers.worker2 ~= nil then self.btnWorker2.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker2) end
+    if self.btnWorker3 ~= nil and self._T.handlers.worker3 ~= nil then self.btnWorker3.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker3) end
+    if self.btnWorker4 ~= nil and self._T.handlers.worker4 ~= nil then self.btnWorker4.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker4) end
+    if self.btnWorker5 ~= nil and self._T.handlers.worker5 ~= nil then self.btnWorker5.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker5) end
 end
 
 end
