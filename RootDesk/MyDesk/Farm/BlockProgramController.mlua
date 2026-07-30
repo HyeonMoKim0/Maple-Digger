@@ -44,6 +44,12 @@ property TextGUIRendererComponent worker4ButtonText = "d7a3b959-0a71-4742-9b94-f
 property TextGUIRendererComponent worker5ButtonText = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
 property integer SelectedWorkerIndex = 1
 
+-- Panel collapse toggle (C201 / docs/08 §6.3). btnToggle is a sibling of the
+-- panel so it stays alive while the panel subtree is disabled.
+property ButtonComponent btnToggle = "dc2d9c74-935f-411f-bc00-4337288cc7b1"
+property TextGUIRendererComponent toggleButtonText = "dc2d9c74-935f-411f-bc00-4337288cc7b1"
+property Entity programPanel = "54c94cbd-758e-4d66-a3fc-2f885989564a"
+
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- Resets the editor and wires every D2 palette, control, and text-input event.
@@ -74,6 +80,10 @@ method void OnBeginPlay()
     if self.btnWorker3 ~= nil then self._T.handlers.worker3 = self.btnWorker3.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker3Clicked) end
     if self.btnWorker4 ~= nil then self._T.handlers.worker4 = self.btnWorker4.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker4Clicked) end
     if self.btnWorker5 ~= nil then self._T.handlers.worker5 = self.btnWorker5.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker5Clicked) end
+    if self.btnToggle ~= nil then
+        self._T.handlers.toggle = self.btnToggle.Entity:ConnectEvent(ButtonClickEvent, self.OnToggleClicked)
+    end
+    self:RefreshToggleLabel()
     self.chatInput.Text = ""
     self.SelectedWorkerIndex = 1
     self:RefreshWorkerButtons()
@@ -148,6 +158,27 @@ method void OnStopClicked()
     end
     worker:StopProgram()
     self:SetFeedback("일꾼 " .. tostring(self.SelectedWorkerIndex) .. "에게 정지 요청을 보냈습니다.")
+end
+
+@ExecSpace("ClientOnly")
+method void OnToggleClicked()
+    -- Collapses / expands the editor panel so the world is not permanently
+    -- covered (C201). Enable is the standard show/hide flag; the running
+    -- program is server-side and unaffected by this client-side toggle.
+    if self.programPanel == nil then return end
+    self.programPanel.Enable = not self.programPanel.Enable
+    self:RefreshToggleLabel()
+    log("[BlockProgram] panel collapsed=" .. tostring(not self.programPanel.Enable))
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshToggleLabel()
+    -- Keeps the toggle caption in sync with the panel's current state.
+    if self.toggleButtonText == nil then return end
+    local expanded = true
+    if self.programPanel ~= nil then expanded = self.programPanel.Enable end
+    if expanded then self.toggleButtonText.Text = "패널 접기"
+    else self.toggleButtonText.Text = "패널 펼치기" end
 end
 
 @ExecSpace("ClientOnly")
@@ -762,6 +793,7 @@ method void OnEndPlay()
     if self.btnWorker3 ~= nil and self._T.handlers.worker3 ~= nil then self.btnWorker3.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker3) end
     if self.btnWorker4 ~= nil and self._T.handlers.worker4 ~= nil then self.btnWorker4.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker4) end
     if self.btnWorker5 ~= nil and self._T.handlers.worker5 ~= nil then self.btnWorker5.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker5) end
+    if self.btnToggle ~= nil and self._T.handlers.toggle ~= nil then self.btnToggle.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.toggle) end
 end
 
 end

@@ -140,6 +140,18 @@
 - **이 세션은 문서만 바꿨다.** `RootDesk/`, `map/`, `ui/` 아래 게임 파일은 한 줄도 수정하지 않았으므로 런타임 동작은 `6a4ab91`과 동일하다.
 - 다음 작업과 열린 질문은 `docs/17-Claude-인수인계.md` **§0 이어가기 지점**에 있다. 1순위는 F5에 HUD 표시 계약을 작성한 뒤 `docs/16` §7.3의 D-1·D-2를 수정하는 것이다.
 
+### 2026-07-30 — D-1·D-3 수정과 화면 결함 전량 런타임 검증
+
+- 편집기 패널을 760×960 → **640×960**으로 줄였다(C201 상한 = 화면 1/3). 좌우 여백 24를 유지해 콘텐츠 폭 712 → 592로 바꾸고, 자식 27개의 x·width를 4열 136 / 3열 186·186·188 / 전폭 592 그리드로 재계산했다. y 그리드는 그대로다.
+- `BtnToggle`(`패널 접기` / `패널 펼치기`)을 **패널의 형제**로 신설했다. 패널의 `Enable`을 껐을 때도 버튼이 살아 있어야 하기 때문이다. `BlockProgramController`에 `btnToggle` / `toggleButtonText` / `programPanel` property와 `OnToggleClicked` / `RefreshToggleLabel`을 추가했다. 토글은 클라이언트 표시 상태만 바꾸며 서버 측 프로그램 실행에 영향이 없다.
+- 광산 선택 열기 버튼을 좌측 상단에서 **우측 HUD 아래**로 옮겼다(top-right 앵커 + pivot `(1,1)`). pivot을 명시하지 않으면 `patch()`가 기존 `(0,1)`을 보존해 우상단 예약 영역으로 밀려나므로 반드시 함께 지정한다.
+- 8개 화면의 `GroupOrder`를 F5 §6.2 목표값으로 교정했다: `DefaultGroup 0` / `BlockProgramUI 1` / `MineHUD 2` / `MineInventoryUI 5` / `MineSelectUI 7` / `PopupGroup 10` / `ToastGroup 20` / `AccountRecoveryUI 50`. 이전에는 생성 순서(0~7)여서 토스트와 세션 차단 오버레이가 모달보다 아래였다.
+- 폭이 줄어 제목 `광산 명령 블록`(FontSize 38)이 2줄로 깨졌다. `BestFit`(Min 20 / Max 38)로 전환해 한 줄로 복원했다.
+- **좌표 검증**: 상시 4개 요소가 편집기 `x -680..-40`, 토글 `x -680..-490 / y 450..538`, HUD `x 240..700 / y 86..516`, 열기 버튼 `x 510..700 / y -14..74`로 **6개 쌍 전부 겹침 0**, PC 예약 영역 침범 0. 자식 최대 right edge 616 ≤ 640.
+- **Maker 런타임 검증 PASS**: Build Console 16건 전부 `Info`(baseline 동일, 새 항목 없음). Play 로그에서 `[MineInventoryUI] fields mine=초보 광산 lv=0 storage=0/0/0 gold=0 crystal=0 token=0 worker=1 cart=0/20 states=1 Idle` 확인. `maker_execute_script`로 `_BlockProgramController:OnToggleClicked()`를 호출해 `panel collapsed=true → false` 양방향 로그와 접힌 화면(월드 전체 노출)을 스크린샷으로 확인. 편집기 제목 가림도 해소됐다. 런타임 오류 0건.
+- `mouse_input`이 `ButtonComponent`를 클릭하지 못하는 한계는 그대로여서, 토글 버튼 실클릭·하역/판매 반영·일꾼 2명 이상 전환·640px 패널의 27개 버튼 회귀는 사용자 직접 검수로 남는다(`docs/16` §12.2).
+- 남은 화면 결함은 **D-7**(인벤토리 팝업의 F5 §5.2 I2~I5) 1건이다.
+
 ### 2026-07-30 — D-2·D-4·D-5 수정 (HUD 필수 필드·창고 출처·선택 일꾼)
 
 - `ui/MineHUD.ui`를 UIBuilder로 수정해 F5 §5.1의 H1~H10 10개 필드를 모두 갖췄다. 신설 필드는 `MineText`(광산명 + 강화 레벨), `StorageText`(계정 창고 3종), `CurrencyText`(골드·크리스탈·토큰), `WorkerStateText`(소유 일꾼별 실행 상태)다. 패널은 420×190 → 460×430, 미바인딩 placeholder였던 `Panel/OreIcon`은 제거했다(아이콘은 F5 연출 단위에서 일괄 적용).
