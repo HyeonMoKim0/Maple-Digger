@@ -1,10 +1,15 @@
 -- ACTIVE CLIENT HUD
 -- Shows only synchronized server state. Inventory/depot mutations remain in
 -- WorkerController and VeinTickSimulator so the client cannot grant resources.
+-- Display contract: docs/08-비주얼-사운드-기능명세.md §5 (fields H1~H10 / I1).
 @Logic
 script MineInventoryController extends Logic
 
 -- UIBuilder replaces these placeholders with generated entity UUIDs.
+property TextGUIRendererComponent mineText = "365c199b-862d-462d-a8c9-64a9ad20bf05"
+property TextGUIRendererComponent storageText = "10e4c593-6ae5-4625-8828-20a2597f5175"
+property TextGUIRendererComponent currencyText = "a29041bf-f355-4b95-ab3c-eb0d5c38b8d5"
+property TextGUIRendererComponent workerStateText = "8241b596-fed7-42ec-a823-696ded08ed1f"
 property TextGUIRendererComponent depotText = "9395e38a-0b37-4c6e-ba68-ebd554c90fd3"
 property TextGUIRendererComponent cartText = "ada2db0e-12dc-4412-82d0-e94425ced00c"
 property TextGUIRendererComponent handText = "936aa37c-c3da-4dcd-83a6-390a45b2ad4e"
@@ -13,17 +18,17 @@ property ButtonComponent btnInventory = "7e830fdf-624e-4d91-83d9-d6e2d321c96f"
 property ButtonComponent btnClose = "6bf38474-c9e7-44b4-847d-36fb7fac3bb9"
 property Entity inventoryPanel = "3434f74e-d21b-4493-a1f7-9406a7796a4c"
 
+-- H2/H7 are constants until the v8 profile adds mineLevels and Crystal
+-- (docs/08 §5.1 "미구현 필드의 처리", docs/16 §10.2 D-6).
+property integer MineLevelPlaceholder = 0
+property integer MineLevelMax = 10
+property integer CrystalPlaceholder = 0
+
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- Initializes cached HUD state, popup visibility, and UI event handlers.
     self._T.handlers = {}
-    self._T.lastDepotStone = -1
-    self._T.lastDepotIron = -1
-    self._T.lastDepotGold = -1
-    self._T.lastCartCount = -1
-    self._T.lastCartCapacity = -1
-    self._T.lastPendingOre = "__unset__"
-    self._T.lastWorkerIndex = -1
+    self._T.lastState = "__unset__"
 
     if self.inventoryPanel ~= nil then self.inventoryPanel.Enable = false end
     if self.btnInventory ~= nil then
@@ -44,42 +49,119 @@ method void OnUpdate(number delta)
 end
 
 @ExecSpace("ClientOnly")
+method AccountProfileService GetProfile()
+    -- Resolves the local player's server-owned account ledger (read-only here).
+    local player = _UserService.LocalPlayer
+    if player == nil then return nil end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    return profile
+end
+
+@ExecSpace("ClientOnly")
 method void RefreshUI(boolean force)
-    -- Renders the selected worker's hand/cart and the shared depot when changed.
+    -- Renders every field required by docs/08 §5.1 when any of them changed.
     local worker = self:GetSelectedWorker()
     local mineState = self:GetCurrentMineState()
-    if worker == nil or mineState == nil then return end
+    local profile = self:GetProfile()
+    if worker == nil or mineState == nil or profile == nil then return end
 
-    local depotStone = mineState.DepotStone
-    local depotIron = mineState.DepotIron
-    local depotGold = mineState.DepotGold
     local workerIndex = self:GetSelectedWorkerIndex()
-    local cartCount = worker.CartCount
-    local cartCapacity = worker.CartCapacity
-    local pendingOre = worker.PendingOre
+    local ownedCount = profile.OwnedWorkerCount
+    -- Resolved once per refresh: the summary walks up to 5 child lookups, so
+    -- building it twice (change key + display) would double that cost.
+    local workerStates = self:GetWorkerStateSummary(ownedCount)
+    local state = tostring(workerIndex) .. ":" .. tostring(ownedCount)
+    state = state .. ":" .. tostring(mineState.MineId) .. ":" .. tostring(profile.LastMineId)
+    state = state .. ":" .. tostring(profile.Stone) .. ":" .. tostring(profile.Iron) .. ":" .. tostring(profile.GoldOre)
+    state = state .. ":" .. tostring(profile.Gold) .. ":" .. tostring(profile.MineTokens)
+    state = state .. ":" .. tostring(worker.PendingOre) .. ":" .. tostring(worker.CartCount) .. ":" .. tostring(worker.CartCapacity)
+    state = state .. ":" .. tostring(mineState.DepotStone) .. ":" .. tostring(mineState.DepotIron) .. ":" .. tostring(mineState.DepotGold)
+    state = state .. ":" .. workerStates
 
-    if not force and workerIndex == self._T.lastWorkerIndex and depotStone == self._T.lastDepotStone and depotIron == self._T.lastDepotIron and depotGold == self._T.lastDepotGold and cartCount == self._T.lastCartCount and cartCapacity == self._T.lastCartCapacity and pendingOre == self._T.lastPendingOre then
-        return
+    if not force and state == self._T.lastState then return end
+    self._T.lastState = state
+    if force then
+        log("[MineInventoryUI] fields mine=" .. self:GetMineDisplayName(mineState, profile) .. " lv=" .. tostring(self.MineLevelPlaceholder) .. " storage=" .. tostring(profile.Stone) .. "/" .. tostring(profile.Iron) .. "/" .. tostring(profile.GoldOre) .. " gold=" .. tostring(profile.Gold) .. " crystal=" .. tostring(self.CrystalPlaceholder) .. " token=" .. tostring(profile.MineTokens) .. " worker=" .. tostring(workerIndex) .. " cart=" .. tostring(worker.CartCount) .. "/" .. tostring(worker.CartCapacity) .. " states=" .. workerStates)
     end
 
-    self._T.lastWorkerIndex = workerIndex
-    self._T.lastDepotStone = depotStone
-    self._T.lastDepotIron = depotIron
-    self._T.lastDepotGold = depotGold
-    self._T.lastCartCount = cartCount
-    self._T.lastCartCapacity = cartCapacity
-    self._T.lastPendingOre = pendingOre
-
-    if self.depotText ~= nil then self.depotText.Text = "창고  돌 " .. tostring(depotStone) .. " | 철 " .. tostring(depotIron) .. " | 금 " .. tostring(depotGold) end
-    if self.cartText ~= nil then self.cartText.Text = "일꾼 " .. tostring(workerIndex) .. " 수레: " .. tostring(cartCount) .. " / " .. tostring(cartCapacity) end
+    -- H1 + H2: current mine and its permanent upgrade level.
+    if self.mineText ~= nil then
+        self.mineText.Text = self:GetMineDisplayName(mineState, profile) .. "   Lv." .. tostring(self.MineLevelPlaceholder) .. " / " .. tostring(self.MineLevelMax)
+    end
+    -- H3~H5: account storage ledger, NOT the session depot total.
+    if self.storageText ~= nil then
+        self.storageText.Text = "창고  돌 " .. tostring(profile.Stone) .. "  철 " .. tostring(profile.Iron) .. "  금 " .. tostring(profile.GoldOre)
+    end
+    -- H6~H8: currencies.
+    if self.currencyText ~= nil then
+        self.currencyText.Text = "골드 " .. tostring(profile.Gold) .. "  크리스탈 " .. tostring(self.CrystalPlaceholder) .. "  토큰 " .. tostring(profile.MineTokens)
+    end
+    -- H9: selected worker's hand and cart.
     if self.handText ~= nil then
-        if pendingOre == "" then
+        if worker.PendingOre == "" then
             self.handText.Text = "일꾼 " .. tostring(workerIndex) .. " 손: 비어 있음"
         else
-            self.handText.Text = "일꾼 " .. tostring(workerIndex) .. " 손: " .. self:OreLabel(pendingOre)
+            self.handText.Text = "일꾼 " .. tostring(workerIndex) .. " 손: " .. self:OreLabel(worker.PendingOre)
         end
     end
-    if self.inventoryStoneText ~= nil then self.inventoryStoneText.Text = "돌  " .. tostring(depotStone) .. "   철  " .. tostring(depotIron) .. "   금  " .. tostring(depotGold) end
+    if self.cartText ~= nil then
+        self.cartText.Text = "일꾼 " .. tostring(workerIndex) .. " 수레: " .. tostring(worker.CartCount) .. " / " .. tostring(worker.CartCapacity)
+    end
+    -- H10: per-worker program state for every owned worker.
+    if self.workerStateText ~= nil then
+        self.workerStateText.Text = "실행 상태  " .. workerStates
+    end
+    -- Session depot total is kept under its own label so it is never mistaken
+    -- for the account ledger above (docs/16 §10.2 D-4).
+    if self.depotText ~= nil then
+        self.depotText.Text = "이번 세션 하역  돌 " .. tostring(mineState.DepotStone) .. " 철 " .. tostring(mineState.DepotIron) .. " 금 " .. tostring(mineState.DepotGold)
+    end
+    -- I1: inventory popup shows the account ledger too.
+    if self.inventoryStoneText ~= nil then
+        self.inventoryStoneText.Text = "돌  " .. tostring(profile.Stone) .. "   철  " .. tostring(profile.Iron) .. "   금  " .. tostring(profile.GoldOre)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method string GetMineDisplayName(VeinTickSimulator mineState, AccountProfileService profile)
+    -- Maps the layout MineId to its Korean label, falling back to the profile.
+    local mineId = ""
+    if mineState ~= nil then mineId = mineState.MineId end
+    if mineId == "" or mineId == nil then mineId = profile.LastMineId end
+    if mineId == "beginner_mine" or mineId == "farm01" then return "초보 광산" end
+    if mineId == "deep_mine" then return "깊은 광산" end
+    if mineId == "gem_mine" then return "보석 광산" end
+    return tostring(mineId)
+end
+
+@ExecSpace("ClientOnly")
+method string GetWorkerStateSummary(integer ownedCount)
+    -- Builds "1 Running · 2 Idle" for every owned worker (max 5).
+    local summary = ""
+    for index = 1, ownedCount do
+        local worker = self:GetWorkerByIndex(index)
+        local workerState = "-"
+        if worker ~= nil then workerState = worker.ProgramState end
+        if summary ~= "" then summary = summary .. "  ·  " end
+        summary = summary .. tostring(index) .. " " .. tostring(workerState)
+    end
+    if summary == "" then return "-" end
+    return summary
+end
+
+@ExecSpace("ClientOnly")
+method WorkerController GetWorkerByIndex(integer workerIndex)
+    -- Resolves a worker in the current mine by its Worker0N entity name.
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return nil end
+    local suffix = tostring(workerIndex)
+    if workerIndex < 10 then suffix = "0" .. suffix end
+    local workerEntity = player.CurrentMap:GetChildByName("Worker" .. suffix, false)
+    if workerEntity == nil then return nil end
+    ---@type WorkerController
+    local worker = workerEntity:GetComponent("script.WorkerController")
+    return worker
 end
 
 @ExecSpace("ClientOnly")
@@ -102,8 +184,9 @@ end
 
 @ExecSpace("ClientOnly")
 method integer GetSelectedWorkerIndex()
-    -- The MVP exposes only Worker01 until F7-B worker purchase is implemented.
-    return 1
+    -- Follows the program editor's selection instead of a hard-coded slot
+    -- (docs/08 §5.3, docs/16 §10.2 D-5).
+    return _BlockProgramController:GetSelectedWorkerIndex()
 end
 
 @ExecSpace("ClientOnly")

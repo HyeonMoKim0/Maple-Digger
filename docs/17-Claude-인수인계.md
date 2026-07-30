@@ -38,21 +38,28 @@
 
 ### 0.2 다음에 할 일 (사용자가 선택한 순서)
 
-**1순위 — F5 §5/§6 계약대로 화면 결함 5건(D-1~D-5)을 수정한다.**
+**1순위 — 남은 화면 결함(D-1 · D-3 · D-7)을 수정하고, D-2·D-4·D-5의 런타임 검증을 받는다.**
 
-선행 작업이던 표시 계약 작성은 2026-07-30 세션에서 끝났다. 이제 `docs/08`(F5) **§5 HUD 표시 계약**과 **§6 화면 영역 분할 규칙**이 단일 기준이며, 판정 근거는 `docs/16` §5·§10이다.
+표시 계약 작성과 **D-2·D-4·D-5 수정은 2026-07-30 세션에서 끝났다**(`docs/16` §11). 단 **Maker MCP가 없어 런타임 검증은 하지 못했다** — `docs/16` §11.2의 4단계 절차가 남아 있다.
 
-| # | 증상 | 수정 위치 | 계약 |
-|---|---|---|---|
-| D-1 | `광산 선택` 버튼이 블록 편집기 패널 헤더를 가림 | `ui/MineSelectUI.ui`, `ui/BlockProgramUI.ui`의 앵커·`displayOrder` | F5 §6.1, §6.2 |
-| D-2 | HUD에 골드·크리스탈·토큰이 없음 | `ui/MineHUD.ui` + `MineInventoryController.mlua` | F5 §5.1 H6~H8 |
-| D-3 | 편집기 패널이 좌측 절반 이상 점유, 토글 없음 | `ui/BlockProgramUI.ui` + `BlockProgramController.mlua` | F5 §6.1, §6.3, C201 |
-| D-4 | HUD 창고 값이 계정 원장이 아니라 세션 Depot 합계 | `MineInventoryController.mlua` | F5 §5.1 H3~H5 |
-| D-5 | HUD 선택 일꾼 인덱스가 1로 고정 | `MineInventoryController.mlua` | F5 §5.3 |
+| # | 증상 | 수정 위치 | 계약 | 상태 |
+|---|---|---|---|---|
+| D-1 | `광산 선택` 버튼이 블록 편집기 패널 헤더를 가림 | `ui/MineSelectUI.ui`, `ui/BlockProgramUI.ui` 앵커 | F5 §6.1 | 미착수 |
+| D-3 | 편집기 패널이 좌측 절반 이상 점유, 토글 없음 | `ui/BlockProgramUI.ui` + `BlockProgramController.mlua` | F5 §6.1, §6.3, C201 | 미착수 |
+| — | `GroupOrder` 계층 교정 (토스트·복구 오버레이가 모달보다 아래) | 8개 `.ui`의 루트 `UIGroupComponent.GroupOrder` | F5 §6.2 | 미착수 |
+| D-7 | 인벤토리 팝업에 희귀 컬렉션 필드 없음 | `ui/MineInventoryUI.ui` + `MineInventoryController.mlua` | F5 §5.2 I2~I5 | 미착수 |
+| D-2 · D-4 · D-5 | HUD 재화 누락 / 창고 출처 오류 / 선택 인덱스 고정 | `ui/MineHUD.ui`, `MineInventoryController.mlua` | F5 §5.1, §5.3 | **수정 완료·런타임 검증 대기** |
 
-권장 처리 순서는 **D-2 + D-4 + D-5를 한 묶음**(같은 파일·같은 갱신 루프), 그다음 **D-1 + D-3**(둘 다 좌측 영역 재배치)이다. 나눠 하면 같은 파일을 두 번 손댄다.
+D-1·D-3·`GroupOrder`는 모두 좌측 영역과 화면 계층을 건드리므로 **한 묶음**으로 처리한다.
 
-H2(맵 강화 레벨)·H7(크리스탈)은 v7에 필드가 없으므로 F5 §5.1의 "미구현 필드의 처리"대로 **상수 표시**로 만들고, `@Sync` 연결은 2순위 v8 작업에서 이어 붙인다.
+**D-1의 실측 좌표** (2026-07-30 UIBuilder 측정, 캔버스 1920×1080 중심 원점):
+
+- `BlockProgramUI/Panel` = bottom-left 앵커, pivot(0,0), pos(280,20), 760×960 → 화면 `x -680..80`, `y -520..440`. 폭 760은 C201 상한 640을 넘고 화면 중앙(x=0)을 80px 침범한다.
+- `BlockProgramUI/Panel/Title` → 화면 `x -656..-328`, `y 370..422`
+- `MineSelectUI/BtnOpen` = top-left 앵커, pivot(0,1), pos(300,-100), 190×88 → 화면 `x -660..-470`, `y 352..440` → **Title과 `x -656..-470`, `y 370..422`에서 겹친다.** `MineSelectUI`의 `GroupOrder=7`이 `BlockProgramUI=1`보다 높아 버튼이 위에 그려진다.
+- 수정 후 HUD는 `x 240..700`을 쓰므로 좌측 영역을 640px로 줄여도 충돌하지 않는다.
+
+H2(맵 강화 레벨)·H7(크리스탈)은 v7에 필드가 없어 현재 **상수 표시**(`Lv.0 / 10`, `크리스탈 0`)다. `@Sync` 연결은 2순위 v8 작업에서 이어 붙인다.
 
 ⚠️ `.ui` 수정은 반드시 **UIBuilder** 경유다. 원본 JSON 직접 편집·grep 금지(`AGENTS.md`, `msw-ui-system`).
 

@@ -140,6 +140,17 @@
 - **이 세션은 문서만 바꿨다.** `RootDesk/`, `map/`, `ui/` 아래 게임 파일은 한 줄도 수정하지 않았으므로 런타임 동작은 `6a4ab91`과 동일하다.
 - 다음 작업과 열린 질문은 `docs/17-Claude-인수인계.md` **§0 이어가기 지점**에 있다. 1순위는 F5에 HUD 표시 계약을 작성한 뒤 `docs/16` §7.3의 D-1·D-2를 수정하는 것이다.
 
+### 2026-07-30 — D-2·D-4·D-5 수정 (HUD 필수 필드·창고 출처·선택 일꾼)
+
+- `ui/MineHUD.ui`를 UIBuilder로 수정해 F5 §5.1의 H1~H10 10개 필드를 모두 갖췄다. 신설 필드는 `MineText`(광산명 + 강화 레벨), `StorageText`(계정 창고 3종), `CurrencyText`(골드·크리스탈·토큰), `WorkerStateText`(소유 일꾼별 실행 상태)다. 패널은 420×190 → 460×430, 미바인딩 placeholder였던 `Panel/OreIcon`은 제거했다(아이콘은 F5 연출 단위에서 일괄 적용).
+- `MineInventoryController.mlua`의 창고 표시 출처를 세션 Depot 합계에서 **계정 원장**(`AccountProfileService.Stone/Iron/GoldOre`)으로 바꿨다(D-4). 세션 합계는 `이번 세션 하역` 라벨의 별도 행으로 남겼다.
+- 선택 일꾼 인덱스를 상수 `1`에서 `_BlockProgramController:GetSelectedWorkerIndex()` 위임으로 바꿨다(D-5). 일꾼별 상태 요약은 `Worker0N` 자식 조회로 소유 수만큼 만들고, `OnUpdate` 비용 때문에 refresh당 1회만 계산한다.
+- 맵 강화 레벨·크리스탈은 v7 프로필에 필드가 없어 상수 표시(`Lv.0 / 10`, `크리스탈 0`)다. v8 마이그레이션에서 `@Sync` 연결로 교체한다.
+- `ui_lint` clean(ERROR/WARN 0), 바인딩 8건 주입 성공, 자식 9개가 패널 430 안에 겹침 없이 배치됨을 확인했다. `patch()`가 기존 `Pivot`을 보존해 `BtnInventory`가 184px 튀어나가는 `L014`가 발생했고 pivot `(0,1)` 명시로 교정했다.
+- **Maker 런타임 검증은 하지 못했다.** 작업 세션에 Maker MCP가 연결되지 않아 `refresh`/build log/`play`/runtime log를 얻을 수 없었다. 사용자 검증 절차는 `docs/16` §11.2에 있다.
+- `docs/08` §6.2의 계층 규칙을 `displayOrder` → **`UIGroupComponent.GroupOrder`** 로 정정했다. `displayOrder`는 같은 부모의 형제 순서일 뿐 `.ui` 파일 간 앞뒤를 바꾸지 못한다. 실측 결과 현재 `GroupOrder`는 생성 순서대로 0~7이라 **토스트(3)와 복구 오버레이(6)가 모달(7)보다 아래**이고 인벤토리 팝업(4)이 HUD(5)보다 아래다. 교정은 D-1·D-3과 같은 단위로 남겼다.
+- 새 미구현 항목 **D-7**(인벤토리 팝업의 희귀 컬렉션 필드 I2~I5)을 `docs/16` §11.1에 기록했다.
+
 ### 2026-07-30 — HUD 표시 계약·화면 영역 분할 규칙 신설
 
 - **이 세션도 문서만 바꿨다.** `RootDesk/`, `map/`, `ui/` 아래 게임 파일은 한 줄도 수정하지 않았으므로 런타임 동작은 `6a4ab91`과 동일하다.
