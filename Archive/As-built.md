@@ -140,6 +140,20 @@
 - **이 세션은 문서만 바꿨다.** `RootDesk/`, `map/`, `ui/` 아래 게임 파일은 한 줄도 수정하지 않았으므로 런타임 동작은 `6a4ab91`과 동일하다.
 - 다음 작업과 열린 질문은 `docs/17-Claude-인수인계.md` **§0 이어가기 지점**에 있다. 1순위는 F5에 HUD 표시 계약을 작성한 뒤 `docs/16` §7.3의 D-1·D-2를 수정하는 것이다.
 
+### 2026-07-30 — HUD 표시 계약·화면 영역 분할 규칙 신설
+
+- **이 세션도 문서만 바꿨다.** `RootDesk/`, `map/`, `ui/` 아래 게임 파일은 한 줄도 수정하지 않았으므로 런타임 동작은 `6a4ab91`과 동일하다.
+- `docs/` 18개 전체와 `ui/` 8개 파일(UIBuilder `listEntities`)을 대조해 기획-구현 차이를 목록화했다.
+- 열린 질문 2건을 사용자 결정으로 확정했다. D8 **C201**(편집기 패널 최대 폭 640px = 화면 1/3, 토글 제공), **C202**(현 `MineSelectUI` 구조를 정식 정보구조로 확정. 맵 강화는 `MineSelectUI`의 모달 패널로, 외형·도감·가챠·제작은 별도 `.ui` 파일로. C79의 4탭 구상은 초기 구상으로 격하).
+- `docs/08`(F5)에 **§5 HUD 표시 계약**과 **§6 화면 영역 분할 규칙**을 신설했다. `MineHUD` 필수 필드 H1~H10, `MineInventoryUI` I1~I6, 각 필드의 `@Sync` 출처와 갱신 시점, 미구현 필드(맵 레벨·크리스탈)의 상수 표시 규칙, `displayOrder` 6계층, 편집기 토글 규칙, 수용 테스트 F5-7~F5-14를 포함한다. 기존 수용 테스트 절은 §5 → §7로 번호만 이동했다.
+- 코드 대조로 **기록되지 않았던 계약 위반 2건과 미구현 1건**을 찾아 `docs/16` §10에 남겼다.
+  - **D-4**: `MineInventoryController.RefreshUI`가 창고 표시에 `VeinTickSimulator.DepotStone/DepotIron/DepotGold`(세션 하역 합계)를 쓴다. D3 §7이 요구한 값은 계정 원장 `AccountProfileService.Stone/Iron/GoldOre`다. 재접속 시 0으로 보인다.
+  - **D-5**: `MineInventoryController.GetSelectedWorkerIndex()`가 상수 `1`을 반환해 편집기 선택을 따르지 않는다.
+  - **D-6**: `Crystal` 심볼이 `RootDesk/MyDesk` 전체에 0건이다. D7 §3.1이 저장 대상 화폐로 규정했으므로 v8 마이그레이션에 `currencies.Crystal`을 추가해야 한다. D-2를 표시 추가만으로 해결할 수 없다.
+- `MineInventoryUI`는 엔티티 이름이 `StoneRow/StoneText`지만 실제로 돌·철·금 3종을 한 줄에 렌더한다. 행 누락이 아니라 D-4와 같은 출처 문제다.
+- 화면 판정을 **실패 5건(D-1~D-5)** 으로 갱신했다. D-3은 C201 확정으로 보류에서 실패로 승격했다.
+- 다음 작업은 `docs/17` §0.2의 1순위, F5 §5/§6 계약대로 D-1~D-5를 수정하는 것이다. 권장 순서는 D-2+D-4+D-5 → D-1+D-3이다.
+
 ### 2026-07-29 — F7-A 손상 복구·동시 접속 잠금
 
 - `AccountProfileService`가 `UserDataStorage`의 primary/backup을 거래 단위로 저장한다. 손상된 primary JSON은 안전하게 판별해 정상 backup의 복구 또는 새 기본 계정 시작을 선택하게 하며, 포기 전 backup은 recovery archive 키에 보관한다.
