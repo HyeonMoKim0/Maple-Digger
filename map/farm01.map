@@ -43,9 +43,9 @@
             {
               "@type": "script.VeinTickSimulator",
               "Enable": true,
+              "RequiredWorkerStartCount": 5,
               "MineId": "beginner_mine",
               "LayoutVersion": 2,
-              "RequiredWorkerStartCount": 5,
               "SpecialVeinSpawnTicks": 750,
               "SpecialVeinMaxActive": 3,
               "SpecialVeinSpawnBatch": 2,
@@ -80,7 +80,7 @@
                 "r": 0.549019635,
                 "g": 0.34117648,
                 "b": 0.164705887,
-                "a": 1
+                "a": 1.0
               },
               "TemplateRUID": "794ad8421e2543d8a6d2c70307637450",
               "Type": 2,
@@ -152,15 +152,15 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 1000
+                "x": 0.0,
+                "y": 0.0,
+                "z": 1000.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Enable": true
             },
@@ -714,20 +714,20 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -739,28 +739,28 @@
               "FlipX": false,
               "FlipY": false,
               "OrderInLayer": 2,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "RenderSetting": 0,
               "SpriteRUID": "3e76c89ae8e7477ca871f5bbcd6f6f29",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "Enable": true
             },
             {
               "@type": "MOD.Core.MovementComponent",
-              "InputSpeed": 3,
+              "InputSpeed": 3.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.KinematicbodyComponent",
               "MoveVelocity": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "Enable": true
             },
@@ -786,28 +786,35 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 5,
+          "displayOrder": 4,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "e6bb7a18-4104-42b7-a5b7-36c76ed2ab7a",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -818,14 +825,7 @@
               "MarkerKind": "depot"
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "e6bb7a18-4104-42b7-a5b7-36c76ed2ab7a",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -839,28 +839,35 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 6,
+          "displayOrder": 5,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "4bfb5f5b-17e3-4c47-8d9a-45fd13d7cb07",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 1,
-                "y": 0,
-                "z": 0
+                "x": 1.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -871,14 +878,7 @@
               "MarkerKind": "normal"
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "4bfb5f5b-17e3-4c47-8d9a-45fd13d7cb07",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -892,28 +892,35 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 7,
+          "displayOrder": 6,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "94b3dc99-3519-4524-8bc6-c85e1c673652",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 2,
-                "y": 0,
-                "z": 0
+                "x": 2.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -924,14 +931,7 @@
               "MarkerKind": "normal"
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "94b3dc99-3519-4524-8bc6-c85e1c673652",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -945,28 +945,35 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 8,
+          "displayOrder": 7,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "fb8b828a-0aff-4964-8b42-5e361bd7078d",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 2,
-                "y": -1,
-                "z": 0
+                "x": 2.0,
+                "y": -1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -977,14 +984,7 @@
               "MarkerKind": "normal"
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "fb8b828a-0aff-4964-8b42-5e361bd7078d",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -998,28 +998,35 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 9,
+          "displayOrder": 8,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "30774092-999f-48c3-9817-7a536c0a4b52",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 3,
-                "y": -1,
-                "z": 0
+                "x": 3.0,
+                "y": -1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -1030,14 +1037,7 @@
               "MarkerKind": "normal"
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "30774092-999f-48c3-9817-7a536c0a4b52",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1051,28 +1051,35 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 10,
+          "displayOrder": 9,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "e6c41353-4909-4cee-b116-e50b4c8b86dc",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 1,
-                "y": 1,
-                "z": 0
+                "x": 1.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -1083,14 +1090,7 @@
               "MarkerKind": "special"
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "e6c41353-4909-4cee-b116-e50b4c8b86dc",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1104,28 +1104,35 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 11,
+          "displayOrder": 10,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "7c427c47-de3d-4dd0-8c69-90db3f51d94f",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 2,
-                "y": 1,
-                "z": 0
+                "x": 2.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -1136,14 +1143,7 @@
               "MarkerKind": "special"
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "7c427c47-de3d-4dd0-8c69-90db3f51d94f",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1157,28 +1157,35 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 12,
+          "displayOrder": 11,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "3f7d5dad-331f-4266-bebc-fb9522d24020",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
               "Position": {
-                "x": 3,
-                "y": 1,
-                "z": 0
+                "x": 3.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "Enable": true
             },
@@ -1189,14 +1196,7 @@
               "MarkerKind": "special"
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "3f7d5dad-331f-4266-bebc-fb9522d24020",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       }
     ]
