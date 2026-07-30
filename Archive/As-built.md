@@ -140,6 +140,15 @@
 - **이 세션은 문서만 바꿨다.** `RootDesk/`, `map/`, `ui/` 아래 게임 파일은 한 줄도 수정하지 않았으므로 런타임 동작은 `6a4ab91`과 동일하다.
 - 다음 작업과 열린 질문은 `docs/17-Claude-인수인계.md` **§0 이어가기 지점**에 있다. 1순위는 F5에 HUD 표시 계약을 작성한 뒤 `docs/16` §7.3의 D-1·D-2를 수정하는 것이다.
 
+### 2026-07-30 — 바인딩 전수 감사와 D-12 (워커 칩 라벨)
+
+- D-11이 "선언 타입이 틀리면 조용히 nil"인 부류였으므로 같은 유형을 전수 감사했다. **`tools/audit_bindings.cjs` 신설** — `RootDesk/MyDesk`의 모든 `.mlua`에서 `property <Type> x = "<uuid>"`를 뽑아 `ui/*.ui`(UIBuilder)·`map/*.map`(MapBuilder) 엔티티의 실제 `componentNames`와 대조한다. `.mlua` 19개 / 선언 109개 / 엔티티 197개를 검사한다.
+- **D-12 (5건)**: `BlockProgramController`의 `worker1ButtonText`~`worker5ButtonText`를 `TextGUIRendererComponent`로 선언했지만 칩 엔티티는 레거시 `TextComponent`다. `SetWorkerButtonLabel`이 nil 가드로 빠져나가 **워커 탭 라벨이 한 번도 갱신되지 않았다** — 선택/미보유를 화면으로 알 수 없었다.
+- 같이 발견: 칩의 글자색과 배경색이 **둘 다 `rgba(1,1,1,1)`(흰색)** 이라 바인딩을 고쳐도 글자가 보이지 않는다. 스크린샷에서 칩 5개가 빈 흰 박스였던 이유다.
+- 수정: 5개 속성과 `SetWorkerButtonLabel` 파라미터를 `TextComponent`로 맞추고, 칩 배경을 어둡게(`rgba(0.16,0.18,0.24,1)`) 바꾸고, 64×52에 맞게 라벨을 번호 + 짧은 표식(`1` / `[1]` / `1 X`)으로 줄이고 `BestFit`(12~20)을 켰다.
+- **검증**: 5개 바인딩이 `TextComponent`로 정상 해석, Play 화면에서 `[1] 2 X 3 X 4 X 5 X` 확인. 감사 재실행 **실패 0건 / 정상 109건**. 빌드 오류 0건. 개발 프로필은 새 세션에서 재확인: `gold=0 stone=1 token=0 workers=1 cart1=20`.
+- 사용자 판매 클릭 검수도 통과했다("잘 팔림, 텍스트로라도 표기하니 잘 보임").
+
 ### 2026-07-30 — D-10·D-11 수정 (판매가 아예 되지 않던 원인)
 
 - **D-11 (근본 원인)**: `MineSelectController`의 속성 3개가 실제 컴포넌트 타입과 달라 런타임에 **nil**이었다. `saleAmountInput`·`protectedAmountInput`을 레거시 `TextInputComponent`로 선언했지만 엔티티는 `TextGUIRendererInputComponent`를 갖고 있고, `workerStatusText`는 `TextGUIRendererComponent`로 선언했지만 엔티티는 레거시 `TextComponent`다. 빠른 버튼이 `saleAmountInput.Text`에 값을 써도 참조가 nil이라 아무 일도 일어나지 않아, 수량이 영원히 0이고 판매가 100% 실패했다. 세 선언을 실제 타입에 맞췄다.

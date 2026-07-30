@@ -33,15 +33,17 @@ property TextGUIRendererInputComponent chatInput = "82c35bd9-3fb9-41ea-a73e-e5f5
 property ButtonComponent btnConvert = "bf0948e9-fc7b-41ef-80f8-fdc6925bd2b2"
 property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
 property ButtonComponent btnWorker1 = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
-property TextGUIRendererComponent worker1ButtonText = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
+-- 워커 칩 5개는 레거시 TextComponent 를 쓴다. TextGUIRendererComponent 로
+-- 선언하면 런타임 nil 이 되어 라벨이 한 번도 갱신되지 않는다 (docs/16 §15 D-12).
+property TextComponent worker1ButtonText = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
 property ButtonComponent btnWorker2 = "f08a6c90-b376-411e-b6c9-859d694bb530"
 property ButtonComponent btnWorker3 = "a0ca4259-731b-4cc1-bcbd-d23e4e02aff5"
 property ButtonComponent btnWorker4 = "d7a3b959-0a71-4742-9b94-fbd4f7135bce"
 property ButtonComponent btnWorker5 = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
-property TextGUIRendererComponent worker2ButtonText = "f08a6c90-b376-411e-b6c9-859d694bb530"
-property TextGUIRendererComponent worker3ButtonText = "a0ca4259-731b-4cc1-bcbd-d23e4e02aff5"
-property TextGUIRendererComponent worker4ButtonText = "d7a3b959-0a71-4742-9b94-fbd4f7135bce"
-property TextGUIRendererComponent worker5ButtonText = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
+property TextComponent worker2ButtonText = "f08a6c90-b376-411e-b6c9-859d694bb530"
+property TextComponent worker3ButtonText = "a0ca4259-731b-4cc1-bcbd-d23e4e02aff5"
+property TextComponent worker4ButtonText = "d7a3b959-0a71-4742-9b94-fbd4f7135bce"
+property TextComponent worker5ButtonText = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
 property integer SelectedWorkerIndex = 1
 
 -- Panel collapse toggle (C201 / docs/08 §6.3). btnToggle is a sibling of the
@@ -261,14 +263,16 @@ method void RefreshWorkerButtons()
 end
 
 @ExecSpace("ClientOnly")
-method void SetWorkerButtonLabel(TextGUIRendererComponent label, integer workerIndex, integer owned)
+method void SetWorkerButtonLabel(TextComponent label, integer workerIndex, integer owned)
+    -- 칩은 64x52 뿐이라 "일꾼 N (미보유)" 는 들어가지 않는다. 번호 + 짧은 표식만
+    -- 쓰고, 선택 결과는 피드백 줄이 문장으로 알려 준다.
     if label == nil then return end
     if workerIndex > owned then
-        label.Text = "일꾼 " .. tostring(workerIndex) .. " (미보유)"
+        label.Text = tostring(workerIndex) .. " X"
     elseif self.SelectedWorkerIndex == workerIndex then
-        label.Text = "일꾼 " .. tostring(workerIndex) .. " ✓"
+        label.Text = "[" .. tostring(workerIndex) .. "]"
     else
-        label.Text = "일꾼 " .. tostring(workerIndex)
+        label.Text = tostring(workerIndex)
     end
 end
 
