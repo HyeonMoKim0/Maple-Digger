@@ -2839,27 +2839,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 350,
-                "y": -325
+                "y": -371
               },
               "OffsetMin": {
                 "x": -350,
-                "y": -355
+                "y": -401
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 700,
@@ -2874,11 +2874,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": -340
+                "y": -371
               },
               "Position": {
                 "x": 0,
-                "y": -340,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -3041,27 +3041,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 375,
-                "y": -238
+                "y": -282
               },
               "OffsetMin": {
                 "x": 225,
-                "y": -326
+                "y": -370
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 150,
@@ -3079,8 +3079,8 @@
                 "y": -282
               },
               "Position": {
-                "x": 300,
-                "y": -282,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -3293,31 +3293,31 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": -225,
-                "y": -257
+                "y": -282
               },
               "OffsetMin": {
                 "x": -375,
-                "y": -307
+                "y": -370
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 150,
-                "y": 50
+                "y": 88
               },
               "UIMode": 1,
               "UIScale": {
@@ -3331,8 +3331,8 @@
                 "y": -282
               },
               "Position": {
-                "x": -300,
-                "y": -282,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -3627,7 +3627,7 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0.235294119
+                "a": 0.96
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -3701,20 +3701,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": -330,
-                "y": -310
+                "x": 0,
+                "y": 0
               },
               "OffsetMin": {
-                "x": 330,
-                "y": 310
+                "x": 0,
+                "y": 0
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 100,
-                "y": 100
+                "x": 760,
+                "y": 720
               },
               "UIMode": 1,
               "UIScale": {
@@ -3846,19 +3846,19 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 280,
-                "y": -46
+                "x": 240,
+                "y": -20
               },
               "OffsetMin": {
-                "x": -280,
-                "y": -94
+                "x": -240,
+                "y": -68
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 1
               },
               "RectSize": {
-                "x": 560,
+                "x": 480,
                 "y": 48
               },
               "UIMode": 1,
@@ -3870,11 +3870,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": -46
+                "y": -20
               },
               "Position": {
                 "x": 0,
-                "y": 314,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -4034,12 +4034,12 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": -54,
-                "y": -44
+                "x": -16,
+                "y": -16
               },
               "OffsetMin": {
-                "x": -150,
-                "y": -88
+                "x": -112,
+                "y": -60
               },
               "Pivot": {
                 "x": 1,
@@ -4057,12 +4057,12 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": -54,
-                "y": -44
+                "x": -16,
+                "y": -16
               },
               "Position": {
-                "x": 326,
-                "y": 316,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -4273,11 +4273,11 @@
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 325,
-                "y": -120
+                "y": -76
               },
               "OffsetMin": {
                 "x": -325,
-                "y": -194
+                "y": -150
               },
               "Pivot": {
                 "x": 0.5,
@@ -4296,11 +4296,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": -120
+                "y": -76
               },
               "Position": {
                 "x": 0,
-                "y": 240,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -4449,27 +4449,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": -130,
-                "y": -66
+                "y": -162
               },
               "OffsetMin": {
                 "x": -310,
-                "y": -118
+                "y": -214
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 180,
@@ -4484,11 +4484,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": -220,
-                "y": -92
+                "y": -162
               },
               "Position": {
-                "x": -220,
-                "y": -92,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -4687,27 +4687,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 90,
-                "y": -66
+                "y": -162
               },
               "OffsetMin": {
                 "x": -90,
-                "y": -118
+                "y": -214
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 180,
@@ -4722,11 +4722,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": -92
+                "y": -162
               },
               "Position": {
                 "x": 0,
-                "y": -92,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -4925,27 +4925,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 310,
-                "y": -66
+                "y": -162
               },
               "OffsetMin": {
                 "x": 130,
-                "y": -118
+                "y": -214
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 180,
@@ -4960,11 +4960,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 220,
-                "y": -92
+                "y": -162
               },
               "Position": {
-                "x": 220,
-                "y": -92,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -5163,27 +5163,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 130,
-                "y": 7
+                "y": -226
               },
               "OffsetMin": {
                 "x": -130,
-                "y": -43
+                "y": -276
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 260,
@@ -5198,11 +5198,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": -18
+                "y": -226
               },
               "Position": {
                 "x": 0,
-                "y": -18,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -5373,27 +5373,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": -177,
-                "y": 75
+                "y": -286
               },
               "OffsetMin": {
                 "x": -273,
-                "y": 29
+                "y": -332
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 96,
@@ -5408,11 +5408,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": -225,
-                "y": 52
+                "y": -286
               },
               "Position": {
-                "x": -225,
-                "y": 52,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -5611,27 +5611,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": -27,
-                "y": 75
+                "y": -286
               },
               "OffsetMin": {
                 "x": -123,
-                "y": 29
+                "y": -332
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 96,
@@ -5646,11 +5646,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": -75,
-                "y": 52
+                "y": -286
               },
               "Position": {
-                "x": -75,
-                "y": 52,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -5849,27 +5849,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 123,
-                "y": 75
+                "y": -286
               },
               "OffsetMin": {
                 "x": 27,
-                "y": 29
+                "y": -332
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 96,
@@ -5884,11 +5884,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 75,
-                "y": 52
+                "y": -286
               },
               "Position": {
-                "x": 75,
-                "y": 52,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -6087,27 +6087,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 273,
-                "y": 75
+                "y": -286
               },
               "OffsetMin": {
                 "x": 177,
-                "y": 29
+                "y": -332
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 96,
@@ -6122,11 +6122,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 225,
-                "y": 52
+                "y": -286
               },
               "Position": {
-                "x": 225,
-                "y": 52,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -6325,27 +6325,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": -35,
-                "y": 147
+                "y": -344
               },
               "OffsetMin": {
                 "x": -295,
-                "y": 97
+                "y": -394
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 260,
@@ -6360,11 +6360,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": -165,
-                "y": 122
+                "y": -344
               },
               "Position": {
-                "x": -165,
-                "y": 122,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -6563,27 +6563,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 295,
-                "y": 147
+                "y": -344
               },
               "OffsetMin": {
                 "x": 35,
-                "y": 97
+                "y": -394
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 260,
@@ -6598,11 +6598,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 165,
-                "y": 122
+                "y": -344
               },
               "Position": {
-                "x": 165,
-                "y": 122,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -6801,27 +6801,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": -10,
-                "y": 225
+                "y": -478
               },
               "OffsetMin": {
                 "x": -250,
-                "y": 175
+                "y": -528
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 240,
@@ -6836,11 +6836,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": -130,
-                "y": 200
+                "y": -478
               },
               "Position": {
-                "x": -130,
-                "y": 200,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -7011,27 +7011,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 270,
-                "y": 225
+                "y": -478
               },
               "OffsetMin": {
                 "x": 70,
-                "y": 175
+                "y": -528
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 200,
@@ -7046,11 +7046,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 170,
-                "y": 200
+                "y": -478
               },
               "Position": {
-                "x": 170,
-                "y": 200,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -7249,27 +7249,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 180,
-                "y": 306
+                "y": -412
               },
               "OffsetMin": {
                 "x": -180,
-                "y": 250
+                "y": -468
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 360,
@@ -7284,11 +7284,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": 278
+                "y": -412
               },
               "Position": {
                 "x": 0,
-                "y": 278,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -7487,27 +7487,27 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 0,
+              "AlignmentOption": 3,
               "AnchorsMax": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "AnchorsMin": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 180,
-                "y": -162
+                "y": -540
               },
               "OffsetMin": {
                 "x": -180,
-                "y": -218
+                "y": -596
               },
               "Pivot": {
                 "x": 0.5,
-                "y": 0.5
+                "y": 1
               },
               "RectSize": {
                 "x": 360,
@@ -7522,11 +7522,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": -190
+                "y": -540
               },
               "Position": {
                 "x": 0,
-                "y": -190,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {

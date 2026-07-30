@@ -272,7 +272,11 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnSellClicked()
+    -- One centre modal at a time (docs/08 §6.1). Leaving selectPanel enabled
+    -- stacked two same-sized panels and made both unreadable (docs/16 §13 D-8).
+    if self.selectPanel ~= nil then self.selectPanel.Enable = false end
     if self.salePanel ~= nil then self.salePanel.Enable = true end
+    if self.cartPanel ~= nil then self.cartPanel.Enable = false end
     if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     self:SelectOre(self._T.selectedOre)
     if self.saleAmountInput ~= nil then self.saleAmountInput.Text = "1" end
@@ -280,20 +284,27 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnSaleCloseClicked()
+    -- Closing a sub-panel returns to the mine-select menu it was opened from.
     if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.selectPanel ~= nil then self.selectPanel.Enable = true end
+    self:RefreshUI(true)
 end
 
 @ExecSpace("ClientOnly")
 method void OnRareOpenClicked()
+    if self.selectPanel ~= nil then self.selectPanel.Enable = false end
     if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.cartPanel ~= nil then self.cartPanel.Enable = false end
     if self.rarePanel ~= nil then self.rarePanel.Enable = true end
     self:RefreshUI(true)
 end
 
 @ExecSpace("ClientOnly")
 method void OnRareCloseClicked()
+    -- The rare popup is opened from the sale panel, so it returns there.
     if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     if self.salePanel ~= nil then self.salePanel.Enable = true end
+    self:RefreshUI(true)
 end
 
 @ExecSpace("ClientOnly")
@@ -452,6 +463,10 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnCartOpenClicked()
+    -- One centre modal at a time (docs/08 §6.1, docs/16 §13 D-8).
+    if self.selectPanel ~= nil then self.selectPanel.Enable = false end
+    if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     if self.cartPanel ~= nil then self.cartPanel.Enable = true end
     self._T.cartWorkerIndex = 1
     self:RefreshUI(true)
@@ -459,7 +474,10 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnCartCloseClicked()
+    -- Returns to the mine-select menu it was opened from.
     if self.cartPanel ~= nil then self.cartPanel.Enable = false end
+    if self.selectPanel ~= nil then self.selectPanel.Enable = true end
+    self:RefreshUI(true)
 end
 
 @ExecSpace("ClientOnly")
