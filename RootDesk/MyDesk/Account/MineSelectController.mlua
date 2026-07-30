@@ -20,8 +20,11 @@ property ButtonComponent btnSaleClose = "9c5394e7-deac-4f6b-a8f5-cb099cdce3ee"
 property ButtonComponent btnOreStone = "d876c4ed-bd2b-4461-b25a-e93a5cc534c3"
 property ButtonComponent btnOreIron = "a7b5e659-c7dd-43ce-bbd9-33e5009a9e59"
 property ButtonComponent btnOreGold = "6b1a5af9-d13d-4a66-95b9-a047ed0b838a"
-property TextInputComponent saleAmountInput = "35a53a3e-b413-4f1c-acab-6f67795f97a1"
-property TextInputComponent protectedAmountInput = "11ee646a-5d19-469f-949b-65106eebe749"
+-- 두 입력창의 실제 컴포넌트는 TextGUIRendererInputComponent 다. 레거시
+-- TextInputComponent 로 선언하면 GetComponent 가 nil 을 돌려주고, 수량이 절대
+-- 입력되지 않아 판매가 항상 "수량은 1 이상" 으로 실패했다 (docs/16 §14 D-11).
+property TextGUIRendererInputComponent saleAmountInput = "35a53a3e-b413-4f1c-acab-6f67795f97a1"
+property TextGUIRendererInputComponent protectedAmountInput = "11ee646a-5d19-469f-949b-65106eebe749"
 property ButtonComponent btnQuickOne = "17fb7222-327e-45c9-8f31-e3592659a17a"
 property ButtonComponent btnQuickTen = "f179fa04-2b7b-4493-811c-8df7f4fb77b3"
 property ButtonComponent btnQuickHundred = "4cb338a6-780e-4a9f-99da-8d62d96b6a3a"
@@ -31,11 +34,13 @@ property ButtonComponent btnToggleProtected = "e802e753-5484-40b5-b941-04c34ec1d
 property ButtonComponent btnSaveProtection = "3635c978-5a77-4118-8d49-519629327e6f"
 property ButtonComponent btnToggleAutoSell = "20ce51cb-b8b0-4ded-949d-74050165cb39"
 property TextGUIRendererComponent saleSummaryText = "1764b8f3-caf1-407a-b19c-754d038bc501"
+property TextGUIRendererComponent saleFeedbackText = "64f32ca0-d2f9-4beb-a603-2c6c1b6b1aab"
 property ButtonComponent btnRareOpen = "3ab7dc8e-ddfc-43ce-a503-c174cc6fb8c4"
 property Entity rarePanel = "1e5dbbfb-0671-4eb3-84c5-d39b45ad9ecd"
 property ButtonComponent btnRareClose = "f64125f4-938c-4639-8684-d5d5190311c2"
 property ButtonComponent btnBuyWorker = "3595093e-2707-4992-8d2c-43b2f5a64c6a"
-property TextGUIRendererComponent workerStatusText = "8d793449-ab64-4ccf-b43c-76e1f9b73324"
+-- SelectPanel/WorkerStatus 는 레거시 TextComponent 를 쓴다 (docs/16 §14 D-11).
+property TextComponent workerStatusText = "8d793449-ab64-4ccf-b43c-76e1f9b73324"
 property ButtonComponent btnRareStone = "49556e19-68aa-4d27-bed5-a716026ab9ac"
 property ButtonComponent btnRareIron = "e13c8f6c-0241-441e-a836-e39de5567820"
 property ButtonComponent btnRareGold = "e8bb96b2-72b5-484e-bf9c-d0513240da82"
@@ -131,6 +136,7 @@ method void RefreshUI(boolean force)
     if profile == nil then return end
     local state = tostring(profile.Gold) .. ":" .. tostring(profile.MineTokens) .. ":" .. tostring(profile.Stone) .. ":" .. tostring(profile.Iron) .. ":" .. tostring(profile.GoldOre) .. ":" .. tostring(profile.RareStoneCollectionLevel) .. ":" .. tostring(profile.RareIronCollectionLevel) .. ":" .. tostring(profile.RareGoldCollectionLevel) .. ":" .. tostring(profile.RareStoneStored) .. ":" .. tostring(profile.RareIronStored) .. ":" .. tostring(profile.RareGoldStored) .. ":" .. tostring(profile.OwnedWorkerCount) .. ":" .. tostring(profile.Worker1CartCapacity) .. ":" .. tostring(profile.Worker2CartCapacity) .. ":" .. tostring(profile.Worker3CartCapacity) .. ":" .. tostring(profile.Worker4CartCapacity) .. ":" .. tostring(profile.Worker5CartCapacity) .. ":" .. tostring(profile.StoneAutoSell) .. ":" .. tostring(profile.IronAutoSell) .. ":" .. tostring(profile.GoldOreAutoSell) .. ":" .. tostring(profile.StoneProtectedAmount) .. ":" .. tostring(profile.IronProtectedAmount) .. ":" .. tostring(profile.GoldOreProtectedAmount) .. ":" .. tostring(profile.DeepMineUnlocked) .. ":" .. tostring(profile.GemMineUnlocked) .. ":" .. profile.LastTransactionMessage .. ":" .. profile.RecoveryStatus
     state = state .. ":" .. tostring(profile.RareStoneAutoSell) .. ":" .. tostring(profile.RareIronAutoSell) .. ":" .. tostring(profile.RareGoldAutoSell)
+    state = state .. ":" .. tostring(profile.StoneEffectiveProtection) .. ":" .. tostring(profile.IronEffectiveProtection) .. ":" .. tostring(profile.GoldOreEffectiveProtection)
     if not force and state == self._T.lastState then return end
     self._T.lastState = state
 
@@ -227,17 +233,63 @@ method boolean GetSelectedAutoSell(AccountProfileService profile)
 end
 
 @ExecSpace("ClientOnly")
-method void RefreshSaleSummary(AccountProfileService profile)
-    if self.saleSummaryText == nil then return end
-    local autoLabel = "끔"
-    if self:GetSelectedAutoSell(profile) then autoLabel = "켬" end
-    local protectionLabel = "해제"
-    if self._T.includeProtected then protectionLabel = "포함" end
-    self.saleSummaryText.Text = "선택: " .. self._T.selectedOre .. "  |  보유 " .. tostring(self:GetSelectedBalance(profile)) .. "  |  설정 보호 " .. tostring(self:GetSelectedProtection(profile)) .. "\n자동판매 " .. autoLabel .. "  |  보호분 판매 " .. protectionLabel
+method integer GetSelectedEffectiveProtection(AccountProfileService profile)
+    -- max(설정 보호, 다음 광산 해금 필요량). 서버가 판매를 판정할 때 쓰는 값이다.
+    if self._T.selectedOre == "stone" then return profile.StoneEffectiveProtection end
+    if self._T.selectedOre == "iron" then return profile.IronEffectiveProtection end
+    return profile.GoldOreEffectiveProtection
 end
 
 @ExecSpace("ClientOnly")
-method integer ReadNonNegative(TextInputComponent input, integer fallback)
+method string OreLabel(string oreType)
+    -- 요약에 코드값(stone)이 아니라 한글 라벨을 보여 준다.
+    if oreType == "stone" then return "돌" end
+    if oreType == "iron" then return "철" end
+    if oreType == "gold" then return "금광석" end
+    return oreType
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshSaleSummary(AccountProfileService profile)
+    if self.saleSummaryText ~= nil then
+        local autoLabel = "끔"
+        if self:GetSelectedAutoSell(profile) then autoLabel = "켬" end
+        local protectionLabel = "해제"
+        if self._T.includeProtected then protectionLabel = "포함" end
+        local balance = self:GetSelectedBalance(profile)
+        local effective = self:GetSelectedEffectiveProtection(profile)
+        local sellable = balance - effective
+        if sellable < 0 then sellable = 0 end
+        self.saleSummaryText.Text = "선택: " .. self:OreLabel(self._T.selectedOre) .. "  |  보유 " .. tostring(balance) .. "  |  보호 " .. tostring(effective) .. " (설정 " .. tostring(self:GetSelectedProtection(profile)) .. ")\n지금 팔 수 있는 수량 " .. tostring(sellable) .. "  |  자동판매 " .. autoLabel .. "  |  보호분 판매 " .. protectionLabel
+    end
+    self:RefreshSaleFeedback(profile)
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshSaleFeedback(AccountProfileService profile)
+    -- 판매 패널 전용 피드백. LastTransactionMessage 는 SelectPanel 의 FeedbackText 에만
+    -- 있었고, 판매 패널을 열면 SelectPanel 이 꺼지므로 거부 사유가 화면에서 사라졌다
+    -- (docs/16 §14 D-10).
+    if self.saleFeedbackText == nil then return end
+    if self._T.localSaleHint ~= nil and self._T.localSaleHint ~= "" then
+        self.saleFeedbackText.Text = self._T.localSaleHint
+        return
+    end
+    if profile.LastTransactionMessage ~= "" then
+        self.saleFeedbackText.Text = profile.LastTransactionMessage
+        return
+    end
+    local balance = self:GetSelectedBalance(profile)
+    local effective = self:GetSelectedEffectiveProtection(profile)
+    if balance <= effective and not self._T.includeProtected then
+        self.saleFeedbackText.Text = "보유 " .. tostring(balance) .. "개가 모두 보호 수량(" .. tostring(effective) .. ")입니다. 팔려면 `보호분 포함 전환`을 먼저 누르세요."
+        return
+    end
+    self.saleFeedbackText.Text = "광물과 수량을 고른 뒤 `선택 수량 판매`를 누르세요."
+end
+
+@ExecSpace("ClientOnly")
+method integer ReadNonNegative(TextGUIRendererInputComponent input, integer fallback)
     if input == nil then return fallback end
     local parsed = tonumber(input.Text)
     if parsed == nil then return fallback end
@@ -248,6 +300,9 @@ end
 method void SelectOre(string oreType)
     self._T.selectedOre = oreType
     self._T.includeProtected = false
+    -- 이전 요청의 힌트를 지운다. 지우지 않으면 한 번 뜬 "수량은 1 이상" 문구가
+    -- 계속 남아 이후의 서버 거부 사유를 덮는다.
+    self._T.localSaleHint = ""
     local profile = self:GetProfile()
     if profile ~= nil and self.protectedAmountInput ~= nil then
         self.protectedAmountInput.Text = tostring(self:GetSelectedProtection(profile))
@@ -325,6 +380,8 @@ end
 @ExecSpace("ClientOnly")
 method void SetSaleAmount(integer amount)
     if self.saleAmountInput ~= nil then self.saleAmountInput.Text = tostring(math.max(0, amount)) end
+    self._T.localSaleHint = ""
+    self:RefreshUI(true)
 end
 
 @ExecSpace("ClientOnly")
@@ -352,6 +409,7 @@ end
 @ExecSpace("ClientOnly")
 method void OnToggleProtectedClicked()
     self._T.includeProtected = not self._T.includeProtected
+    self._T.localSaleHint = ""
     self:RefreshUI(true)
 end
 
@@ -359,12 +417,14 @@ end
 method void OnSellSelectedClicked()
     local profile = self:GetProfile()
     if profile == nil then return end
+    self._T.localSaleHint = ""
     local amount = self:ReadNonNegative(self.saleAmountInput, 0)
     if amount <= 0 then
         self._T.localSaleHint = "판매 수량은 1 이상이어야 합니다."
         self:RefreshUI(true)
         return
     end
+    log("[MineSelectUI] sell request ore=" .. self._T.selectedOre .. " amount=" .. tostring(amount) .. " includeProtected=" .. tostring(self._T.includeProtected))
     profile:RequestSellOre(self._T.selectedOre, amount, self._T.includeProtected)
 end
 

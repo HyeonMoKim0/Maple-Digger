@@ -73,6 +73,16 @@ property integer IronProtectedAmount = 0
 @Sync
 property integer GoldOreProtectedAmount = 0
 
+-- Read-only mirrors of max(설정 보호, 해금 필요 보호). Runtime-only; not persisted.
+@Sync
+property integer StoneEffectiveProtection = 0
+
+@Sync
+property integer IronEffectiveProtection = 0
+
+@Sync
+property integer GoldOreEffectiveProtection = 0
+
 @Sync
 property boolean DeepMineUnlocked = false
 
@@ -669,6 +679,13 @@ method void SyncRuntimeState()
     self.StoneProtectedAmount = self._T.profile.saleSettings.stone.protectedAmount
     self.IronProtectedAmount = self._T.profile.saleSettings.iron.protectedAmount
     self.GoldOreProtectedAmount = self._T.profile.saleSettings.gold.protectedAmount
+    -- Effective protection = max(설정값, 다음 광산 해금 필요량). The sale screen must
+    -- show this, not the configured value alone: with 0 configured and 120 mandatory
+    -- the player saw "보호 0" and could not tell why the sale was refused
+    -- (docs/16 §14 D-10).
+    self.StoneEffectiveProtection = _EconomyService:GetEffectiveProtection(self._T.profile, "stone")
+    self.IronEffectiveProtection = _EconomyService:GetEffectiveProtection(self._T.profile, "iron")
+    self.GoldOreEffectiveProtection = _EconomyService:GetEffectiveProtection(self._T.profile, "gold")
     self.DeepMineUnlocked = self._T.profile.deepMineUnlocked
     self.GemMineUnlocked = self._T.profile.gemMineUnlocked
     self.LastMineId = self._T.profile.lastMineId

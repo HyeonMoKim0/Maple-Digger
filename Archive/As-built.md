@@ -140,6 +140,15 @@
 - **이 세션은 문서만 바꿨다.** `RootDesk/`, `map/`, `ui/` 아래 게임 파일은 한 줄도 수정하지 않았으므로 런타임 동작은 `6a4ab91`과 동일하다.
 - 다음 작업과 열린 질문은 `docs/17-Claude-인수인계.md` **§0 이어가기 지점**에 있다. 1순위는 F5에 HUD 표시 계약을 작성한 뒤 `docs/16` §7.3의 D-1·D-2를 수정하는 것이다.
 
+### 2026-07-30 — D-10·D-11 수정 (판매가 아예 되지 않던 원인)
+
+- **D-11 (근본 원인)**: `MineSelectController`의 속성 3개가 실제 컴포넌트 타입과 달라 런타임에 **nil**이었다. `saleAmountInput`·`protectedAmountInput`을 레거시 `TextInputComponent`로 선언했지만 엔티티는 `TextGUIRendererInputComponent`를 갖고 있고, `workerStatusText`는 `TextGUIRendererComponent`로 선언했지만 엔티티는 레거시 `TextComponent`다. 빠른 버튼이 `saleAmountInput.Text`에 값을 써도 참조가 nil이라 아무 일도 일어나지 않아, 수량이 영원히 0이고 판매가 100% 실패했다. 세 선언을 실제 타입에 맞췄다.
+- **교훈**: `property <Type> x = "<uuid>"`는 `entity:GetComponent(Type)`로 해석되므로 **타입이 틀리면 오류 없이 nil**이 되고, `if x ~= nil` 가드와 만나면 기능이 조용히 사라진다. 빌드 로그에도 남지 않는다. 바인딩 전에 `.ui` 엔티티의 `componentNames`를 확인할 것.
+- **D-10**: 서버 거부 사유(`LastTransactionMessage`)를 그리는 `FeedbackText`가 `SelectPanel`에 있어서, D-8에서 판매 패널을 열 때 `SelectPanel`을 끄게 한 뒤로 메시지가 화면에서 사라졌다(D-8이 만든 회귀). 또 요약이 `설정 보호 0`만 보여 줬는데 서버가 쓰는 값은 `max(설정, 해금 필요량)` = 120이라 왜 막히는지 알 수 없었다.
+- 수정: `AccountProfileService`에 `StoneEffectiveProtection` 등 `@Sync` 3개를 추가해 유효 보호 수량을 내려보내고(런타임 전용, 저장 대상 아님), 요약을 `보유 5 | 보호 120 (설정 0)` / `지금 팔 수 있는 수량 0` 형태로 바꾸고, **판매 패널 전용 피드백 줄**을 신설해 서버 메시지·로컬 힌트·"`보호분 포함 전환`을 먼저 누르라"는 안내를 표시한다. 한 번 설정되면 남아 이후 메시지를 덮던 `localSaleHint`도 초기화 지점을 추가했다.
+- **검증**: 바인딩 3개 정상 해석, 빠른 버튼 `10` 반영(`sell request amount=10`), 보유 초과 시 `보유 수량보다 많이 판매할 수 없습니다.` 표시, **보호분 포함 + 수량 1 판매 성공**(`수동 판매 완료: 골드 +1`, 요약 `보유 4`, HUD `창고 돌 4` · `골드 2`). 빌드 오류 0건. 개발 프로필은 `gold=0 stone=1 workers=1`로 원복.
+- **채굴·적재·하역**도 프로그램 실행으로 검증했다. 초보 광산은 Depot `(0,0)`, 시작 `(0,0)`, 돌 광맥 `(1,0) (2,0) (2,-1) (3,-1)`이며 `E → M → L → W → U` 5블록이 `mined → hand → cart=1/20 → credited ore=stone count=1 → unload depotStone=1 → program finished → recovered stage=3`까지 정상 동작한다. "확인이 어렵다"는 체감 문제는 F5 연출 미구현 때문이며, 그때까지는 HUD의 손/수레/창고 숫자가 유일한 확인 수단이다.
+
 ### 2026-07-30 — D-8·D-9 수정 (중앙 모달 배타·패널 내부 겹침)
 
 사용자 1차 검수에서 "판매 화면 조작을 알 수 없다"는 보고가 들어와 원인을 찾은 결과, UX 문제가 아니라 결함 2건이었다.
