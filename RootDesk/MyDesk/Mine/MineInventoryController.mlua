@@ -14,6 +14,11 @@ property TextGUIRendererComponent depotText = "9395e38a-0b37-4c6e-ba68-ebd554c90
 property TextGUIRendererComponent cartText = "ada2db0e-12dc-4412-82d0-e94425ced00c"
 property TextGUIRendererComponent handText = "936aa37c-c3da-4dcd-83a6-390a45b2ad4e"
 property TextGUIRendererComponent inventoryStoneText = "00b765d6-de3f-47e3-a1fd-e6a7dab02bcd"
+-- 인벤토리 팝업의 희귀 컬렉션 필드 (docs/08 §5.2 I2~I6).
+property TextGUIRendererComponent rareStoneText = "25ea3ae3-31f5-425c-abdb-695e0bf5c6aa"
+property TextGUIRendererComponent rareIronText = "e81b1e08-66b8-4fc4-a7f6-51f0a0b39d8f"
+property TextGUIRendererComponent rareGoldText = "841b16be-6b84-4598-9f35-e81548735df7"
+property TextGUIRendererComponent saleSettingText = "2a0d93d2-63be-42cc-a8d2-0e62e659a59b"
 property ButtonComponent btnInventory = "7e830fdf-624e-4d91-83d9-d6e2d321c96f"
 property ButtonComponent btnClose = "6bf38474-c9e7-44b4-847d-36fb7fac3bb9"
 property Entity inventoryPanel = "3434f74e-d21b-4493-a1f7-9406a7796a4c"
@@ -78,6 +83,12 @@ method void RefreshUI(boolean force)
     state = state .. ":" .. tostring(worker.PendingOre) .. ":" .. tostring(worker.CartCount) .. ":" .. tostring(worker.CartCapacity)
     state = state .. ":" .. tostring(mineState.DepotStone) .. ":" .. tostring(mineState.DepotIron) .. ":" .. tostring(mineState.DepotGold)
     state = state .. ":" .. workerStates
+    -- I2~I6: 희귀 컬렉션·보관·판매 잠금·패시브·판매 설정. 변경 감지 키에서 빠지면
+    -- 값이 바뀌어도 팝업이 갱신되지 않는다 (무증상 실패).
+    state = state .. ":" .. tostring(profile.RareStoneCollectionLevel) .. ":" .. tostring(profile.RareIronCollectionLevel) .. ":" .. tostring(profile.RareGoldCollectionLevel)
+    state = state .. ":" .. tostring(profile.RareStoneStored) .. ":" .. tostring(profile.RareIronStored) .. ":" .. tostring(profile.RareGoldStored)
+    state = state .. ":" .. tostring(profile.StoneAutoSell) .. ":" .. tostring(profile.IronAutoSell) .. ":" .. tostring(profile.GoldOreAutoSell)
+    state = state .. ":" .. tostring(profile.StoneEffectiveProtection) .. ":" .. tostring(profile.IronEffectiveProtection) .. ":" .. tostring(profile.GoldOreEffectiveProtection)
 
     if not force and state == self._T.lastState then return end
     self._T.lastState = state
@@ -119,8 +130,38 @@ method void RefreshUI(boolean force)
     end
     -- I1: inventory popup shows the account ledger too.
     if self.inventoryStoneText ~= nil then
-        self.inventoryStoneText.Text = "돌  " .. tostring(profile.Stone) .. "   철  " .. tostring(profile.Iron) .. "   금  " .. tostring(profile.GoldOre)
+        self.inventoryStoneText.Text = "창고  돌 " .. tostring(profile.Stone) .. "   철 " .. tostring(profile.Iron) .. "   금 " .. tostring(profile.GoldOre)
     end
+    -- I2~I5: 희귀 3종의 컬렉션 단계 / 보관 수량 / 판매 잠금 / 적용 패시브.
+    if self.rareStoneText ~= nil then
+        self.rareStoneText.Text = self:RareRowText("돌", profile.RareStoneCollectionLevel, profile.RareStoneStored, "수레")
+    end
+    if self.rareIronText ~= nil then
+        self.rareIronText.Text = self:RareRowText("철", profile.RareIronCollectionLevel, profile.RareIronStored, "회복")
+    end
+    if self.rareGoldText ~= nil then
+        self.rareGoldText.Text = self:RareRowText("금", profile.RareGoldCollectionLevel, profile.RareGoldStored, "판매가")
+    end
+    -- I6: 일반 광물 자동 판매 여부와 실제로 판매를 막는 보호 수량.
+    if self.saleSettingText ~= nil then
+        self.saleSettingText.Text = "자동판매  돌 " .. self:OnOffLabel(profile.StoneAutoSell) .. " · 철 " .. self:OnOffLabel(profile.IronAutoSell) .. " · 금 " .. self:OnOffLabel(profile.GoldOreAutoSell) .. "\n보호 수량  돌 " .. tostring(profile.StoneEffectiveProtection) .. " · 철 " .. tostring(profile.IronEffectiveProtection) .. " · 금 " .. tostring(profile.GoldOreEffectiveProtection)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method string RareRowText(string oreLabel, integer level, integer stored, string passiveLabel)
+    -- "돌  3/10   보관 0   판매 잠김   수레 +9%" 한 줄. 패시브는 단계당 +3%이고
+    -- 10단계 전에는 수동·자동 판매가 모두 잠긴다 (C196).
+    local lockLabel = "판매 잠김"
+    if level >= 10 then lockLabel = "판매 가능" end
+    return oreLabel .. "  " .. tostring(level) .. "/10   보관 " .. tostring(stored) .. "   " .. lockLabel .. "   " .. passiveLabel .. " +" .. tostring(level * 3) .. "%"
+end
+
+@ExecSpace("ClientOnly")
+method string OnOffLabel(boolean flag)
+    -- 자동 판매 토글 표시.
+    if flag then return "켬" end
+    return "끔"
 end
 
 @ExecSpace("ClientOnly")
