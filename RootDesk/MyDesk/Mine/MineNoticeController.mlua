@@ -1,0 +1,89 @@
+-- F5 §2.2 CLIENT-SIDE IMPORTANT EVENT CHANNEL
+-- 서버가 VeinTickSimulator 에 실어 보낸 중요 이벤트(특별 광맥 출현 등)를 읽어
+-- 토스트로 알린다. 게임 상태는 절대 바꾸지 않는다 (F5 §1 금지 사항).
+-- 행동 이벤트(WorkerController.VisualEvent*)와는 다른 채널이며, 이쪽은
+-- "놓쳐도 HUD 현재 상태로 복구 가능"해야 하므로 재생을 건너뛰는 쪽이 안전하다.
+@Component
+script MineNoticeController extends Component
+
+-- @Sync 값은 맵 로드 직후 한 박자 늦게 도착한다. 그동안 관측되는 변화는 "이미
+-- 일어난 일"이므로 재생하지 않고 기준선만 옮긴다 (F5-5 재접속 중복 방지).
+property number SyncSettleSeconds = 1.0
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- Caches the map's server channel and seeds the dedup baseline.
+    self._T.mineState = self.Entity:GetComponent("script.VeinTickSimulator")
+    self._T.lastNoticeId = -1
+    self._T.settleElapsed = 0
+    if self._T.mineState == nil then
+        log_error("[MineNotice] VeinTickSimulator missing on " .. self.Entity.Name)
+        return
+    end
+    log("[MineNotice] ready map=" .. self.Entity.Name)
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- Processes at most one unseen notice per frame; the server emits far less
+    -- often than a frame, so a queue is unnecessary.
+    local mineState = self._T.mineState
+    if mineState == nil then return end
+
+    self._T.settleElapsed = self._T.settleElapsed + delta
+
+    local noticeId = mineState.NoticeId
+    if noticeId == self._T.lastNoticeId then return end
+
+    if self._T.lastNoticeId < 0 then
+        -- 최초 관측. 접속 전에 일어난 이벤트를 소급 재생하지 않는다.
+        self._T.lastNoticeId = noticeId
+        return
+    end
+    if self._T.settleElapsed < self.SyncSettleSeconds then
+        -- 동기화가 아직 안정되지 않은 구간. 값이 뒤늦게 도착한 것이지 새 이벤트가
+        -- 아니므로 기준선만 옮긴다.
+        self._T.lastNoticeId = noticeId
+        return
+    end
+    if noticeId > self._T.lastNoticeId + 1 then
+        -- 지연·재접속으로 사이 이벤트를 놓쳤다. 몰아서 재생하면 F5-5 위반이므로
+        -- 재생을 건너뛰고 HUD 현재 상태(ActiveSpecialCount)에 복구를 맡긴다.
+        log("[MineNotice] skipped stale notices from=" .. tostring(self._T.lastNoticeId) .. " to=" .. tostring(noticeId))
+        self._T.lastNoticeId = noticeId
+        return
+    end
+    if noticeId < self._T.lastNoticeId then
+        -- 맵이 다시 로드돼 서버 채널이 처음부터 시작한 경우다.
+        self._T.lastNoticeId = noticeId
+        return
+    end
+
+    self._T.lastNoticeId = noticeId
+    self:PlayNotice(mineState.NoticeKind, mineState.NoticeCellX, mineState.NoticeCellY, mineState.NoticeCount)
+end
+
+@ExecSpace("ClientOnly")
+method void PlayNotice(string kind, integer cellX, integer cellY, integer count)
+    -- Renders one important event. Unknown kinds are logged and ignored so a
+    -- future server-side kind never breaks an older client.
+    if kind == "special_vein_spawn" then
+        local message = "특별 광맥 출현!  " .. tostring(count) .. "곳  ·  위치 (" .. tostring(cellX) .. ", " .. tostring(cellY) .. ")"
+        self:ShowToast(message)
+        log("[MineNotice] special_vein_spawn count=" .. tostring(count) .. " cell=(" .. cellX .. "," .. cellY .. ")")
+        return
+    end
+    log("[MineNotice] unhandled kind=" .. tostring(kind))
+end
+
+@ExecSpace("ClientOnly")
+method void ShowToast(string message)
+    -- ToastGroup 은 계정 복구 오버레이 아래, 모달 위에 있다 (F5 §6.2).
+    if _UIToast == nil then
+        log_error("[MineNotice] UIToast logic missing - toast skipped: " .. message)
+        return
+    end
+    _UIToast:ShowMessage(message)
+end
+
+end

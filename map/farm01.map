@@ -16,7 +16,7 @@
       {
         "id": "83de308d-98c5-4c42-9888-5506ea78244f",
         "path": "/maps/farm01",
-        "componentNames": "MOD.Core.MapComponent,MOD.Core.FootholdComponent,script.VeinTickSimulator",
+        "componentNames": "MOD.Core.MapComponent,MOD.Core.FootholdComponent,script.VeinTickSimulator,script.MineNoticeController",
         "jsonString": {
           "name": "farm01",
           "path": "/maps/farm01",
@@ -53,6 +53,10 @@
               "VeinDefinitionsJson": "[{\"id\":\"vein-stone-01\",\"cellX\":1,\"cellY\":0,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-01-marker\"},{\"id\":\"vein-stone-02\",\"cellX\":2,\"cellY\":0,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-02-marker\"},{\"id\":\"vein-stone-03\",\"cellX\":2,\"cellY\":-1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-03-marker\"},{\"id\":\"vein-stone-04\",\"cellX\":3,\"cellY\":-1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-04-marker\"}]",
               "WorkerStartsJson": "[{\"workerIndex\":1,\"cellX\":0,\"cellY\":0},{\"workerIndex\":2,\"cellX\":0,\"cellY\":1},{\"workerIndex\":3,\"cellX\":-1,\"cellY\":0},{\"workerIndex\":4,\"cellX\":-1,\"cellY\":1},{\"workerIndex\":5,\"cellX\":-2,\"cellY\":0}]",
               "SpecialVeinCandidatesJson": "[{\"id\":\"special-slot-01\",\"cellX\":1,\"cellY\":1,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-01-marker\"},{\"id\":\"special-slot-02\",\"cellX\":2,\"cellY\":1,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-02-marker\"},{\"id\":\"special-slot-03\",\"cellX\":3,\"cellY\":1,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-03-marker\"}]"
+            },
+            {
+              "@type": "script.MineNoticeController",
+              "Enable": true
             }
           ],
           "@version": 1

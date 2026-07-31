@@ -25,6 +25,33 @@
 
 ## 기록
 
+### 2026-07-31 — T-04 Phase 3: 중요 이벤트 채널과 특별 광맥 토스트
+
+> 브랜치 `feat/t04-mine-fx-p3` (Phase 1·2는 PR #2로 `main`에 병합 완료). Phase 4~6은 미착수다.
+
+- **중요 이벤트 채널을 `VeinTickSimulator`에 신설했다** — `NoticeId` / `NoticeKind` / `NoticeCellX` / `NoticeCellY` / `NoticeCount`, 그리고 상태 복구용 `ActiveSpecialCount` (F5 §2.2). 일꾼의 행동 scalar(`WorkerController.VisualEvent*`)와 **다른 채널**이다. 행동 이벤트는 놓쳐도 그만이지만 중요 이벤트는 "놓쳤다"는 사실 자체를 알아야 하므로 판정 규칙이 다르다.
+  - `EmitMineNotice`는 **`NoticeId`를 마지막에 쓴다.** 새 id를 본 클라이언트는 반드시 짝이 맞는 kind·cell·count를 함께 본다(Phase 1 `EmitVisualEvent`와 같은 규칙).
+  - **`NoticeId`는 `LoadLayout`에서 리셋하지 않는다.** `LoadLayout`은 맵 전환마다 다시 도는데 거기서 id를 되돌리면 클라이언트가 이미 본 id가 재사용돼 중복 제거가 깨진다. 초기화는 `OnBeginPlay` 한 곳뿐이고, `ActiveSpecialCount`만 `LoadLayout`에서 0으로 되돌린다.
+  - 스폰 알림은 **묶음당 1회**다(F5 §4 "스폰 묶음당 1회"). `TrySpawnSpecialVeins`가 2개를 만들어도 notice는 하나이고 대표 위치는 첫 광맥 셀이다.
+- **`MineNoticeController`(ClientOnly) 신설.** `@Logic`이 아니라 **맵 엔티티 컴포넌트**다 — `@Logic`은 맵 전환 후에도 살아남아 이전 광산의 기준선을 들고 다니므로 중복·누락이 생긴다(AGENTS "Script lifecycle").
+- **재접속 중복 방지는 3중 가드다** (F5-5).
+  1. **최초 관측**(`lastNoticeId < 0`)은 재생하지 않고 기준선만 잡는다 — 접속 전 이벤트의 소급 재생 방지.
+  2. **`OnBeginPlay` 후 1초**(`SyncSettleSeconds`) 안의 변화도 기준선만 옮긴다. `@Sync`는 맵 로드 직후 한 박자 늦게 도착하므로, 이 구간의 변화는 새 이벤트가 아니라 "뒤늦게 도착한 값"이다. 1번 가드만으로는 서버가 이미 id=1이었던 경우를 못 거른다.
+  3. **id가 2 이상 건너뛰면** 몰아서 재생하지 않고 건너뛴다. 대신 HUD의 `ActiveSpecialCount`가 현재 상태를 그대로 보여 준다 — F5 §2.2의 "놓치면 HUD 현재 상태로 복구 가능해야 한다"가 이 설계의 근거다.
+- **스폰 강조는 크기 펄스**(0.6초, 1.6배→1.0배)다. `docs/21` §5.1대로 회복·출현용 파티클 자산이 없어 별도 VFX를 넣지 않았다. 첫 페인트(`isFirstPaint`)에서는 펄스를 걸지 않는다 — 접속 시점에 이미 활성인 특별 광맥까지 강조하면 재접속마다 스폰 연출이 반복된다.
+- **HUD에 특별 광맥 행을 추가했다.** `MineHUD/Panel` 430→466px, `SpecialText` y=-332, `BtnInventory` -334→-370. **`MineSelectUI/BtnOpen`도 36px 함께 내렸다**(-466→-502) — 우측 버튼 스택은 HUD 패널 바로 아래 12px 간격에 붙어 있어 패널만 늘리면 겹친다(F5 §6.1 "상시 표시 요소는 겹치지 않는다").
+- **검증**: 빌드 오류 0건(baseline 16 Info 유지). `[VeinTick] notice id=1 kind=special_vein_spawn cell=(1,1) count=2 activeSpecial=2` → `[MineNotice] special_vein_spawn count=2 cell=(1,1)` **1회**, `[VeinMarkerFx] special spawn emphasis` 2개 marker. 토스트 "특별 광맥 출현! 2곳 · 위치 (1, 1)"을 스크린샷으로 확인했다. **id를 서버에서 1→6으로 강제로 건너뛰자 `[MineNotice] skipped stale notices from=1 to=6`이 찍히고 토스트는 뜨지 않았다** — F5-5 경로의 직접 증거다. 바인딩 감사 114건 실패 0건.
+- **새로 알아낸 함정 2개**
+  - **`UIBuilder.text()`는 레거시 `MOD.Core.TextComponent`를 함께 붙인다.** 기존 HUD 행은 `TextGUIRendererComponent` 하나만 갖는데, 새 행에는 렌더러가 둘이 생겨 **같은 자리에 문자열 두 개가 겹쳐 찍혔다.** 컨트롤러가 갱신하는 쪽은 `TextGUIRendererComponent`뿐이라 나머지 하나는 생성 시점 문자열("활성 0곳")에 멈춘 채 남는다. 좌표·텍스트 덤프는 정상으로 보이므로 **스크린샷 없이는 잡히지 않는다.** 새 텍스트 행을 만들면 `removeComponent(..., "MOD.Core.TextComponent")`로 정리하고, 기존 행과 `componentNames`를 대조한다.
+  - **UIBuilder 검증기가 엔진 26.7과 어긋나 `.ui` 쓰기를 전부 막았다** — 아래 별도 항목.
+
+### 2026-07-31 — UIBuilder `U002`가 모든 `.ui` 쓰기를 차단 (도구 수정)
+
+- Phase 3의 HUD 작업에서 `UIBuilder.write()`가 `U002: ...TextGUIRendererComponent.Font must be int32. Got "Default"`로 **모든 `.ui` 파일에서 실패**했다. `validate()`를 돌려 보니 `MineHUD` 9건 · `MineSelectUI` 40건 · `MineInventoryUI` 9건 · `BlockProgramUI` 23건 · `AccountRecoveryUI` 4건이었다. 즉 **T-01 이후 `.ui`를 한 번도 못 고치는 상태였다.**
+- 원인은 파일이 아니라 **도구**다. `Environment/NativeScripts/Component/TextGUIRendererComponent.d.mlua`가 `property string Font = "Default"` · `property float FontSize = 20`으로 선언하는데, 스킬의 `msw_ui_builder.cjs`가 두 필드를 `INT32_COMPONENT_FIELDS`에 넣어 정수를 강제하고 있었다. 엔진 26.7 재저장으로 파일에 `"Default"` / `""` / `"0"` 같은 문자열이 들어오면서 드러났다.
+- **파일 쪽을 고치면 안 된다.** `Font`를 정수로 바꾸면 전 행의 글꼴이 바뀌고 다음 Maker 저장에서 되돌아간다. `.d.mlua`가 기준이므로 **검증기에서 `Font`를 빼고 `FontSize`를 실수 필드로 옮겼다.**
+- 수정 대상은 `.claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs`로 **도구·환경 범위**라 게임 커밋에 넣지 않는다(§10 경계). 따라서 **다른 컴퓨터에서는 같은 차단이 그대로 재현된다.** 새 환경에서 `.ui`를 만지기 전에 이 두 줄을 먼저 고칠 것.
+
 ### 2026-07-31 — 엔진 26.7 재저장분 정리와 GroupOrder 복구
 
 - 4차 세션 이후 `ui/` 8개와 `map/farm01.map`이 **미커밋 상태로 남아 있었다.** 파일 mtime이 전부 `2026-07-30 08:27:14` 1초 안이고 내장 `CoreVersion`이 `26.5.0.0 → 26.7.0.0`으로 바뀐 것으로 보아, Maker가 엔진 업그레이드 후 일괄 재저장한 결과다. `Environment/config`도 `26.7.0.0`이므로 버전 자체는 정상이다.

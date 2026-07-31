@@ -6,23 +6,26 @@
 
 ## 0. 이어가기 지점 — 여기부터 읽는다
 
-### 0.0 최근 세션 요약 (2026-07-31, 6차) — 가장 최신
+### 0.0 최근 세션 요약 (2026-07-31, 7차) — 가장 최신
 
-**⚠️ 진행 중인 브랜치가 있다: `feat/t04-mine-fx`.** T-04를 6단계로 나눠 **Phase 1·2까지 구현·검증 완료**했고 Phase 3~6이 남았다. 아래 §0.1이 이어가는 지점이다.
+**⚠️ 진행 중인 브랜치가 있다: `feat/t04-mine-fx-p3`.** Phase 1·2는 **PR #2로 `main`에 병합 완료**됐고, 이 브랜치가 **Phase 3**을 담고 있다. Phase 4~6이 남았다. 아래 §0.1-A가 이어가는 지점이다.
 
 | 범위 | 내용 |
 |---|---|
-| **T-04 Phase 1** (`3d977a1`) | 서버 동기화 표면 신설 — `VeinMarker`에 `ReserveStage`/`OreType`/`IsActive`/`VisualRevision` `@Sync`, `WorkerController`에 `VisualEvent*`. **연출의 유일한 입력이며 이게 없어서 아무것도 안 보였다** |
-| **T-04 Phase 2** (`dc5ed1f`) | 광맥 stage 시각화 — `VeinMarkerController`(ClientOnly) 신설, `MineMarker.model`에 렌더러 추가, 맵 인스턴스 38개에 부착. **광맥과 Depot이 실제로 화면에 보인다** |
+| **T-04 Phase 3** (브랜치 `feat/t04-mine-fx-p3`) | 중요 이벤트 채널 신설 — `VeinTickSimulator`에 `NoticeId`/`NoticeKind`/`NoticeCell*`/`NoticeCount` + 상태 복구용 `ActiveSpecialCount`. `MineNoticeController`(ClientOnly, 맵 컴포넌트) 신설 → **특별 광맥 출현 토스트**. 스폰 강조 펄스, HUD 특별 광맥 행 |
+| **도구 차단 해소** | UIBuilder 검증기가 `Font`를 int32로 강제해 **모든 `.ui` 쓰기가 막혀 있었다.** 엔진 26.7은 `Font`를 문자열로 쓴다 → 검증기 수정. **`.claude/` 범위라 커밋에 없다. 새 환경에서 재현된다** (§1 주의사항 8) |
+| **T-04 Phase 1** (`3d977a1`, `main`) | 서버 동기화 표면 — `VeinMarker`에 `ReserveStage`/`OreType`/`IsActive`/`VisualRevision` `@Sync`, `WorkerController`에 `VisualEvent*` |
+| **T-04 Phase 2** (`dc5ed1f`, `main`) | 광맥 stage 시각화 — `VeinMarkerController`(ClientOnly), `MineMarker.model`, 맵 인스턴스 38개. **광맥과 Depot이 실제로 화면에 보인다** |
 | 기획 보강 **D9** (`91e6d30`) | `docs/22` 밸런스 검증 — 광맥 공급 상한 정량화, 숙련도별 처리량, 조정 권고 6건. 도구 `tools/balance_sim.cjs` |
 | 기획 보강 **F8** (`c943ca0`) | `docs/23` 서버 거절 사유 카탈로그 — 전수 목록에 안정 코드 부여, 신규 화면 계약 5개. **문구 불일치 3건 발견** |
 | 결정 카드 | **C207** — P4의 "10~15분"을 **첫 접속 총 경과 시간**으로 확정. 경제 수치는 조정하지 않는다 |
-| 문서 정합화 (`d2dc30b`) | 사실 오류 7건 정정, 상충 1건 해소, `docs/17` 구조 개편(세션 기록 As-built로 일원화) |
 
-**이 세션에서 배운 것 — 반복하면 안 되는 함정 2개**
+**반복하면 안 되는 함정 4개**
 
 1. **`.codeblock` 캐시가 한 사이클 지연된다.** 메서드 시그니처를 바꾸면 첫 `refresh`의 빌드 로그가 **옛 시그니처로 오류**를 낸다. 호출하는 쪽 `.mlua`를 다시 저장해 codeblock 재생성을 유도하면 해소된다. **빌드 로그 타임스탬프가 이전과 같으면 재빌드가 안 돈 것**이므로 로그를 믿기 전에 확인한다.
 2. **`.model` 수정은 이미 배치된 맵 인스턴스에 소급되지 않는다.** 맵 엔티티의 `componentNames`가 로드 시 기준이기 때문이다(builder-protocol-map §1.4). `placeModel`로 다시 놓으면 인스턴스별 값(`MarkerId` 등)이 날아가므로 **`upsertComponent`로 더한다.**
+3. **`UIBuilder.text()`는 레거시 `MOD.Core.TextComponent`를 함께 붙인다.** 기존 HUD 행은 `TextGUIRendererComponent` 하나만 갖는다. 그대로 두면 **문자열 두 개가 같은 자리에 겹쳐 찍히고** 컨트롤러가 갱신하지 않는 쪽은 생성 시점 문자열에 멈춘다. **좌표·텍스트 덤프로는 안 잡히고 스크린샷에서만 보인다.** 새 텍스트 행은 만든 뒤 `removeComponent(..., "MOD.Core.TextComponent")`하고 기존 행과 `componentNames`를 대조한다.
+4. **UIBuilder 검증기와 엔진 26.7이 어긋나면 `.ui` 쓰기가 통째로 막힌다** (§1 주의사항 8).
 
 > 5차 이전 세션의 상세는 `Archive/As-built.md`의 날짜별 기록을 본다. 요약하면 — **2차**(07-29) 희귀 광물 서버 규칙 전량 검증, **3차**(07-30) F5 §5·§6 계약 신설, **4차**(07-30) 화면 결함 D-1~D-12 전량 수정 + `docs/18`~`21` 신설, **5차**(07-31) `GroupOrder` 회귀 복구(D-13) + T-04 자산 확정(C206).
 
@@ -34,26 +37,30 @@
 
 | 순위 | 할 일 | 상태 | 비고 |
 |:-:|---|---|---|
-| **1** | **T-04 Phase 3~6** — 브랜치 `feat/t04-mine-fx` | **진행 중** | Phase 1·2 완료. 아래 §0.1-A가 이어가는 지점이다 |
+| **1** | **T-04 Phase 4~6** — 브랜치 `feat/t04-mine-fx-p3` | **진행 중** | Phase 1~3 완료. 아래 §0.1-A가 이어가는 지점이다 |
 | 2 | **T-02 → T-03 · 맵 강화** | 대기 | T-02가 프로필을 **v8로 올린다.** 다른 티켓과 동시 진행 금지. 착수 전 `docs/22`(D9) §7과 `docs/23`(F8) §6.1을 읽는다 |
 | 3 | T-05 / T-06 | 대기 | 서로 독립, 병렬 가능. `docs/23` §6.2·§6.3에 추가할 거절 경로가 잡혀 있다 |
 | 4 | T-07 · 튜토리얼 | 대기 | 선행 T-02(v8에 `tutorial` 필드) + T-05(보상의 기본 프로그램) |
 | 5 | **F9 성능·부하 기준** | 대기 | **T-04를 실제로 돌려 보며 쓰는 것이 정확하다.** 지금 쓰면 근거 없는 숫자만 박는다 |
 
-### 0.1-A T-04 이어가기 — Phase 3~6
+### 0.1-A T-04 이어가기 — Phase 4~6
 
-**브랜치 `feat/t04-mine-fx`에서 이어간다.** 자산 RUID는 전부 [`21-연출-자산-승인표.md`](21-연출-자산-승인표.md) **§7.1**에 있다 — **이 문서에 RUID를 복사하지 말 것.**
+**브랜치 `feat/t04-mine-fx-p3`에서 이어간다.** 자산 RUID는 전부 [`21-연출-자산-승인표.md`](21-연출-자산-승인표.md) **§7.1**에 있다 — **이 문서에 RUID를 복사하지 말 것.**
 
 | Phase | 내용 | 상태 |
 |:-:|---|---|
-| 1 | 서버 동기화 표면 (`VeinMarker` `@Sync` · `WorkerController` `VisualEvent*`) | ✅ `3d977a1` |
-| 2 | 광맥 stage 시각화 (`VeinMarkerController` · 모델 · 맵 38개) | ✅ `dc5ed1f` |
-| **3** | **특별 광맥 연출 + 토스트** | ⬜ 다음 |
-| 4 | 일꾼 연출 (선택 링 · 파편 · Depot 강조 · **아바타 교체**) | ⬜ |
+| 1 | 서버 동기화 표면 (`VeinMarker` `@Sync` · `WorkerController` `VisualEvent*`) | ✅ `3d977a1` (`main`) |
+| 2 | 광맥 stage 시각화 (`VeinMarkerController` · 모델 · 맵 38개) | ✅ `dc5ed1f` (`main`) |
+| 3 | 특별 광맥 연출 + 토스트 (중요 이벤트 채널) | ✅ `feat/t04-mine-fx-p3` |
+| **4** | **일꾼 연출** (선택 링 · 파편 · Depot 강조 · **아바타 교체**) | ⬜ 다음 |
 | 5 | 사운드 7종 배선 | ⬜ |
 | 6 | 검증·기록 (F5-1~F5-6, `docs/16`, As-built) | ⬜ |
 
-**Phase 3 착수 지점.** `VeinMarker.IsActive`가 이미 서버에서 내려오고 `VeinMarkerController`가 그것으로 특별 광맥을 보이고 숨긴다 — **기본 표시는 이미 동작한다.** 남은 것은 ① 스폰 강조 연출 ② `ToastGroup` 통지 ③ F5 §2.2의 **중요 이벤트 채널**(단조 증가 ID, 재접속 시 중복 재생 방지)이다. 중요 이벤트는 행동 이벤트(`VisualEvent*`)와 **분리된 채널**을 쓴다.
+**Phase 3에서 만들어 둔 것 — Phase 4가 그대로 쓴다.** 중요 이벤트 채널은 **kind 문자열로 분기**하도록 일반화돼 있다.
+
+- 서버: `VeinTickSimulator:EmitMineNotice(kind, cellX, cellY, count)` 하나만 부르면 된다. **`rare_ore_unload`는 이 메서드를 호출하는 것으로 끝난다** — 호출 지점은 `WorkerController:DoUnload` 또는 `VeinTickSimulator:AddToDepot`이고, 희귀 종류 판별은 이미 거기 있다.
+- 클라이언트: `MineNoticeController:PlayNotice`에 `elseif kind == "rare_ore_unload"` 분기를 더한다. 모르는 kind는 로그만 남기고 무시하므로 **서버를 먼저 붙여도 클라이언트가 깨지지 않는다.**
+- 중복 방지 3중 가드(최초 관측 / 1초 settle / id 점프 스킵)는 kind와 무관하게 이미 동작한다. 새 kind에 다시 만들지 말 것.
 
 **Phase 4 주의.** 일꾼이 아직 **임시 몬스터 스프라이트**다. `docs/21` §4가 아바타 기반(`cap` 안전제일 모자 / `coat` 화이트루즈 멜빵 / `pants` 밀라노청바지 / `weapon` 황금 곡괭이)으로 바꾸도록 정해 뒀다. `msw-avatar` 스킬을 먼저 읽는다. 그리고 **D9 §5.2 권고 3** — 일꾼 2 구매 직후 프로그램 복사 시 위치 경고를 노출하는 것은 T-05 몫이지만, 일꾼 연출과 함께 보면 좋다.
 
@@ -99,7 +106,9 @@ git status --short -- docs RootDesk ui map tools Archive
 
 ## 1. `.ui` 작업 시 반드시 지킬 것
 
-**세션이 바뀌어도 유효한 규칙이다.** 아래 7개는 전부 이 프로젝트에서 실제로 터진 사고에서 나왔다.
+**세션이 바뀌어도 유효한 규칙이다.** 아래 9개는 전부 이 프로젝트에서 실제로 터진 사고에서 나왔다.
+
+> **먼저 읽을 것 — 주의사항 8은 새 작업 환경에서 `.ui` 작업을 통째로 막는다.** `.ui`를 만질 계획이면 8번부터 확인하고 시작한다.
 
 1. **`patch()`는 기존 `Pivot`을 보존한다.** 앵커를 바꿀 때 pivot을 함께 넘기지 않으면 박스가 반대쪽으로 밀려난다(`BtnInventory`가 184px 튀어나간 `L014`, 열기 버튼이 우상단 예약 영역으로 밀려난 사례 모두 이 원인).
 2. **한 패널 안에서 앵커 모드를 혼용하지 말 것.** `AlignmentOption=0`(중앙)과 `=3`(상단)을 섞으면 같은 행에 두려던 요소가 아래로 밀려 겹친다(`docs/16` §13 D-9).
@@ -117,6 +126,14 @@ node tools/audit_bindings.cjs
 7. **`GroupOrder`의 절대값은 런타임에 남지 않는다.** 엔진이 로드 시 0..N 밀집 수열로 재압축하므로 **상대 순서만 의미가 있다.** 계층 검증은 파일이 아니라 Play 중 `maker_execute_script`(client)로 `/ui/<Group>`의 `UIGroupComponent.GroupOrder`를 찍어 판정한다.
    - **그래서 파일도 밀집 수열 `0~7`로 맞춰 뒀다** (2026-07-31). 희소값(10·20·50)을 쓰면 Maker가 저장할 때마다 압축값으로 덮어써서 diff가 계속 생기고, **일부 파일만 저장되면 압축값과 저자값이 섞여 순서가 깨진다** — D-13이 정확히 그 경우였다. 밀집 수열은 Maker가 쓰는 값과 같아서 더 이상 흔들리지 않는다.
    - 새 UIGroup을 추가할 때는 **끝에 붙이거나 중간 삽입 후 전체를 다시 0부터 매긴다.** 희소값으로 자리를 비워 두는 방식은 압축 때문에 의미가 없다.
+8. **UIBuilder 검증기가 엔진 26.7과 어긋나 `.ui` 쓰기를 전부 막는다 — 새 환경에서 재현된다.** 증상은 `write()`가 `U002: ...TextGUIRendererComponent.Font must be int32. Got "Default"`로 실패하는 것이고, **특정 파일이 아니라 5개 `.ui` 전부**에서 난다(2026-07-31 관측: `MineHUD` 9 · `MineSelectUI` 40 · `MineInventoryUI` 9 · `BlockProgramUI` 23 · `AccountRecoveryUI` 4).
+
+   원인은 파일이 아니라 도구다. `Environment/NativeScripts/Component/TextGUIRendererComponent.d.mlua`가 `property string Font = "Default"` · `property float FontSize = 20`으로 선언하는데, 스킬 빌더가 두 필드를 정수로 강제한다. **파일의 `Font`를 숫자로 바꾸면 안 된다** — 전 행의 글꼴이 바뀌고 다음 Maker 저장에서 되돌아간다.
+
+   고칠 곳은 `.claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs`다. `INT32_COMPONENT_FIELDS`에서 `"Font"`와 `"FontSize"`를 빼고, `"FontSize"`는 `NUMBER_COMPONENT_FIELDS`에 넣는다. **`.claude/`는 도구·환경 범위라 커밋에 없으므로**(§10) 컴퓨터를 옮기면 같은 차단이 그대로 다시 난다.
+9. **새 텍스트 행을 만들면 `MOD.Core.TextComponent`를 지운다.** `UIBuilder.text()`는 레거시 `TextComponent`와 `TextGUIRendererComponent`를 **둘 다** 붙이는데, 기존 HUD 행은 후자 하나만 갖는다. 렌더러가 둘이면 **같은 자리에 문자열 두 개가 겹쳐 찍히고**, 컨트롤러가 갱신하는 쪽은 하나뿐이라 나머지는 생성 시점 문자열에 멈춘다.
+
+   **좌표·텍스트 덤프(`maker_execute_script`)로는 안 잡힌다** — 컴포넌트 하나만 조회하면 정상으로 보인다. **스크린샷에서만 드러난다.** 만든 뒤 `removeComponent(path, "MOD.Core.TextComponent")`하고, 기존 행과 `componentNames`를 대조해 같은지 확인한다.
 
 **사용자 직접 검수 현황** (`mouse_input`이 `ButtonComponent`를 클릭하지 못함, `docs/16` §9):
 

@@ -26,11 +26,21 @@ property number VeinScale = 0.7
 property number SpecialScale = 1.0
 property number DepotScale = 1.0
 
+-- 특별 광맥 스폰 강조 (F5 §2.2 "월드 전용 marker"). 별도 파티클 자산이 없어
+-- (docs/21 §5.1) 크기 펄스로 시선을 끈다. 사운드 cue 는 Phase 5 범위다.
+property number SpawnPulseSeconds = 0.6
+property number SpawnPulseScale = 1.6
+
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- Caches the sibling marker and paints the first frame.
     self._T.marker = self.Entity:GetComponent("script.VeinMarker")
     self._T.lastRevision = -1
+    -- 음수는 "펄스 없음"이다. 접속 시점에 이미 활성인 특별 광맥까지 강조하면
+    -- 재접속마다 스폰 연출이 반복되므로(F5-5) 첫 페인트는 제외한다.
+    self._T.pulseElapsed = -1
+    self._T.wasActive = false
+    self._T.firstPaint = true
     if self._T.marker == nil then
         log_error("[VeinMarkerFx] VeinMarker missing on " .. self.Entity.Name)
         return
@@ -43,8 +53,29 @@ method void OnUpdate(number delta)
     -- VisualRevision 이 바뀔 때만 다시 그린다. 서버가 무변경 틱에는 올리지
     -- 않으므로 정지 상태에서는 비교 1회로 끝난다.
     if self._T.marker == nil then return end
-    if self._T.marker.VisualRevision == self._T.lastRevision then return end
-    self:Repaint()
+    if self._T.marker.VisualRevision ~= self._T.lastRevision then
+        self:Repaint()
+    end
+    -- 펄스는 revision 과 무관하게 진행돼야 한다. Repaint 뒤에 두어 이번 프레임의
+    -- 기본 Scale 위에 덮어쓴다.
+    self:AdvanceSpawnPulse(delta)
+end
+
+@ExecSpace("ClientOnly")
+method void AdvanceSpawnPulse(number delta)
+    -- Shrinks the marker from SpawnPulseScale back to its resting scale once.
+    if self._T.pulseElapsed == nil or self._T.pulseElapsed < 0 then return end
+    self._T.pulseElapsed = self._T.pulseElapsed + delta
+
+    local progress = self._T.pulseElapsed / self.SpawnPulseSeconds
+    if progress >= 1 then
+        self._T.pulseElapsed = -1
+        self.Entity.TransformComponent.Scale = Vector3(self.SpecialScale, self.SpecialScale, 1)
+        return
+    end
+
+    local scale = self.SpecialScale * (1 + (self.SpawnPulseScale - 1) * (1 - progress))
+    self.Entity.TransformComponent.Scale = Vector3(scale, scale, 1)
 end
 
 @ExecSpace("ClientOnly")
@@ -53,6 +84,10 @@ method void Repaint()
     local marker = self._T.marker
     if marker == nil then return end
     self._T.lastRevision = marker.VisualRevision
+    -- 플래그는 여기서 즉시 내린다. 아래 분기에는 조기 return 경로가 있어 메서드
+    -- 끝에서 내리면 "첫 페인트"가 계속 참으로 남는다.
+    local isFirstPaint = self._T.firstPaint == true
+    self._T.firstPaint = false
 
     local renderer = self.Entity.SpriteRendererComponent
     if renderer == nil then
@@ -71,6 +106,17 @@ method void Repaint()
         if marker.IsActive then
             ruid = self.SpecialRuid
             scale = self.SpecialScale
+            if self._T.wasActive ~= true and not isFirstPaint then
+                -- 비활성 → 활성. 이 marker 에서 실제로 스폰이 일어난 순간이다.
+                self._T.pulseElapsed = 0
+                log("[VeinMarkerFx] special spawn emphasis " .. self.Entity.Name
+                    .. " cell=(" .. marker.CellX .. "," .. marker.CellY .. ")")
+            end
+            self._T.wasActive = true
+        else
+            -- 활성 목록에서 제거되면 즉시 연출을 취소한다 (F5 §3).
+            self._T.wasActive = false
+            self._T.pulseElapsed = -1
         end
     else
         ruid = self:StageRuid(marker.ReserveStage)
