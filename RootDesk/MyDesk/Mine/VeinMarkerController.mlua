@@ -1,0 +1,100 @@
+-- F5 §1 CLIENT-SIDE MARKER RENDERING
+-- 서버가 확정한 VeinMarker 의 @Sync 상태만 읽어 스프라이트를 고른다.
+-- 게임 상태를 절대 바꾸지 않는다 (F5 §1 금지 사항).
+-- RUID 는 docs/21 §7.1 확정값이며 C205·C206 이 근거다.
+@Component
+script VeinMarkerController extends Component
+
+-- 일반 광맥 = 부유석(npc/2400021.img). stage 3→0 순서로 광물이 줄어든다.
+-- 관측 잔량 순서는 stand ≈ condition1 > condition3 ≈ condition4 > condition5 이며
+-- condition2 는 색만 달라(빨강) D5 §8 V1 위반이라 제외했다 (C206).
+property string Stage3Ruid = "0f44530d655f4e33bfbe43423450ee9f"
+property string Stage2Ruid = "a0bd28cbdcd54445827f0375f24266b5"
+property string Stage1Ruid = "2daf76debab042e09b2d3bf2d5ba575f"
+property string Stage0Ruid = "40c805ead61d440889632ef2244dab30"
+
+-- 특별 광맥 = 신비한 광석(mob/9300497.img). 바위 받침이라는 형태 차이로
+-- 일반 광맥과 즉시 구분된다 (F5 §2.2 / D5 §7).
+property string SpecialRuid = "2e0c28aa5d2c4118b53668f6649b7322"
+
+-- Depot = 눈 없는 금속 광차. 108x80 이 아니라 128x64 라 한 셀에 잘 들어간다.
+property string DepotRuid = "3d661344f01f4c1c8fc0facbb80df834"
+
+-- 부유석은 80x144 = 0.8 x 1.44 world unit 이라 한 셀(1 unit)을 세로로 44% 넘는다.
+-- 축소하지 않으면 위아래 칸의 광맥·일꾼과 겹쳐 보인다 (C206).
+property number VeinScale = 0.7
+property number SpecialScale = 1.0
+property number DepotScale = 1.0
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- Caches the sibling marker and paints the first frame.
+    self._T.marker = self.Entity:GetComponent("script.VeinMarker")
+    self._T.lastRevision = -1
+    if self._T.marker == nil then
+        log_error("[VeinMarkerFx] VeinMarker missing on " .. self.Entity.Name)
+        return
+    end
+    self:Repaint()
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- VisualRevision 이 바뀔 때만 다시 그린다. 서버가 무변경 틱에는 올리지
+    -- 않으므로 정지 상태에서는 비교 1회로 끝난다.
+    if self._T.marker == nil then return end
+    if self._T.marker.VisualRevision == self._T.lastRevision then return end
+    self:Repaint()
+end
+
+@ExecSpace("ClientOnly")
+method void Repaint()
+    -- Picks one RUID from (MarkerKind, OreType, ReserveStage) and applies it.
+    local marker = self._T.marker
+    if marker == nil then return end
+    self._T.lastRevision = marker.VisualRevision
+
+    local renderer = self.Entity.SpriteRendererComponent
+    if renderer == nil then
+        log_error("[VeinMarkerFx] SpriteRendererComponent missing on " .. self.Entity.Name)
+        return
+    end
+
+    local ruid = ""
+    local scale = self.VeinScale
+
+    if marker.MarkerKind == "depot" then
+        ruid = self.DepotRuid
+        scale = self.DepotScale
+    elseif marker.MarkerKind == "special" then
+        -- 활성 슬롯일 때만 보인다. 비활성 후보 자리는 숨긴다 (F5 §3).
+        if marker.IsActive then
+            ruid = self.SpecialRuid
+            scale = self.SpecialScale
+        end
+    else
+        ruid = self:StageRuid(marker.ReserveStage)
+    end
+
+    if ruid == "" then
+        -- 빈 RUID 를 넣으면 아무 오류 없이 사라진다(platform.md §7). 그래서
+        -- RUID 를 지우는 대신 렌더러 자체를 끈다.
+        renderer.Enable = false
+        return
+    end
+
+    renderer.Enable = true
+    renderer.SpriteRUID = ruid
+    self.Entity.TransformComponent.Scale = Vector3(scale, scale, 1)
+end
+
+@ExecSpace("ClientOnly")
+method string StageRuid(integer stage)
+    -- Maps ReserveStage 0~3 to the approved 부유석 condition sprites (C206).
+    if stage >= 3 then return self.Stage3Ruid end
+    if stage == 2 then return self.Stage2Ruid end
+    if stage == 1 then return self.Stage1Ruid end
+    return self.Stage0Ruid
+end
+
+end

@@ -2188,7 +2188,7 @@
       {
         "id": "ef6f5088-761e-43a9-a6dd-2b13030da64f",
         "path": "/maps/gem_mine/DepotMarker",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "DepotMarker",
           "path": "/maps/gem_mine/DepotMarker",
@@ -2226,6 +2226,16 @@
               "Enable": true,
               "MarkerId": "depot-main-marker",
               "MarkerKind": "depot"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2241,7 +2251,7 @@
       {
         "id": "3eaf4cdc-1518-46b8-ad01-4f63a58037a5",
         "path": "/maps/gem_mine/VeinMarker01",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker01",
           "path": "/maps/gem_mine/VeinMarker01",
@@ -2279,6 +2289,16 @@
               "Enable": true,
               "MarkerId": "vein-stone-01-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2294,7 +2314,7 @@
       {
         "id": "9a552496-71a8-45fa-9290-2dd45eaf6569",
         "path": "/maps/gem_mine/VeinMarker02",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker02",
           "path": "/maps/gem_mine/VeinMarker02",
@@ -2332,6 +2352,16 @@
               "Enable": true,
               "MarkerId": "vein-stone-02-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2347,7 +2377,7 @@
       {
         "id": "e8214867-d208-4f3b-824c-8089ca50d7f2",
         "path": "/maps/gem_mine/VeinMarker03",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker03",
           "path": "/maps/gem_mine/VeinMarker03",
@@ -2385,6 +2415,16 @@
               "Enable": true,
               "MarkerId": "vein-stone-03-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2400,7 +2440,7 @@
       {
         "id": "27403f41-559c-4a84-8133-31a85d5a4eba",
         "path": "/maps/gem_mine/VeinMarker04",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker04",
           "path": "/maps/gem_mine/VeinMarker04",
@@ -2438,6 +2478,16 @@
               "Enable": true,
               "MarkerId": "vein-iron-01-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2453,7 +2503,7 @@
       {
         "id": "130c19de-3459-4495-9870-f087ff7fd5e2",
         "path": "/maps/gem_mine/VeinMarker05",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker05",
           "path": "/maps/gem_mine/VeinMarker05",
@@ -2491,6 +2541,16 @@
               "Enable": true,
               "MarkerId": "vein-iron-02-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2506,7 +2566,7 @@
       {
         "id": "9dd79cc0-68a6-4bbb-a9ac-51405dd37d45",
         "path": "/maps/gem_mine/VeinMarker06",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker06",
           "path": "/maps/gem_mine/VeinMarker06",
@@ -2544,6 +2604,16 @@
               "Enable": true,
               "MarkerId": "vein-iron-03-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2559,7 +2629,7 @@
       {
         "id": "390be4ec-5199-4fec-88ef-f26f9784b52e",
         "path": "/maps/gem_mine/VeinMarker07",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker07",
           "path": "/maps/gem_mine/VeinMarker07",
@@ -2597,6 +2667,16 @@
               "Enable": true,
               "MarkerId": "vein-iron-04-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2612,7 +2692,7 @@
       {
         "id": "3d0e1c0c-9431-41c0-ac85-bf33396b6b2c",
         "path": "/maps/gem_mine/VeinMarker08",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker08",
           "path": "/maps/gem_mine/VeinMarker08",
@@ -2650,6 +2730,16 @@
               "Enable": true,
               "MarkerId": "vein-gold-01-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2665,7 +2755,7 @@
       {
         "id": "24409b22-a964-4e9c-9af1-1545377a008f",
         "path": "/maps/gem_mine/VeinMarker09",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker09",
           "path": "/maps/gem_mine/VeinMarker09",
@@ -2703,6 +2793,16 @@
               "Enable": true,
               "MarkerId": "vein-gold-02-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2718,7 +2818,7 @@
       {
         "id": "9f4174f2-1a27-4a8e-99d4-b81c62186fbb",
         "path": "/maps/gem_mine/VeinMarker10",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker10",
           "path": "/maps/gem_mine/VeinMarker10",
@@ -2756,6 +2856,16 @@
               "Enable": true,
               "MarkerId": "vein-gold-03-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2771,7 +2881,7 @@
       {
         "id": "47e6599a-cb06-4509-9bc5-709d461a7530",
         "path": "/maps/gem_mine/VeinMarker11",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker11",
           "path": "/maps/gem_mine/VeinMarker11",
@@ -2809,6 +2919,16 @@
               "Enable": true,
               "MarkerId": "vein-gold-04-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2824,7 +2944,7 @@
       {
         "id": "83433dd4-8e71-4e46-a881-d6b998d93e5e",
         "path": "/maps/gem_mine/SpecialMarker01",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker01",
           "path": "/maps/gem_mine/SpecialMarker01",
@@ -2862,6 +2982,16 @@
               "Enable": true,
               "MarkerId": "special-slot-01-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2877,7 +3007,7 @@
       {
         "id": "7f2d67fe-a6a3-4e3b-9113-3c5c9d6423c9",
         "path": "/maps/gem_mine/SpecialMarker02",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker02",
           "path": "/maps/gem_mine/SpecialMarker02",
@@ -2915,6 +3045,16 @@
               "Enable": true,
               "MarkerId": "special-slot-02-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2930,7 +3070,7 @@
       {
         "id": "706924a9-d3c7-4cba-9b84-db42d53f7ea2",
         "path": "/maps/gem_mine/SpecialMarker03",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker03",
           "path": "/maps/gem_mine/SpecialMarker03",
@@ -2968,6 +3108,16 @@
               "Enable": true,
               "MarkerId": "special-slot-03-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -2983,7 +3133,7 @@
       {
         "id": "dcc1ab7b-bd12-4cd7-b4f3-cffa330c93d9",
         "path": "/maps/gem_mine/SpecialMarker04",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker04",
           "path": "/maps/gem_mine/SpecialMarker04",
@@ -3021,6 +3171,16 @@
               "Enable": true,
               "MarkerId": "special-slot-04-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -3036,7 +3196,7 @@
       {
         "id": "98b60a7d-464b-41b0-a25b-67257e4d50bf",
         "path": "/maps/gem_mine/SpecialMarker05",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker05",
           "path": "/maps/gem_mine/SpecialMarker05",
@@ -3074,6 +3234,16 @@
               "Enable": true,
               "MarkerId": "special-slot-05-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
@@ -3089,7 +3259,7 @@
       {
         "id": "8aa89297-0e84-4443-9b16-8959609abc8f",
         "path": "/maps/gem_mine/SpecialMarker06",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker06",
           "path": "/maps/gem_mine/SpecialMarker06",
@@ -3127,6 +3297,16 @@
               "Enable": true,
               "MarkerId": "special-slot-06-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
