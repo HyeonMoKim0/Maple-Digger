@@ -25,6 +25,16 @@
 
 ## 기록
 
+### 2026-07-31 — 엔진 26.7 재저장분 정리와 GroupOrder 복구
+
+- 4차 세션 이후 `ui/` 8개와 `map/farm01.map`이 **미커밋 상태로 남아 있었다.** 파일 mtime이 전부 `2026-07-30 08:27:14` 1초 안이고 내장 `CoreVersion`이 `26.5.0.0 → 26.7.0.0`으로 바뀐 것으로 보아, Maker가 엔진 업그레이드 후 일괄 재저장한 결과다. `Environment/config`도 `26.7.0.0`이므로 버전 자체는 정상이다.
+- 재저장분의 대부분은 무해한 정규화다: `Rotation`/`ZRotation` 필드 추가, `Position`에 앵커 해석값 기입, float32 반올림(`0.10196078431372549 → 0.101960786`), 자식 `displayOrder` 1칸 당김(상대 순서 보존).
+- **그러나 `UIGroupComponent.GroupOrder` 3개가 함께 되돌아갔다** — `PopupGroup 10→3`, `ToastGroup 20→4`, `AccountRecoveryUI 50→6`. 나머지 5개는 그대로여서 상대 순서가 깨졌고, 토스트와 복구 오버레이가 다시 모달 아래로 내려갔다. D-1·D-3에서 맞춘 F5 §6.2 계층이 무효화된 상태였다.
+- UIBuilder(`patchComponent`)로 세 값을 10·20·50으로 복구했다. `refresh` 뒤 Build Console 16건 전부 `Info`(baseline 동일, 새 오류 0건), Play에서 UI 컨트롤러 4개 정상 초기화, `[VeinTick] layout loaded mineId=beginner_mine veins=4 starts=5 specialCandidates=3 depot=(0,0)`, `[Worker 1] configured cart=0/20 hand=`, `owned workers restored count=1`, `schema=7 gold=0`을 확인했다. 바인딩 감사도 실패 0건/정상 113건이다.
+- **새로 확인한 엔진 동작: `GroupOrder`는 로드 시 0..N 밀집 수열로 재압축된다.** 런타임 실측값은 `DefaultGroup 0 / BlockProgramUI 1 / MineHUD 2 / MineInventoryUI 3 / MineSelectUI 4 / PopupGroup 5 / ToastGroup 6 / AccountRecoveryUI 7`로, 파일의 5·7·10·20·50과 다르다. **절대값은 살아남지 않고 상대 순서만 의미가 있다.** 2026-07-30 기록의 "현재 `GroupOrder`는 생성 순서대로 0~7"이라는 관측은 원본 값이 아니라 이 압축된 런타임 값을 본 것이다.
+- 따라서 계층 검증은 파일 값이 아니라 **런타임 상대 순서**로 판정해야 한다. 확인 방법은 Play 중 `maker_execute_script`(client)로 `/ui/<Group>`의 `UIGroupComponent.GroupOrder`를 찍어 보는 것이다.
+- Maker 작업 후에는 `git status`로 `.ui`/`.map` 재저장분을 반드시 확인한다. 정규화에 섞여 들어온 계층 회귀는 화면을 켜 보기 전에는 드러나지 않는다.
+
 ### 2026-07-19 — D2 완료 기준점
 
 - 커밋 `04c1cd5`에서 D2 서버 인터프리터·블록 UI·전용 자연어 입력을 저장했다.

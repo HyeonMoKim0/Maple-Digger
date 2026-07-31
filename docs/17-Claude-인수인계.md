@@ -157,7 +157,7 @@ git status --short -- docs RootDesk ui map tools Archive
 
 H2(맵 강화 레벨)·H7(크리스탈)은 v7에 필드가 없어 현재 **상수 표시**(`Lv.0 / 10`, `크리스탈 0`)다.
 
-**`.ui` 작업 시 반드시 지킬 것 3가지**
+**`.ui` 작업 시 반드시 지킬 것**
 
 1. **`patch()`는 기존 `Pivot`을 보존한다.** 앵커를 바꿀 때 pivot을 함께 넘기지 않으면 박스가 반대쪽으로 밀려난다(`BtnInventory`가 184px 튀어나간 `L014`, 열기 버튼이 우상단 예약 영역으로 밀려난 사례 모두 이 원인).
 2. **한 패널 안에서 앵커 모드를 혼용하지 말 것.** `AlignmentOption=0`(중앙)과 `=3`(상단)을 섞으면 같은 행에 두려던 요소가 아래로 밀려 겹친다(`docs/16` §13 D-9).
@@ -171,6 +171,8 @@ node tools/audit_bindings.cjs
 
 4. **중앙 모달은 한 번에 하나만.** 열 때 다른 모달을 모두 끄고, 닫을 때 진입점 화면으로 복귀한다. 모달 배경 알파는 **0.96 이상** (F5 §6.1, D-8).
 5. **서버 거부 사유를 그릴 자리를 만들 것.** 없으면 사용자에게는 "그냥 안 되는 것"으로 보인다 (D-10).
+6. **Maker 재저장이 `UIGroupComponent.GroupOrder`를 덮어쓴다.** 엔진 26.7 업그레이드 재저장에서 `PopupGroup 10→3` / `ToastGroup 20→4` / `AccountRecoveryUI 50→6`으로 되돌아가 F5 §6.2 계층이 무효화된 적이 있다(2026-07-31 복구). **Maker에서 작업한 뒤에는 `git status`로 `.ui`/`.map` 재저장분을 반드시 확인**하고, 정규화(`Rotation`·`Position`·float 반올림·`CoreVersion`)에 계층 회귀가 섞여 있지 않은지 본다.
+7. **`GroupOrder`의 절대값은 런타임에 남지 않는다.** 엔진이 로드 시 0..N 밀집 수열로 재압축하므로 **상대 순서만 의미가 있다.** 파일에 10·20·50을 써도 런타임은 5·6·7이다. 계층 검증은 파일이 아니라 Play 중 `maker_execute_script`(client)로 `/ui/<Group>`의 `UIGroupComponent.GroupOrder`를 찍어 판정한다.
 
 **사용자 직접 검수 현황** (`mouse_input`이 `ButtonComponent`를 클릭하지 못함, `docs/16` §9):
 
