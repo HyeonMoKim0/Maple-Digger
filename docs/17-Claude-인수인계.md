@@ -89,7 +89,9 @@ node tools/audit_bindings.cjs
 4. **중앙 모달은 한 번에 하나만.** 열 때 다른 모달을 모두 끄고, 닫을 때 진입점 화면으로 복귀한다. 모달 배경 알파는 **0.96 이상** (F5 §6.1, D-8).
 5. **서버 거부 사유를 그릴 자리를 만들 것.** 없으면 사용자에게는 "그냥 안 되는 것"으로 보인다 (D-10).
 6. **Maker 재저장이 `UIGroupComponent.GroupOrder`를 덮어쓴다.** 엔진 26.7 업그레이드 재저장에서 `PopupGroup 10→3` / `ToastGroup 20→4` / `AccountRecoveryUI 50→6`으로 되돌아가 F5 §6.2 계층이 무효화된 적이 있다(2026-07-31 복구). **Maker에서 작업한 뒤에는 `git status`로 `.ui`/`.map` 재저장분을 반드시 확인**하고, 정규화(`Rotation`·`Position`·float 반올림·`CoreVersion`)에 계층 회귀가 섞여 있지 않은지 본다.
-7. **`GroupOrder`의 절대값은 런타임에 남지 않는다.** 엔진이 로드 시 0..N 밀집 수열로 재압축하므로 **상대 순서만 의미가 있다.** 파일에 10·20·50을 써도 런타임은 5·6·7이다. 계층 검증은 파일이 아니라 Play 중 `maker_execute_script`(client)로 `/ui/<Group>`의 `UIGroupComponent.GroupOrder`를 찍어 판정한다.
+7. **`GroupOrder`의 절대값은 런타임에 남지 않는다.** 엔진이 로드 시 0..N 밀집 수열로 재압축하므로 **상대 순서만 의미가 있다.** 계층 검증은 파일이 아니라 Play 중 `maker_execute_script`(client)로 `/ui/<Group>`의 `UIGroupComponent.GroupOrder`를 찍어 판정한다.
+   - **그래서 파일도 밀집 수열 `0~7`로 맞춰 뒀다** (2026-07-31). 희소값(10·20·50)을 쓰면 Maker가 저장할 때마다 압축값으로 덮어써서 diff가 계속 생기고, **일부 파일만 저장되면 압축값과 저자값이 섞여 순서가 깨진다** — D-13이 정확히 그 경우였다. 밀집 수열은 Maker가 쓰는 값과 같아서 더 이상 흔들리지 않는다.
+   - 새 UIGroup을 추가할 때는 **끝에 붙이거나 중간 삽입 후 전체를 다시 0부터 매긴다.** 희소값으로 자리를 비워 두는 방식은 압축 때문에 의미가 없다.
 
 **사용자 직접 검수 현황** (`mouse_input`이 `ButtonComponent`를 클릭하지 못함, `docs/16` §9):
 
@@ -155,7 +157,9 @@ node tools/audit_bindings.cjs
 
 | 영역 | 현재 구현 | 주 파일 |
 |---|---|---|
-| 광산/일꾼 | RectTile 광산 3개(`farm01`, `deep_mine`, `gem_mine`), Worker01 기본 활성, 2~5 구매 뒤 서버 생성·복구 | `MineLayoutConfig.mlua`, `VeinTickSimulator.mlua`, `WorkerController.mlua`, `MineTransitionService.mlua` |
+| 광산/일꾼 | RectTile 광산 3개(`farm01`, `deep_mine`, `gem_mine`), Worker01 기본 활성, 2~5 구매 뒤 서버 생성·복구 | `VeinTickSimulator.mlua`, `WorkerController.mlua`, `MineTransitionService.mlua` |
+
+> **맵 레이아웃은 `.mlua` 파일이 아니라 `.map`에 있다.** 광맥 좌표·광물 종류·`recoverTicks`는 각 맵 루트 엔티티의 `script.VeinTickSimulator` 컴포넌트 속성(`VeinDefinitionsJson` / `DepotDefinitionsJson` / `WorkerStartsJson`)에 JSON 문자열로 박혀 있다. F6(`docs/09` §2)가 "`MineLayoutConfig` 데이터 계약"이라 부르는 것이 이것이며, **같은 이름의 `.mlua` 파일은 존재하지 않는다.** 읽으려면 `MapBuilder.read(...).component(mapName, "script.VeinTickSimulator")`를 쓴다.
 | 계정·복구 | v7 프로필, Gold/광물/일꾼/마지막 광산/수레 상태 저장, primary·backup 복구와 동시 접속 lease | `AccountProfileService.mlua`, `AccountRecoveryController.mlua` |
 | 경제·진행 | 일반 광물 수동·자동 판매/보호 수량, 깊은·보석 광산 첫 해금, 일꾼 구매, 일꾼별 수레 20→50 강화 | `EconomyService.mlua`, `ProgressionService.mlua`, `MineSelectController.mlua` |
 | 희귀 광물 | 일반 광맥 1%, 특별 광맥 5% 드롭. 손→수레→Depot 뒤 컬렉션 등록, 종별 10단계 패시브, 11회째부터 보관·판매 | `AccountProfileService.mlua`, `EconomyService.mlua`, `VeinTickSimulator.mlua`, `WorkerController.mlua` |
