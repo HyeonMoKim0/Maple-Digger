@@ -35,6 +35,22 @@ property integer CartCount = 0
 @Sync
 property integer CartCapacity = 20
 
+-- F5 §2.2 행동 이벤트 채널. 서버가 액션을 확정할 때마다 Sequence 를 올리고,
+-- 클라이언트는 아직 처리하지 않은 Sequence 만 한 번 처리한다. 같은 kind 가
+-- 연속으로 나와도 Sequence 가 다르므로 구분된다.
+@Sync
+property integer VisualEventSequence = 0
+
+-- move / mine_success / mine_fail / load_success / unload_success
+@Sync
+property string VisualEventKind = ""
+
+@Sync
+property integer VisualEventCellX = 0
+
+@Sync
+property integer VisualEventCellY = 0
+
 @ExecSpace("ServerOnly")
 method void OnBeginPlay()
     -- Initializes the worker cell, interpreter state, and mine simulation registration.
@@ -272,6 +288,16 @@ method void FinishProgram()
 end
 
 @ExecSpace("ServerOnly")
+method void EmitVisualEvent(string kind, integer cellX, integer cellY)
+    -- Publishes one F5 §2.2 action event. Sequence is written last so a client
+    -- that observes the new Sequence always sees the matching kind and cell.
+    self.VisualEventKind = kind
+    self.VisualEventCellX = cellX
+    self.VisualEventCellY = cellY
+    self.VisualEventSequence = self.VisualEventSequence + 1
+end
+
+@ExecSpace("ServerOnly")
 method boolean IsActionType(string commandType)
     -- Reports whether a command consumes one simulation tick as a D2 action.
     return commandType == "move" or commandType == "mine" or commandType == "load" or commandType == "unload"
@@ -406,6 +432,7 @@ method void DoMove(string dir)
     self.CellX = targetX
     self.CellY = targetY
     self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
+    self:EmitVisualEvent("move", self._T.cellX, self._T.cellY)
     log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
 end
 
@@ -413,24 +440,29 @@ end
 method void DoMine()
     -- Atomically checks the hand before consuming a reserve stage.
     if self.PendingOre ~= "" then
+        self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
         log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand full ore=" .. self.PendingOre)
         return
     end
     if not self._T.mineState:IsVein(self._T.cellX, self._T.cellY) then
+        self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
         log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no vein at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
         return
     end
     if not self._T.mineState:HasOre(self._T.cellX, self._T.cellY) then
+        self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
         log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
         return
     end
 
     local oreType = self._T.mineState:TryMine(self._T.cellX, self._T.cellY)
     if oreType == "" then
+        self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
         log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
         return
     end
     self.PendingOre = oreType
+    self:EmitVisualEvent("mine_success", self._T.cellX, self._T.cellY)
     local stage = self._T.mineState:GetReserveStage(self._T.cellX, self._T.cellY)
     log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " -> hand at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
     if self._T.mineState.AutoLoadOnMine then self:DoLoad() end
@@ -454,6 +486,7 @@ method void DoLoad()
     self.Cart[oreType] = oreCount + loadCount
     self.CartCount = self.CartCount + loadCount
     self.PendingOre = ""
+    self:EmitVisualEvent("load_success", self._T.cellX, self._T.cellY)
     log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - load " .. oreType .. " cart=" .. self.CartCount .. "/" .. self.CartCapacity)
 end
 
@@ -474,6 +507,7 @@ method void DoUnload()
     end
     self.Cart = { stone = 0, rare_stone = 0 }
     self.CartCount = 0
+    self:EmitVisualEvent("unload_success", self._T.cellX, self._T.cellY)
     log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload count=" .. unloaded .. " depotStone=" .. self._T.mineState.DepotStone)
 end
 

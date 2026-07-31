@@ -80,7 +80,7 @@
                 "r": 0.549019635,
                 "g": 0.34117648,
                 "b": 0.164705887,
-                "a": 1.0
+                "a": 1
               },
               "TemplateRUID": "794ad8421e2543d8a6d2c70307637450",
               "Type": 2,
@@ -152,22 +152,22 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 1000.0
+                "x": 0,
+                "y": 0,
+                "z": 1000
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -720,27 +720,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -751,28 +751,28 @@
               "FlipX": false,
               "FlipY": false,
               "OrderInLayer": 2,
-              "PlayRate": 1.0,
+              "PlayRate": 1,
               "RenderSetting": 0,
               "SpriteRUID": "3e76c89ae8e7477ca871f5bbcd6f6f29",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1.0,
-                "g": 1.0,
-                "b": 1.0,
-                "a": 1.0
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "Enable": true
             },
             {
               "@type": "MOD.Core.MovementComponent",
-              "InputSpeed": 3.0,
+              "InputSpeed": 3,
               "Enable": true
             },
             {
               "@type": "MOD.Core.KinematicbodyComponent",
               "MoveVelocity": {
-                "x": 0.0,
-                "y": 0.0
+                "x": 0,
+                "y": 0
               },
               "Enable": true
             },
@@ -790,7 +790,7 @@
       {
         "id": "e6bb7a18-4104-42b7-a5b7-36c76ed2ab7a",
         "path": "/maps/farm01/DepotMarker",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "DepotMarker",
           "path": "/maps/farm01/DepotMarker",
@@ -813,27 +813,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -841,6 +841,16 @@
               "Enable": true,
               "MarkerId": "depot-main-marker",
               "MarkerKind": "depot"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1
@@ -849,7 +859,7 @@
       {
         "id": "4bfb5f5b-17e3-4c47-8d9a-45fd13d7cb07",
         "path": "/maps/farm01/VeinMarker01",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker01",
           "path": "/maps/farm01/VeinMarker01",
@@ -872,27 +882,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 1.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 1,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -900,6 +910,16 @@
               "Enable": true,
               "MarkerId": "vein-stone-01-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1
@@ -908,7 +928,7 @@
       {
         "id": "94b3dc99-3519-4524-8bc6-c85e1c673652",
         "path": "/maps/farm01/VeinMarker02",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker02",
           "path": "/maps/farm01/VeinMarker02",
@@ -931,27 +951,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 2.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 2,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -959,6 +979,16 @@
               "Enable": true,
               "MarkerId": "vein-stone-02-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1
@@ -967,7 +997,7 @@
       {
         "id": "fb8b828a-0aff-4964-8b42-5e361bd7078d",
         "path": "/maps/farm01/VeinMarker03",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker03",
           "path": "/maps/farm01/VeinMarker03",
@@ -990,27 +1020,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 2.0,
-                "y": -1.0,
-                "z": 0.0
+                "x": 2,
+                "y": -1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1018,6 +1048,16 @@
               "Enable": true,
               "MarkerId": "vein-stone-03-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1
@@ -1026,7 +1066,7 @@
       {
         "id": "30774092-999f-48c3-9817-7a536c0a4b52",
         "path": "/maps/farm01/VeinMarker04",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "VeinMarker04",
           "path": "/maps/farm01/VeinMarker04",
@@ -1049,27 +1089,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 3.0,
-                "y": -1.0,
-                "z": 0.0
+                "x": 3,
+                "y": -1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1077,6 +1117,16 @@
               "Enable": true,
               "MarkerId": "vein-stone-04-marker",
               "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1
@@ -1085,7 +1135,7 @@
       {
         "id": "e6c41353-4909-4cee-b116-e50b4c8b86dc",
         "path": "/maps/farm01/SpecialMarker01",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker01",
           "path": "/maps/farm01/SpecialMarker01",
@@ -1108,27 +1158,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 0.0
+                "x": 1,
+                "y": 1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1136,6 +1186,16 @@
               "Enable": true,
               "MarkerId": "special-slot-01-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1
@@ -1144,7 +1204,7 @@
       {
         "id": "7c427c47-de3d-4dd0-8c69-90db3f51d94f",
         "path": "/maps/farm01/SpecialMarker02",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker02",
           "path": "/maps/farm01/SpecialMarker02",
@@ -1167,27 +1227,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 2.0,
-                "y": 1.0,
-                "z": 0.0
+                "x": 2,
+                "y": 1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1195,6 +1255,16 @@
               "Enable": true,
               "MarkerId": "special-slot-02-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1
@@ -1203,7 +1273,7 @@
       {
         "id": "3f7d5dad-331f-4266-bebc-fb9522d24020",
         "path": "/maps/farm01/SpecialMarker03",
-        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
         "jsonString": {
           "name": "SpecialMarker03",
           "path": "/maps/farm01/SpecialMarker03",
@@ -1226,27 +1296,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 3.0,
-                "y": 1.0,
-                "z": 0.0
+                "x": 3,
+                "y": 1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1254,6 +1324,16 @@
               "Enable": true,
               "MarkerId": "special-slot-03-marker",
               "MarkerKind": "special"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "Enable": true,
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "OrderInLayer": 1
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1

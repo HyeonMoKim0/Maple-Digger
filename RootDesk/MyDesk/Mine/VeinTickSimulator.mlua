@@ -55,6 +55,7 @@ method void OnBeginPlay()
     self._T.tickAccumulator = 0
     self._T.workers = {}
     self._T.markers = {}
+    self._T.markerList = {}
     self._T.activeSpecialVeins = {}
     self._T.nextSpecialCandidateIndex = 1
     self._T.tilemap = self.Entity:GetFirstChildComponentByTypeName("RectTileMapComponent")
@@ -85,6 +86,9 @@ method void OnUpdate(number delta)
         -- registered workers execute one action. This order must stay stable.
         self:AdvanceTick()
         self:AdvanceWorkers()
+        -- 회복과 채굴이 모두 끝난 뒤 한 번만 밀어 넣는다. 틱 중간 상태가
+        -- 클라이언트에 보이지 않도록 순서를 유지할 것.
+        self:SyncMarkerVisuals()
     end
 end
 
@@ -138,8 +142,9 @@ method void UnregisterWorker(WorkerController worker)
 end
 
 @ExecSpace("ServerOnly")
-method void RegisterMarker(string markerId, string markerKind)
-    -- Registers a map-authored marker so its stable ID can be checked in Play logs.
+method void RegisterMarker(string markerId, string markerKind, VeinMarker marker)
+    -- Registers a map-authored marker so its stable ID can be checked in Play logs
+    -- and so SyncMarkerVisuals can push F5 §2.1 visual state into it each tick.
     if markerId == nil or markerId == "" then
         log_error("[VeinTick] marker missing id kind=" .. tostring(markerKind))
         return
@@ -149,8 +154,37 @@ method void RegisterMarker(string markerId, string markerKind)
         log_error("[VeinTick] duplicate marker id=" .. markerId)
         return
     end
-    self._T.markers[markerId] = markerKind
-    log("[VeinTick] marker registered id=" .. markerId .. " kind=" .. markerKind)
+    self._T.markers[markerId] = { kind = markerKind, marker = marker }
+    if self._T.markerList == nil then self._T.markerList = {} end
+    table.insert(self._T.markerList, marker)
+
+    -- 저작된 marker 셀이 실제 광맥/창고와 어긋나면 연출이 조용히 빈 채로 남는다.
+    -- 등록 시점에 대조해 로그로 드러낸다.
+    if markerKind == "normal" and not self:IsVein(marker.CellX, marker.CellY) then
+        log_error("[VeinTick] marker cell has no vein id=" .. markerId
+            .. " cell=(" .. marker.CellX .. "," .. marker.CellY .. ")")
+    end
+    log("[VeinTick] marker registered id=" .. markerId .. " kind=" .. markerKind
+        .. " cell=(" .. marker.CellX .. "," .. marker.CellY .. ")")
+end
+
+@ExecSpace("ServerOnly")
+method void SyncMarkerVisuals()
+    -- Pushes the authoritative vein snapshot into every registered marker.
+    -- ApplyVeinState skips unchanged markers, so this is cheap enough to run
+    -- every tick and removes the need for change plumbing at each mutation site.
+    if self._T.markerList == nil then return end
+    for i = 1, #self._T.markerList do
+        local marker = self._T.markerList[i]
+        if marker ~= nil and isvalid(marker) then
+            local vein = self:GetVein(marker.CellX, marker.CellY)
+            if vein == nil then
+                marker:ApplyVeinState("", 0, false)
+            else
+                marker:ApplyVeinState(vein.ore, vein.stage, vein.isSpecial == true)
+            end
+        end
+    end
 end
 
 @ExecSpace("ServerOnly")
