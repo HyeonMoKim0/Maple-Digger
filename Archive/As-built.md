@@ -44,6 +44,25 @@
 - **자동화 틱 실패는 화면에 전혀 나타나지 않는다** — `vein_empty` / `hand_full` / `cart_full` / 맵 전환 거절 4종이 로그만 남는다. D9 §5.2가 발견한 "일꾼 2를 사도 채굴량 0"이 사용자에게 보이지 않는 이유가 이것이다.
 - 신규 화면이 지킬 **계약 5개**(§5)와 T-02·T-05·T-06이 추가할 거절 경로(§6)를 미리 잡았다. 정리 권고 6건 중 **1~4번(문구 통일·부족분 숫자·롤백 명시·버그성 거절 분리)은 T-02 착수 전에 처리하는 것이 싸다.**
 
+### 2026-07-31 — T-04 Phase 1·2 구현: 광맥이 화면에 나타났다
+
+> 브랜치 `feat/t04-mine-fx`. Phase 3~6은 미착수다.
+
+- **"채굴이 눈에 안 보인다"의 실제 원인은 연출 부실이 아니었다.** 광맥 marker는 `TransformComponent` + `script.VeinMarker`만 든 **빈 엔티티**였고 렌더러가 아예 없었다. 일꾼도 행동 이벤트를 내보내지 않았다. 즉 클라이언트가 읽을 입력 자체가 없었다.
+- **Phase 1 — 서버 동기화 표면** (`3d977a1`). `VeinMarker`에 `CellX/CellY/ReserveStage/OreType/IsActive/VisualRevision` `@Sync`를 신설하고, `WorkerController`에 `VisualEventSequence/Kind/CellX/CellY`를 신설했다(F5 §2.1·§2.2).
+  - marker 셀은 **저작된 marker 위치에서 얻는다.** 별도 property를 두면 광맥 정의와 이중 관리가 되고, RectTile에서 1셀 = 1 world unit이라 저작 위치가 이미 셀 좌표와 정확히 일치한다. 대신 등록 시점에 광맥 테이블과 대조해 어긋나면 `log_error`를 남긴다.
+  - `ApplyVeinState`는 **값이 실제로 바뀔 때만** `VisualRevision`을 올린다. 매 틱 호출되므로 무변경 경로가 `@Sync`를 건드리면 안 된다.
+  - `SyncMarkerVisuals`는 `AdvanceTick`(회복) → `AdvanceWorkers`(채굴) **뒤에 한 번** 돈다. 틱 중간 상태가 클라이언트에 보이지 않는다. 변경 지점마다 배선하는 방식보다 단순하고, 새 광맥 종류가 생겨도 배선을 빠뜨릴 수 없다.
+  - `EmitVisualEvent`는 **Sequence를 마지막에 쓴다.** 새 Sequence를 본 클라이언트는 반드시 짝이 맞는 kind와 cell을 함께 본다.
+- **Phase 2 — 광맥 stage 시각화** (`dc5ed1f`). `VeinMarkerController`(ClientOnly) 신설. `MarkerKind`로 분기해 depot은 금속 광차, special은 `IsActive`일 때만 신비한 광석, normal은 `ReserveStage`로 부유석 condition을 고른다. RUID는 `docs/21` §7.1 확정값이다.
+  - **모델을 고쳐도 이미 배치된 인스턴스에는 소급되지 않는다.** 맵 엔티티의 `componentNames`가 로드 시 기준이기 때문이다(builder-protocol-map §1.4). `placeModel`로 다시 놓으면 `MarkerId`가 날아가므로 **38개 인스턴스에 `upsertComponent`로 더했다**(farm01 8 / deep_mine 12 / gem_mine 18). 모델도 함께 고쳐 앞으로 배치될 marker는 그냥 맞는다. 작업 스크립트는 `.builder-work/attach_marker_renderer.cjs`.
+  - **RUID를 비우는 대신 렌더러를 끈다.** 빈 `SpriteRUID`는 오류 없이 사라져 "숨김"과 "버그"를 구분할 수 없다(platform.md §7).
+  - 부유석은 `Scale` **0.7**로 줄인다. 원본 1.44 unit은 한 셀을 세로 44% 넘어 위아래 칸과 겹친다(C206).
+- **검증**: 빌드 오류 0건(baseline 16 Info 유지). 스크린샷에서 광맥 4개 + Depot 광차 확인, 특별 광맥 후보 3개는 숨김. 클라이언트 실측에서 `rev`이 **1(무변경)과 4(채굴2+회복2)로 갈린 것**이 `Repaint`가 변화에만 반응한다는 증거다. 행동 이벤트는 seq 0→6으로 5종 전부 발행됐고 **빈 수레 하역 실패는 seq를 올리지 않았다.** 바인딩 감사 113건 실패 0건. 프로필 baseline 원복 완료.
+- **새로 알아낸 함정 2개**
+  - **`.codeblock` 캐시가 한 사이클 지연된다.** 메서드 시그니처를 바꾸면 첫 `refresh`의 빌드 로그가 옛 시그니처로 오류를 낸다. 호출하는 쪽 `.mlua`를 다시 저장해 codeblock 재생성을 유도하면 해소된다. **빌드 로그 타임스탬프가 그대로면 재빌드가 안 돈 것**이므로 로그를 믿기 전에 확인한다.
+  - **`.model` 수정은 기존 맵 인스턴스에 소급되지 않는다** (위 Phase 2 항목).
+
 ### 2026-07-31 — C207: P4 목표를 "첫 접속 총 경과 시간"으로 확정
 
 - D9 §5.1의 권고를 오너가 승인해 **D8 C207**로 확정했다. P4의 "10~15분"은 **새 계정 첫 접속부터 깊은 광산 해금까지의 총 경과 시간**이며 튜토리얼·프로그램 조립·UI 조작을 포함한다. **순수 채굴 시간이 아니다.**
