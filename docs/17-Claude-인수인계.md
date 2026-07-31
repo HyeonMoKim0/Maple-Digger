@@ -126,11 +126,11 @@ node tools/audit_bindings.cjs
 7. **`GroupOrder`의 절대값은 런타임에 남지 않는다.** 엔진이 로드 시 0..N 밀집 수열로 재압축하므로 **상대 순서만 의미가 있다.** 계층 검증은 파일이 아니라 Play 중 `maker_execute_script`(client)로 `/ui/<Group>`의 `UIGroupComponent.GroupOrder`를 찍어 판정한다.
    - **그래서 파일도 밀집 수열 `0~7`로 맞춰 뒀다** (2026-07-31). 희소값(10·20·50)을 쓰면 Maker가 저장할 때마다 압축값으로 덮어써서 diff가 계속 생기고, **일부 파일만 저장되면 압축값과 저자값이 섞여 순서가 깨진다** — D-13이 정확히 그 경우였다. 밀집 수열은 Maker가 쓰는 값과 같아서 더 이상 흔들리지 않는다.
    - 새 UIGroup을 추가할 때는 **끝에 붙이거나 중간 삽입 후 전체를 다시 0부터 매긴다.** 희소값으로 자리를 비워 두는 방식은 압축 때문에 의미가 없다.
-8. **UIBuilder 검증기가 엔진 26.7과 어긋나 `.ui` 쓰기를 전부 막는다 — 새 환경에서 재현된다.** 증상은 `write()`가 `U002: ...TextGUIRendererComponent.Font must be int32. Got "Default"`로 실패하는 것이고, **특정 파일이 아니라 5개 `.ui` 전부**에서 난다(2026-07-31 관측: `MineHUD` 9 · `MineSelectUI` 40 · `MineInventoryUI` 9 · `BlockProgramUI` 23 · `AccountRecoveryUI` 4).
+8. **UIBuilder 검증기와 엔진 버전이 어긋나면 `.ui` 쓰기가 통째로 막힌다.** 2026-07-31에 실제로 막혀 있었다 — `write()`가 `U002: ...TextGUIRendererComponent.Font must be int32. Got "Default"`로 실패했고, **특정 파일이 아니라 5개 `.ui` 전부**에서 났다(`MineHUD` 9 · `MineSelectUI` 40 · `MineInventoryUI` 9 · `BlockProgramUI` 23 · `AccountRecoveryUI` 4). 즉 T-01 이후 `.ui`를 한 번도 못 고치는 상태였다.
 
-   원인은 파일이 아니라 도구다. `Environment/NativeScripts/Component/TextGUIRendererComponent.d.mlua`가 `property string Font = "Default"` · `property float FontSize = 20`으로 선언하는데, 스킬 빌더가 두 필드를 정수로 강제한다. **파일의 `Font`를 숫자로 바꾸면 안 된다** — 전 행의 글꼴이 바뀌고 다음 Maker 저장에서 되돌아간다.
+   원인은 파일이 아니라 도구였다. `Environment/NativeScripts/Component/TextGUIRendererComponent.d.mlua`가 `property string Font = "Default"` · `property float FontSize = 20`으로 선언하는데 빌더가 두 필드를 정수로 강제했다. **이 건은 고쳐서 커밋했다** — `.claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs`, 게임 기능과 섞이지 않도록 **도구 전용 커밋으로 분리**했다(§10 경계 유지). 저장소를 pull 하면 따라오므로 새 환경에서 다시 고칠 필요는 없다.
 
-   고칠 곳은 `.claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs`다. `INT32_COMPONENT_FIELDS`에서 `"Font"`와 `"FontSize"`를 빼고, `"FontSize"`는 `NUMBER_COMPONENT_FIELDS`에 넣는다. **`.claude/`는 도구·환경 범위라 커밋에 없으므로**(§10) 컴퓨터를 옮기면 같은 차단이 그대로 다시 난다.
+   **같은 종류의 사고에 대비하는 규칙**: `U002`/`U003`/`U004`가 **내가 건드리지도 않은 엔티티에서** 무더기로 나오면, 파일이 아니라 **검증기와 엔진 버전이 어긋난 것**을 먼저 의심한다. 판정 근거는 `Environment/NativeScripts/Component/*.d.mlua`의 `property <타입>` 선언이다. **파일 값을 검증기에 맞추면 안 된다** — 실제 표시가 바뀌고 다음 Maker 저장에서 되돌아간다.
 9. **새 텍스트 행을 만들면 `MOD.Core.TextComponent`를 지운다.** `UIBuilder.text()`는 레거시 `TextComponent`와 `TextGUIRendererComponent`를 **둘 다** 붙이는데, 기존 HUD 행은 후자 하나만 갖는다. 렌더러가 둘이면 **같은 자리에 문자열 두 개가 겹쳐 찍히고**, 컨트롤러가 갱신하는 쪽은 하나뿐이라 나머지는 생성 시점 문자열에 멈춘다.
 
    **좌표·텍스트 덤프(`maker_execute_script`)로는 안 잡힌다** — 컴포넌트 하나만 조회하면 정상으로 보인다. **스크린샷에서만 드러난다.** 만든 뒤 `removeComponent(path, "MOD.Core.TextComponent")`하고, 기존 행과 `componentNames`를 대조해 같은지 확인한다.
