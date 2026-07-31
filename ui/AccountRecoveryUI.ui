@@ -7,7 +7,7 @@
   "Usage": 0,
   "UsePublish": 1,
   "UseService": 0,
-  "CoreVersion": "26.5.0.0",
+  "CoreVersion": "26.7.0.0",
   "StudioVersion": "0.1.0.0",
   "DynamicLoading": 0,
   "ContentProto": {
@@ -76,6 +76,11 @@
                 "x": 0,
                 "y": 0
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -92,6 +97,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -175,6 +181,11 @@
                 "x": 0,
                 "y": 0
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -191,6 +202,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -320,6 +332,11 @@
                 "x": 0,
                 "y": 0
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -336,6 +353,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -465,6 +483,11 @@
                 "x": 0,
                 "y": 0
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -481,6 +504,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -610,6 +634,11 @@
                 "x": 0,
                 "y": 0
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -626,6 +655,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -755,6 +785,11 @@
                 "x": 0,
                 "y": -45
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 125,
@@ -771,6 +806,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -943,6 +979,11 @@
                 "x": 0,
                 "y": 15
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 15,
@@ -959,6 +1000,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1131,6 +1173,11 @@
                 "x": -145,
                 "y": 55
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": -145,
                 "y": -115,
@@ -1147,6 +1194,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1369,6 +1417,11 @@
                 "x": 145,
                 "y": 55
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 145,
                 "y": -115,
@@ -1385,6 +1438,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
