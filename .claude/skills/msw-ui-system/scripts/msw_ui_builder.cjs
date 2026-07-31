@@ -98,7 +98,11 @@ const KNOWN_COMPONENTS = new Set([
 const INT32_COMPONENT_FIELDS = new Set([
   "ActivePlatform", "Alignment", "AlignmentOption", "AnimClipPlayType", "Axis", "ChildAlignment",
   "Constraint", "ConstraintCount", "ContentType", "Direction", "DownArrow", "EndFrameIndex",
-  "FillMethod", "FillOrigin", "FixedCount", "FixedType", "Font", "FontSize", "FrameColumn",
+  // Font / FontSize are NOT int32. Environment/NativeScripts/Component/
+  // TextGUIRendererComponent.d.mlua declares `property string Font = "Default"`
+  // and `property float FontSize = 20`. Keeping them here rejected every
+  // Maker-authored .ui in the workspace (U002) and blocked all writes.
+  "FillMethod", "FillOrigin", "FixedCount", "FixedType", "FrameColumn",
   "FrameRate", "FrameRow", "GridChildAlignment", "GroupOrder", "GroupType",
   "HorizontalScrollBarDirection", "KeyCode", "LeftArrow", "LineType", "MaxSize", "MinSize",
   "OrderInLayer", "Overflow", "ParticleType", "PreserveAvatar", "PreserveMode",
@@ -109,7 +113,7 @@ const INT32_COMPONENT_FIELDS = new Set([
 
 const NUMBER_COMPONENT_FIELDS = new Set([
   "ChatEmotionDuration", "ColorMultiplier", "ConstraintX", "ConstraintY", "DropShadowAngle",
-  "DropShadowDistance", "FadeDuration", "FillAmount", "Flexibility", "GroupAlpha",
+  "DropShadowDistance", "FadeDuration", "FillAmount", "Flexibility", "FontSize", "GroupAlpha",
   "MaxValue", "MinValue", "OutlineWidth", "ParticleCount", "ParticleLifeTime", "ParticleSize",
   "ParticleSpeed", "PlayRate", "PlaySpeed", "ScrollBarThickness", "Spacing", "Value", "Width",
 ]);
