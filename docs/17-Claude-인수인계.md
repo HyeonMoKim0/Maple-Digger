@@ -335,7 +335,7 @@ Maker MCP의 `mouse_input`은 **엔진 관리 UI(`ButtonComponent`)를 클릭하
 1. 저장소를 열고 `git log --oneline -3`, `git status --short`, `git diff --check`로 실제로 옮겨진 변경을 확인한다. **이 문서의 §0이 보이면 2차 세션 결과까지 넘어온 것이다.**
 2. `AGENTS.md`의 MSW Foundation/도메인 규칙을 그 작업 환경에 맞게 로드한다. 특히 `.ui`는 UIBuilder, `.model`/`.map`은 해당 Builder로만 수정한다.
 3. Maker를 연결한 뒤 `refresh`, build log 확인, `play`, runtime log 확인, `stop` 순서로 첫 상태를 재확인한다. 기대값은 빌드 오류 0건, `[VeinTick] layout loaded mineId=beginner_mine veins=4 starts=5 specialCandidates=3`, `[Worker 1] configured cart=0/20 hand=`, `owned workers restored count=1`이다.
-4. **§0.2의 1순위(F5 §5/§6 계약대로 D-1~D-5 수정)부터 진행한다.** 서버 규칙 검수는 2차 세션에서 이미 통과했으므로 다시 하지 않아도 된다. 남은 검수는 `docs/16` §9에 따라 사용자만 수행할 수 있는 버튼 클릭 항목이다.
+4. **§0.1의 우선순위표부터 진행한다.** 서버 규칙 검수는 2차 세션에서 이미 통과했으므로 다시 하지 않아도 된다. 남은 검수는 `docs/16` §9에 따라 사용자만 수행할 수 있는 버튼 클릭 항목이다.
 5. 새 개발을 시작할 때는 계획 문서 → 기능 명세 → 구현 → As-built → 검수 체크리스트 순서를 유지한다.
 
 ### 서버 규칙을 다시 검증해야 할 때
@@ -349,7 +349,7 @@ local p = users[1]:GetComponent("script.AccountProfileService")
 local d = p:GetProfile()
 ```
 
-검증 뒤에는 **반드시 개발 프로필을 기준 상태로 원복한다** (Gold 0, 토큰 0, 광물 0, 희귀 컬렉션·보관 0, 자동 판매 해제, 수레 20, Worker01 1명, `lastMineId = "farm01"`). 원복 후 `p:ApplyRareStoneCartBonus()` → `p:SyncRuntimeState()` → `p:MarkProfileDirty()` → `p:SaveProfileAndWait()` 순서로 저장한다.
+검증 뒤에는 **반드시 개발 프로필을 기준 상태로 원복한다.** 되돌릴 필드 전체와 판정 기준은 **§0.2-A**에 있다 — 화폐만 되돌리면 희귀 컬렉션이 남아 `cart = 0/21`이 된다(2026-08-04에 실제로 놓쳤다).
 
 ## 10. 작업 트리/커밋 주의사항
 
@@ -366,28 +366,29 @@ local d = p:GetProfile()
 Maple-Digger MSW 프로젝트를 인수받아 이어서 작업한다.
 
 먼저 docs/17-Claude-인수인계.md를 §0부터 끝까지 읽어라. §0이 이어가기 지점이고,
-§1의 .ui 주의사항 7개는 세션이 바뀌어도 유효한 규칙이다.
-그다음 AGENTS.md, docs/00-기획문서-로드맵.md, docs/02-마스터-GDD.md,
-docs/11-MVP-결정-질문답변-로그.md의 C196, C197~C200, C201~C202, C206,
-docs/12-계정-프로필-저장-복구-기능명세.md, docs/13-경제-진행-기능명세.md(§5 포함),
-Archive/As-built.md, docs/16-사용자-검수-체크리스트.md를 읽어라.
-D8 카드는 뒤 번호가 앞 번호를 정정하므로 높은 번호를 우선한다.
+§1의 .ui 주의사항 10개는 세션이 바뀌어도 유효한 규칙이다.
+그다음 Archive/As-built.md의 최근 기록과 docs/16-사용자-검수-체크리스트.md를 읽어라.
+그 밖의 문서는 §0이 가리키는 것만 필요할 때 읽는다 — 전부 읽으면 컨텍스트만 먹는다.
+D8 결정 카드(docs/11)는 뒤 번호가 앞 번호를 정정하므로 높은 번호를 우선한다.
 
 현재 기준은 프로필 v7, Gold 0, Worker01만 활성, 수레 0/20, CoreVersion 26.7.0.0이다.
 희귀 돌/철/금은 손→수레→Depot 뒤 첫 10개가 컬렉션(+3% 패시브)에 등록되고,
 11회째부터만 보관·수동/자동 판매할 수 있다. 가격은 50/200/600 Gold다.
 이 희귀 광물 서버 규칙은 2026-07-29에 전량 검증 통과했으니 다시 검증하지 않아도 된다.
-화면 결함 D-1~D-13도 전부 해소됐다.
+화면 결함은 D-1~D-14까지 전부 해소됐고 미해결 0건이다.
 
-다음 작업은 §0.1의 우선순위표를 따른다. 1순위는 기획 보강 3건(밸런스 검증 ·
-서버 거절 사유 카탈로그 · 성능 기준)이고, 근거와 차단 티켓은 docs/00의
-"작성 예정 문서" 표에 있다. 밸런스는 T-02보다 먼저 있어야 한다.
-2순위 T-04(F5 연출)는 자산이 docs/21 §7.1에 전부 확정돼 있어 바로 착수 가능하다.
+진행 중인 브랜치는 feat/t04-mine-fx-p4이고 PR은 아직 없다.
+다음 작업은 §0.1-A를 따른다 — T-04 Phase 4의 남은 절반(아바타 교체 →
+채굴 먼지 최종 판정 → rare_ore_unload)이 1순위다.
 
 .ui 수정은 반드시 UIBuilder를 경유하고 원본 JSON을 직접 편집하지 마라.
 Maker refresh/build/Play/runtime log 없이 "동작한다"고 판정하지 마라.
+그리고 로그만으로 "보인다"고 판정하지 마라 — 짧은 연출·시각 계약은
+스크린샷이 있어야 판정된다(docs/16 §20에서 실제로 세 번 뒤집혔다).
+새 자산 RUID를 처음 쓸 때는 msw-asset-verify 스킬로 실물을 먼저 확인하라.
+검증 뒤 개발 프로필 원복은 §0.2-A의 필드 전체를 되돌리고 cart=0/20으로 판정하라.
 Maker에서 작업한 뒤에는 git status로 .ui/.map 재저장분을 확인하라 —
-재저장이 GroupOrder를 되돌린 적이 있다(§1 주의사항 6).
+재저장이 GroupOrder를 되돌린 적이 있다(§1 주의사항 6). 재저장분은 chore 커밋으로 분리한다.
 UI 버튼 클릭 검수는 mouse_input으로 불가능하니(docs/16 §9) 나에게 요청하라.
 게임 기능 변경과 .agents/.claude/.codex 등 도구 환경 변경은 별도 커밋으로 분리하라.
 여러 파일에 걸치는 작업은 브랜치+PR, 문서 갱신은 main 직접으로 한다.
