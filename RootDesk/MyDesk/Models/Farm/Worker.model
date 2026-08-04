@@ -22,7 +22,8 @@
         "MOD.Core.SpriteRendererComponent",
         "MOD.Core.MovementComponent",
         "MOD.Core.KinematicbodyComponent",
-        "script.WorkerController"
+        "script.WorkerController",
+        "script.WorkerVisualController"
       ],
       "Properties": [],
       "Values": [
@@ -43,6 +44,15 @@
             "type": "System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
           },
           "Value": 3
+        },
+        {
+          "TargetType": "MOD.Core.SpriteRendererComponent",
+          "Name": "OrderInLayer",
+          "ValueType": {
+            "$type": "MODNativeType",
+            "type": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+          },
+          "Value": 2
         }
       ],
       "EventLinks": [],

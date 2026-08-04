@@ -153,19 +153,32 @@ method void OnUpdate(number delta)
 end
 
 @ExecSpace("ClientOnly")
+method void PlayEmphasis()
+    -- Public one-shot emphasis. Depot 강조(F5 §3 unload_success)처럼 다른
+    -- 컨트롤러가 이 marker 를 강조시키고 싶을 때 부른다. Transform.Scale 은
+    -- 이 컴포넌트만 쓰도록 해서 두 곳이 같은 값을 다투지 않게 한다.
+    self._T.pulseElapsed = 0
+end
+
+@ExecSpace("ClientOnly")
 method void AdvanceSpawnPulse(number delta)
     -- Shrinks the marker from SpawnPulseScale back to its resting scale once.
     if self._T.pulseElapsed == nil or self._T.pulseElapsed < 0 then return end
     self._T.pulseElapsed = self._T.pulseElapsed + delta
 
+    -- 쉬는 크기는 kind 마다 다르다(일반 0.7 / 특별·Depot 1.0). Repaint 가 정한
+    -- 값으로 돌아가지 않으면 Depot 이 펄스 뒤에 특별 광맥 크기로 굳어 버린다.
+    local rest = self._T.restScale
+    if rest == nil then rest = self.VeinScale end
+
     local progress = self._T.pulseElapsed / self.SpawnPulseSeconds
     if progress >= 1 then
         self._T.pulseElapsed = -1
-        self.Entity.TransformComponent.Scale = Vector3(self.SpecialScale, self.SpecialScale, 1)
+        self.Entity.TransformComponent.Scale = Vector3(rest, rest, 1)
         return
     end
 
-    local scale = self.SpecialScale * (1 + (self.SpawnPulseScale - 1) * (1 - progress))
+    local scale = rest * (1 + (self.SpawnPulseScale - 1) * (1 - progress))
     self.Entity.TransformComponent.Scale = Vector3(scale, scale, 1)
 end
 
@@ -199,7 +212,7 @@ method void Repaint()
             scale = self.SpecialScale
             if self._T.wasActive ~= true and not isFirstPaint then
                 -- 비활성 → 활성. 이 marker 에서 실제로 스폰이 일어난 순간이다.
-                self._T.pulseElapsed = 0
+                self:PlayEmphasis()
                 log("[VeinMarkerFx] special spawn emphasis " .. self.Entity.Name
                     .. " cell=(" .. marker.CellX .. "," .. marker.CellY .. ")")
             end
@@ -225,6 +238,8 @@ method void Repaint()
 
     renderer.Enable = true
     renderer.SpriteRUID = ruid
+    -- 펄스가 끝나면 이 값으로 돌아간다. kind 별로 다르므로 여기서 기억해 둔다.
+    self._T.restScale = scale
     self.Entity.TransformComponent.Scale = Vector3(scale, scale, 1)
 end
 

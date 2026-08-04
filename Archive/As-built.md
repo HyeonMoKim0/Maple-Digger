@@ -25,6 +25,21 @@
 
 ## 기록
 
+### 2026-08-04 — T-04 Phase 4 (1/2): 일꾼 연출 — 선택 링 · 채굴 파편 · Depot 강조
+
+> 브랜치 `feat/t04-mine-fx-p4`. Phase 4 의 **아바타 교체**와 `rare_ore_unload` 중요 이벤트는 아직 남았다.
+
+- **Phase 1 이 만든 행동 이벤트 채널(`VisualEvent*`)이 드디어 소비된다.** 지금까지 서버는 `mine_success`/`unload_success` 를 발행만 하고 아무도 읽지 않았다. `WorkerVisualController`(ClientOnly) 를 신설해 읽는 쪽을 붙였다.
+- **선택 링** — `docs/21` §5 승인 자산. 발밑에 깔리는 타원이며 **표시 여부는 프로그램 편집기의 선택값(`_BlockProgramController:GetSelectedWorkerIndex()`) 하나만 따른다**(F5 §3 / §5.3). HUD 가 인덱스를 따로 들면 둘이 어긋나므로 기준을 하나로 뒀다.
+- **채굴 파편** — `mine_success` 에 0.3초 표시(F5 §3). 스폰/파괴를 반복하지 않고 **자식 엔티티 하나를 켜고 끈다** — 채굴은 틱마다 일어나므로 매번 생성하면 churn 이 크다.
+- **Depot 강조** — `unload_success` 에 Depot marker 를 펄스시킨다. **강조는 marker 자신이 그린다**(`VeinMarkerController:PlayEmphasis()` 신설). 일꾼 쪽에서 Depot 의 `Transform.Scale` 을 직접 만지면 marker 의 `Repaint` 와 매 프레임 다툰다 — 같은 값을 두 컴포넌트가 쓰지 않게 소유자를 하나로 정했다.
+  - 이 과정에서 **기존 펄스의 버그를 하나 고쳤다.** 펄스 종료 시 `SpecialScale`(1.0) 로 되돌리고 있어, Depot(1.0)은 우연히 맞았지만 일반 광맥(0.7)에 쓰면 크기가 굳어 버린다. `Repaint` 가 정한 값을 `restScale` 로 기억해 그리로 돌아가게 했다.
+- **자산은 런타임 자식 엔티티로 붙인다** — D-14 와 같은 방식. 공용 템플릿 `FxSprite.model`(신규, `model://fxsprite`)을 쓴다. 맵 파일에 FX 엔티티를 심지 않으므로 일꾼이 늘어도 맵 수술이 없다.
+- **부착 범위**: 일꾼 2~5 는 런타임 스폰이라 `Worker.model` 에 붙이면 따라오지만, **`Worker01` 은 맵에 배치돼 있어 모델 수정이 소급되지 않는다**(Phase 2 함정). 3개 맵의 `Worker01` 에 `upsertComponent` 로 따로 더했다. 링이 발밑에 깔리도록 일꾼 `OrderInLayer` 를 2 로 올렸다(링은 0).
+- **검증**: 빌드 오류 0건. 5회 반복 프로그램을 돌려 로그 101건 전부 `Info`, 오류·경고 0건. `[WorkerFx] ready` 1회, **`shard on`/`shard off` 각 5회(짝이 맞음)**, `depot emphasis` 5회 — 채굴 5회·하역 5회와 정확히 일치한다. 선택 링은 스크린샷으로 발밑 표시를 확인했다.
+  - **파편은 0.3초라 스크린샷으로 잡히지 않는다.** verify-checklist Step 2b 대로 생성·소멸 로그를 짝으로 남겨 1회 재생을 판정했다.
+- 검증 뒤 프로필 baseline 원복(돌 19 → 1). 바인딩 감사 114건 실패 0건.
+
 ### 2026-08-04 — D-14 수정: 광물 종류 아이콘 뱃지 (Phase 3.5)
 
 - `RootDesk/MyDesk/Models/Mine/OreBadge.model`(신규, `model://orebadge`)과 `VeinMarkerController`의 뱃지 로직으로 D-14를 해소했다. 돌·철·금이 이제 형태와 색으로 구분된다.

@@ -53,7 +53,7 @@
 | 2 | 광맥 stage 시각화 (`VeinMarkerController` · 모델 · 맵 38개) | ✅ `dc5ed1f` (`main`) |
 | 3 | 특별 광맥 연출 + 토스트 (중요 이벤트 채널) | ✅ `feat/t04-mine-fx-p3` |
 | 3.5 | 광물 종류 아이콘 뱃지 (D-14) — Phase 표에서 빠져 있던 항목 | ✅ `feat/t04-mine-fx-p3` |
-| **4** | **일꾼 연출** (선택 링 · 파편 · Depot 강조 · **아바타 교체**) | ⬜ **다음** |
+| **4** | **일꾼 연출** — 선택 링 · 파편 · Depot 강조 ✅ / **아바타 교체** · `rare_ore_unload` ⬜ | 🔶 **진행 중** `feat/t04-mine-fx-p4` |
 | 5 | 사운드 7종 배선 | ⬜ |
 | 6 | 검증·기록 (F5-1~F5-6, `docs/16`, As-built) | ⬜ |
 
@@ -66,6 +66,11 @@
 **Phase 3.5에서 만들어 둔 것 (D-14 해소).** `OreBadge.model`(신규) + `VeinMarkerController`가 marker의 자식으로 **클라이언트 로컬 엔티티**를 스폰해 광물 아이콘을 세운다. 맵 파일은 건드리지 않았다 — 이미 배치된 marker 35개에 자식을 심는 대신 런타임에 만든다. **앞으로 marker를 추가해도 맵 수술이 필요 없다.**
 
 > **시각 계약은 `gem_mine`에서 판정한다.** 세 광물이 한 화면에 있는 유일한 맵이다. `farm01`은 돌 전용이라 어떤 종류 구분 결함도 통과처럼 보인다 — D-14가 정확히 그렇게 숨어 있었다.
+
+**Phase 4 남은 것 2개.**
+
+1. **아바타 교체** — `Worker.model` 의 `SpriteRendererComponent` 를 `AvatarRendererComponent` + `CostumeManagerComponent` 로 바꾸고 `docs/21` §4 의 4슬롯을 넣는다. **`Worker01` 은 맵에 배치돼 있어 모델 수정이 소급되지 않으므로** 3개 맵도 함께 고쳐야 한다(Phase 4 전반부에서 같은 작업을 했다). `msw-avatar` 의 3계층 파이프라인 주의사항을 먼저 읽을 것.
+2. **`rare_ore_unload` 중요 이벤트** — 서버는 `VeinTickSimulator:EmitMineNotice("rare_ore_unload", ...)` 호출 한 줄(`WorkerController:DoUnload` 또는 `AddToDepot`), 클라이언트는 `MineNoticeController:PlayNotice` 에 분기 하나. Depot 강조는 이미 `VeinMarkerController:PlayEmphasis()` 로 부를 수 있다.
 
 **Phase 4 주의.** 일꾼이 아직 **임시 몬스터 스프라이트**다. `docs/21` §4가 아바타 기반(`cap` 안전제일 모자 / `coat` 화이트루즈 멜빵 / `pants` 밀라노청바지 / `weapon` 황금 곡괭이)으로 바꾸도록 정해 뒀다. `msw-avatar` 스킬을 먼저 읽는다. 그리고 **D9 §5.2 권고 3** — 일꾼 2 구매 직후 프로그램 복사 시 위치 경고를 노출하는 것은 T-05 몫이지만, 일꾼 연출과 함께 보면 좋다.
 

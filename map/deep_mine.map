@@ -1079,7 +1079,7 @@
       {
         "id": "2821c65e-01ba-4504-b920-6a350a06d729",
         "path": "/maps/deep_mine/Worker01",
-        "componentNames": "MOD.Core.TransformComponent,MOD.Core.SpriteRendererComponent,MOD.Core.MovementComponent,MOD.Core.KinematicbodyComponent,script.WorkerController",
+        "componentNames": "MOD.Core.TransformComponent,MOD.Core.SpriteRendererComponent,MOD.Core.MovementComponent,MOD.Core.KinematicbodyComponent,script.WorkerController,script.WorkerVisualController",
         "jsonString": {
           "name": "Worker01",
           "path": "/maps/deep_mine/Worker01",
@@ -1153,6 +1153,10 @@
               "WorkerIndex": 1,
               "StartCellX": 0,
               "StartCellY": 0
+            },
+            {
+              "@type": "script.WorkerVisualController",
+              "Enable": true
             }
           ],
           "@version": 1,

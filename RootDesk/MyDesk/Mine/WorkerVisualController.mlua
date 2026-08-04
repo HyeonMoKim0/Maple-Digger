@@ -1,0 +1,206 @@
+-- F5 §1 CLIENT-SIDE WORKER PRESENTATION
+-- 서버가 확정한 WorkerController 의 @Sync 상태와 행동 이벤트만 읽어
+-- 선택 링 · 채굴 파편 · Depot 강조를 그린다.
+-- 게임 상태를 절대 바꾸지 않는다 (F5 §1 금지 사항).
+-- RUID 는 docs/21 §5 확정값이다.
+@Component
+script WorkerVisualController extends Component
+
+-- 표시 전용 자식 엔티티의 공용 모델. 맵 파일을 건드리지 않으려고 런타임에 붙인다.
+property string FxModelId = "fxsprite"
+
+-- 선택 일꾼 발밑 링 (docs/21 §5 승인). 116x40 = 1.16x0.40 world unit.
+property string RingRuid = "76e2d942cc264558aad35f78be17b109"
+property number RingOffsetY = -0.32
+property integer RingOrderInLayer = 0
+
+-- 채굴 파편 (docs/21 §5). 132x112 라 한 셀을 넘어 축소해 쓴다.
+property string ShardRuid = "d4f82b525b47413c8c485dee4c696431"
+property number ShardScale = 0.55
+property number ShardOffsetY = 0.1
+property integer ShardOrderInLayer = 6
+-- F5 §3 "0.3초 내 파편 효과".
+property number ShardSeconds = 0.3
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- Caches the sibling worker and builds the two client-local visuals.
+    self._T.worker = self.Entity:GetComponent("script.WorkerController")
+    self._T.lastSequence = -1
+    self._T.shardElapsed = -1
+    self._T.ring = nil
+    self._T.shard = nil
+    self._T.lastSelected = -1
+    if self._T.worker == nil then
+        log_error("[WorkerFx] WorkerController missing on " .. self.Entity.Name)
+        return
+    end
+    self:EnsureVisuals()
+    log("[WorkerFx] ready " .. self.Entity.Name .. " index=" .. tostring(self._T.worker.WorkerIndex))
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 클라이언트 로컬 엔티티라 서버가 치워 주지 않는다 (F5 §3).
+    if self._T.ring ~= nil and isvalid(self._T.ring) then self._T.ring:Destroy() end
+    if self._T.shard ~= nil and isvalid(self._T.shard) then self._T.shard:Destroy() end
+    self._T.ring = nil
+    self._T.shard = nil
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- Polls the selection and consumes at most one unseen action event per frame.
+    local worker = self._T.worker
+    if worker == nil then return end
+
+    self:RefreshRing()
+    self:AdvanceShard(delta)
+
+    local sequence = worker.VisualEventSequence
+    if sequence == self._T.lastSequence then return end
+    if self._T.lastSequence < 0 then
+        -- 최초 관측. 접속 전에 쌓인 행동을 소급 재생하지 않는다.
+        self._T.lastSequence = sequence
+        return
+    end
+    self._T.lastSequence = sequence
+    self:PlayActionEvent(worker.VisualEventKind)
+end
+
+@ExecSpace("ClientOnly")
+method void EnsureVisuals()
+    -- Creates the ring and the shard once, as children of this worker.
+    local map = self.Entity.CurrentMap
+    if map == nil then return end
+
+    if self._T.ring == nil then
+        local ring = _SpawnService:SpawnByModelId(self.FxModelId, self.Entity.Name .. "_Ring", Vector3(0, self.RingOffsetY, 0), self.Entity)
+        if ring == nil then
+            log_error("[WorkerFx] ring spawn failed model=" .. self.FxModelId)
+        else
+            ring.TransformComponent.Position = Vector3(0, self.RingOffsetY, 0)
+            local renderer = ring.SpriteRendererComponent
+            if renderer ~= nil then
+                renderer.SpriteRUID = self.RingRuid
+                renderer.OrderInLayer = self.RingOrderInLayer
+                renderer.Enable = false
+            end
+            self._T.ring = ring
+        end
+    end
+
+    if self._T.shard == nil then
+        local shard = _SpawnService:SpawnByModelId(self.FxModelId, self.Entity.Name .. "_Shard", Vector3(0, self.ShardOffsetY, 0), self.Entity)
+        if shard == nil then
+            log_error("[WorkerFx] shard spawn failed model=" .. self.FxModelId)
+        else
+            shard.TransformComponent.Position = Vector3(0, self.ShardOffsetY, 0)
+            shard.TransformComponent.Scale = Vector3(self.ShardScale, self.ShardScale, 1)
+            local renderer = shard.SpriteRendererComponent
+            if renderer ~= nil then
+                renderer.SpriteRUID = self.ShardRuid
+                renderer.OrderInLayer = self.ShardOrderInLayer
+                -- 파편은 채굴 순간에만 뜬다. 평소에는 꺼 둔다.
+                renderer.Enable = false
+            end
+            self._T.shard = shard
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshRing()
+    -- 선택 링은 프로그램 편집기의 선택값을 단일 기준으로 따른다 (F5 §3 / §5.3).
+    -- HUD 가 인덱스를 따로 들고 있으면 둘이 어긋난다.
+    local ring = self._T.ring
+    if ring == nil or not isvalid(ring) then return end
+
+    local selected = _BlockProgramController:GetSelectedWorkerIndex()
+    if selected == self._T.lastSelected then return end
+    self._T.lastSelected = selected
+
+    local renderer = ring.SpriteRendererComponent
+    if renderer == nil then return end
+    renderer.Enable = selected == self._T.worker.WorkerIndex
+end
+
+@ExecSpace("ClientOnly")
+method void PlayActionEvent(string kind)
+    -- Renders one F5 §2.2 action event. 사운드 cue 는 Phase 5 범위다.
+    if kind == "mine_success" then
+        self:ShowShard()
+        return
+    end
+    if kind == "unload_success" then
+        self:EmphasizeDepot()
+        return
+    end
+    -- move / mine_fail / load_success 는 아직 전용 연출이 없다. 조용히 넘어간다.
+end
+
+@ExecSpace("ClientOnly")
+method void ShowShard()
+    -- Turns the shard on for ShardSeconds; AdvanceShard turns it back off.
+    local shard = self._T.shard
+    if shard == nil or not isvalid(shard) then return end
+    local renderer = shard.SpriteRendererComponent
+    if renderer == nil then return end
+    renderer.Enable = true
+    self._T.shardElapsed = 0
+    -- 0.3초짜리라 스크린샷으로 잡히지 않는다. 생성·소멸을 짝으로 남겨
+    -- 로그만으로 1회 재생을 판정할 수 있게 한다 (verify-checklist Step 2b).
+    log("[WorkerFx] shard on " .. self.Entity.Name)
+end
+
+@ExecSpace("ClientOnly")
+method void AdvanceShard(number delta)
+    -- Hides the shard once its short lifetime is over.
+    if self._T.shardElapsed == nil or self._T.shardElapsed < 0 then return end
+    self._T.shardElapsed = self._T.shardElapsed + delta
+    if self._T.shardElapsed < self.ShardSeconds then return end
+
+    self._T.shardElapsed = -1
+    local shard = self._T.shard
+    if shard == nil or not isvalid(shard) then return end
+    local renderer = shard.SpriteRendererComponent
+    if renderer ~= nil then renderer.Enable = false end
+    log("[WorkerFx] shard off " .. self.Entity.Name)
+end
+
+@ExecSpace("ClientOnly")
+method void EmphasizeDepot()
+    -- Depot 강조는 marker 자신이 그린다. 여기서 Transform 을 직접 만지면
+    -- VeinMarkerController 의 Scale 과 매 프레임 다툰다.
+    local depot = self:FindDepotController()
+    if depot == nil then
+        log_error("[WorkerFx] depot marker not found for " .. self.Entity.Name)
+        return
+    end
+    depot:PlayEmphasis()
+    log("[WorkerFx] depot emphasis by " .. self.Entity.Name)
+end
+
+@ExecSpace("ClientOnly")
+method VeinMarkerController FindDepotController()
+    -- Resolves the depot marker once and caches it; the map has exactly one.
+    if self._T.depotFx ~= nil and isvalid(self._T.depotFx) then return self._T.depotFx end
+
+    local map = self.Entity.CurrentMap
+    if map == nil then return nil end
+    local markers = map:GetChildComponentsByTypeName("script.VeinMarker", false)
+    if markers == nil then return nil end
+    for _, component in ipairs(markers) do
+        ---@type VeinMarker
+        local marker = component
+        if marker.MarkerKind == "depot" then
+            ---@type VeinMarkerController
+            local fx = marker.Entity:GetComponent("script.VeinMarkerController")
+            self._T.depotFx = fx
+            return fx
+        end
+    end
+    return nil
+end
+
+end
