@@ -52,7 +52,8 @@
 | 1 | 서버 동기화 표면 (`VeinMarker` `@Sync` · `WorkerController` `VisualEvent*`) | ✅ `3d977a1` (`main`) |
 | 2 | 광맥 stage 시각화 (`VeinMarkerController` · 모델 · 맵 38개) | ✅ `dc5ed1f` (`main`) |
 | 3 | 특별 광맥 연출 + 토스트 (중요 이벤트 채널) | ✅ `feat/t04-mine-fx-p3` |
-| **4** | **일꾼 연출** (선택 링 · 파편 · Depot 강조 · **아바타 교체**) | ⬜ 다음 |
+| **3.5** | **광물 종류 아이콘 뱃지 (D-14)** — Phase 표에서 빠져 있던 항목 | ⬜ **다음** |
+| 4 | 일꾼 연출 (선택 링 · 파편 · Depot 강조 · **아바타 교체**) | ⬜ |
 | 5 | 사운드 7종 배선 | ⬜ |
 | 6 | 검증·기록 (F5-1~F5-6, `docs/16`, As-built) | ⬜ |
 
@@ -61,6 +62,8 @@
 - 서버: `VeinTickSimulator:EmitMineNotice(kind, cellX, cellY, count)` 하나만 부르면 된다. **`rare_ore_unload`는 이 메서드를 호출하는 것으로 끝난다** — 호출 지점은 `WorkerController:DoUnload` 또는 `VeinTickSimulator:AddToDepot`이고, 희귀 종류 판별은 이미 거기 있다.
 - 클라이언트: `MineNoticeController:PlayNotice`에 `elseif kind == "rare_ore_unload"` 분기를 더한다. 모르는 kind는 로그만 남기고 무시하므로 **서버를 먼저 붙여도 클라이언트가 깨지지 않는다.**
 - 중복 방지 3중 가드(최초 관측 / 1초 settle / id 점프 스킵)는 kind와 무관하게 이미 동작한다. 새 kind에 다시 만들지 말 것.
+
+**Phase 3.5 착수 지점 (D-14).** `VeinMarkerController`는 `ReserveStage`만 보고 RUID를 고르며 **`OreType`을 읽지 않는다.** 서버는 이미 `VeinMarker.OreType`을 `@Sync`로 내려보내고 있으므로 **클라이언트만 고치면 된다.** 자산은 `docs/20` §0 승인 아이콘 3종, 구현 형태는 `docs/21` §1.3(자식 뱃지 엔티티)이다. 판정 근거는 D5 §8 V1이고, 검증은 **`gem_mine`에서 해야 한다** — 세 종류가 한 화면에 있는 유일한 맵이다. `farm01`은 돌 전용이라 통과처럼 보인다.
 
 **Phase 4 주의.** 일꾼이 아직 **임시 몬스터 스프라이트**다. `docs/21` §4가 아바타 기반(`cap` 안전제일 모자 / `coat` 화이트루즈 멜빵 / `pants` 밀라노청바지 / `weapon` 황금 곡괭이)으로 바꾸도록 정해 뒀다. `msw-avatar` 스킬을 먼저 읽는다. 그리고 **D9 §5.2 권고 3** — 일꾼 2 구매 직후 프로그램 복사 시 위치 경고를 노출하는 것은 T-05 몫이지만, 일꾼 연출과 함께 보면 좋다.
 
@@ -96,7 +99,13 @@ git status --short -- docs RootDesk ui map tools Archive
 
 ### 0.5 화면 결함 현황
 
-**D-1 ~ D-12는 전량 수정·검증 완료 (2026-07-30). 미해결 0건.** 각 건의 원인과 검증 기록은 `docs/16` §11~§16에 있다.
+**미해결 1건 — D-14.** `docs/16` §18에 있다.
+
+> **D-14 (2026-08-04)** — 같은 stage의 **돌·철·금 광맥이 픽셀 단위로 동일**하다. C205가 정한 광물 종류 **아이콘 뱃지(자식 엔티티)** 가 미구현이고, `VeinMarkerController`가 `OreType`을 아예 읽지 않는다. D5 §8 **V1**("광물 종류와 네 상태가 색 외의 형태로 구분") 위반이다.
+>
+> **`farm01`이 돌 전용이라 6차 세션까지 안 드러났다.** 두 종류 이상이 섞인 `deep_mine`·`gem_mine`에서만 보인다. T-04 Phase 표에 이 항목이 없어 **Phase 2와 Phase 4 사이로 빠진 것**이 근본 원인이다. 아이콘 RUID 3종은 `docs/20` §0에 승인돼 있고 구현 형태는 `docs/21` §1.3에 있다.
+
+**D-1 ~ D-12는 전량 수정·검증 완료 (2026-07-30).** 각 건의 원인과 검증 기록은 `docs/16` §11~§16에 있다.
 
 **D-13**(엔진 26.7 재저장이 `GroupOrder`를 되돌림)은 2026-07-31에 복구했다 — `docs/16` §17.
 
