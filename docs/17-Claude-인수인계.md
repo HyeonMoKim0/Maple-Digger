@@ -33,7 +33,7 @@
 2. **`.model` 수정은 이미 배치된 맵 인스턴스에 소급되지 않는다.** 맵 엔티티의 `componentNames`가 로드 시 기준이기 때문이다. `placeModel`로 다시 놓으면 인스턴스별 값이 날아가므로 **`upsertComponent`로 더한다.** 런타임 스폰 엔티티(일꾼 2~5)는 모델 수정이 따라오지만 **맵에 배치된 것(`Worker01`)은 안 따라온다.**
 3. **`UIBuilder.text()`는 레거시 `MOD.Core.TextComponent`를 함께 붙인다** (§1 주의사항 9).
 4. **`.ui` 컴포넌트 제거는 Maker에 이미 임포트된 엔티티에 소급되지 않는다** (§1 주의사항 10). 파일은 깨끗한데 런타임에 남아 화면에 찍힌다.
-5. **자산은 검색 결과 설명을 믿지 말고 월드에 띄워 보고 고른다.** 이번에 `docs/21` §5의 "돌 파편"이 실제로는 어두운 얼룩, "노란 스파크"가 보라색 광석이었다. **C206(부유석 condition)과 같은 종류의 오류가 두 번째로 났다.** 후보를 한 줄로 배치해 스크린샷으로 판정하는 방식만 이걸 잡는다.
+5. **자산은 검색 결과 설명을 믿지 말고 월드에 띄워 보고 고른다.** 이번에 `docs/21` §5의 "돌 파편"이 실제로는 어두운 얼룩, "노란 스파크"가 보라색 광석이었다. **C206(부유석 condition)과 같은 종류의 오류가 두 번째로 났다.** → **절차를 `msw-asset-verify` 스킬로 만들어 뒀다** (2026-08-04). 새 RUID를 처음 넣기 전과 승인표의 승인란이 빈 후보를 쓸 때 이 스킬을 부른다.
 6. **한 맵에서만 검증하면 그 맵의 데이터가 가려 주는 결함은 통과로 나온다.** D-14는 `farm01`이 돌 전용이라 6차 세션까지 숨어 있었다. **시각 계약은 `gem_mine`에서 판정한다** — 세 광물이 한 화면에 있는 유일한 맵이다.
 7. **프로필 원복은 화폐만으로 부족하다.** 채굴 루프를 오래 돌리면 **1% 확률로 희귀 광물이 떨어져 컬렉션이 오르고**, 그러면 수레 용량 보너스가 남아 `cart=0/21`이 된다. §0.2의 원복 목록을 그대로 쓸 것.
 
@@ -91,7 +91,7 @@
 
 **Phase 4 남은 것 3개.**
 
-1. **아바타 교체** — `Worker` 템플릿의 `SpriteRendererComponent`를 `AvatarRendererComponent` + `CostumeManagerComponent`로 바꾸고 `docs/21` §4의 4슬롯을 넣는다. **`Worker01`은 맵에 배치돼 있어 모델 수정이 소급되지 않으므로** 3개 맵도 함께 고쳐야 한다(전반부에서 `script.WorkerVisualController`를 붙일 때 같은 작업을 했다 — `.builder-work/p4_attach_worker_visual.cjs`가 그 예다). `msw-avatar`의 3계층 파이프라인 주의사항을 먼저 읽을 것.
+1. **아바타 교체** — `Worker` 템플릿의 `SpriteRendererComponent`를 `AvatarRendererComponent` + `CostumeManagerComponent`로 바꾸고 `docs/21` §4의 4슬롯을 넣는다. **4슬롯 중 `pants`는 승인란이 비어 있다 — `msw-asset-verify`로 실물을 먼저 본다.** 아바타는 썸네일이 아니라 **착용 스크린샷이 최종 판정**이다. **`Worker01`은 맵에 배치돼 있어 모델 수정이 소급되지 않으므로** 3개 맵도 함께 고쳐야 한다(전반부에서 `script.WorkerVisualController`를 붙일 때 같은 작업을 했다 — `.builder-work/p4_attach_worker_visual.cjs`가 그 예다). `msw-avatar`의 3계층 파이프라인 주의사항을 먼저 읽을 것.
 2. **채굴 먼지 최종 판정** — 아바타 교체 직후 오너에게 보여 준다. 크기(`ShardScale` 0.9)·오프셋(`HitFxOffsetY` 0.25)·지속(`ShardSeconds` 0.3)이 조정 후보다. **0.3초는 F5 §3 계약값이므로 늘리려면 계약을 함께 고친다.**
 3. **`rare_ore_unload` 중요 이벤트** — 서버는 `VeinTickSimulator:EmitMineNotice("rare_ore_unload", ...)` 호출 한 줄(`WorkerController:DoUnload` 또는 `AddToDepot`), 클라이언트는 `MineNoticeController:PlayNotice`에 분기 하나. Depot 강조는 이미 `PlayEmphasis()`로 부를 수 있다.
 
