@@ -19,17 +19,31 @@ property integer RingOrderInLayer = 0
 -- 오프셋을 잡아야 하는데, 아바타 교체 뒤 그 값이 전부 무효가 된다.
 -- 셀 좌표는 Phase 1 이 만든 VisualEventCellX/Y 가 그대로 준다.
 --
--- 자산은 **흰 먼지 퍼짐**이다. 2026-08-04 월드 실측에서 후보를 나란히 놓고 골랐다.
--- docs/21 §5 가 "돌 파편"으로 적어 둔 `d4f82b52` 는 실제로는 어두운 얼룩이라
--- 초록 바닥에서 잔디와 구분되지 않았고(오너 검수 "그림자 같다"),
--- "노란 스파크"라던 `6ade17ad` 는 보라색 광석이었다. 둘 다 메타데이터 설명과
--- 실제 그림이 달랐다 — C206(부유석 condition)과 같은 종류의 오류다.
-property string ShardRuid = "78ea5621bb574c8d8d7f84848262014d"
-property number ShardScale = 0.9
+-- 자산은 **뭉게뭉게 피는 흰 먼지구름**이다 (2026-08-04 오너 확정).
+-- 앞선 `78ea5621`(넓고 납작한 베이지 얼룩)은 오너 검수에서 "어울리지 않는다"로
+-- 교체됐다 — 초록 바닥에 스며들어 얼룩처럼 읽혔다.
+--
+-- 후보는 **텍스트 검색으로 못 찾는다.** searchResources 가 돌려준 39건이 전부
+-- 이름·점수가 비어 있었고, "먼지"로 잡힌 것 중에는 나무 상자와 검은 연기도 있었다.
+-- 결국 `78ea5621` 을 씨앗으로 findSimilarResources 를 돌려 skill 카테고리
+-- 애니메이션클립 12개를 얻고, 그걸 월드에 띄워 눈으로 골랐다.
+-- (같은 종류의 오독: C206 부유석 condition · `d4f82b52` 어두운 얼룩 ·
+--  `6ade17ad` 보라색 광석 — 전부 메타데이터 설명과 실제 그림이 달랐다.)
+property string ShardRuid = "de538ed75f964038b61d6d735cd9ae0b"
+property number ShardScale = 1.3
 property integer ShardOrderInLayer = 6
 
--- 광맥 스프라이트 위로 살짝 띄워 광맥 자체를 가리지 않게 한다.
-property number HitFxOffsetY = 0.25
+-- **광물 정중앙**에 띄운다 (2026-08-04 오너 지시). 이전 자산은 광맥을 가리지 않으려고
+-- 0.25 만큼 위로 올려 놨었는데, 지금 자산은 중심에 얹어야 "여기를 캤다"로 읽힌다.
+property number HitFxOffsetY = 0
+
+-- ⚠ 이 스프라이트는 **pivot 이 중심이 아니다.** 광맥 좌표에 그대로 놓으면 먼지가
+-- 오른쪽으로 밀려서 뜬다. 게다가 엔티티 Scale 이 pivot 오프셋까지 함께 키우므로
+-- **밀리는 양이 ShardScale 에 비례한다** — 상수 보정으로는 크기를 바꿀 때마다 어긋난다.
+-- 아래 값은 farm01 실측(0.9 / 1.3 / 1.7 세 크기에서 각각 85 / 125 / 165 px 이동,
+-- 1 unit = 110 px)에서 얻은 unit-per-scale 값이다.
+-- 자산을 바꾸면 이 값도 다시 재야 한다. pivot 이 중심인 자산이면 0 이다.
+property number ShardPivotOffsetX = -0.855
 
 -- F5 §3 "0.3초 내 파편 효과".
 property number ShardSeconds = 0.3
@@ -149,7 +163,10 @@ method boolean MoveShardToCell(integer cellX, integer cellY)
     end
 
     local world = tilemap:ToWorldPosition(Vector2Int(cellX, cellY))
-    shard.TransformComponent.Position = Vector3(world.x, world.y + self.HitFxOffsetY, 0)
+    -- pivot 보정은 ShardScale 에 비례한다 (속성 선언부의 ⚠ 참조).
+    -- EnsureVisuals 가 엔티티 Scale 을 ShardScale 로 잡으므로 같은 값을 쓴다.
+    local pivotX = self.ShardPivotOffsetX * self.ShardScale
+    shard.TransformComponent.Position = Vector3(world.x + pivotX, world.y + self.HitFxOffsetY, 0)
     return true
 end
 
