@@ -98,7 +98,7 @@
             "$type": "MODNativeType",
             "type": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
           },
-          "Value": "c74b23716ab948bbb7118ad68b23b08b"
+          "Value": "e6ff0ea602e043f48a7e231ed4f95daf"
         },
         {
           "TargetType": "MOD.Core.CostumeManagerComponent",

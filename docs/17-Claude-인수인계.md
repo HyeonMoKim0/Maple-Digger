@@ -57,12 +57,15 @@
 
 **브랜치 `feat/t04-mine-fx-p4`에서 이어간다.** 자산 RUID는 전부 [`21-연출-자산-승인표.md`](21-연출-자산-승인표.md) **§7.1**에 있다 — **이 문서에 RUID를 복사하지 말 것.** (§5의 채굴 파편은 2026-08-04에 흰 먼지로 교체됐다. §7.1보다 §5가 최신이다.)
 
-**가장 먼저 할 일 = 오너 검수 2건을 받는 것.** 아바타 교체는 9차에서 끝났고(임시 몬스터 스프라이트 → MSW 아바타), 그 결과 **막혀 있던 판정 2개가 동시에 풀렸다.**
+**가장 먼저 할 일 = 채굴 먼지 오너 검수.** 아바타 교체는 9차에서 끝났고(임시 몬스터 스프라이트 → MSW 아바타), `pants`는 오너가 `e6ff0ea6…`로 지정해 확정됐다(`docs/21` §4).
 
-1. **`pants` 슬롯** — `docs/21` §4 착용 실측표. 밀라노청바지가 "짧은 청색 하의"로 읽힌다. 그대로 갈지 `데님 카고 바지`로 바꿀지 오너 판단.
-2. **채굴 먼지** — 오너가 "먼지는 아바타 만들어지고 확인하겠다"고 했다(2026-08-04). 이제 최종 실루엣이 들어갔으니 볼 수 있다.
+**남은 것은 채굴 먼지 하나다.** 오너가 "먼지는 아바타 만들어지고 확인하겠다"고 했던 항목이고(2026-08-04), 이제 최종 실루엣이 들어갔으니 판정할 수 있다. 9차에서 확인한 사실:
 
-둘 다 RUID·수치 한 줄 교체라 되돌리기 싸다. **검수를 먼저 받고 `rare_ore_unload`로 넘어간다.**
+- 먼지는 정상 재생된다. `shard on`→`off` 짝, 위치는 **광맥 셀 중심 + `HitFxOffsetY` 0.25**(실측 `shard pos=(1.5,0.75)` / `worker pos=(1.5,0.5)`), `ShardScale` 0.9, `OrderInLayer` 6.
+- **`OrderInLayer` 6은 일꾼(2)보다 앞이라 먼지가 안전모를 덮는다.** 0.3초짜리라 실사용에서 문제인지는 오너 판단이다. 뒤로 보내려면 일꾼(2)과 광맥 marker(1) 사이 값이 없으므로 **일꾼 쪽을 올리는 편**이 낫다.
+- 조정 후보: `ShardScale` 0.9 · `HitFxOffsetY` 0.25 · `ShardSeconds` 0.3. **0.3초는 F5 §3 계약값이므로 늘리려면 계약을 함께 고친다.**
+
+> **먼지 검증 요령 (9차에서 두 번 헛수고했다).** 0.3초는 스크린샷 왕복(1~4초)에 절대 안 잡힌다. Play 중 클라이언트에서 `WorkerVisualController.ShardSeconds`를 크게 올려 두고 캐면 잡힌다 — **파일을 건드리지 않고 `stop`하면 원복된다.** 그리고 **`shard on`/`off` 로그 타임스탬프와 스크린샷 시각을 대조**할 것. 9차에 수명 밖에서 찍은 스크린샷을 "먼지가 안 보인다"로 오독할 뻔했다. 또 광맥 결정(청록)과 먼지(흰색)가 화면에서 헷갈리므로, 판정할 때는 `VeinMarker` 스프라이트를 잠시 꺼서 **먼지만 남긴 화면**으로 본다.
 
 | Phase | 내용 | 상태 |
 |:-:|---|---|
@@ -93,8 +96,8 @@
 
 **Phase 4 남은 것 3개.**
 
-1. ~~**아바타 교체**~~ → **✅ 완료 (2026-08-04, 9차).** `Worker.model` + 맵 3개의 `Worker01`에서 `SpriteRendererComponent`를 걷어내고 `AvatarRendererComponent` + `CostumeManagerComponent`로 바꿨다(`.builder-work/p4_worker_avatar.cjs`). `docs/21` §4의 4슬롯 + 기본 body 적용, `equippedCount=6` 확인. **오너 판단이 남은 것은 `pants` 하나** — `docs/21` §4의 착용 실측표를 볼 것.
-2. **채굴 먼지 최종 판정** — **오너 확인 대기.** 아바타는 들어갔으니 이제 볼 수 있다. 크기(`ShardScale` 0.9)·오프셋(`HitFxOffsetY` 0.25)·지속(`ShardSeconds` 0.3)이 조정 후보다. **0.3초는 F5 §3 계약값이므로 늘리려면 계약을 함께 고친다.** 아바타 교체 뒤에도 `shard on`/`shard off` 짝은 정상 재생된다(9차 검증).
+1. ~~**아바타 교체**~~ → **✅ 완료 (2026-08-04, 9차).** `Worker.model` + 맵 3개의 `Worker01`에서 `SpriteRendererComponent`를 걷어내고 `AvatarRendererComponent` + `CostumeManagerComponent`로 바꿨다(`.builder-work/p4_worker_avatar.cjs`). `docs/21` §4의 4슬롯 + 기본 body 적용, `equippedCount=6` 확인. `pants`는 오너가 `e6ff0ea6…`로 지정해 확정(`.builder-work/p4_worker_pants.cjs`).
+2. **채굴 먼지 최종 판정** — **오너 확인 대기.** 위 §0.1-A 머리말에 실측값·조정 후보·검증 요령을 정리해 뒀다.
 3. **`rare_ore_unload` 중요 이벤트** — 서버는 `VeinTickSimulator:EmitMineNotice("rare_ore_unload", ...)` 호출 한 줄(`WorkerController:DoUnload` 또는 `AddToDepot`), 클라이언트는 `MineNoticeController:PlayNotice`에 분기 하나. Depot 강조는 이미 `PlayEmphasis()`로 부를 수 있다.
 
 **아바타 교체에서 정한 것 — 뒤집으려면 근거가 필요하다.**
