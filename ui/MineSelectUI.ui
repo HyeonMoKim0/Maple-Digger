@@ -156,11 +156,11 @@
               "MobileOnly": false,
               "OffsetMax": {
                 "x": -260.0,
-                "y": -466.0
+                "y": -502.0
               },
               "OffsetMin": {
                 "x": -450.0,
-                "y": -554.0
+                "y": -590.0
               },
               "Pivot": {
                 "x": 1.0,
@@ -179,7 +179,7 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": -260.0,
-                "y": -466.0
+                "y": -502.0
               },
               "Rotation": {
                 "x": 0.0,
@@ -188,7 +188,7 @@
               },
               "Position": {
                 "x": 700.0,
-                "y": 74.0,
+                "y": 38.0,
                 "z": 0.0
               },
               "QuaternionRotation": {

@@ -49,6 +49,31 @@ property integer DepotIron = 0
 @Sync
 property integer DepotGold = 0
 
+-- F5 §2.2 중요 이벤트 채널. 일꾼의 행동 scalar(`WorkerController.VisualEvent*`)와
+-- 분리된 별도 채널이다. 서버만 쓰고 클라이언트는 읽기만 한다. NoticeId 는 단조
+-- 증가하며, 클라이언트는 아직 처리하지 않은 id 만 한 번 처리한다.
+@Sync
+property integer NoticeId = 0
+
+-- special_vein_spawn / rare_ore_unload / sale_completed / appearance_obtained
+@Sync
+property string NoticeKind = ""
+
+@Sync
+property integer NoticeCellX = 0
+
+@Sync
+property integer NoticeCellY = 0
+
+-- 이벤트별 요약 수량. special_vein_spawn 은 이번 묶음에서 스폰된 광맥 수다.
+@Sync
+property integer NoticeCount = 0
+
+-- 이벤트를 놓쳤을 때 HUD 가 현재 상태로 복구할 수 있어야 한다 (F5 §2.2 / F5-5).
+-- 그래서 "몇 개가 활성인가"는 이벤트가 아니라 상태로도 내려보낸다.
+@Sync
+property integer ActiveSpecialCount = 0
+
 @ExecSpace("ServerOnly")
 method void OnBeginPlay()
     -- Initializes the map-scoped vein ledger, shared depot, and worker registry.
@@ -63,6 +88,13 @@ method void OnBeginPlay()
     self.DepotStone = 0
     self.DepotIron = 0
     self.DepotGold = 0
+    -- NoticeId 만 여기서 0 으로 초기화한다. LoadLayout 은 맵 전환마다 다시 도는데
+    -- 거기서 id 를 되돌리면 이미 본 id 가 재사용돼 클라이언트 중복 제거가 깨진다.
+    self.NoticeId = 0
+    self.NoticeKind = ""
+    self.NoticeCellX = 0
+    self.NoticeCellY = 0
+    self.NoticeCount = 0
     if self._T.tilemap == nil then
         log_error("[VeinTick] RectTileMapComponent not found")
         return
@@ -212,6 +244,7 @@ method boolean LoadLayout()
     self._T.specialVeinCandidates = {}
     self._T.activeSpecialVeins = {}
     self._T.nextSpecialCandidateIndex = 1
+    self.ActiveSpecialCount = 0
     self.VeinState = {}
     self.Depot = {}
 
@@ -400,6 +433,10 @@ method integer TrySpawnSpecialVeins()
     if targetCount > slots then targetCount = slots end
 
     local spawned = 0
+    -- 토스트·HUD 는 묶음당 한 번만 알린다(F5 §4 "스폰 묶음당 1회"). 대표 위치로
+    -- 이번 묶음의 첫 광맥 셀을 쓴다.
+    local firstCellX = 0
+    local firstCellY = 0
     local candidateCount = #self._T.specialVeinCandidates
     for offset = 0, candidateCount - 1 do
         if spawned >= targetCount then break end
@@ -420,6 +457,10 @@ method integer TrySpawnSpecialVeins()
                 specialId = candidate.id,
             }
             self._T.activeSpecialVeins[candidate.id] = true
+            if spawned == 0 then
+                firstCellX = candidate.cellX
+                firstCellY = candidate.cellY
+            end
             spawned = spawned + 1
             log("[VeinTick] special spawned id=" .. candidate.id .. " marker=" .. candidate.markerId .. " ore=" .. oreType .. " cell=" .. key)
         end
@@ -427,8 +468,26 @@ method integer TrySpawnSpecialVeins()
     self._T.nextSpecialCandidateIndex = ((self._T.nextSpecialCandidateIndex - 1 + spawned) % candidateCount) + 1
     if spawned == 0 then
         log("[VeinTick] special spawn skipped reason=no-unused-candidate")
+        return 0
     end
+    self.ActiveSpecialCount = activeCount + spawned
+    self:EmitMineNotice("special_vein_spawn", firstCellX, firstCellY, spawned)
     return spawned
+end
+
+@ExecSpace("ServerOnly")
+method void EmitMineNotice(string kind, integer cellX, integer cellY, integer count)
+    -- Publishes one F5 §2.2 important event. NoticeId is written last so a client
+    -- that observes the new id always sees the matching payload, and it is never
+    -- reset mid-session so a reconnecting client can tell old ids from new ones.
+    self.NoticeKind = kind
+    self.NoticeCellX = cellX
+    self.NoticeCellY = cellY
+    self.NoticeCount = count
+    self.NoticeId = self.NoticeId + 1
+    log("[VeinTick] notice id=" .. self.NoticeId .. " kind=" .. kind
+        .. " cell=(" .. cellX .. "," .. cellY .. ") count=" .. count
+        .. " activeSpecial=" .. self.ActiveSpecialCount)
 end
 
 @ExecSpace("ServerOnly")

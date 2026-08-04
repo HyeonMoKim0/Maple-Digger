@@ -11,6 +11,9 @@ property TextGUIRendererComponent storageText = "10e4c593-6ae5-4625-8828-20a2597
 property TextGUIRendererComponent currencyText = "a29041bf-f355-4b95-ab3c-eb0d5c38b8d5"
 property TextGUIRendererComponent workerStateText = "8241b596-fed7-42ec-a823-696ded08ed1f"
 property TextGUIRendererComponent depotText = "9395e38a-0b37-4c6e-ba68-ebd554c90fd3"
+-- F5 §2.2 특별 광맥 "HUD 아이콘". 토스트를 놓쳐도 여기서 현재 상태를 읽을 수
+-- 있어야 한다 (F5-5). 아이콘 자산 적용 자체는 T-08 범위라 지금은 텍스트다.
+property TextGUIRendererComponent specialText = "93a12307-155f-4923-bf63-ce8398e6024c"
 property TextGUIRendererComponent cartText = "ada2db0e-12dc-4412-82d0-e94425ced00c"
 property TextGUIRendererComponent handText = "936aa37c-c3da-4dcd-83a6-390a45b2ad4e"
 property TextGUIRendererComponent inventoryStoneText = "00b765d6-de3f-47e3-a1fd-e6a7dab02bcd"
@@ -83,6 +86,9 @@ method void RefreshUI(boolean force)
     state = state .. ":" .. tostring(worker.PendingOre) .. ":" .. tostring(worker.CartCount) .. ":" .. tostring(worker.CartCapacity)
     state = state .. ":" .. tostring(mineState.DepotStone) .. ":" .. tostring(mineState.DepotIron) .. ":" .. tostring(mineState.DepotGold)
     state = state .. ":" .. workerStates
+    -- 특별 광맥 현재 상태 + 최근 출현 위치. 키에서 빠지면 값이 바뀌어도 화면이
+    -- 갱신되지 않는다 (F5 §5.3 무증상 실패).
+    state = state .. ":" .. tostring(mineState.ActiveSpecialCount) .. ":" .. tostring(mineState.NoticeId)
     -- I2~I6: 희귀 컬렉션·보관·판매 잠금·패시브·판매 설정. 변경 감지 키에서 빠지면
     -- 값이 바뀌어도 팝업이 갱신되지 않는다 (무증상 실패).
     state = state .. ":" .. tostring(profile.RareStoneCollectionLevel) .. ":" .. tostring(profile.RareIronCollectionLevel) .. ":" .. tostring(profile.RareGoldCollectionLevel)
@@ -127,6 +133,15 @@ method void RefreshUI(boolean force)
     -- for the account ledger above (docs/16 §10.2 D-4).
     if self.depotText ~= nil then
         self.depotText.Text = "이번 세션 하역  돌 " .. tostring(mineState.DepotStone) .. " 철 " .. tostring(mineState.DepotIron) .. " 금 " .. tostring(mineState.DepotGold)
+    end
+    -- F5 §2.2: 특별 광맥 활성 수는 "상태"라 이벤트를 놓쳐도 복구된다. 최근 출현
+    -- 위치는 특별 광맥이 하나라도 살아 있을 때만 뜻이 있으므로 그때만 덧붙인다.
+    if self.specialText ~= nil then
+        local specialLine = "특별 광맥  활성 " .. tostring(mineState.ActiveSpecialCount) .. "곳"
+        if mineState.ActiveSpecialCount > 0 and mineState.NoticeKind == "special_vein_spawn" then
+            specialLine = specialLine .. "   최근 (" .. tostring(mineState.NoticeCellX) .. ", " .. tostring(mineState.NoticeCellY) .. ")"
+        end
+        self.specialText.Text = specialLine
     end
     -- I1: inventory popup shows the account ledger too.
     if self.inventoryStoneText ~= nil then

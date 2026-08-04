@@ -16,7 +16,7 @@
       {
         "id": "83de308d-98c5-4c42-9888-5506ea78244f",
         "path": "/maps/farm01",
-        "componentNames": "MOD.Core.MapComponent,MOD.Core.FootholdComponent,script.VeinTickSimulator",
+        "componentNames": "MOD.Core.MapComponent,MOD.Core.FootholdComponent,script.VeinTickSimulator,script.MineNoticeController",
         "jsonString": {
           "name": "farm01",
           "path": "/maps/farm01",
@@ -53,6 +53,10 @@
               "VeinDefinitionsJson": "[{\"id\":\"vein-stone-01\",\"cellX\":1,\"cellY\":0,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-01-marker\"},{\"id\":\"vein-stone-02\",\"cellX\":2,\"cellY\":0,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-02-marker\"},{\"id\":\"vein-stone-03\",\"cellX\":2,\"cellY\":-1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-03-marker\"},{\"id\":\"vein-stone-04\",\"cellX\":3,\"cellY\":-1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-04-marker\"}]",
               "WorkerStartsJson": "[{\"workerIndex\":1,\"cellX\":0,\"cellY\":0},{\"workerIndex\":2,\"cellX\":0,\"cellY\":1},{\"workerIndex\":3,\"cellX\":-1,\"cellY\":0},{\"workerIndex\":4,\"cellX\":-1,\"cellY\":1},{\"workerIndex\":5,\"cellX\":-2,\"cellY\":0}]",
               "SpecialVeinCandidatesJson": "[{\"id\":\"special-slot-01\",\"cellX\":1,\"cellY\":1,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-01-marker\"},{\"id\":\"special-slot-02\",\"cellX\":2,\"cellY\":1,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-02-marker\"},{\"id\":\"special-slot-03\",\"cellX\":3,\"cellY\":1,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-03-marker\"}]"
+            },
+            {
+              "@type": "script.MineNoticeController",
+              "Enable": true
             }
           ],
           "@version": 1
@@ -80,7 +84,7 @@
                 "r": 0.549019635,
                 "g": 0.34117648,
                 "b": 0.164705887,
-                "a": 1
+                "a": 1.0
               },
               "TemplateRUID": "794ad8421e2543d8a6d2c70307637450",
               "Type": 2,
@@ -152,22 +156,22 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 1000
+                "x": 0.0,
+                "y": 0.0,
+                "z": 1000.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -720,27 +724,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -751,28 +755,28 @@
               "FlipX": false,
               "FlipY": false,
               "OrderInLayer": 2,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "RenderSetting": 0,
               "SpriteRUID": "3e76c89ae8e7477ca871f5bbcd6f6f29",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "Enable": true
             },
             {
               "@type": "MOD.Core.MovementComponent",
-              "InputSpeed": 3,
+              "InputSpeed": 3.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.KinematicbodyComponent",
               "MoveVelocity": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "Enable": true
             },
@@ -813,27 +817,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -844,9 +848,11 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
@@ -882,27 +888,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 1,
-                "y": 0,
-                "z": 0
+                "x": 1.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -913,9 +919,11 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
@@ -951,27 +959,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 2,
-                "y": 0,
-                "z": 0
+                "x": 2.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -982,9 +990,11 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
@@ -1020,27 +1030,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 2,
-                "y": -1,
-                "z": 0
+                "x": 2.0,
+                "y": -1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1051,9 +1061,11 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
@@ -1089,27 +1101,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 3,
-                "y": -1,
-                "z": 0
+                "x": 3.0,
+                "y": -1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1120,9 +1132,11 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
@@ -1158,27 +1172,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 1,
-                "y": 1,
-                "z": 0
+                "x": 1.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1189,9 +1203,11 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
@@ -1227,27 +1243,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 2,
-                "y": 1,
-                "z": 0
+                "x": 2.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1258,9 +1274,11 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
@@ -1296,27 +1314,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 3,
-                "y": 1,
-                "z": 0
+                "x": 3.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1327,9 +1345,11 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",

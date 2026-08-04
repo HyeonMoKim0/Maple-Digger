@@ -25,6 +25,70 @@
 
 ## 기록
 
+### 2026-08-04 — D-14 수정: 광물 종류 아이콘 뱃지 (Phase 3.5)
+
+- `RootDesk/MyDesk/Models/Mine/OreBadge.model`(신규, `model://orebadge`)과 `VeinMarkerController`의 뱃지 로직으로 D-14를 해소했다. 돌·철·금이 이제 형태와 색으로 구분된다.
+- **런타임 자식 엔티티로 만든 이유.** `.map` 3개에 이미 배치된 marker가 35개다. 자식 뱃지를 파일에 심으려면 맵을 전부 수술해야 하고, Phase 2에서 이미 같은 이유로 38개 인스턴스에 `upsertComponent`를 돌린 적이 있다. 뱃지는 **서버 상태가 없는 표시 전용**이라 F5 §1의 책임 분리상 클라이언트 몫이고, `SpawnByModelId`를 클라이언트에서 부르면 **클라이언트 로컬 엔티티**가 만들어진다(workspace.md "Local Entity"). 부모 marker의 자식으로 붙이면 맵을 떠날 때 함께 사라진다.
+  - `SpawnByModelId`는 `.d.mlua`에 `@ExecSpace`가 없다 — 호출한 쪽에서 실행된다. 그래서 ClientOnly 컨트롤러에서 부를 수 있다.
+  - **앞으로 marker를 추가해도 맵 수술이 필요 없다.** 컨트롤러가 붙는 순간 뱃지도 따라온다.
+- 뱃지는 `OreType`으로만 결정되고 stage 변화에는 반응하지 않는다. **고갈(stage 0)에서도 유지**한다 — 무슨 광맥이었는지 알아야 회복을 기다린다(docs/21 §1.3). `OrderInLayer`는 부모(1)보다 위인 5.
+- **검증은 `gem_mine`에서 했다** — 세 광물이 한 화면에 있는 유일한 맵이다. marker 18개 중 17개(Depot 제외) 부착, 세 종류가 서로 다른 승인 RUID, stage 3·2·1·0에서 같은 뱃지 유지. 카메라를 금 광맥 옆으로 옮겨 **금은 노란 뱃지, 돌·철은 회색 계열**로 눈에 구분되는 것까지 스크린샷으로 확인했다.
+- **남은 판단**: 뱃지가 docs/21 §1.3의 "좌상단 또는 상단 중앙"이 아니라 우상단 쪽에 붙는다. 광맥을 가리지 않아 그대로 뒀다.
+
+### 2026-08-04 — `.ui` 컴포넌트 제거가 런타임에 소급되지 않는다 (파일 감사의 한계)
+
+- D-14를 고치다 **Phase 3에서 고쳤다고 보고했던 겹쳐 찍힘이 실제로는 살아 있었다**는 것을 발견했다. `UIBuilder.text()`가 붙인 레거시 `TextComponent`를 `removeComponent`로 지웠고 **`.ui` 파일에서는 정말로 사라졌는데**(`componentNames`와 원본 `@components` 배열 둘 다 확인), Maker에 이미 임포트된 엔티티에는 남아 HUD에 `Text`가 계속 찍히고 있었다.
+- **왜 놓쳤나 — 감사를 파일에서만 돌렸다.** 07-31의 "렌더러 2개 동시 보유 0건" 전수 확인은 `.ui`/`.map` 파일을 훑은 것이라 통과로 나왔다. 런타임에는 1건이 남아 있었다. **파일이 맞다는 것은 화면이 맞다는 뜻이 아니다.**
+- 런타임 감사를 도입했다 — Play 중 client 스크립트로 `/ui/<Group>`을 재귀 순회해 `TextComponent`와 `TextGUIRendererComponent`를 동시에 가진 엔티티를 센다. 수정 전 `scanned=139 dualRenderer=1`, 수정 후 `0`.
+- **해결은 컴포넌트가 아니라 엔티티를 새 UUID로 다시 만드는 것**이다(`.builder-work/d14b_respawn_special_text.cjs`). 컴포넌트 제거는 소급되지 않지만 엔티티 교체는 통한다. Maker 재시작으로도 풀릴지는 확인하지 않았다 — 새 UUID 쪽이 Maker 상태에 의존하지 않아 확실하다.
+- Phase 2의 "`.model` 수정이 배치된 인스턴스에 소급되지 않는다"와 **같은 계열의 세 번째 사례**다. MSW에서 "파일을 고쳤다"는 "런타임이 그렇게 돈다"를 의미하지 않는다.
+
+### 2026-08-04 — 3광산 전수 검증에서 D-14 발견 (광물 종류 구분 없음)
+
+- Phase 3까지의 검증이 전부 **`farm01` 한 맵**에서만 이뤄졌다는 것을 깨닫고 세 맵을 모두 돌렸다. `MineTransitionService:TransitionPlayerToMine`을 서버 컨텍스트에서 직접 불러 전환했다 — 해금 플래그를 건드리지 않으므로 프로필을 오염시키지 않는다.
+- **중요 이벤트 채널은 세 맵 모두 정상이다.** 맵 전환 때마다 `[MineNotice] ready map=<맵>`이 다시 찍히고 새 기준선을 잡는다. 컨트롤러를 `@Logic`이 아니라 맵 컴포넌트로 둔 판단이 여기서 값을 했다 — `@Logic`이었다면 이전 맵의 `NoticeId`를 들고 와 첫 알림을 삼켰을 것이다.
+- **F5-1은 부분 통과다.** stage 0~3을 강제로 흩어 놓고 클라이언트에서 실측한 결과 C206 매핑(`3=condition1 / 2=stand / 1=condition4 / 0=condition5`)과 정확히 일치했고 `Scale`도 0.7이었다. **그러나 돌·철·금이 같은 stage에서 완전히 같은 스프라이트였다.**
+
+  ```
+  stone:s3=0f44530d/c0   iron:s3=0f44530d/c0   gold:s3=0f44530d/c0
+  gold:s2=a0bd28cb/c0    gold:s1=2daf76de/c0   gold:s0=40c805ea/c0
+  ```
+
+- **D-14로 등록했다** (`docs/16` §18). C205가 정한 광물 종류 아이콘 뱃지(자식 엔티티)가 미구현이고 `VeinMarkerController`가 `OreType`을 아예 읽지 않는다. 실측에서 모든 marker의 자식 수가 **0**이었다. D5 §8 **V1** 위반이다.
+- **왜 6차 세션까지 안 드러났나 — 검증 맵이 결함을 숨겼다.** `farm01`은 돌 전용이라 "전부 같은 모양"이 정상으로 보인다. 두 종류 이상이 섞인 맵에서만 드러난다. **한 맵에서만 검증하면 그 맵의 데이터가 우연히 가려 주는 결함은 통과로 판정된다** — 앞으로 시각 계약은 가장 다양한 데이터를 가진 맵(`gem_mine`)에서 판정한다.
+- **Phase 표의 구멍이 근본 원인이다.** 뱃지는 Phase 2(광맥 stage 시각화)에도 Phase 4(일꾼 연출)에도 들어 있지 않았다. 어느 Phase의 몫인지 정해지지 않은 항목은 **아무도 하지 않는다.** Phase 3.5로 명시했다.
+- 자산은 이미 있다 — 아이콘 RUID 3종은 `docs/20` §0 승인 완료, 구현 형태는 `docs/21` §1.3. 서버가 `VeinMarker.OreType`을 이미 `@Sync`로 내려보내므로 **클라이언트만 고치면 된다.**
+- 검증 후 프로필은 baseline 그대로였다: `gold=0 stone=1 iron=0 goldOre=0 token=0 workers=1 lastMine=farm01 cart=0/20 rareColl=0/0/0 rareStore=0/0/0`.
+
+### 2026-07-31 — T-04 Phase 3: 중요 이벤트 채널과 특별 광맥 토스트
+
+> 브랜치 `feat/t04-mine-fx-p3` (Phase 1·2는 PR #2로 `main`에 병합 완료). Phase 4~6은 미착수다.
+
+- **중요 이벤트 채널을 `VeinTickSimulator`에 신설했다** — `NoticeId` / `NoticeKind` / `NoticeCellX` / `NoticeCellY` / `NoticeCount`, 그리고 상태 복구용 `ActiveSpecialCount` (F5 §2.2). 일꾼의 행동 scalar(`WorkerController.VisualEvent*`)와 **다른 채널**이다. 행동 이벤트는 놓쳐도 그만이지만 중요 이벤트는 "놓쳤다"는 사실 자체를 알아야 하므로 판정 규칙이 다르다.
+  - `EmitMineNotice`는 **`NoticeId`를 마지막에 쓴다.** 새 id를 본 클라이언트는 반드시 짝이 맞는 kind·cell·count를 함께 본다(Phase 1 `EmitVisualEvent`와 같은 규칙).
+  - **`NoticeId`는 `LoadLayout`에서 리셋하지 않는다.** `LoadLayout`은 맵 전환마다 다시 도는데 거기서 id를 되돌리면 클라이언트가 이미 본 id가 재사용돼 중복 제거가 깨진다. 초기화는 `OnBeginPlay` 한 곳뿐이고, `ActiveSpecialCount`만 `LoadLayout`에서 0으로 되돌린다.
+  - 스폰 알림은 **묶음당 1회**다(F5 §4 "스폰 묶음당 1회"). `TrySpawnSpecialVeins`가 2개를 만들어도 notice는 하나이고 대표 위치는 첫 광맥 셀이다.
+- **`MineNoticeController`(ClientOnly) 신설.** `@Logic`이 아니라 **맵 엔티티 컴포넌트**다 — `@Logic`은 맵 전환 후에도 살아남아 이전 광산의 기준선을 들고 다니므로 중복·누락이 생긴다(AGENTS "Script lifecycle").
+- **재접속 중복 방지는 3중 가드다** (F5-5).
+  1. **최초 관측**(`lastNoticeId < 0`)은 재생하지 않고 기준선만 잡는다 — 접속 전 이벤트의 소급 재생 방지.
+  2. **`OnBeginPlay` 후 1초**(`SyncSettleSeconds`) 안의 변화도 기준선만 옮긴다. `@Sync`는 맵 로드 직후 한 박자 늦게 도착하므로, 이 구간의 변화는 새 이벤트가 아니라 "뒤늦게 도착한 값"이다. 1번 가드만으로는 서버가 이미 id=1이었던 경우를 못 거른다.
+  3. **id가 2 이상 건너뛰면** 몰아서 재생하지 않고 건너뛴다. 대신 HUD의 `ActiveSpecialCount`가 현재 상태를 그대로 보여 준다 — F5 §2.2의 "놓치면 HUD 현재 상태로 복구 가능해야 한다"가 이 설계의 근거다.
+- **스폰 강조는 크기 펄스**(0.6초, 1.6배→1.0배)다. `docs/21` §5.1대로 회복·출현용 파티클 자산이 없어 별도 VFX를 넣지 않았다. 첫 페인트(`isFirstPaint`)에서는 펄스를 걸지 않는다 — 접속 시점에 이미 활성인 특별 광맥까지 강조하면 재접속마다 스폰 연출이 반복된다.
+- **HUD에 특별 광맥 행을 추가했다.** `MineHUD/Panel` 430→466px, `SpecialText` y=-332, `BtnInventory` -334→-370. **`MineSelectUI/BtnOpen`도 36px 함께 내렸다**(-466→-502) — 우측 버튼 스택은 HUD 패널 바로 아래 12px 간격에 붙어 있어 패널만 늘리면 겹친다(F5 §6.1 "상시 표시 요소는 겹치지 않는다").
+- **검증**: 빌드 오류 0건(baseline 16 Info 유지). `[VeinTick] notice id=1 kind=special_vein_spawn cell=(1,1) count=2 activeSpecial=2` → `[MineNotice] special_vein_spawn count=2 cell=(1,1)` **1회**, `[VeinMarkerFx] special spawn emphasis` 2개 marker. 토스트 "특별 광맥 출현! 2곳 · 위치 (1, 1)"을 스크린샷으로 확인했다. **id를 서버에서 1→6으로 강제로 건너뛰자 `[MineNotice] skipped stale notices from=1 to=6`이 찍히고 토스트는 뜨지 않았다** — F5-5 경로의 직접 증거다. 바인딩 감사 114건 실패 0건.
+- **새로 알아낸 함정 2개**
+  - **`UIBuilder.text()`는 레거시 `MOD.Core.TextComponent`를 함께 붙인다.** 기존 HUD 행은 `TextGUIRendererComponent` 하나만 갖는데, 새 행에는 렌더러가 둘이 생겨 **같은 자리에 문자열 두 개가 겹쳐 찍혔다.** 컨트롤러가 갱신하는 쪽은 `TextGUIRendererComponent`뿐이라 나머지 하나는 생성 시점 문자열("활성 0곳")에 멈춘 채 남는다. 좌표·텍스트 덤프는 정상으로 보이므로 **스크린샷 없이는 잡히지 않는다.** 새 텍스트 행을 만들면 `removeComponent(..., "MOD.Core.TextComponent")`로 정리하고, 기존 행과 `componentNames`를 대조한다.
+  - **UIBuilder 검증기가 엔진 26.7과 어긋나 `.ui` 쓰기를 전부 막았다** — 아래 별도 항목.
+
+### 2026-07-31 — UIBuilder `U002`가 모든 `.ui` 쓰기를 차단 (도구 수정)
+
+- Phase 3의 HUD 작업에서 `UIBuilder.write()`가 `U002: ...TextGUIRendererComponent.Font must be int32. Got "Default"`로 **모든 `.ui` 파일에서 실패**했다. `validate()`를 돌려 보니 `MineHUD` 9건 · `MineSelectUI` 40건 · `MineInventoryUI` 9건 · `BlockProgramUI` 23건 · `AccountRecoveryUI` 4건이었다. 즉 **T-01 이후 `.ui`를 한 번도 못 고치는 상태였다.**
+- 원인은 파일이 아니라 **도구**다. `Environment/NativeScripts/Component/TextGUIRendererComponent.d.mlua`가 `property string Font = "Default"` · `property float FontSize = 20`으로 선언하는데, 스킬의 `msw_ui_builder.cjs`가 두 필드를 `INT32_COMPONENT_FIELDS`에 넣어 정수를 강제하고 있었다. 엔진 26.7 재저장으로 파일에 `"Default"` / `""` / `"0"` 같은 문자열이 들어오면서 드러났다.
+- **파일 쪽을 고치면 안 된다.** `Font`를 정수로 바꾸면 전 행의 글꼴이 바뀌고 다음 Maker 저장에서 되돌아간다. `.d.mlua`가 기준이므로 **검증기에서 `Font`를 빼고 `FontSize`를 실수 필드로 옮겼다.**
+- 수정 대상은 `.claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs`였고 도구 전용 커밋(`edc346e`)으로 분리했다.
+- **후속 (2026-08-04): 스킬 플러그인 업데이트가 상위에서 같은 문제를 제대로 고쳤다.** 갱신된 빌더는 `Font`/`FontSize`가 여전히 정수 목록에 있는데도 8개 UI 파일 전부 `validate()` 오류 0건이다 — 검사 방식 자체가 바뀌었다. **`edc346e`의 2줄 패치는 이제 불필요하다.** 도구 문제를 로컬에서 우회했을 때는 상위가 고쳤는지 주기적으로 확인해야 패치가 유령으로 남지 않는다.
+- **앞으로 같은 종류를 판별하는 법**: `U002`/`U003`/`U004`가 건드리지도 않은 엔티티에서 무더기로 나오면 파일이 아니라 검증기를 의심한다. 근거는 항상 `Environment/NativeScripts/Component/*.d.mlua`의 `property <타입>` 선언이다.
+
 ### 2026-07-31 — 엔진 26.7 재저장분 정리와 GroupOrder 복구
 
 - 4차 세션 이후 `ui/` 8개와 `map/farm01.map`이 **미커밋 상태로 남아 있었다.** 파일 mtime이 전부 `2026-07-30 08:27:14` 1초 안이고 내장 `CoreVersion`이 `26.5.0.0 → 26.7.0.0`으로 바뀐 것으로 보아, Maker가 엔진 업그레이드 후 일괄 재저장한 결과다. `Environment/config`도 `26.7.0.0`이므로 버전 자체는 정상이다.
