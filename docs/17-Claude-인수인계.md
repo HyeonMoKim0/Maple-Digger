@@ -52,8 +52,8 @@
 | 1 | 서버 동기화 표면 (`VeinMarker` `@Sync` · `WorkerController` `VisualEvent*`) | ✅ `3d977a1` (`main`) |
 | 2 | 광맥 stage 시각화 (`VeinMarkerController` · 모델 · 맵 38개) | ✅ `dc5ed1f` (`main`) |
 | 3 | 특별 광맥 연출 + 토스트 (중요 이벤트 채널) | ✅ `feat/t04-mine-fx-p3` |
-| **3.5** | **광물 종류 아이콘 뱃지 (D-14)** — Phase 표에서 빠져 있던 항목 | ⬜ **다음** |
-| 4 | 일꾼 연출 (선택 링 · 파편 · Depot 강조 · **아바타 교체**) | ⬜ |
+| 3.5 | 광물 종류 아이콘 뱃지 (D-14) — Phase 표에서 빠져 있던 항목 | ✅ `feat/t04-mine-fx-p3` |
+| **4** | **일꾼 연출** (선택 링 · 파편 · Depot 강조 · **아바타 교체**) | ⬜ **다음** |
 | 5 | 사운드 7종 배선 | ⬜ |
 | 6 | 검증·기록 (F5-1~F5-6, `docs/16`, As-built) | ⬜ |
 
@@ -63,7 +63,9 @@
 - 클라이언트: `MineNoticeController:PlayNotice`에 `elseif kind == "rare_ore_unload"` 분기를 더한다. 모르는 kind는 로그만 남기고 무시하므로 **서버를 먼저 붙여도 클라이언트가 깨지지 않는다.**
 - 중복 방지 3중 가드(최초 관측 / 1초 settle / id 점프 스킵)는 kind와 무관하게 이미 동작한다. 새 kind에 다시 만들지 말 것.
 
-**Phase 3.5 착수 지점 (D-14).** `VeinMarkerController`는 `ReserveStage`만 보고 RUID를 고르며 **`OreType`을 읽지 않는다.** 서버는 이미 `VeinMarker.OreType`을 `@Sync`로 내려보내고 있으므로 **클라이언트만 고치면 된다.** 자산은 `docs/20` §0 승인 아이콘 3종, 구현 형태는 `docs/21` §1.3(자식 뱃지 엔티티)이다. 판정 근거는 D5 §8 V1이고, 검증은 **`gem_mine`에서 해야 한다** — 세 종류가 한 화면에 있는 유일한 맵이다. `farm01`은 돌 전용이라 통과처럼 보인다.
+**Phase 3.5에서 만들어 둔 것 (D-14 해소).** `OreBadge.model`(신규) + `VeinMarkerController`가 marker의 자식으로 **클라이언트 로컬 엔티티**를 스폰해 광물 아이콘을 세운다. 맵 파일은 건드리지 않았다 — 이미 배치된 marker 35개에 자식을 심는 대신 런타임에 만든다. **앞으로 marker를 추가해도 맵 수술이 필요 없다.**
+
+> **시각 계약은 `gem_mine`에서 판정한다.** 세 광물이 한 화면에 있는 유일한 맵이다. `farm01`은 돌 전용이라 어떤 종류 구분 결함도 통과처럼 보인다 — D-14가 정확히 그렇게 숨어 있었다.
 
 **Phase 4 주의.** 일꾼이 아직 **임시 몬스터 스프라이트**다. `docs/21` §4가 아바타 기반(`cap` 안전제일 모자 / `coat` 화이트루즈 멜빵 / `pants` 밀라노청바지 / `weapon` 황금 곡괭이)으로 바꾸도록 정해 뒀다. `msw-avatar` 스킬을 먼저 읽는다. 그리고 **D9 §5.2 권고 3** — 일꾼 2 구매 직후 프로그램 복사 시 위치 경고를 노출하는 것은 T-05 몫이지만, 일꾼 연출과 함께 보면 좋다.
 
@@ -99,11 +101,7 @@ git status --short -- docs RootDesk ui map tools Archive
 
 ### 0.5 화면 결함 현황
 
-**미해결 1건 — D-14.** `docs/16` §18에 있다.
-
-> **D-14 (2026-08-04)** — 같은 stage의 **돌·철·금 광맥이 픽셀 단위로 동일**하다. C205가 정한 광물 종류 **아이콘 뱃지(자식 엔티티)** 가 미구현이고, `VeinMarkerController`가 `OreType`을 아예 읽지 않는다. D5 §8 **V1**("광물 종류와 네 상태가 색 외의 형태로 구분") 위반이다.
->
-> **`farm01`이 돌 전용이라 6차 세션까지 안 드러났다.** 두 종류 이상이 섞인 `deep_mine`·`gem_mine`에서만 보인다. T-04 Phase 표에 이 항목이 없어 **Phase 2와 Phase 4 사이로 빠진 것**이 근본 원인이다. 아이콘 RUID 3종은 `docs/20` §0에 승인돼 있고 구현 형태는 `docs/21` §1.3에 있다.
+**미해결 0건.** D-14는 2026-08-04에 수정·검증 완료했다 (`docs/16` §18.1) — 광물 종류 아이콘 뱃지를 `VeinMarkerController`가 런타임 자식 엔티티로 세운다. `gem_mine`에서 돌·철·금이 눈으로 구분되는 것까지 확인했다.
 
 **D-1 ~ D-12는 전량 수정·검증 완료 (2026-07-30).** 각 건의 원인과 검증 기록은 `docs/16` §11~§16에 있다.
 
@@ -115,7 +113,7 @@ git status --short -- docs RootDesk ui map tools Archive
 
 ## 1. `.ui` 작업 시 반드시 지킬 것
 
-**세션이 바뀌어도 유효한 규칙이다.** 아래 9개는 전부 이 프로젝트에서 실제로 터진 사고에서 나왔다.
+**세션이 바뀌어도 유효한 규칙이다.** 아래 10개는 전부 이 프로젝트에서 실제로 터진 사고에서 나왔다.
 
 > **먼저 읽을 것 — 주의사항 8은 새 작업 환경에서 `.ui` 작업을 통째로 막는다.** `.ui`를 만질 계획이면 8번부터 확인하고 시작한다.
 
@@ -143,6 +141,11 @@ node tools/audit_bindings.cjs
 9. **새 텍스트 행을 만들면 `MOD.Core.TextComponent`를 지운다.** `UIBuilder.text()`는 레거시 `TextComponent`와 `TextGUIRendererComponent`를 **둘 다** 붙이는데, 기존 HUD 행은 후자 하나만 갖는다. 렌더러가 둘이면 **같은 자리에 문자열 두 개가 겹쳐 찍히고**, 컨트롤러가 갱신하는 쪽은 하나뿐이라 나머지는 생성 시점 문자열에 멈춘다.
 
    **좌표·텍스트 덤프(`maker_execute_script`)로는 안 잡힌다** — 컴포넌트 하나만 조회하면 정상으로 보인다. **스크린샷에서만 드러난다.** 만든 뒤 `removeComponent(path, "MOD.Core.TextComponent")`하고, 기존 행과 `componentNames`를 대조해 같은지 확인한다.
+10. **`.ui` 컴포넌트 제거는 Maker에 이미 임포트된 엔티티에 소급되지 않는다.** 파일에서는 지워졌는데(`componentNames`·원본 `@components` 둘 다 확인) **런타임에는 남아 화면에 계속 찍힌다.** 2026-08-04에 실제로 났다 — 9번대로 지운 `TextComponent`가 런타임에 살아남아 HUD에 `Text`가 찍히고 있었다(`docs/16` §19).
+
+    **그래서 파일 감사는 런타임을 증명하지 못한다.** 겹쳐 찍힘·유령 컴포넌트는 Play 중 client 스크립트로 `/ui/<Group>`을 재귀 순회해 세야 한다. 수정 전 `dualRenderer=1`, 수정 후 `0`.
+
+    **해결은 컴포넌트가 아니라 엔티티를 새로 만드는 것이다** — `UIBuilder.remove()` → 같은 경로로 재생성(새 UUID) → `write(..., { bind })`로 `.mlua` UUID 재주입. `.builder-work/d14b_respawn_special_text.cjs`가 그 예다.
 
 **사용자 직접 검수 현황** (`mouse_input`이 `ButtonComponent`를 클릭하지 못함, `docs/16` §9):
 

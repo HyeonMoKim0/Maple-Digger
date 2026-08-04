@@ -181,6 +181,11 @@
                 "x": -260,
                 "y": -24
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -197,6 +202,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1102,6 +1108,11 @@
                 "x": 16,
                 "y": -370
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -1118,6 +1129,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2054,7 +2066,7 @@
         }
       },
       {
-        "id": "adf778e4-584c-408b-acf3-f4d4b56f49ac",
+        "id": "93a12307-155f-4923-bf63-ce8398e6024c",
         "path": "/ui/MineHUD/Panel/SpecialText",
         "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.TextGUIRendererComponent",
         "jsonString": {
@@ -2064,17 +2076,17 @@
           "enable": true,
           "visible": true,
           "localize": true,
-          "displayOrder": 9,
+          "displayOrder": 10,
           "pathConstraints": "////",
           "revision": 0,
           "origin": {
             "type": "Model",
-            "entry_id": "UIText",
+            "entry_id": "UITextGUIRenderer",
             "sub_entity_id": null,
             "root_entity_id": null,
             "replaced_model_id": null
           },
-          "modelId": "uitext",
+          "modelId": "uitextguirenderer",
           "@components": [
             {
               "@type": "MOD.Core.UITransformComponent",
@@ -2154,14 +2166,13 @@
               "OrderInLayer": 0,
               "OverrideSorting": false,
               "PlayRate": 1,
-              "PreserveAspect": false,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
                 "a": 0
               },
               "DropShadow": false,

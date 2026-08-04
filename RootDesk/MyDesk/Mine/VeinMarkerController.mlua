@@ -31,6 +31,23 @@ property number DepotScale = 1.0
 property number SpawnPulseSeconds = 0.6
 property number SpawnPulseScale = 1.6
 
+-- D-14: 광물 종류 아이콘 뱃지 (C205 방안 C / docs/21 §1.3).
+-- stage 는 부모 스프라이트가, 광물 종류는 이 뱃지가 담당한다. 색조로만 구분하는
+-- 방안은 D5 §8 V1("색 외의 형태로 구분")을 어겨 기각됐다.
+-- 아이콘 RUID 3종은 docs/20 §0 승인값이며 전부 sprite 타입이라 thumbnail:// 을 붙이지 않는다.
+property string BadgeModelId = "orebadge"
+property string StoneBadgeRuid = "184829e852ab4810898f5bb72b9db8a3"
+property string IronBadgeRuid = "79f438d0427142f09f979b58e982b1bd"
+property string GoldBadgeRuid = "658807fea5a24a0299a2b909c36b3025"
+
+-- 뱃지는 광맥 스프라이트 상단에 얹는다. 부모 로컬 좌표이며 부모 Scale 이 곱해진다.
+-- 부유석(0.8x1.44)과 신비한 광석(1.08x0.80)은 높이가 달라 kind 별로 값이 다르다.
+property number BadgeHeightNormal = 0.62
+property number BadgeHeightSpecial = 0.45
+-- 부모가 0.7 로 축소돼 있어 뱃지도 함께 줄어든다. 원본 28~32px(0.28~0.32 unit)이
+-- 0.3 unit 내외로 보이도록 되돌린다 (docs/21 §1.3).
+property number BadgeScale = 1.4
+
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- Caches the sibling marker and paints the first frame.
@@ -41,11 +58,85 @@ method void OnBeginPlay()
     self._T.pulseElapsed = -1
     self._T.wasActive = false
     self._T.firstPaint = true
+    self._T.badge = nil
     if self._T.marker == nil then
         log_error("[VeinMarkerFx] VeinMarker missing on " .. self.Entity.Name)
         return
     end
+    self:EnsureBadge()
     self:Repaint()
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 뱃지는 클라이언트 로컬 엔티티라 서버가 치워 주지 않는다. 맵을 떠날 때
+    -- 직접 지운다 (F5 §3 "임시 파티클·타이머·핸들은 map unload 에서 정리").
+    if self._T.badge ~= nil and isvalid(self._T.badge) then
+        self._T.badge:Destroy()
+    end
+    self._T.badge = nil
+end
+
+@ExecSpace("ClientOnly")
+method void EnsureBadge()
+    -- Creates the client-local ore-type badge once, as a child of this marker.
+    -- 맵 파일을 건드리지 않으려고 런타임 생성을 택했다 — 이미 배치된 marker 35개에
+    -- 자식 엔티티를 심으려면 .map 3개를 모두 수술해야 한다.
+    local marker = self._T.marker
+    if marker == nil or self._T.badge ~= nil then return end
+    -- Depot 은 광물 종류가 없다.
+    if marker.MarkerKind == "depot" then return end
+
+    local height = self.BadgeHeightNormal
+    if marker.MarkerKind == "special" then height = self.BadgeHeightSpecial end
+
+    local badge = _SpawnService:SpawnByModelId(self.BadgeModelId, self.Entity.Name .. "_Badge", Vector3(0, height, 0), self.Entity)
+    if badge == nil then
+        -- 모델이 없으면 조용히 nil 이 온다(platform.md §8). 뱃지는 표시 전용이라
+        -- 여기서 멈추지 않고 stage 표시만 계속한다.
+        log_error("[VeinMarkerFx] badge spawn failed model=" .. self.BadgeModelId .. " on " .. self.Entity.Name)
+        return
+    end
+
+    -- 부모 자식 좌표는 부모 로컬이다. 스폰 인자만 믿지 않고 명시적으로 다시 쓴다.
+    badge.TransformComponent.Position = Vector3(0, height, 0)
+    badge.TransformComponent.Scale = Vector3(self.BadgeScale, self.BadgeScale, 1)
+    self._T.badge = badge
+    log("[VeinMarkerFx] badge attached " .. self.Entity.Name .. " kind=" .. marker.MarkerKind)
+end
+
+@ExecSpace("ClientOnly")
+method void UpdateBadge(VeinMarker marker, boolean parentVisible)
+    -- Shows the ore icon whenever the marker itself is visible.
+    -- 고갈(stage 0)에서도 뱃지는 유지한다 — 무슨 광맥이었는지 알아야 회복을
+    -- 기다릴 수 있다 (docs/21 §1.3).
+    local badge = self._T.badge
+    if badge == nil then return end
+    if not isvalid(badge) then
+        self._T.badge = nil
+        return
+    end
+
+    local renderer = badge.SpriteRendererComponent
+    if renderer == nil then return end
+
+    local ruid = self:BadgeRuid(marker.OreType)
+    if ruid == "" or not parentVisible then
+        renderer.Enable = false
+        return
+    end
+    renderer.Enable = true
+    renderer.SpriteRUID = ruid
+end
+
+@ExecSpace("ClientOnly")
+method string BadgeRuid(string oreType)
+    -- Maps the serialized ore key to its approved icon (docs/20 §0).
+    -- 희귀 광물은 광맥 종류가 아니라 채굴 결과이므로 여기 오지 않는다.
+    if oreType == "stone" then return self.StoneBadgeRuid end
+    if oreType == "iron" then return self.IronBadgeRuid end
+    if oreType == "gold" then return self.GoldBadgeRuid end
+    return ""
 end
 
 @ExecSpace("ClientOnly")
@@ -121,6 +212,9 @@ method void Repaint()
     else
         ruid = self:StageRuid(marker.ReserveStage)
     end
+
+    -- 뱃지는 부모가 숨을 때 함께 숨어야 하므로 아래 조기 return 보다 먼저 부른다.
+    self:UpdateBadge(marker, ruid ~= "")
 
     if ruid == "" then
         -- 빈 RUID 를 넣으면 아무 오류 없이 사라진다(platform.md §7). 그래서
