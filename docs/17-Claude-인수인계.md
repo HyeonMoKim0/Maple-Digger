@@ -1,31 +1,41 @@
 # Claude 작업 인수인계
 
-> 기준일: 2026-07-31 (**6차 세션** 종료 시점)
+> 기준일: 2026-08-04 (**8차 세션** 종료 시점)
 > 대상: Maple-Digger MSW 프로젝트를 이어 개발할 Claude 작업자
 > **세션별 상세 기록은 [`Archive/As-built.md`](../Archive/As-built.md)에 있다.** 이 문서는 "다음에 무엇을 할지"에 집중하며, 최근 1개 세션 요약만 유지한다.
 
 ## 0. 이어가기 지점 — 여기부터 읽는다
 
-### 0.0 최근 세션 요약 (2026-07-31, 7차) — 가장 최신
+### 0.0 최근 세션 요약 (2026-08-04, 8차) — 가장 최신
 
-**⚠️ 진행 중인 브랜치가 있다: `feat/t04-mine-fx-p3`.** Phase 1·2는 **PR #2로 `main`에 병합 완료**됐고, 이 브랜치가 **Phase 3**을 담고 있다. Phase 4~6이 남았다. 아래 §0.1-A가 이어가는 지점이다.
+**⚠️ 진행 중인 브랜치: `feat/t04-mine-fx-p4`.** Phase 1~3.5는 **`main`에 병합 완료**(PR #2·#3)이고, 이 브랜치가 **Phase 4의 전반부**를 담고 있다. 아래 §0.1-A가 이어가는 지점이다.
 
-| 범위 | 내용 |
+| 범위 | 상태 |
 |---|---|
-| **T-04 Phase 3** (브랜치 `feat/t04-mine-fx-p3`) | 중요 이벤트 채널 신설 — `VeinTickSimulator`에 `NoticeId`/`NoticeKind`/`NoticeCell*`/`NoticeCount` + 상태 복구용 `ActiveSpecialCount`. `MineNoticeController`(ClientOnly, 맵 컴포넌트) 신설 → **특별 광맥 출현 토스트**. 스폰 강조 펄스, HUD 특별 광맥 행 |
-| **도구 차단 해소** | UIBuilder 검증기가 `Font`를 int32로 강제해 **모든 `.ui` 쓰기가 막혀 있었다.** 엔진 26.7은 `Font`를 문자열로 쓴다 → 검증기 수정. **`.claude/` 범위라 커밋에 없다. 새 환경에서 재현된다** (§1 주의사항 8) |
-| **T-04 Phase 1** (`3d977a1`, `main`) | 서버 동기화 표면 — `VeinMarker`에 `ReserveStage`/`OreType`/`IsActive`/`VisualRevision` `@Sync`, `WorkerController`에 `VisualEvent*` |
-| **T-04 Phase 2** (`dc5ed1f`, `main`) | 광맥 stage 시각화 — `VeinMarkerController`(ClientOnly), `MineMarker.model`, 맵 인스턴스 38개. **광맥과 Depot이 실제로 화면에 보인다** |
-| 기획 보강 **D9** (`91e6d30`) | `docs/22` 밸런스 검증 — 광맥 공급 상한 정량화, 숙련도별 처리량, 조정 권고 6건. 도구 `tools/balance_sim.cjs` |
-| 기획 보강 **F8** (`c943ca0`) | `docs/23` 서버 거절 사유 카탈로그 — 전수 목록에 안정 코드 부여, 신규 화면 계약 5개. **문구 불일치 3건 발견** |
-| 결정 카드 | **C207** — P4의 "10~15분"을 **첫 접속 총 경과 시간**으로 확정. 경제 수치는 조정하지 않는다 |
+| **T-04 Phase 3** (`main`) | 중요 이벤트 채널 — `VeinTickSimulator`에 `NoticeId`/`NoticeKind`/`NoticeCell*`/`NoticeCount` + 상태 복구용 `ActiveSpecialCount`. `MineNoticeController`(ClientOnly, 맵 컴포넌트) → **특별 광맥 출현 토스트**. 스폰 강조 펄스, HUD 특별 광맥 행 |
+| **T-04 Phase 3.5** (`main`) | **D-14** — 돌·철·금이 화면에서 구분되지 않던 결함. `OreBadge` 모델 + `VeinMarkerController`가 marker의 자식으로 아이콘 뱃지를 세운다 |
+| **T-04 Phase 4 전반** (브랜치 `feat/t04-mine-fx-p4`) | 일꾼 연출 — **선택 링 · 채굴 먼지 · Depot 강조**. `WorkerVisualController`(ClientOnly) 신설. Phase 1이 만든 `VisualEvent*` 채널을 처음으로 소비한다 |
+| 결정 카드 | **C208** — F5-3의 "지도 위치"를 **셀 좌표 표기**로 판정. 미니맵은 만들지 않는다 |
+| 자산 판정 | `docs/21` §5 — 채굴 파편 후보 2종 **기각**, **흰 먼지 퍼짐(`78ea5621`)으로 확정** |
 
-**반복하면 안 되는 함정 4개**
+**오너 검수에서 나온 지적과 반영** (2026-08-04)
+
+| 지적 | 반영 |
+|---|---|
+| 선택 링 | 이상 없음 |
+| "채굴 파편이 안 보임 — 그림자가 생기는 느낌" | 자산이 **어두운 얼룩**이었다. 흰 먼지로 교체 |
+| "Depot은 커진 상태에서 작아진 것만 보임" | 펄스가 최대 크기에서 시작해 줄기만 했다. `sin` 곡선으로 교체 → **해결 확인** |
+| "파편은 광석 위치 중심에 발생할 것" | 일꾼 자식 → **맵 자식 + `VisualEventCellX/Y`**로 광맥 셀에 배치 |
+
+**반복하면 안 되는 함정 7개**
 
 1. **`.codeblock` 캐시가 한 사이클 지연된다.** 메서드 시그니처를 바꾸면 첫 `refresh`의 빌드 로그가 **옛 시그니처로 오류**를 낸다. 호출하는 쪽 `.mlua`를 다시 저장해 codeblock 재생성을 유도하면 해소된다. **빌드 로그 타임스탬프가 이전과 같으면 재빌드가 안 돈 것**이므로 로그를 믿기 전에 확인한다.
-2. **`.model` 수정은 이미 배치된 맵 인스턴스에 소급되지 않는다.** 맵 엔티티의 `componentNames`가 로드 시 기준이기 때문이다(builder-protocol-map §1.4). `placeModel`로 다시 놓으면 인스턴스별 값(`MarkerId` 등)이 날아가므로 **`upsertComponent`로 더한다.**
-3. **`UIBuilder.text()`는 레거시 `MOD.Core.TextComponent`를 함께 붙인다.** 기존 HUD 행은 `TextGUIRendererComponent` 하나만 갖는다. 그대로 두면 **문자열 두 개가 같은 자리에 겹쳐 찍히고** 컨트롤러가 갱신하지 않는 쪽은 생성 시점 문자열에 멈춘다. **좌표·텍스트 덤프로는 안 잡히고 스크린샷에서만 보인다.** 새 텍스트 행은 만든 뒤 `removeComponent(..., "MOD.Core.TextComponent")`하고 기존 행과 `componentNames`를 대조한다.
-4. **UIBuilder 검증기와 엔진 26.7이 어긋나면 `.ui` 쓰기가 통째로 막힌다** (§1 주의사항 8).
+2. **`.model` 수정은 이미 배치된 맵 인스턴스에 소급되지 않는다.** 맵 엔티티의 `componentNames`가 로드 시 기준이기 때문이다. `placeModel`로 다시 놓으면 인스턴스별 값이 날아가므로 **`upsertComponent`로 더한다.** 런타임 스폰 엔티티(일꾼 2~5)는 모델 수정이 따라오지만 **맵에 배치된 것(`Worker01`)은 안 따라온다.**
+3. **`UIBuilder.text()`는 레거시 `MOD.Core.TextComponent`를 함께 붙인다** (§1 주의사항 9).
+4. **`.ui` 컴포넌트 제거는 Maker에 이미 임포트된 엔티티에 소급되지 않는다** (§1 주의사항 10). 파일은 깨끗한데 런타임에 남아 화면에 찍힌다.
+5. **자산은 검색 결과 설명을 믿지 말고 월드에 띄워 보고 고른다.** 이번에 `docs/21` §5의 "돌 파편"이 실제로는 어두운 얼룩, "노란 스파크"가 보라색 광석이었다. **C206(부유석 condition)과 같은 종류의 오류가 두 번째로 났다.** → **절차를 `msw-asset-verify` 스킬로 만들어 뒀다** (2026-08-04). 새 RUID를 처음 넣기 전과 승인표의 승인란이 빈 후보를 쓸 때 이 스킬을 부른다.
+6. **한 맵에서만 검증하면 그 맵의 데이터가 가려 주는 결함은 통과로 나온다.** D-14는 `farm01`이 돌 전용이라 6차 세션까지 숨어 있었다. **시각 계약은 `gem_mine`에서 판정한다** — 세 광물이 한 화면에 있는 유일한 맵이다.
+7. **프로필 원복은 화폐만으로 부족하다.** 채굴 루프를 오래 돌리면 **1% 확률로 희귀 광물이 떨어져 컬렉션이 오르고**, 그러면 수레 용량 보너스가 남아 `cart=0/21`이 된다. §0.2의 원복 목록을 그대로 쓸 것.
 
 > 5차 이전 세션의 상세는 `Archive/As-built.md`의 날짜별 기록을 본다. 요약하면 — **2차**(07-29) 희귀 광물 서버 규칙 전량 검증, **3차**(07-30) F5 §5·§6 계약 신설, **4차**(07-30) 화면 결함 D-1~D-12 전량 수정 + `docs/18`~`21` 신설, **5차**(07-31) `GroupOrder` 회귀 복구(D-13) + T-04 자산 확정(C206).
 
@@ -37,15 +47,31 @@
 
 | 순위 | 할 일 | 상태 | 비고 |
 |:-:|---|---|---|
-| **1** | **T-04 Phase 4~6** — 브랜치 `feat/t04-mine-fx-p3` | **진행 중** | Phase 1~3 완료. 아래 §0.1-A가 이어가는 지점이다 |
+| **1** | **T-04 Phase 4 잔여 → 5~6** — 브랜치 `feat/t04-mine-fx-p4` | **진행 중** | Phase 1~3.5 완료 + Phase 4 전반부 완료. 아래 §0.1-A가 이어가는 지점이다 |
 | 2 | **T-02 → T-03 · 맵 강화** | 대기 | T-02가 프로필을 **v8로 올린다.** 다른 티켓과 동시 진행 금지. 착수 전 `docs/22`(D9) §7과 `docs/23`(F8) §6.1을 읽는다 |
 | 3 | T-05 / T-06 | 대기 | 서로 독립, 병렬 가능. `docs/23` §6.2·§6.3에 추가할 거절 경로가 잡혀 있다 |
 | 4 | T-07 · 튜토리얼 | 대기 | 선행 T-02(v8에 `tutorial` 필드) + T-05(보상의 기본 프로그램) |
 | 5 | **F9 성능·부하 기준** | 대기 | **T-04를 실제로 돌려 보며 쓰는 것이 정확하다.** 지금 쓰면 근거 없는 숫자만 박는다 |
 
-### 0.1-A T-04 이어가기 — Phase 4~6
+### 0.1-A T-04 이어가기 — Phase 4 잔여 → 5~6
 
-**브랜치 `feat/t04-mine-fx-p3`에서 이어간다.** 자산 RUID는 전부 [`21-연출-자산-승인표.md`](21-연출-자산-승인표.md) **§7.1**에 있다 — **이 문서에 RUID를 복사하지 말 것.**
+**브랜치 `feat/t04-mine-fx-p4`에서 이어간다.** 자산 RUID는 전부 [`21-연출-자산-승인표.md`](21-연출-자산-승인표.md) **§7.1**에 있다 — **이 문서에 RUID를 복사하지 말 것.** (§5의 채굴 파편은 2026-08-04에 흰 먼지로 교체됐다. §7.1보다 §5가 최신이다.)
+
+**Phase 4 는 9차에서 완료됐다. 다음은 Phase 5(사운드 7종 배선)다.**
+
+9차에 확정된 것 — 아바타(임시 몬스터 스프라이트 → MSW 아바타, 4슬롯 + 기본 body) · `pants` 오너 지정 `e6ff0ea6…` · **채굴 먼지** `de538ed7…`(뭉게뭉게 흰 먼지구름) `ShardScale` **1.3** **광물 정중앙**(`HitFxOffsetY` 0) · **`rare_ore_unload` 중요 이벤트**.
+
+**Phase 4 에서 열어 둔 판단 하나**: `ShardOrderInLayer` 6 이 일꾼(2)보다 앞이라 **먼지가 안전모를 덮는다.** 0.3초짜리라 실사용 문제인지는 오너 판단이다. 뒤로 보내려면 일꾼(2)과 광맥 marker(1) 사이에 값이 없으므로 **일꾼 쪽을 올리는 편**이 낫다.
+
+> **`rare_ore_unload` 를 넣으며 알게 된 채널 제약** — 중요 이벤트는 **한 틱에 2건 이상 내면 안 된다.** `MineNoticeController` 가 `noticeId > lastNoticeId + 1` 이면 "놓친 이벤트"로 보고 **재생을 통째로 건너뛰기** 때문이다(F5-5 중복 방지). 그래서 알림은 `AddToDepot`(광물 종류마다 호출됨)이 아니라 **`DoUnload` 에서 하역 1회당 1건**으로 낸다. 새 kind 를 추가할 때도 같은 규칙을 지킬 것 — 루프 안에서 `EmitMineNotice` 를 부르면 조용히 사라진다.
+
+> **⚠️ 이펙트 자산을 다시 고를 일이 생기면 `docs/21` §5.0 을 먼저 읽는다.** 요약하면 — **텍스트 검색(`searchResources`)은 시각 이펙트에 대해 작동하지 않는다.** 39건 전부 이름이 비고 점수가 0이라 걸러낼 근거가 없고, "먼지"로 나무 상자·검은 연기가 잡힌다. **`findSimilarResources` 에 이미 옳다고 판정된 연출을 씨앗으로** 넣는 것이 유일하게 작동한 방법이다.
+>
+> **그리고 pivot 이 중심이 아닌 스프라이트가 있다** (§5.0.1). 밀리는 양이 `Scale` 에 비례하므로 상수 보정으로는 크기를 바꿀 때마다 어긋난다. `ShardPivotOffsetX` 가 그 보정값이고 **자산을 바꾸면 다시 재야 한다.**
+
+> **먼지 검증 요령 (9차에서 두 번 헛수고했다).** 0.3초는 스크린샷 왕복(1~4초)에 절대 안 잡힌다. Play 중 클라이언트에서 `WorkerVisualController.ShardSeconds`를 크게 올려 두고 캐면 잡힌다 — **파일을 건드리지 않고 `stop`하면 원복된다.** 그리고 **`shard on`/`off` 로그 타임스탬프와 스크린샷 시각을 대조**할 것. 9차에 수명 밖에서 찍은 스크린샷을 "먼지가 안 보인다"로 오독할 뻔했다. 또 광맥 결정(청록)과 먼지(흰색)가 화면에서 헷갈리므로, 판정할 때는 `VeinMarker` 스프라이트를 잠시 꺼서 **먼지만 남긴 화면**으로 본다(단 `VeinMarkerController.Repaint` 가 매 프레임 되돌리므로 끈 직후에 찍는다).
+>
+> **위치·크기는 눈으로 픽셀을 재지 말고 좌표를 찍어 확인한다.** 9차에 화면만 보고 "밀렸다/안 밀렸다"를 두 번 뒤집었다. `shard.TransformComponent.Position` 과 `tilemap:ToWorldPosition(cell)` 을 함께 로그로 남기면 한 번에 끝난다.
 
 | Phase | 내용 | 상태 |
 |:-:|---|---|
@@ -53,8 +79,8 @@
 | 2 | 광맥 stage 시각화 (`VeinMarkerController` · 모델 · 맵 38개) | ✅ `dc5ed1f` (`main`) |
 | 3 | 특별 광맥 연출 + 토스트 (중요 이벤트 채널) | ✅ `feat/t04-mine-fx-p3` |
 | 3.5 | 광물 종류 아이콘 뱃지 (D-14) — Phase 표에서 빠져 있던 항목 | ✅ `feat/t04-mine-fx-p3` |
-| **4** | **일꾼 연출** (선택 링 · 파편 · Depot 강조 · **아바타 교체**) | ⬜ **다음** |
-| 5 | 사운드 7종 배선 | ⬜ |
+| **4** | **일꾼 연출** — 선택 링 · 파편 · Depot 강조 · **아바타 교체** · `rare_ore_unload` | ✅ **완료** `feat/t04-mine-fx-p4` |
+| 5 | 사운드 7종 배선 | ⬜ **다음 차례** |
 | 6 | 검증·기록 (F5-1~F5-6, `docs/16`, As-built) | ⬜ |
 
 **Phase 3에서 만들어 둔 것 — Phase 4가 그대로 쓴다.** 중요 이벤트 채널은 **kind 문자열로 분기**하도록 일반화돼 있다.
@@ -67,11 +93,54 @@
 
 > **시각 계약은 `gem_mine`에서 판정한다.** 세 광물이 한 화면에 있는 유일한 맵이다. `farm01`은 돌 전용이라 어떤 종류 구분 결함도 통과처럼 보인다 — D-14가 정확히 그렇게 숨어 있었다.
 
-**Phase 4 주의.** 일꾼이 아직 **임시 몬스터 스프라이트**다. `docs/21` §4가 아바타 기반(`cap` 안전제일 모자 / `coat` 화이트루즈 멜빵 / `pants` 밀라노청바지 / `weapon` 황금 곡괭이)으로 바꾸도록 정해 뒀다. `msw-avatar` 스킬을 먼저 읽는다. 그리고 **D9 §5.2 권고 3** — 일꾼 2 구매 직후 프로그램 복사 시 위치 경고를 노출하는 것은 T-05 몫이지만, 일꾼 연출과 함께 보면 좋다.
+**Phase 4 전반부에서 만들어 둔 것.** `WorkerVisualController`(ClientOnly, 일꾼 컴포넌트)가 세 연출을 모두 담는다.
+
+- **선택 링** — 표시 기준은 `_BlockProgramController:GetSelectedWorkerIndex()` **하나뿐이다.** HUD가 인덱스를 따로 들면 둘이 어긋난다(F5 §3 / §5.3).
+- **채굴 먼지** — `mine_success`에 0.3초. **맵의 자식**이고 `VisualEventCellX/Y`로 채굴한 광맥 셀에 놓는다. 일꾼 자식으로 두면 일꾼 스프라이트 크기에 오프셋이 묶여 아바타 교체 때 전부 무효가 된다.
+- **Depot 강조** — `unload_success`에 marker를 펄스. **강조는 marker 자신이 그린다**(`VeinMarkerController:PlayEmphasis()`). 일꾼 쪽에서 Depot의 `Transform.Scale`을 직접 만지면 marker의 `Repaint`와 매 프레임 다툰다.
+- 표시 전용 자식은 `FxSprite.model`(`model://fxsprite`)로 **런타임 생성**한다. D-14의 `OreBadge`와 같은 방식이라 맵 파일에 FX 엔티티를 심지 않는다.
+
+**Phase 4 남은 것 3개.**
+
+1. ~~**아바타 교체**~~ → **✅ 완료 (2026-08-04, 9차).** `Worker.model` + 맵 3개의 `Worker01`에서 `SpriteRendererComponent`를 걷어내고 `AvatarRendererComponent` + `CostumeManagerComponent`로 바꿨다(`.builder-work/p4_worker_avatar.cjs`). `docs/21` §4의 4슬롯 + 기본 body 적용, `equippedCount=6` 확인. `pants`는 오너가 `e6ff0ea6…`로 지정해 확정(`.builder-work/p4_worker_pants.cjs`).
+2. ~~**채굴 먼지 최종 판정**~~ → **✅ 완료 (2026-08-04, 9차).** `de538ed7…` · `ShardScale` 1.3 · 광물 정중앙. 자산 선정 방법과 pivot 보정은 `docs/21` §5.0 / §5.0.1 에 있다.
+3. ~~**`rare_ore_unload` 중요 이벤트**~~ → **✅ 완료 (2026-08-04, 9차).** 서버는 `WorkerController:DoUnload` 에서 하역 1회당 1건, 클라이언트는 `MineNoticeController:PlayNotice` 분기 하나. **`AddToDepot` 안에서 내면 안 된다** — 위 채널 제약 참조.
+
+**아바타 교체에서 정한 것 — 뒤집으려면 근거가 필요하다.**
+
+- **`StateComponent` / `AvatarStateAnimationComponent`를 일부러 넣지 않았다.** 일꾼은 `MovementComponent:MoveToDirection`이 아니라 `KinematicbodyComponent:SetWorldPosition`으로 **셀 단위 순간이동**을 한다(`WorkerController:DoMove`). 걷기 클립이 재생될 연속 구간이 없어서, 상태 스택을 넣으면 `IsLegacy`·권한(monster/NPC는 ServerOnly) 함정만 떠안고 화면에는 차이가 없다. 나중에 이동을 보간으로 바꾸면 그때 `ChangeState("MOVE")` 한 줄로 붙일 수 있다.
+- **`UseCustomEquipOnly = true`** — 끄면 접속 계정의 기본 코스튬이 비쳐 일꾼 외형이 계정마다 달라진다.
+- **`AvatarRendererComponent.OrderInLayer = 2`** — 교체 전 `SpriteRendererComponent`와 같은 값이다. 선택 링(0)·광맥 marker(1) 위에 일꾼이 와야 한다.
+- **`SpriteRendererComponent.Color`/`FlipX`는 아바타 엔티티에서 무음 무효다**(`msw-avatar`). 일꾼을 물들이거나 좌우 반전하려면 `AvatarRendererComponent:SetColor` / `MovementComponent`의 방향 API를 쓴다.
+
+**Phase 4 자산.** `docs/21` §4가 아바타 4슬롯(`cap` 안전제일 모자 / `coat` 화이트루즈 멜빵 / `pants` 밀라노청바지 / `weapon` 황금 곡괭이)과 기본 body/head를 확정해 뒀다. 그리고 **D9 §5.2 권고 3** — 일꾼 2 구매 직후 프로그램 복사 시 위치 경고를 노출하는 것은 T-05 몫이지만, 일꾼 연출과 함께 보면 좋다.
 
 **Phase 5 주의.** 사운드는 **청취 확인이 안 된 잠정값**이다(오너가 나중에 진행하기로 함). `mine_empty`는 특히 약한 선택이라 **무음도 유효한 선택**이다(F5 §4가 허용). `docs/21` §3의 ⚠️ 참조.
 
-**Phase 6 필수.** `refresh → build log 0건 → play → 런타임 로그·스크린샷 → stop`, `node tools/audit_bindings.cjs` 실패 0건, F5 §7의 F5-1~F5-6 확인, `docs/16`·`Archive/As-built.md` 기록, **개발 프로필 baseline 원복**(`gold=0 stone=1 token=0 workers=1 cart1=20`).
+**Phase 6 필수.** `refresh → build log 0건 → play → 런타임 로그·스크린샷 → stop`, `node tools/audit_bindings.cjs` 실패 0건, F5 §7의 F5-1~F5-6 확인, `docs/16`·`Archive/As-built.md` 기록, **개발 프로필 baseline 원복**(아래 §0.2-A).
+
+### 0.2-A 개발 프로필 baseline 원복 — 화폐만으로는 부족하다
+
+검증하느라 채굴 루프를 돌리면 **1% 확률로 희귀 광물이 떨어져 컬렉션이 오른다.** 그러면 수레 용량 보너스가 남아 `cart = 0/21`이 되고, 화폐만 되돌린 채 "원복 완료"로 판정하면 baseline이 어긋난 상태로 커밋된다. 2026-08-04에 실제로 이렇게 놓쳤다.
+
+`maker_execute_script`(`server_main`)에서 아래를 **전부** 되돌린 뒤 저장한다.
+
+```lua
+local d = p:GetProfile()
+d.gold = 0  d.stone = 1  d.iron = 0  d.goldOre = 0  d.mineTokens = 0
+d.rareCollection.rare_stone = 0  d.rareCollection.rare_iron = 0  d.rareCollection.rare_gold = 0
+d.rareStorage.rare_stone = 0     d.rareStorage.rare_iron = 0     d.rareStorage.rare_gold = 0
+p:ApplyRareStoneCartBonus()  p:SyncRuntimeState()  p:MarkProfileDirty()  p:SaveProfileAndWait()
+```
+
+**판정 기준** — 로그가 아래와 정확히 같아야 한다. `cart`가 `0/20`이 아니면 희귀 컬렉션이 남은 것이다.
+
+```
+gold=0 stone=1 iron=0 goldOre=0 token=0 workers=1
+rareColl=0/0/0 rareStore=0/0/0 cart=0/20 lastMine=farm01
+```
+
+맵을 옮겨 검증했다면 **`farm01`로 돌아와서** 원복한다(`lastMineId`가 마지막 전환 맵으로 저장된다).
 
 **T-02 착수 전 주의**: v8 마이그레이션에 **필드 4개**를 함께 넣어야 한다 — `progress.mineLevels` · worker 손 개수 · `currencies.Crystal` · `tutorial`. 그리고 F7-B **§5.6.5의 표기용 `@Sync` 7종**도 T-02 범위다. 나눠서 v9를 만들면 마이그레이션이 두 번 필요해진다.
 
@@ -88,7 +157,11 @@
 
 **브랜치 정책** — 문서 갱신·자산 검색·소규모 수정은 `main` 직접. **T-04처럼 여러 파일·여러 커밋에 걸치는 작업은 브랜치 + PR**로 한다(2026-07-31 합의). 중간에 어긋나면 `main`에서 되돌리는 것보다 브랜치를 버리는 쪽이 싸다.
 
-**커밋에 넣지 않는 것**: `.claude/` · `.codex/` · `.agents/` · `AGENTS.md` · `CLAUDE.md` · `Environment/` · `skills-lock.json`. 도구·환경 범위이며 이번 세션에도 미커밋으로 남겨 뒀다.
+**커밋에 넣지 않는 것**: `.claude/` · `.codex/` · `.agents/` · `AGENTS.md` · `CLAUDE.md` · `Environment/` · `skills-lock.json`. 도구·환경 범위다.
+
+> **2026-08-04 현재 `.claude/**` 90여 개가 갱신된 채 미커밋이다** — 스킬 플러그인 업데이트(신규 스킬 `msw-planning`·`maplestory-skill-maker`, `builder-protocol` 분할, `skills-lock.json`, `.omc/`). 오너 환경 갱신분이라 손대지 않았다. 커밋 여부는 오너 판단이며 **게임 동작에는 영향이 없다.**
+
+**Maker 재저장분은 별도 `chore:` 커밋으로 분리한다** (2026-08-04 합의). Play를 여러 번 돌리면 `Global/common.gamelogic`·`map/*.map`·`ui/*.ui`가 정규화 재저장된다. 기능 커밋에 섞으면 다음에 "무엇이 실제 변경인지" 구분할 수 없다. **분리 전에 §1 주의사항 6대로 `GroupOrder` 회귀를 먼저 확인할 것** — 밀집 수열 0~7이 유지되는지 본다.
 
 **커밋 전 체크** (§0.7 DoD의 축약):
 
@@ -280,7 +353,7 @@ Maker MCP의 `mouse_input`은 **엔진 관리 UI(`ButtonComponent`)를 클릭하
 1. 저장소를 열고 `git log --oneline -3`, `git status --short`, `git diff --check`로 실제로 옮겨진 변경을 확인한다. **이 문서의 §0이 보이면 2차 세션 결과까지 넘어온 것이다.**
 2. `AGENTS.md`의 MSW Foundation/도메인 규칙을 그 작업 환경에 맞게 로드한다. 특히 `.ui`는 UIBuilder, `.model`/`.map`은 해당 Builder로만 수정한다.
 3. Maker를 연결한 뒤 `refresh`, build log 확인, `play`, runtime log 확인, `stop` 순서로 첫 상태를 재확인한다. 기대값은 빌드 오류 0건, `[VeinTick] layout loaded mineId=beginner_mine veins=4 starts=5 specialCandidates=3`, `[Worker 1] configured cart=0/20 hand=`, `owned workers restored count=1`이다.
-4. **§0.2의 1순위(F5 §5/§6 계약대로 D-1~D-5 수정)부터 진행한다.** 서버 규칙 검수는 2차 세션에서 이미 통과했으므로 다시 하지 않아도 된다. 남은 검수는 `docs/16` §9에 따라 사용자만 수행할 수 있는 버튼 클릭 항목이다.
+4. **§0.1의 우선순위표부터 진행한다.** 서버 규칙 검수는 2차 세션에서 이미 통과했으므로 다시 하지 않아도 된다. 남은 검수는 `docs/16` §9에 따라 사용자만 수행할 수 있는 버튼 클릭 항목이다.
 5. 새 개발을 시작할 때는 계획 문서 → 기능 명세 → 구현 → As-built → 검수 체크리스트 순서를 유지한다.
 
 ### 서버 규칙을 다시 검증해야 할 때
@@ -294,7 +367,7 @@ local p = users[1]:GetComponent("script.AccountProfileService")
 local d = p:GetProfile()
 ```
 
-검증 뒤에는 **반드시 개발 프로필을 기준 상태로 원복한다** (Gold 0, 토큰 0, 광물 0, 희귀 컬렉션·보관 0, 자동 판매 해제, 수레 20, Worker01 1명, `lastMineId = "farm01"`). 원복 후 `p:ApplyRareStoneCartBonus()` → `p:SyncRuntimeState()` → `p:MarkProfileDirty()` → `p:SaveProfileAndWait()` 순서로 저장한다.
+검증 뒤에는 **반드시 개발 프로필을 기준 상태로 원복한다.** 되돌릴 필드 전체와 판정 기준은 **§0.2-A**에 있다 — 화폐만 되돌리면 희귀 컬렉션이 남아 `cart = 0/21`이 된다(2026-08-04에 실제로 놓쳤다).
 
 ## 10. 작업 트리/커밋 주의사항
 
@@ -311,28 +384,29 @@ local d = p:GetProfile()
 Maple-Digger MSW 프로젝트를 인수받아 이어서 작업한다.
 
 먼저 docs/17-Claude-인수인계.md를 §0부터 끝까지 읽어라. §0이 이어가기 지점이고,
-§1의 .ui 주의사항 7개는 세션이 바뀌어도 유효한 규칙이다.
-그다음 AGENTS.md, docs/00-기획문서-로드맵.md, docs/02-마스터-GDD.md,
-docs/11-MVP-결정-질문답변-로그.md의 C196, C197~C200, C201~C202, C206,
-docs/12-계정-프로필-저장-복구-기능명세.md, docs/13-경제-진행-기능명세.md(§5 포함),
-Archive/As-built.md, docs/16-사용자-검수-체크리스트.md를 읽어라.
-D8 카드는 뒤 번호가 앞 번호를 정정하므로 높은 번호를 우선한다.
+§1의 .ui 주의사항 10개는 세션이 바뀌어도 유효한 규칙이다.
+그다음 Archive/As-built.md의 최근 기록과 docs/16-사용자-검수-체크리스트.md를 읽어라.
+그 밖의 문서는 §0이 가리키는 것만 필요할 때 읽는다 — 전부 읽으면 컨텍스트만 먹는다.
+D8 결정 카드(docs/11)는 뒤 번호가 앞 번호를 정정하므로 높은 번호를 우선한다.
 
 현재 기준은 프로필 v7, Gold 0, Worker01만 활성, 수레 0/20, CoreVersion 26.7.0.0이다.
 희귀 돌/철/금은 손→수레→Depot 뒤 첫 10개가 컬렉션(+3% 패시브)에 등록되고,
 11회째부터만 보관·수동/자동 판매할 수 있다. 가격은 50/200/600 Gold다.
 이 희귀 광물 서버 규칙은 2026-07-29에 전량 검증 통과했으니 다시 검증하지 않아도 된다.
-화면 결함 D-1~D-13도 전부 해소됐다.
+화면 결함은 D-1~D-14까지 전부 해소됐고 미해결 0건이다.
 
-다음 작업은 §0.1의 우선순위표를 따른다. 1순위는 기획 보강 3건(밸런스 검증 ·
-서버 거절 사유 카탈로그 · 성능 기준)이고, 근거와 차단 티켓은 docs/00의
-"작성 예정 문서" 표에 있다. 밸런스는 T-02보다 먼저 있어야 한다.
-2순위 T-04(F5 연출)는 자산이 docs/21 §7.1에 전부 확정돼 있어 바로 착수 가능하다.
+진행 중인 브랜치는 feat/t04-mine-fx-p4이고 PR은 아직 없다.
+다음 작업은 §0.1-A를 따른다 — T-04 Phase 4의 남은 절반(아바타 교체 →
+채굴 먼지 최종 판정 → rare_ore_unload)이 1순위다.
 
 .ui 수정은 반드시 UIBuilder를 경유하고 원본 JSON을 직접 편집하지 마라.
 Maker refresh/build/Play/runtime log 없이 "동작한다"고 판정하지 마라.
+그리고 로그만으로 "보인다"고 판정하지 마라 — 짧은 연출·시각 계약은
+스크린샷이 있어야 판정된다(docs/16 §20에서 실제로 세 번 뒤집혔다).
+새 자산 RUID를 처음 쓸 때는 msw-asset-verify 스킬로 실물을 먼저 확인하라.
+검증 뒤 개발 프로필 원복은 §0.2-A의 필드 전체를 되돌리고 cart=0/20으로 판정하라.
 Maker에서 작업한 뒤에는 git status로 .ui/.map 재저장분을 확인하라 —
-재저장이 GroupOrder를 되돌린 적이 있다(§1 주의사항 6).
+재저장이 GroupOrder를 되돌린 적이 있다(§1 주의사항 6). 재저장분은 chore 커밋으로 분리한다.
 UI 버튼 클릭 검수는 mouse_input으로 불가능하니(docs/16 §9) 나에게 요청하라.
 게임 기능 변경과 .agents/.claude/.codex 등 도구 환경 변경은 별도 커밋으로 분리하라.
 여러 파일에 걸치는 작업은 브랜치+PR, 문서 갱신은 main 직접으로 한다.

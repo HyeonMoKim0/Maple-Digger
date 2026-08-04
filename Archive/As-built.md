@@ -25,6 +25,117 @@
 
 ## 기록
 
+### 2026-08-04 — T-04 Phase 4 (2/2 일부): 일꾼을 임시 몬스터 스프라이트에서 MSW 아바타로 교체
+
+> 브랜치 `feat/t04-mine-fx-p4`. Phase 4 의 `rare_ore_unload` 중요 이벤트는 아직 남았다.
+
+D5 §3 이 요구한 "MSW 아바타 기반 실루엣"을 넣었다. `SpriteRendererComponent`(임시 몬스터 `3e76c89a`)를 걷어내고 **`AvatarRendererComponent` + `CostumeManagerComponent`** 로 바꿨다. 작업 스크립트는 `.builder-work/p4_worker_avatar.cjs`.
+
+- **두 곳을 같이 고쳐야 했다.** `Worker.model` 은 런타임 스폰되는 일꾼 2~5 를 덮고, **맵에 배치된 `Worker01` 은 모델 수정이 소급되지 않아** `farm01`·`deep_mine`·`gem_mine` 3개를 `upsertComponent` / `removeComponent` 로 따로 고쳤다. Phase 2 에서 이미 밟은 함정이라 이번에는 처음부터 같이 처리했다.
+- **자산은 `docs/21` §4 확정값 4슬롯 + 기본 body.** 안전제일 모자 / 화이트루즈 멜빵 / 밀라노청바지 / 황금 곡괭이. 곡괭이는 **한손 슬롯**(`CustomOneHandedWeaponEquip`)이다. 런타임 확인 `equippedCount=6`(4슬롯 + body + 엔진 자동 head).
+- **`UseCustomEquipOnly = true` 를 켰다.** 끄면 접속 계정의 기본 코스튬이 먼저 깔려 일꾼 외형이 계정마다 달라진다. 일꾼은 플레이어가 아니다.
+- **`head` 는 대입할 슬롯이 없다.** `Custom*Equip` 17종에 `CustomHeadEquip` 이 없고 엔진이 `body` 색에 맞춰 자동 처리한다. `docs/21` §7.1 의 `head` RUID 는 참고값일 뿐이다. `CustomFaceEquip` 을 비워도 얼굴은 정상 렌더된다(실측).
+- **`AvatarRendererComponent.OrderInLayer = 2`** — 교체 전 `SpriteRendererComponent` 와 같은 값을 유지했다. 선택 링(0)·광맥 marker(1) 위에 일꾼이 와야 한다.
+
+**`StateComponent` / `AvatarStateAnimationComponent` 는 일부러 넣지 않았다.** `Global/Player.model` 은 이 둘을 함께 들고 있어서 그대로 따라가고 싶어지지만, **일꾼의 이동은 보간이 아니라 순간이동이다** — `WorkerController:DoMove` 가 `KinematicbodyComponent:SetWorldPosition` 으로 셀을 건너뛴다. 걷기 클립이 재생될 연속 구간 자체가 없으므로, 상태 스택을 넣으면 `IsLegacy` 기본값 함정과 `AddState` 권한(monster/NPC 는 ServerOnly) 문제만 떠안고 화면에는 아무 차이가 없다. 이동을 보간으로 바꾸는 날 `ChangeState("MOVE")` 한 줄로 붙일 수 있다.
+
+**검증** (`farm01`, Play): 빌드 로그 16건 전부 `Info` LIA(기존 오탐), 오류 0건. 런타임 오류·경고 0건 — 특히 `[LEA-3004]` 없음. 아바타 교체 뒤에도 **Phase 4 연출이 그대로 동작**한다: `mine stone` → `[WorkerFx] shard on` → `shard off` 짝, 광맥 stage 2→3 회복, `special_vein_spawn` 토스트·marker 강조까지 재생됐다. 프로필 baseline 원복 확인 — `gold=0 stone=1 iron=0 goldOre=0 token=0 workers=1 rareColl=0/0/0 rareStore=0/0/0 cart=0/20 hand='' lastMine=farm01`. 바인딩 감사 114건 실패 0건.
+
+**오너 판단 2건이 열렸다** (둘 다 한 줄 교체라 되돌리기 싸다):
+
+1. **`pants`** — 승인란이 비어 있던 슬롯이다. → **오너가 `e6ff0ea6…`로 지정해 확정** (아래 항목 참조).
+2. **채굴 먼지** — 오너가 "먼지는 아바타 만들어지고 확인하겠다"고 했던 항목이다. 최종 실루엣이 들어갔으니 이제 판정할 수 있다.
+
+**곁가지로 발견한 것**: `ShowDefaultWeaponEffects` 기본값이 `true` 라 **곡괭이에 상시 반짝임이 붙는다.** 대기 중인 일꾼이 계속 반짝이므로 채굴 먼지와 신호가 겹친다고 판단되면 `false` 로 끈다.
+
+### 2026-08-04 — T-04 Phase 4 완료: `rare_ore_unload` 중요 이벤트
+
+Phase 4 의 마지막 항목이다. 희귀 광물을 Depot 에 하역하면 토스트로 알린다 (F5 §2.2).
+
+- **서버**: `WorkerController:DoUnload` 가 수레를 비우면서 희귀 3종 합계를 세고, 0보다 크면 `VeinTickSimulator:EmitMineNotice("rare_ore_unload", cellX, cellY, rareTotal)` 를 **한 번** 부른다. 희귀 판별은 새 헬퍼 `IsRareOre` 로 모았다.
+- **클라이언트**: `MineNoticeController:PlayNotice` 에 `rare_ore_unload` 분기 하나. 기존 `ShowToast` 를 그대로 쓴다.
+
+**핵심 설계 판단 — 알림은 `AddToDepot` 이 아니라 `DoUnload` 에서 낸다.** 인수인계는 두 곳 중 하나라고 적어 뒀지만 **`AddToDepot` 은 틀린 선택이다.** 그 메서드는 광물 종류마다 호출되므로, 희귀 돌+철을 함께 실은 수레가 한 틱에 알림 2건을 만든다. 그러면 `MineNoticeController` 의 `noticeId > lastNoticeId + 1` 가드(놓친 이벤트 = 재생 건너뛰기, F5-5)에 걸려 **토스트가 통째로 사라진다.** 하역 1회당 1건이어야 F5 §4 의 "이벤트 ID당 1회" 쿨다운과도 맞는다.
+
+**검증** — 희귀 드롭은 1% 라 기다릴 수 없어 수레를 직접 채워 3회 돌렸다. 특히 **희귀 2종을 함께 실어** 위 실패 경로를 실제로 쳤다:
+
+- `stone=3 rare_stone=2 rare_iron=1` → `AddToDepot` **3회** 호출 · `notice id=1 kind=rare_ore_unload count=3` **1건만** · `[MineNotice] rare_ore_unload count=3` 재생. 일반 광물 3개는 count 에서 제외됐다
+- `rare_gold=2` → `notice id=2 count=2` 재생 (id 연속이라 건너뛰기 없음)
+- `[WorkerFx] depot emphasis` 도 함께 정상 재생 — 행동 이벤트 채널과 충돌하지 않는다
+
+빌드 오류 0건(재빌드 타임스탬프 확인), 런타임 오류·경고 0건. 프로필 baseline 원복 `cart=0/20`, 바인딩 감사 114건 실패 0건.
+
+> **토스트 화면 캡처는 실패했다.** 토스트 수명이 스크린샷 왕복(1~4초)보다 짧아 세 번 시도 모두 놓쳤다. 다만 `ShowToast(message)` 는 로그 줄보다 **먼저** 호출되고 `_UIToast` 가 nil 이면 `log_error` 를 내도록 돼 있는데 그 오류가 없었으므로, `[MineNotice] rare_ore_unload count=N` 이 찍힌 것은 토스트가 실제로 디스패치됐다는 증거다(verify-checklist Step 2b 가 허용하는 짝 로그). 토스트 렌더 자체는 `special_vein_spawn` 으로 이미 육안 검증된 경로다.
+
+### 2026-08-04 — 채굴 먼지 3차 교체: 이펙트는 텍스트 검색으로 못 찾는다
+
+오너 검수 "어울리지 않는다"로 채굴 파편을 세 번째로 골랐다. 확정은 **뭉게뭉게 피는 흰 먼지구름 `de538ed7`**, `ShardScale` **1.3**, 광물 **정중앙**(`HitFxOffsetY` 0.25 → **0**).
+
+**텍스트 검색이 작동하지 않는다는 것을 이번에 확실히 확인했다.** `searchResources` 로 8가지 질의(한/영)를 돌려 39건을 모았는데 **전부 `names` 가 비어 있고 `score` 가 0.000** 이었다. `dname` 도 `sprite-8923707` 같은 일련번호뿐이라 메타데이터로 걸러낼 근거가 아예 없다. 실제로 띄워 보니 "먼지"로 잡힌 것 중에 **나무 상자**와 **검은 연기**가 있었고, 이미 기각한 `d4f82b52`·`6ade17ad` 도 그대로 다시 올라왔다.
+
+**해법은 `findSimilarResources` 였다.** 이미 옳다고 판정된 자산을 씨앗으로 넣으면 시각적으로 닮은 것을 준다 — 2차 파편 `78ea5621` 을 씨앗으로 넣으니 **전부 `skill` 카테고리 애니메이션클립 12개**가 나왔고 확정안이 그중에 있었다. 다만 **씨앗은 연출이어야 한다**: `신비한 광석 hit1` 을 씨앗으로 넣었더니 바위·배경 스프라이트만 나왔다.
+
+**pivot 이 중심이 아닌 스프라이트를 처음 만났다.** `de538ed7` 은 광맥 좌표에 그대로 놓으면 오른쪽으로 밀리고, **엔티티 `Scale` 이 pivot 오프셋까지 함께 키우므로 크기를 키울수록 더 밀린다.** 상수 보정으로는 크기를 바꿀 때마다 어긋나므로, `ShardPivotOffsetX`(= `-0.855` unit/scale)를 신설하고 `MoveShardToCell` 이 `ShardScale` 을 곱해 쓰도록 했다. 실측 근거는 scale 0.9/1.3/1.7 에서 85/125/165 px 이동(1 unit = 110 px)이고, 세 값 모두 ÷scale 이 95~97 로 일정했다. 앞서 쓰던 `78ea5621` 은 pivot 이 거의 중심이라 이 문제가 없었다 — **자산을 바꾸면 이 값을 다시 재야 한다.**
+
+**검증**: 빌드 오류 0건(재빌드 타임스탬프 갱신 확인), 런타임 오류·경고 0건. 실제 채굴 경로에서 `shard on`/`off` 짝 재생, 파일값이 런타임에 그대로 실림(`ruid=de538ed7… scale=1.3 offsetY=0.0 pivotX=-0.855 order=6`), 보정 결과 `shard-vein dx=-1.1115` = `-0.855 × 1.3` 정확히 일치, Y 는 광맥과 동일(`0.5`). 프로필 baseline 원복 `cart=0/20 hand=''`, 바인딩 감사 114건 실패 0건, `.ui`/`.map` 재저장분 없음.
+
+**남은 판단**: `ShardOrderInLayer` 6 이 일꾼(2)보다 앞이라 먼지가 안전모를 덮는다. 0.3초짜리라 실사용 문제인지는 오너 판단으로 열려 있다.
+
+### 2026-08-04 — 일꾼 하의 교체 + "짧아 보인다"는 내 판정이 틀렸다
+
+오너가 하의를 `e6ff0ea602e043f48a7e231ed4f95daf`로 지정했다. 템플릿과 맵 3개의 `Worker01`에 반영했다(`.builder-work/p4_worker_pants.cjs`). 슬롯 하나만 바꾸면 되므로 `upsertComponent`가 아니라 **`patchComponent`** 를 썼다 — 통째로 갈면 나머지 16슬롯을 다시 써야 한다.
+
+**앞 항목에서 내가 적은 "밀라노청바지는 무릎 위에서 끊기는 짧은 하의"는 틀린 관찰이었다.** 두 후보를 `thumbnail://`로 나란히 띄워 보니 **둘 다 발목까지 오는 긴 청바지**다. 착용 화면에서 짧아 보였던 것은 바지가 아니라 **`coat`(화이트루즈 멜빵) 밑단이 허벅지까지 덮어서** 드러나는 청색 구간이 좁았기 때문이다. 실제 차이는 길이가 아니라 **채도** — 새 것이 더 진한 데님이라 흰 상의와 대비가 산다.
+
+**얻은 규칙 — 착용 확인과 썸네일은 대체재가 아니라 순서다.** `msw-asset-verify`가 "아바타는 착용 스크린샷이 최종 판정"이라고 못박아 둔 것을 **슬롯 하나를 고르는 데까지 그대로 적용한 것이 실수**였다. 착용 화면은 위아래가 겹친 결과물이라, 거기서 개별 슬롯의 성질을 읽으면 이웃 슬롯의 효과를 그 슬롯의 것으로 오독한다. **슬롯 선택은 `thumbnail://`로 아이템 원본을 먼저 보고, 착용 확인은 전체 실루엣을 판정할 때 쓴다.** `docs/21` §4에 정정과 함께 남겼다.
+
+**채굴 먼지 실측** (오너 검수용 근거): 위치는 `shard pos=(1.5, 0.75)` / `worker pos=(1.5, 0.5)` — **광맥 셀 중심 + `HitFxOffsetY` 0.25** 로 설계대로다. `ShardScale` 0.9, `OrderInLayer` 6. **6은 일꾼(2)보다 앞이라 먼지가 안전모를 덮는다** — 0.3초짜리라 실사용에서 문제인지는 오너 판단이고, 뒤로 보내려면 일꾼(2)과 광맥 marker(1) 사이에 값이 없으므로 일꾼 쪽을 올려야 한다.
+
+**검증 과정에서 두 번 헛다리를 짚었다 — 다음 세션이 반복하지 않도록 남긴다.**
+
+- **0.3초는 스크린샷 왕복(1~4초)에 절대 안 잡힌다.** Play 중 클라이언트에서 `WorkerVisualController.ShardSeconds`를 크게 올려 두고 캐면 잡힌다. 파일을 건드리지 않으므로 `stop` 한 번에 원복되고 F5 §3 계약값 0.3은 그대로다.
+- **`shard on`/`off` 로그 타임스탬프와 스크린샷 시각을 대조할 것.** 수명 밖에서 찍은 스크린샷을 "먼지가 안 보인다"로 오독할 뻔했다.
+- **광맥 결정(청록)과 먼지(흰색)가 화면에서 헷갈린다.** 판정할 때는 `VeinMarker` 스프라이트를 잠시 꺼서 **먼지만 남긴 화면**으로 본다. 단 `VeinMarkerController.Repaint`가 매 프레임 `Enable`을 되돌리므로 끈 직후에 찍어야 한다.
+
+**검증**: 빌드 오류 0건, 런타임 오류·경고 0건. 프로필 baseline `gold=0 stone=1 iron=0 goldOre=0 token=0 workers=1 rareColl=0/0/0 rareStore=0/0/0 cart=0/20 hand='' lastMine=farm01`. 바인딩 감사 114건 실패 0건. `.ui` 재저장분 없음.
+
+### 2026-08-04 — 8차 세션 마감: 프로필 원복이 불완전했다
+
+- 세션을 닫으며 baseline 을 확인하다 **수레 용량이 `0/21`** 인 것을 발견했다. baseline 은 20이다.
+- 원인: 검증용 채굴 루프를 여러 번 돌리는 동안 **1% 확률로 희귀 돌이 떨어져 컬렉션이 2단계까지 올랐고**, 그 패시브가 수레 용량 보너스로 남아 있었다. 세션 중 `[RESTORE]` 로그는 `gold/stone/iron/goldOre/mineTokens` 만 되돌렸다.
+- **세션 중 "프로필 baseline 원복 완료"라고 보고한 것들은 이 항목에서 불완전했다.** 화폐는 맞았지만 희귀 컬렉션이 남아 있었다. 스크린샷의 `일꾼 1 수레: 1 / 21` 에 이미 드러나 있었는데 읽지 못했다.
+- `rareCollection` · `rareStorage` 6개 필드를 함께 0으로 되돌려 해소했다. 최종 확인: `gold=0 stone=1 iron=0 goldOre=0 token=0 workers=1 rareColl=0/0/0 rareStore=0/0/0 cart=0/20 lastMine=farm01`.
+- **원복 절차를 `docs/17` §0.2-A 로 못 박았다** — 되돌릴 필드 전체와 판정 기준(`cart=0/20`)을 명시했다. `cart` 가 20이 아니면 희귀 컬렉션이 남은 것이다.
+
+### 2026-08-04 — 오너 검수 반영: 파편을 광맥 위치로 · 펄스 곡선 · 자산 2종 기각
+
+첫 구현을 오너가 눈으로 보고 준 지적 3건을 반영했다. **셋 다 로그로는 통과였고 화면에서만 드러났다.**
+
+- **파편은 일꾼이 아니라 광맥에서 난다** (오너: "파편은 광석 위치 중심에 발생할 것"). 원래는 일꾼의 자식 엔티티였다. 맵의 자식으로 바꾸고 **Phase 1 이 만든 `VisualEventCellX/Y`** 로 채굴한 셀에 놓는다.
+  - 부수 효과가 크다 — 파편이 일꾼 스프라이트 크기와 **무관해졌다.** 자식으로 두면 임시 몬스터(세로 1.8 unit) 기준으로 오프셋을 잡아야 하고, 아바타로 교체하면 그 값이 전부 무효가 된다. 셀 기준이라 교체해도 그대로다.
+- **Depot 펄스가 "커지는 순간" 없이 줄기만 했다** (오너: "커진 상태에서 작아진 것만 보인다"). 최대 크기에서 시작하는 선형 감소였다. `sin` 곡선으로 바꿔 0에서 커졌다 작아지게 했다.
+- **파편 자산 2종을 기각했다.** 월드에 띄워 실물을 보니 `docs/21` §5 의 설명과 달랐다.
+  - `d4f82b52` "돌 파편 흩어짐" → 실제로는 **어두운 얼룩**. 초록 바닥에서 잔디와 구분되지 않는다(오너: "그림자가 생기는 느낌")
+  - `6ade17ad` "작은 노란 스파크" → 실제로는 **보라색 광석 덩어리**
+  - **C206(부유석 condition 오해)과 같은 종류의 오류다.** 두 자산 모두 §5 승인란이 비어 있었고 육안 미확인 상태였는데, 그걸 확인 없이 코드에 넣은 것이 잘못이었다.
+- **재검색 → 흰 먼지 퍼짐(`78ea5621`)으로 확정.** `etc` 카테고리 스프라이트 후보 6종을 월드에 한 줄로 띄워 비교했는데 전부 FX 가 아닌 잡다한 스프라이트였다. 대신 §5 가 고갈 연출 후보로 적어 둔 흰 먼지가 **초록 바닥에서 유일하게 확실히 읽혀** 채굴 파편으로 승격했다. `docs/21` §5 갱신.
+- **얻은 규칙**: 자산은 **검색 결과 설명을 믿지 말고 월드에 띄워 보고 고른다.** 이번에 후보를 나란히 놓고 스크린샷으로 판정한 방식이 C206 때와 같고, 그때도 이 방식으로만 오해가 잡혔다.
+
+### 2026-08-04 — T-04 Phase 4 (1/2): 일꾼 연출 — 선택 링 · 채굴 파편 · Depot 강조
+
+> 브랜치 `feat/t04-mine-fx-p4`. Phase 4 의 **아바타 교체**와 `rare_ore_unload` 중요 이벤트는 아직 남았다.
+
+- **Phase 1 이 만든 행동 이벤트 채널(`VisualEvent*`)이 드디어 소비된다.** 지금까지 서버는 `mine_success`/`unload_success` 를 발행만 하고 아무도 읽지 않았다. `WorkerVisualController`(ClientOnly) 를 신설해 읽는 쪽을 붙였다.
+- **선택 링** — `docs/21` §5 승인 자산. 발밑에 깔리는 타원이며 **표시 여부는 프로그램 편집기의 선택값(`_BlockProgramController:GetSelectedWorkerIndex()`) 하나만 따른다**(F5 §3 / §5.3). HUD 가 인덱스를 따로 들면 둘이 어긋나므로 기준을 하나로 뒀다.
+- **채굴 파편** — `mine_success` 에 0.3초 표시(F5 §3). 스폰/파괴를 반복하지 않고 **자식 엔티티 하나를 켜고 끈다** — 채굴은 틱마다 일어나므로 매번 생성하면 churn 이 크다.
+- **Depot 강조** — `unload_success` 에 Depot marker 를 펄스시킨다. **강조는 marker 자신이 그린다**(`VeinMarkerController:PlayEmphasis()` 신설). 일꾼 쪽에서 Depot 의 `Transform.Scale` 을 직접 만지면 marker 의 `Repaint` 와 매 프레임 다툰다 — 같은 값을 두 컴포넌트가 쓰지 않게 소유자를 하나로 정했다.
+  - 이 과정에서 **기존 펄스의 버그를 하나 고쳤다.** 펄스 종료 시 `SpecialScale`(1.0) 로 되돌리고 있어, Depot(1.0)은 우연히 맞았지만 일반 광맥(0.7)에 쓰면 크기가 굳어 버린다. `Repaint` 가 정한 값을 `restScale` 로 기억해 그리로 돌아가게 했다.
+- **자산은 런타임 자식 엔티티로 붙인다** — D-14 와 같은 방식. 공용 템플릿 `FxSprite.model`(신규, `model://fxsprite`)을 쓴다. 맵 파일에 FX 엔티티를 심지 않으므로 일꾼이 늘어도 맵 수술이 없다.
+- **부착 범위**: 일꾼 2~5 는 런타임 스폰이라 `Worker.model` 에 붙이면 따라오지만, **`Worker01` 은 맵에 배치돼 있어 모델 수정이 소급되지 않는다**(Phase 2 함정). 3개 맵의 `Worker01` 에 `upsertComponent` 로 따로 더했다. 링이 발밑에 깔리도록 일꾼 `OrderInLayer` 를 2 로 올렸다(링은 0).
+- **검증**: 빌드 오류 0건. 5회 반복 프로그램을 돌려 로그 101건 전부 `Info`, 오류·경고 0건. `[WorkerFx] ready` 1회, **`shard on`/`shard off` 각 5회(짝이 맞음)**, `depot emphasis` 5회 — 채굴 5회·하역 5회와 정확히 일치한다. 선택 링은 스크린샷으로 발밑 표시를 확인했다.
+  - **파편은 0.3초라 스크린샷으로 잡히지 않는다.** verify-checklist Step 2b 대로 생성·소멸 로그를 짝으로 남겨 1회 재생을 판정했다.
+- 검증 뒤 프로필 baseline 원복(돌 19 → 1). 바인딩 감사 114건 실패 0건.
+
 ### 2026-08-04 — D-14 수정: 광물 종류 아이콘 뱃지 (Phase 3.5)
 
 - `RootDesk/MyDesk/Models/Mine/OreBadge.model`(신규, `model://orebadge`)과 `VeinMarkerController`의 뱃지 로직으로 D-14를 해소했다. 돌·철·금이 이제 형태와 색으로 구분된다.

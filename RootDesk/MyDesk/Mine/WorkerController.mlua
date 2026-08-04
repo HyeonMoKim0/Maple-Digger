@@ -502,13 +502,30 @@ method void DoUnload()
         return
     end
     local unloaded = self.CartCount
+    local rareUnloaded = 0
     for oreType, count in pairs(self.Cart) do
-        if count > 0 then self._T.mineState:AddToDepot(oreType, count) end
+        if count > 0 then
+            self._T.mineState:AddToDepot(oreType, count)
+            if self:IsRareOre(oreType) then rareUnloaded = rareUnloaded + count end
+        end
     end
     self.Cart = { stone = 0, rare_stone = 0 }
     self.CartCount = 0
     self:EmitVisualEvent("unload_success", self._T.cellX, self._T.cellY)
-    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload count=" .. unloaded .. " depotStone=" .. self._T.mineState.DepotStone)
+    -- F5 §2.2 중요 이벤트. **하역 1회당 정확히 1건**만 낸다 — 종류별로 AddToDepot
+    -- 안에서 내면 희귀 돌+철을 함께 실은 수레가 한 틱에 2건을 만들고, 그러면
+    -- 클라이언트의 "id 점프 = 놓친 이벤트" 가드에 걸려 **토스트가 통째로 사라진다**
+    -- (MineNoticeController: noticeId > lastNoticeId + 1 이면 재생을 건너뛴다).
+    if rareUnloaded > 0 then
+        self._T.mineState:EmitMineNotice("rare_ore_unload", self._T.cellX, self._T.cellY, rareUnloaded)
+    end
+    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload count=" .. unloaded .. " rare=" .. rareUnloaded .. " depotStone=" .. self._T.mineState.DepotStone)
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsRareOre(string oreType)
+    -- 희귀 3종 판별. C196 이 고정한 종류이며 다른 곳에도 같은 목록이 있다.
+    return oreType == "rare_stone" or oreType == "rare_iron" or oreType == "rare_gold"
 end
 
 @ExecSpace("ServerOnly")

@@ -2103,7 +2103,7 @@
       {
         "id": "2d080b77-9ffa-4faf-9cc2-96be23f3532c",
         "path": "/maps/gem_mine/Worker01",
-        "componentNames": "MOD.Core.TransformComponent,MOD.Core.SpriteRendererComponent,MOD.Core.MovementComponent,MOD.Core.KinematicbodyComponent,script.WorkerController",
+        "componentNames": "MOD.Core.TransformComponent,MOD.Core.MovementComponent,MOD.Core.KinematicbodyComponent,script.WorkerController,script.WorkerVisualController,MOD.Core.AvatarRendererComponent,MOD.Core.CostumeManagerComponent",
         "jsonString": {
           "name": "Worker01",
           "path": "/maps/gem_mine/Worker01",
@@ -2137,24 +2137,6 @@
               "Enable": true
             },
             {
-              "@type": "MOD.Core.SpriteRendererComponent",
-              "SpriteRUID": "3e76c89ae8e7477ca871f5bbcd6f6f29",
-              "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
-              },
-              "DrawMode": 0,
-              "FlipX": false,
-              "FlipY": false,
-              "PlayRate": 1,
-              "OrderInLayer": 2,
-              "StartFrameIndex": 0,
-              "EndFrameIndex": 2147483647,
-              "Enable": true
-            },
-            {
               "@type": "MOD.Core.MovementComponent",
               "Enable": true,
               "InputSpeed": 3
@@ -2177,6 +2159,43 @@
               "WorkerIndex": 1,
               "StartCellX": 0,
               "StartCellY": 0
+            },
+            {
+              "@type": "script.WorkerVisualController",
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.AvatarRendererComponent",
+              "IgnoreMapLayerCheck": false,
+              "MaterialId": "",
+              "OrderInLayer": 2,
+              "PlayRate": 1,
+              "ShowDefaultWeaponEffects": true,
+              "SortingLayer": "Default",
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.CostumeManagerComponent",
+              "CustomBodyEquip": "3cf4cb29ae344577b9eed37e531688a4",
+              "CustomCapEquip": "901345ad38f24486a328408df8110976",
+              "CustomCapeEquip": "",
+              "CustomCoatEquip": "be931cbee7dc4b4e85046e60a6eb5651",
+              "CustomEarAccessoryEquip": "",
+              "CustomEarEquip": "",
+              "CustomEyeAccessoryEquip": "",
+              "CustomFaceAccessoryEquip": "",
+              "CustomFaceEquip": "",
+              "CustomGloveEquip": "",
+              "CustomHairEquip": "",
+              "CustomLongcoatEquip": "",
+              "CustomOneHandedWeaponEquip": "79904036a8a1457cb9b5c624084383b8",
+              "CustomPantsEquip": "e6ff0ea602e043f48a7e231ed4f95daf",
+              "CustomShoesEquip": "",
+              "CustomSubWeaponEquip": "",
+              "CustomTwoHandedWeaponEquip": "",
+              "DefaultEquipUserId": "",
+              "UseCustomEquipOnly": true,
+              "Enable": true
             }
           ],
           "@version": 1,
