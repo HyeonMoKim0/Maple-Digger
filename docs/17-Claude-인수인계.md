@@ -57,10 +57,12 @@
 
 **브랜치 `feat/t04-mine-fx-p4`에서 이어간다.** 자산 RUID는 전부 [`21-연출-자산-승인표.md`](21-연출-자산-승인표.md) **§7.1**에 있다 — **이 문서에 RUID를 복사하지 말 것.** (§5의 채굴 파편은 2026-08-04에 흰 먼지로 교체됐다. §7.1보다 §5가 최신이다.)
 
-**가장 먼저 할 일 = 아바타 교체.** 이유는 두 가지다.
+**가장 먼저 할 일 = 오너 검수 2건을 받는 것.** 아바타 교체는 9차에서 끝났고(임시 몬스터 스프라이트 → MSW 아바타), 그 결과 **막혀 있던 판정 2개가 동시에 풀렸다.**
 
-1. Phase 4의 남은 절반이다.
-2. **채굴 먼지의 최종 판정이 여기에 걸려 있다.** 오너가 "먼지는 아바타 만들어지고 확인하겠다"고 했다(2026-08-04). 지금 일꾼은 임시 몬스터 스프라이트라 크기·실루엣이 최종본과 다르다.
+1. **`pants` 슬롯** — `docs/21` §4 착용 실측표. 밀라노청바지가 "짧은 청색 하의"로 읽힌다. 그대로 갈지 `데님 카고 바지`로 바꿀지 오너 판단.
+2. **채굴 먼지** — 오너가 "먼지는 아바타 만들어지고 확인하겠다"고 했다(2026-08-04). 이제 최종 실루엣이 들어갔으니 볼 수 있다.
+
+둘 다 RUID·수치 한 줄 교체라 되돌리기 싸다. **검수를 먼저 받고 `rare_ore_unload`로 넘어간다.**
 
 | Phase | 내용 | 상태 |
 |:-:|---|---|
@@ -68,7 +70,7 @@
 | 2 | 광맥 stage 시각화 (`VeinMarkerController` · 모델 · 맵 38개) | ✅ `dc5ed1f` (`main`) |
 | 3 | 특별 광맥 연출 + 토스트 (중요 이벤트 채널) | ✅ `feat/t04-mine-fx-p3` |
 | 3.5 | 광물 종류 아이콘 뱃지 (D-14) — Phase 표에서 빠져 있던 항목 | ✅ `feat/t04-mine-fx-p3` |
-| **4** | **일꾼 연출** — 선택 링 · 파편 · Depot 강조 ✅ / **아바타 교체** · `rare_ore_unload` ⬜ | 🔶 **진행 중** `feat/t04-mine-fx-p4` |
+| **4** | **일꾼 연출** — 선택 링 · 파편 · Depot 강조 ✅ / **아바타 교체** ✅ / `rare_ore_unload` ⬜ | 🔶 **진행 중** `feat/t04-mine-fx-p4` |
 | 5 | 사운드 7종 배선 | ⬜ |
 | 6 | 검증·기록 (F5-1~F5-6, `docs/16`, As-built) | ⬜ |
 
@@ -91,9 +93,16 @@
 
 **Phase 4 남은 것 3개.**
 
-1. **아바타 교체** — `Worker` 템플릿의 `SpriteRendererComponent`를 `AvatarRendererComponent` + `CostumeManagerComponent`로 바꾸고 `docs/21` §4의 4슬롯을 넣는다. **4슬롯 중 `pants`는 승인란이 비어 있다 — `msw-asset-verify`로 실물을 먼저 본다.** 아바타는 썸네일이 아니라 **착용 스크린샷이 최종 판정**이다. **`Worker01`은 맵에 배치돼 있어 모델 수정이 소급되지 않으므로** 3개 맵도 함께 고쳐야 한다(전반부에서 `script.WorkerVisualController`를 붙일 때 같은 작업을 했다 — `.builder-work/p4_attach_worker_visual.cjs`가 그 예다). `msw-avatar`의 3계층 파이프라인 주의사항을 먼저 읽을 것.
-2. **채굴 먼지 최종 판정** — 아바타 교체 직후 오너에게 보여 준다. 크기(`ShardScale` 0.9)·오프셋(`HitFxOffsetY` 0.25)·지속(`ShardSeconds` 0.3)이 조정 후보다. **0.3초는 F5 §3 계약값이므로 늘리려면 계약을 함께 고친다.**
+1. ~~**아바타 교체**~~ → **✅ 완료 (2026-08-04, 9차).** `Worker.model` + 맵 3개의 `Worker01`에서 `SpriteRendererComponent`를 걷어내고 `AvatarRendererComponent` + `CostumeManagerComponent`로 바꿨다(`.builder-work/p4_worker_avatar.cjs`). `docs/21` §4의 4슬롯 + 기본 body 적용, `equippedCount=6` 확인. **오너 판단이 남은 것은 `pants` 하나** — `docs/21` §4의 착용 실측표를 볼 것.
+2. **채굴 먼지 최종 판정** — **오너 확인 대기.** 아바타는 들어갔으니 이제 볼 수 있다. 크기(`ShardScale` 0.9)·오프셋(`HitFxOffsetY` 0.25)·지속(`ShardSeconds` 0.3)이 조정 후보다. **0.3초는 F5 §3 계약값이므로 늘리려면 계약을 함께 고친다.** 아바타 교체 뒤에도 `shard on`/`shard off` 짝은 정상 재생된다(9차 검증).
 3. **`rare_ore_unload` 중요 이벤트** — 서버는 `VeinTickSimulator:EmitMineNotice("rare_ore_unload", ...)` 호출 한 줄(`WorkerController:DoUnload` 또는 `AddToDepot`), 클라이언트는 `MineNoticeController:PlayNotice`에 분기 하나. Depot 강조는 이미 `PlayEmphasis()`로 부를 수 있다.
+
+**아바타 교체에서 정한 것 — 뒤집으려면 근거가 필요하다.**
+
+- **`StateComponent` / `AvatarStateAnimationComponent`를 일부러 넣지 않았다.** 일꾼은 `MovementComponent:MoveToDirection`이 아니라 `KinematicbodyComponent:SetWorldPosition`으로 **셀 단위 순간이동**을 한다(`WorkerController:DoMove`). 걷기 클립이 재생될 연속 구간이 없어서, 상태 스택을 넣으면 `IsLegacy`·권한(monster/NPC는 ServerOnly) 함정만 떠안고 화면에는 차이가 없다. 나중에 이동을 보간으로 바꾸면 그때 `ChangeState("MOVE")` 한 줄로 붙일 수 있다.
+- **`UseCustomEquipOnly = true`** — 끄면 접속 계정의 기본 코스튬이 비쳐 일꾼 외형이 계정마다 달라진다.
+- **`AvatarRendererComponent.OrderInLayer = 2`** — 교체 전 `SpriteRendererComponent`와 같은 값이다. 선택 링(0)·광맥 marker(1) 위에 일꾼이 와야 한다.
+- **`SpriteRendererComponent.Color`/`FlipX`는 아바타 엔티티에서 무음 무효다**(`msw-avatar`). 일꾼을 물들이거나 좌우 반전하려면 `AvatarRendererComponent:SetColor` / `MovementComponent`의 방향 API를 쓴다.
 
 **Phase 4 자산.** `docs/21` §4가 아바타 4슬롯(`cap` 안전제일 모자 / `coat` 화이트루즈 멜빵 / `pants` 밀라노청바지 / `weapon` 황금 곡괭이)과 기본 body/head를 확정해 뒀다. 그리고 **D9 §5.2 권고 3** — 일꾼 2 구매 직후 프로그램 복사 시 위치 경고를 노출하는 것은 T-05 몫이지만, 일꾼 연출과 함께 보면 좋다.
 

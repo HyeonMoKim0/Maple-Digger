@@ -25,6 +25,29 @@
 
 ## 기록
 
+### 2026-08-04 — T-04 Phase 4 (2/2 일부): 일꾼을 임시 몬스터 스프라이트에서 MSW 아바타로 교체
+
+> 브랜치 `feat/t04-mine-fx-p4`. Phase 4 의 `rare_ore_unload` 중요 이벤트는 아직 남았다.
+
+D5 §3 이 요구한 "MSW 아바타 기반 실루엣"을 넣었다. `SpriteRendererComponent`(임시 몬스터 `3e76c89a`)를 걷어내고 **`AvatarRendererComponent` + `CostumeManagerComponent`** 로 바꿨다. 작업 스크립트는 `.builder-work/p4_worker_avatar.cjs`.
+
+- **두 곳을 같이 고쳐야 했다.** `Worker.model` 은 런타임 스폰되는 일꾼 2~5 를 덮고, **맵에 배치된 `Worker01` 은 모델 수정이 소급되지 않아** `farm01`·`deep_mine`·`gem_mine` 3개를 `upsertComponent` / `removeComponent` 로 따로 고쳤다. Phase 2 에서 이미 밟은 함정이라 이번에는 처음부터 같이 처리했다.
+- **자산은 `docs/21` §4 확정값 4슬롯 + 기본 body.** 안전제일 모자 / 화이트루즈 멜빵 / 밀라노청바지 / 황금 곡괭이. 곡괭이는 **한손 슬롯**(`CustomOneHandedWeaponEquip`)이다. 런타임 확인 `equippedCount=6`(4슬롯 + body + 엔진 자동 head).
+- **`UseCustomEquipOnly = true` 를 켰다.** 끄면 접속 계정의 기본 코스튬이 먼저 깔려 일꾼 외형이 계정마다 달라진다. 일꾼은 플레이어가 아니다.
+- **`head` 는 대입할 슬롯이 없다.** `Custom*Equip` 17종에 `CustomHeadEquip` 이 없고 엔진이 `body` 색에 맞춰 자동 처리한다. `docs/21` §7.1 의 `head` RUID 는 참고값일 뿐이다. `CustomFaceEquip` 을 비워도 얼굴은 정상 렌더된다(실측).
+- **`AvatarRendererComponent.OrderInLayer = 2`** — 교체 전 `SpriteRendererComponent` 와 같은 값을 유지했다. 선택 링(0)·광맥 marker(1) 위에 일꾼이 와야 한다.
+
+**`StateComponent` / `AvatarStateAnimationComponent` 는 일부러 넣지 않았다.** `Global/Player.model` 은 이 둘을 함께 들고 있어서 그대로 따라가고 싶어지지만, **일꾼의 이동은 보간이 아니라 순간이동이다** — `WorkerController:DoMove` 가 `KinematicbodyComponent:SetWorldPosition` 으로 셀을 건너뛴다. 걷기 클립이 재생될 연속 구간 자체가 없으므로, 상태 스택을 넣으면 `IsLegacy` 기본값 함정과 `AddState` 권한(monster/NPC 는 ServerOnly) 문제만 떠안고 화면에는 아무 차이가 없다. 이동을 보간으로 바꾸는 날 `ChangeState("MOVE")` 한 줄로 붙일 수 있다.
+
+**검증** (`farm01`, Play): 빌드 로그 16건 전부 `Info` LIA(기존 오탐), 오류 0건. 런타임 오류·경고 0건 — 특히 `[LEA-3004]` 없음. 아바타 교체 뒤에도 **Phase 4 연출이 그대로 동작**한다: `mine stone` → `[WorkerFx] shard on` → `shard off` 짝, 광맥 stage 2→3 회복, `special_vein_spawn` 토스트·marker 강조까지 재생됐다. 프로필 baseline 원복 확인 — `gold=0 stone=1 iron=0 goldOre=0 token=0 workers=1 rareColl=0/0/0 rareStore=0/0/0 cart=0/20 hand='' lastMine=farm01`. 바인딩 감사 114건 실패 0건.
+
+**오너 판단 2건이 열렸다** (둘 다 한 줄 교체라 되돌리기 싸다):
+
+1. **`pants`** — 승인란이 비어 있던 슬롯이다. 착용해 보니 렌더는 정상인데 **무릎 위에서 끊기는 짧은 청색 하의**로 보여 "밀라노청바지"라는 이름과 실루엣이 다르다. 대체 후보 `데님 카고 바지`가 작업복에는 더 맞을 수 있다. `docs/21` §4 착용 실측표에 관찰을 남겼다.
+2. **채굴 먼지** — 오너가 "먼지는 아바타 만들어지고 확인하겠다"고 했던 항목이다. 최종 실루엣이 들어갔으니 이제 판정할 수 있다.
+
+**곁가지로 발견한 것**: `ShowDefaultWeaponEffects` 기본값이 `true` 라 **곡괭이에 상시 반짝임이 붙는다.** 대기 중인 일꾼이 계속 반짝이므로 채굴 먼지와 신호가 겹친다고 판단되면 `false` 로 끈다.
+
 ### 2026-08-04 — 8차 세션 마감: 프로필 원복이 불완전했다
 
 - 세션을 닫으며 baseline 을 확인하다 **수레 용량이 `0/21`** 인 것을 발견했다. baseline 은 20이다.
