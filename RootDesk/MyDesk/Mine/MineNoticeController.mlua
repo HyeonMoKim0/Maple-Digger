@@ -73,6 +73,14 @@ method void PlayNotice(string kind, integer cellX, integer cellY, integer count)
         log("[MineNotice] special_vein_spawn count=" .. tostring(count) .. " cell=(" .. cellX .. "," .. cellY .. ")")
         return
     end
+    if kind == "rare_ore_unload" then
+        -- 서버는 하역 1회당 1건만 보낸다. count 는 그 수레에 실려 있던 희귀 광물
+        -- 총합이며 종류는 싣지 않는다 — 종류별 내역은 인벤토리 팝업이 담당한다.
+        local message = "희귀 광물 입고!  " .. tostring(count) .. "개  ·  위치 (" .. tostring(cellX) .. ", " .. tostring(cellY) .. ")"
+        self:ShowToast(message)
+        log("[MineNotice] rare_ore_unload count=" .. tostring(count) .. " cell=(" .. cellX .. "," .. cellY .. ")")
+        return
+    end
     log("[MineNotice] unhandled kind=" .. tostring(kind))
 end
 

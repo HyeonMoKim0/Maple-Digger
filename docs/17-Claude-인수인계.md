@@ -57,13 +57,13 @@
 
 **브랜치 `feat/t04-mine-fx-p4`에서 이어간다.** 자산 RUID는 전부 [`21-연출-자산-승인표.md`](21-연출-자산-승인표.md) **§7.1**에 있다 — **이 문서에 RUID를 복사하지 말 것.** (§5의 채굴 파편은 2026-08-04에 흰 먼지로 교체됐다. §7.1보다 §5가 최신이다.)
 
-**Phase 4 는 `rare_ore_unload` 하나만 남았다.** 아바타 교체·하의·채굴 먼지가 9차에서 전부 오너 확정을 받았다.
+**Phase 4 는 9차에서 완료됐다. 다음은 Phase 5(사운드 7종 배선)다.**
 
-- 아바타 — 임시 몬스터 스프라이트 → MSW 아바타, 4슬롯 + 기본 body
-- `pants` — 오너 지정 `e6ff0ea6…`
-- **채굴 먼지** — `de538ed7…`(뭉게뭉게 흰 먼지구름), `ShardScale` **1.3**, **광물 정중앙**(`HitFxOffsetY` 0)
+9차에 확정된 것 — 아바타(임시 몬스터 스프라이트 → MSW 아바타, 4슬롯 + 기본 body) · `pants` 오너 지정 `e6ff0ea6…` · **채굴 먼지** `de538ed7…`(뭉게뭉게 흰 먼지구름) `ShardScale` **1.3** **광물 정중앙**(`HitFxOffsetY` 0) · **`rare_ore_unload` 중요 이벤트**.
 
-**먼지에 대해 열려 있는 것은 하나뿐**: `ShardOrderInLayer` 6 이 일꾼(2)보다 앞이라 **먼지가 안전모를 덮는다.** 0.3초짜리라 실사용 문제인지는 오너 판단이다. 뒤로 보내려면 일꾼(2)과 광맥 marker(1) 사이에 값이 없으므로 **일꾼 쪽을 올리는 편**이 낫다.
+**Phase 4 에서 열어 둔 판단 하나**: `ShardOrderInLayer` 6 이 일꾼(2)보다 앞이라 **먼지가 안전모를 덮는다.** 0.3초짜리라 실사용 문제인지는 오너 판단이다. 뒤로 보내려면 일꾼(2)과 광맥 marker(1) 사이에 값이 없으므로 **일꾼 쪽을 올리는 편**이 낫다.
+
+> **`rare_ore_unload` 를 넣으며 알게 된 채널 제약** — 중요 이벤트는 **한 틱에 2건 이상 내면 안 된다.** `MineNoticeController` 가 `noticeId > lastNoticeId + 1` 이면 "놓친 이벤트"로 보고 **재생을 통째로 건너뛰기** 때문이다(F5-5 중복 방지). 그래서 알림은 `AddToDepot`(광물 종류마다 호출됨)이 아니라 **`DoUnload` 에서 하역 1회당 1건**으로 낸다. 새 kind 를 추가할 때도 같은 규칙을 지킬 것 — 루프 안에서 `EmitMineNotice` 를 부르면 조용히 사라진다.
 
 > **⚠️ 이펙트 자산을 다시 고를 일이 생기면 `docs/21` §5.0 을 먼저 읽는다.** 요약하면 — **텍스트 검색(`searchResources`)은 시각 이펙트에 대해 작동하지 않는다.** 39건 전부 이름이 비고 점수가 0이라 걸러낼 근거가 없고, "먼지"로 나무 상자·검은 연기가 잡힌다. **`findSimilarResources` 에 이미 옳다고 판정된 연출을 씨앗으로** 넣는 것이 유일하게 작동한 방법이다.
 >
@@ -79,8 +79,8 @@
 | 2 | 광맥 stage 시각화 (`VeinMarkerController` · 모델 · 맵 38개) | ✅ `dc5ed1f` (`main`) |
 | 3 | 특별 광맥 연출 + 토스트 (중요 이벤트 채널) | ✅ `feat/t04-mine-fx-p3` |
 | 3.5 | 광물 종류 아이콘 뱃지 (D-14) — Phase 표에서 빠져 있던 항목 | ✅ `feat/t04-mine-fx-p3` |
-| **4** | **일꾼 연출** — 선택 링 · 파편 · Depot 강조 ✅ / **아바타 교체** ✅ / `rare_ore_unload` ⬜ | 🔶 **진행 중** `feat/t04-mine-fx-p4` |
-| 5 | 사운드 7종 배선 | ⬜ |
+| **4** | **일꾼 연출** — 선택 링 · 파편 · Depot 강조 · **아바타 교체** · `rare_ore_unload` | ✅ **완료** `feat/t04-mine-fx-p4` |
+| 5 | 사운드 7종 배선 | ⬜ **다음 차례** |
 | 6 | 검증·기록 (F5-1~F5-6, `docs/16`, As-built) | ⬜ |
 
 **Phase 3에서 만들어 둔 것 — Phase 4가 그대로 쓴다.** 중요 이벤트 채널은 **kind 문자열로 분기**하도록 일반화돼 있다.
@@ -104,7 +104,7 @@
 
 1. ~~**아바타 교체**~~ → **✅ 완료 (2026-08-04, 9차).** `Worker.model` + 맵 3개의 `Worker01`에서 `SpriteRendererComponent`를 걷어내고 `AvatarRendererComponent` + `CostumeManagerComponent`로 바꿨다(`.builder-work/p4_worker_avatar.cjs`). `docs/21` §4의 4슬롯 + 기본 body 적용, `equippedCount=6` 확인. `pants`는 오너가 `e6ff0ea6…`로 지정해 확정(`.builder-work/p4_worker_pants.cjs`).
 2. ~~**채굴 먼지 최종 판정**~~ → **✅ 완료 (2026-08-04, 9차).** `de538ed7…` · `ShardScale` 1.3 · 광물 정중앙. 자산 선정 방법과 pivot 보정은 `docs/21` §5.0 / §5.0.1 에 있다.
-3. **`rare_ore_unload` 중요 이벤트** — 서버는 `VeinTickSimulator:EmitMineNotice("rare_ore_unload", ...)` 호출 한 줄(`WorkerController:DoUnload` 또는 `AddToDepot`), 클라이언트는 `MineNoticeController:PlayNotice`에 분기 하나. Depot 강조는 이미 `PlayEmphasis()`로 부를 수 있다.
+3. ~~**`rare_ore_unload` 중요 이벤트**~~ → **✅ 완료 (2026-08-04, 9차).** 서버는 `WorkerController:DoUnload` 에서 하역 1회당 1건, 클라이언트는 `MineNoticeController:PlayNotice` 분기 하나. **`AddToDepot` 안에서 내면 안 된다** — 위 채널 제약 참조.
 
 **아바타 교체에서 정한 것 — 뒤집으려면 근거가 필요하다.**
 

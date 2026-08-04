@@ -48,6 +48,25 @@ D5 §3 이 요구한 "MSW 아바타 기반 실루엣"을 넣었다. `SpriteRende
 
 **곁가지로 발견한 것**: `ShowDefaultWeaponEffects` 기본값이 `true` 라 **곡괭이에 상시 반짝임이 붙는다.** 대기 중인 일꾼이 계속 반짝이므로 채굴 먼지와 신호가 겹친다고 판단되면 `false` 로 끈다.
 
+### 2026-08-04 — T-04 Phase 4 완료: `rare_ore_unload` 중요 이벤트
+
+Phase 4 의 마지막 항목이다. 희귀 광물을 Depot 에 하역하면 토스트로 알린다 (F5 §2.2).
+
+- **서버**: `WorkerController:DoUnload` 가 수레를 비우면서 희귀 3종 합계를 세고, 0보다 크면 `VeinTickSimulator:EmitMineNotice("rare_ore_unload", cellX, cellY, rareTotal)` 를 **한 번** 부른다. 희귀 판별은 새 헬퍼 `IsRareOre` 로 모았다.
+- **클라이언트**: `MineNoticeController:PlayNotice` 에 `rare_ore_unload` 분기 하나. 기존 `ShowToast` 를 그대로 쓴다.
+
+**핵심 설계 판단 — 알림은 `AddToDepot` 이 아니라 `DoUnload` 에서 낸다.** 인수인계는 두 곳 중 하나라고 적어 뒀지만 **`AddToDepot` 은 틀린 선택이다.** 그 메서드는 광물 종류마다 호출되므로, 희귀 돌+철을 함께 실은 수레가 한 틱에 알림 2건을 만든다. 그러면 `MineNoticeController` 의 `noticeId > lastNoticeId + 1` 가드(놓친 이벤트 = 재생 건너뛰기, F5-5)에 걸려 **토스트가 통째로 사라진다.** 하역 1회당 1건이어야 F5 §4 의 "이벤트 ID당 1회" 쿨다운과도 맞는다.
+
+**검증** — 희귀 드롭은 1% 라 기다릴 수 없어 수레를 직접 채워 3회 돌렸다. 특히 **희귀 2종을 함께 실어** 위 실패 경로를 실제로 쳤다:
+
+- `stone=3 rare_stone=2 rare_iron=1` → `AddToDepot` **3회** 호출 · `notice id=1 kind=rare_ore_unload count=3` **1건만** · `[MineNotice] rare_ore_unload count=3` 재생. 일반 광물 3개는 count 에서 제외됐다
+- `rare_gold=2` → `notice id=2 count=2` 재생 (id 연속이라 건너뛰기 없음)
+- `[WorkerFx] depot emphasis` 도 함께 정상 재생 — 행동 이벤트 채널과 충돌하지 않는다
+
+빌드 오류 0건(재빌드 타임스탬프 확인), 런타임 오류·경고 0건. 프로필 baseline 원복 `cart=0/20`, 바인딩 감사 114건 실패 0건.
+
+> **토스트 화면 캡처는 실패했다.** 토스트 수명이 스크린샷 왕복(1~4초)보다 짧아 세 번 시도 모두 놓쳤다. 다만 `ShowToast(message)` 는 로그 줄보다 **먼저** 호출되고 `_UIToast` 가 nil 이면 `log_error` 를 내도록 돼 있는데 그 오류가 없었으므로, `[MineNotice] rare_ore_unload count=N` 이 찍힌 것은 토스트가 실제로 디스패치됐다는 증거다(verify-checklist Step 2b 가 허용하는 짝 로그). 토스트 렌더 자체는 `special_vein_spawn` 으로 이미 육안 검증된 경로다.
+
 ### 2026-08-04 — 채굴 먼지 3차 교체: 이펙트는 텍스트 검색으로 못 찾는다
 
 오너 검수 "어울리지 않는다"로 채굴 파편을 세 번째로 골랐다. 확정은 **뭉게뭉게 피는 흰 먼지구름 `de538ed7`**, `ShardScale` **1.3**, 광물 **정중앙**(`HitFxOffsetY` 0.25 → **0**).
