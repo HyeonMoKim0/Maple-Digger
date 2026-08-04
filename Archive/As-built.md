@@ -85,7 +85,8 @@
 - Phase 3의 HUD 작업에서 `UIBuilder.write()`가 `U002: ...TextGUIRendererComponent.Font must be int32. Got "Default"`로 **모든 `.ui` 파일에서 실패**했다. `validate()`를 돌려 보니 `MineHUD` 9건 · `MineSelectUI` 40건 · `MineInventoryUI` 9건 · `BlockProgramUI` 23건 · `AccountRecoveryUI` 4건이었다. 즉 **T-01 이후 `.ui`를 한 번도 못 고치는 상태였다.**
 - 원인은 파일이 아니라 **도구**다. `Environment/NativeScripts/Component/TextGUIRendererComponent.d.mlua`가 `property string Font = "Default"` · `property float FontSize = 20`으로 선언하는데, 스킬의 `msw_ui_builder.cjs`가 두 필드를 `INT32_COMPONENT_FIELDS`에 넣어 정수를 강제하고 있었다. 엔진 26.7 재저장으로 파일에 `"Default"` / `""` / `"0"` 같은 문자열이 들어오면서 드러났다.
 - **파일 쪽을 고치면 안 된다.** `Font`를 정수로 바꾸면 전 행의 글꼴이 바뀌고 다음 Maker 저장에서 되돌아간다. `.d.mlua`가 기준이므로 **검증기에서 `Font`를 빼고 `FontSize`를 실수 필드로 옮겼다.**
-- 수정 대상은 `.claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs`다. **게임 기능 커밋과 섞지 않되 저장소에는 남기기로 했다** — 도구 전용 커밋으로 분리했다(§10의 "게임/도구 커밋 분리"를 지키면서 다른 컴퓨터의 재발은 막는다). `.claude/` 전체를 커밋 대상으로 바꾼 것은 아니고, **이 파일 하나**만 예외로 넣었다.
+- 수정 대상은 `.claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs`였고 도구 전용 커밋(`edc346e`)으로 분리했다.
+- **후속 (2026-08-04): 스킬 플러그인 업데이트가 상위에서 같은 문제를 제대로 고쳤다.** 갱신된 빌더는 `Font`/`FontSize`가 여전히 정수 목록에 있는데도 8개 UI 파일 전부 `validate()` 오류 0건이다 — 검사 방식 자체가 바뀌었다. **`edc346e`의 2줄 패치는 이제 불필요하다.** 도구 문제를 로컬에서 우회했을 때는 상위가 고쳤는지 주기적으로 확인해야 패치가 유령으로 남지 않는다.
 - **앞으로 같은 종류를 판별하는 법**: `U002`/`U003`/`U004`가 건드리지도 않은 엔티티에서 무더기로 나오면 파일이 아니라 검증기를 의심한다. 근거는 항상 `Environment/NativeScripts/Component/*.d.mlua`의 `property <타입>` 선언이다.
 
 ### 2026-07-31 — 엔진 26.7 재저장분 정리와 GroupOrder 복구

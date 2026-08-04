@@ -135,7 +135,9 @@ node tools/audit_bindings.cjs
    - 새 UIGroup을 추가할 때는 **끝에 붙이거나 중간 삽입 후 전체를 다시 0부터 매긴다.** 희소값으로 자리를 비워 두는 방식은 압축 때문에 의미가 없다.
 8. **UIBuilder 검증기와 엔진 버전이 어긋나면 `.ui` 쓰기가 통째로 막힌다.** 2026-07-31에 실제로 막혀 있었다 — `write()`가 `U002: ...TextGUIRendererComponent.Font must be int32. Got "Default"`로 실패했고, **특정 파일이 아니라 5개 `.ui` 전부**에서 났다(`MineHUD` 9 · `MineSelectUI` 40 · `MineInventoryUI` 9 · `BlockProgramUI` 23 · `AccountRecoveryUI` 4). 즉 T-01 이후 `.ui`를 한 번도 못 고치는 상태였다.
 
-   원인은 파일이 아니라 도구였다. `Environment/NativeScripts/Component/TextGUIRendererComponent.d.mlua`가 `property string Font = "Default"` · `property float FontSize = 20`으로 선언하는데 빌더가 두 필드를 정수로 강제했다. **이 건은 고쳐서 커밋했다** — `.claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs`, 게임 기능과 섞이지 않도록 **도구 전용 커밋으로 분리**했다(§10 경계 유지). 저장소를 pull 하면 따라오므로 새 환경에서 다시 고칠 필요는 없다.
+   원인은 파일이 아니라 도구였다. `Environment/NativeScripts/Component/TextGUIRendererComponent.d.mlua`가 `property string Font = "Default"` · `property float FontSize = 20`으로 선언하는데 빌더가 두 필드를 정수로 강제했다. 당시 검증기를 직접 고쳐 도구 전용 커밋(`edc346e`)으로 남겼다.
+
+   **그 뒤 스킬 플러그인이 업데이트되면서 상위에서 제대로 고쳐졌다** (2026-08-04 확인 — 8개 UI 파일 전부 `validate()` 오류 0건). `edc346e`의 2줄 패치는 **이제 불필요하다.** 새 환경에서 이 증상이 안 나면 정상이다.
 
    **같은 종류의 사고에 대비하는 규칙**: `U002`/`U003`/`U004`가 **내가 건드리지도 않은 엔티티에서** 무더기로 나오면, 파일이 아니라 **검증기와 엔진 버전이 어긋난 것**을 먼저 의심한다. 판정 근거는 `Environment/NativeScripts/Component/*.d.mlua`의 `property <타입>` 선언이다. **파일 값을 검증기에 맞추면 안 된다** — 실제 표시가 바뀌고 다음 Maker 저장에서 되돌아간다.
 9. **새 텍스트 행을 만들면 `MOD.Core.TextComponent`를 지운다.** `UIBuilder.text()`는 레거시 `TextComponent`와 `TextGUIRendererComponent`를 **둘 다** 붙이는데, 기존 HUD 행은 후자 하나만 갖는다. 렌더러가 둘이면 **같은 자리에 문자열 두 개가 겹쳐 찍히고**, 컨트롤러가 갱신하는 쪽은 하나뿐이라 나머지는 생성 시점 문자열에 멈춘다.
