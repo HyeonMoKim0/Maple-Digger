@@ -14,11 +14,23 @@ property string RingRuid = "76e2d942cc264558aad35f78be17b109"
 property number RingOffsetY = -0.32
 property integer RingOrderInLayer = 0
 
--- 채굴 파편 (docs/21 §5). 132x112 라 한 셀을 넘어 축소해 쓴다.
-property string ShardRuid = "d4f82b525b47413c8c485dee4c696431"
-property number ShardScale = 0.55
-property number ShardOffsetY = 0.1
+-- 채굴 파편 (docs/21 §5). **일꾼이 아니라 채굴한 광맥 셀 중심에 띄운다**
+-- (2026-08-04 오너 검수). 일꾼 자식으로 두면 일꾼 스프라이트 크기에 맞춰
+-- 오프셋을 잡아야 하는데, 아바타 교체 뒤 그 값이 전부 무효가 된다.
+-- 셀 좌표는 Phase 1 이 만든 VisualEventCellX/Y 가 그대로 준다.
+--
+-- 자산은 **흰 먼지 퍼짐**이다. 2026-08-04 월드 실측에서 후보를 나란히 놓고 골랐다.
+-- docs/21 §5 가 "돌 파편"으로 적어 둔 `d4f82b52` 는 실제로는 어두운 얼룩이라
+-- 초록 바닥에서 잔디와 구분되지 않았고(오너 검수 "그림자 같다"),
+-- "노란 스파크"라던 `6ade17ad` 는 보라색 광석이었다. 둘 다 메타데이터 설명과
+-- 실제 그림이 달랐다 — C206(부유석 condition)과 같은 종류의 오류다.
+property string ShardRuid = "78ea5621bb574c8d8d7f84848262014d"
+property number ShardScale = 0.9
 property integer ShardOrderInLayer = 6
+
+-- 광맥 스프라이트 위로 살짝 띄워 광맥 자체를 가리지 않게 한다.
+property number HitFxOffsetY = 0.25
+
 -- F5 §3 "0.3초 내 파편 효과".
 property number ShardSeconds = 0.3
 
@@ -65,7 +77,7 @@ method void OnUpdate(number delta)
         return
     end
     self._T.lastSequence = sequence
-    self:PlayActionEvent(worker.VisualEventKind)
+    self:PlayActionEvent(worker.VisualEventKind, worker.VisualEventCellX, worker.VisualEventCellY)
 end
 
 @ExecSpace("ClientOnly")
@@ -91,22 +103,54 @@ method void EnsureVisuals()
     end
 
     if self._T.shard == nil then
-        local shard = _SpawnService:SpawnByModelId(self.FxModelId, self.Entity.Name .. "_Shard", Vector3(0, self.ShardOffsetY, 0), self.Entity)
+        -- 파편은 **맵의 자식**이다. 일꾼 자식으로 두면 좌표가 일꾼 로컬이 되어
+        -- 채굴한 광맥 셀에 놓을 수 없고, 일꾼 스프라이트 크기에 오프셋이 묶인다.
+        local shard = _SpawnService:SpawnByModelId(self.FxModelId, self.Entity.Name .. "_Shard", Vector3(0, 0, 0), map)
         if shard == nil then
             log_error("[WorkerFx] shard spawn failed model=" .. self.FxModelId)
         else
-            shard.TransformComponent.Position = Vector3(0, self.ShardOffsetY, 0)
             shard.TransformComponent.Scale = Vector3(self.ShardScale, self.ShardScale, 1)
             local renderer = shard.SpriteRendererComponent
             if renderer ~= nil then
                 renderer.SpriteRUID = self.ShardRuid
                 renderer.OrderInLayer = self.ShardOrderInLayer
-                -- 파편은 채굴 순간에만 뜬다. 평소에는 꺼 둔다.
+                -- 채굴 순간에만 뜬다. 평소에는 꺼 둔다.
                 renderer.Enable = false
             end
             self._T.shard = shard
         end
     end
+end
+
+@ExecSpace("ClientOnly")
+method void SetHitFxEnabled(boolean enabled)
+    -- Toggles the mining debris.
+    local shard = self._T.shard
+    if shard == nil or not isvalid(shard) then return end
+    local renderer = shard.SpriteRendererComponent
+    if renderer ~= nil then renderer.Enable = enabled end
+end
+
+@ExecSpace("ClientOnly")
+method boolean MoveShardToCell(integer cellX, integer cellY)
+    -- Places the debris at the mined vein's cell (2026-08-04 오너 검수 —
+    -- "파편은 광석 위치 중심에 발생할 것"). 셀 좌표는 서버가 행동 이벤트에
+    -- 실어 보낸 값 그대로다.
+    local shard = self._T.shard
+    if shard == nil or not isvalid(shard) then return false end
+
+    local map = self.Entity.CurrentMap
+    if map == nil then return false end
+    ---@type RectTileMapComponent
+    local tilemap = map:GetFirstChildComponentByTypeName("RectTileMapComponent")
+    if tilemap == nil then
+        log_error("[WorkerFx] RectTileMapComponent not found")
+        return false
+    end
+
+    local world = tilemap:ToWorldPosition(Vector2Int(cellX, cellY))
+    shard.TransformComponent.Position = Vector3(world.x, world.y + self.HitFxOffsetY, 0)
+    return true
 end
 
 @ExecSpace("ClientOnly")
@@ -126,10 +170,10 @@ method void RefreshRing()
 end
 
 @ExecSpace("ClientOnly")
-method void PlayActionEvent(string kind)
+method void PlayActionEvent(string kind, integer cellX, integer cellY)
     -- Renders one F5 §2.2 action event. 사운드 cue 는 Phase 5 범위다.
     if kind == "mine_success" then
-        self:ShowShard()
+        self:ShowShard(cellX, cellY)
         return
     end
     if kind == "unload_success" then
@@ -140,13 +184,12 @@ method void PlayActionEvent(string kind)
 end
 
 @ExecSpace("ClientOnly")
-method void ShowShard()
-    -- Turns the shard on for ShardSeconds; AdvanceShard turns it back off.
-    local shard = self._T.shard
-    if shard == nil or not isvalid(shard) then return end
-    local renderer = shard.SpriteRendererComponent
-    if renderer == nil then return end
-    renderer.Enable = true
+method void ShowShard(integer cellX, integer cellY)
+    -- Places the debris on the mined vein, then shows it for ShardSeconds.
+    -- 셀로 옮기지 못하면 아무 데나 띄우지 않고 건너뛴다 — 엉뚱한 자리의 파편은
+    -- 없는 것보다 나쁘다.
+    if not self:MoveShardToCell(cellX, cellY) then return end
+    self:SetHitFxEnabled(true)
     self._T.shardElapsed = 0
     -- 0.3초짜리라 스크린샷으로 잡히지 않는다. 생성·소멸을 짝으로 남겨
     -- 로그만으로 1회 재생을 판정할 수 있게 한다 (verify-checklist Step 2b).
@@ -161,10 +204,7 @@ method void AdvanceShard(number delta)
     if self._T.shardElapsed < self.ShardSeconds then return end
 
     self._T.shardElapsed = -1
-    local shard = self._T.shard
-    if shard == nil or not isvalid(shard) then return end
-    local renderer = shard.SpriteRendererComponent
-    if renderer ~= nil then renderer.Enable = false end
+    self:SetHitFxEnabled(false)
     log("[WorkerFx] shard off " .. self.Entity.Name)
 end
 

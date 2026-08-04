@@ -178,7 +178,11 @@ method void AdvanceSpawnPulse(number delta)
         return
     end
 
-    local scale = rest * (1 + (self.SpawnPulseScale - 1) * (1 - progress))
+    -- 커졌다 작아지는 곡선(sin). 이전에는 최대 크기에서 시작해 줄기만 해서
+    -- "커지는 순간"이 없었고, 오너 검수에서 "이미 큰 게 작아지는 것"으로만
+    -- 읽혔다. 0에서 시작해 중간에 최대가 되어야 펄스로 보인다.
+    local wave = math.sin(math.pi * progress)
+    local scale = rest * (1 + (self.SpawnPulseScale - 1) * wave)
     self.Entity.TransformComponent.Scale = Vector3(scale, scale, 1)
 end
 
