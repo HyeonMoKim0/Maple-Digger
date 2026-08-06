@@ -380,10 +380,13 @@ Maker MCP의 `mouse_input`은 **엔진 관리 UI(`ButtonComponent`)를 클릭하
 ## 9. 다른 컴퓨터에서의 시작 절차
 
 1. 저장소를 열고 `git log --oneline -3`, `git status --short`, `git diff --check`로 실제로 옮겨진 변경을 확인한다. **이 문서의 §0이 보이면 2차 세션 결과까지 넘어온 것이다.**
-2. `AGENTS.md`의 MSW Foundation/도메인 규칙을 그 작업 환경에 맞게 로드한다. 특히 `.ui`는 UIBuilder, `.model`/`.map`은 해당 Builder로만 수정한다.
-3. Maker를 연결한 뒤 `refresh`, build log 확인, `play`, runtime log 확인, `stop` 순서로 첫 상태를 재확인한다. 기대값은 빌드 오류 0건, `[VeinTick] layout loaded mineId=beginner_mine veins=4 starts=5 specialCandidates=3`, `[Worker 1] configured cart=0/20 hand=`, `owned workers restored count=1`이다.
-4. **§0.1의 우선순위표부터 진행한다.** 서버 규칙 검수는 2차 세션에서 이미 통과했으므로 다시 하지 않아도 된다. 남은 검수는 `docs/16` §9에 따라 사용자만 수행할 수 있는 버튼 클릭 항목이다.
-5. 새 개발을 시작할 때는 계획 문서 → 기능 명세 → 구현 → As-built → 검수 체크리스트 순서를 유지한다.
+2. **`.mcp.json`을 새로 만든다 — 이것만은 저장소에 없다.** API 키가 들어 있어 `.gitignore`에 있고, 그래서 클론에 따라오지 않는다. 이게 없으면 Maker MCP 도구가 아예 뜨지 않는다. 설정 방법: https://maplestoryworlds-creators.nexon.com/ko/docs?postId=1368
+   - 나머지 작업 환경(`.claude/` 스킬·훅, `AGENTS.md`, `skills-lock.json`)은 **저장소에 함께 커밋돼 있으므로 클론만 하면 된다** (2026-08-06 반영). `.omc/`는 런타임 상태라 무시 대상이고, `.mswai/runtime`은 자체 `.gitignore`로 제외된다 — 둘 다 없어도 정상이다.
+3. `AGENTS.md`의 MSW Foundation/도메인 규칙을 그 작업 환경에 맞게 로드한다. 특히 `.ui`는 UIBuilder, `.model`/`.map`은 해당 Builder로만 수정한다.
+4. `node tools/audit_bindings.cjs`와 `node tools/audit_resave.cjs`를 한 번씩 돌려 **도구가 실제로 도는지** 확인한다. 둘 다 `.claude/skills`의 빌더를 `require`하므로, 여기서 실패하면 워크스페이스가 아니라 **환경이 덜 옮겨진 것**이다.
+5. Maker를 연결한 뒤 `refresh`, build log 확인, `play`, runtime log 확인, `stop` 순서로 첫 상태를 재확인한다. 기대값은 빌드 오류 0건, `[VeinTick] layout loaded mineId=beginner_mine veins=4 starts=5 specialCandidates=3`, `[Worker 1] configured cart=0/20 hand=`, `owned workers restored count=1`이다.
+6. **§0.1의 우선순위표부터 진행한다.** 서버 규칙 검수는 2차 세션에서 이미 통과했으므로 다시 하지 않아도 된다. 남은 검수는 `docs/16` §9에 따라 사용자만 수행할 수 있는 버튼 클릭 항목이다.
+7. 새 개발을 시작할 때는 계획 문서 → 기능 명세 → 구현 → As-built → 검수 체크리스트 순서를 유지한다.
 
 ### 서버 규칙을 다시 검증해야 할 때
 
