@@ -27,9 +27,16 @@ property number SpecialScale = 1.0
 property number DepotScale = 1.0
 
 -- 특별 광맥 스폰 강조 (F5 §2.2 "월드 전용 marker"). 별도 파티클 자산이 없어
--- (docs/21 §5.1) 크기 펄스로 시선을 끈다. 사운드 cue 는 Phase 5 범위다.
+-- (docs/21 §5.1) 크기 펄스로 시선을 끈다.
 property number SpawnPulseSeconds = 0.6
 property number SpawnPulseScale = 1.6
+
+-- @Sync 값은 맵 로드 직후 한 박자 늦게 도착한다 (MineNoticeController 와 같은
+-- 함정). 첫 페인트가 기본값(stage 0)으로 그려진 뒤 실제 값(stage 3)이 도착하면
+-- "상승"으로 오인돼 접속하자마자 vein_recover 가 전 광맥에서 일제히 울린다 —
+-- 2026-08-06 Play 검증에서 실제로 15개가 동시 발사됐다. 이 구간의 상승은
+-- 재생하지 않고 기준선만 옮긴다 (F5-5 재접속 중복 방지).
+property number RecoverySettleSeconds = 1.5
 
 -- D-14: 광물 종류 아이콘 뱃지 (C205 방안 C / docs/21 §1.3).
 -- stage 는 부모 스프라이트가, 광물 종류는 이 뱃지가 담당한다. 색조로만 구분하는
@@ -58,6 +65,7 @@ method void OnBeginPlay()
     self._T.pulseElapsed = -1
     self._T.wasActive = false
     self._T.firstPaint = true
+    self._T.settleElapsed = 0
     self._T.badge = nil
     if self._T.marker == nil then
         log_error("[VeinMarkerFx] VeinMarker missing on " .. self.Entity.Name)
@@ -144,6 +152,7 @@ method void OnUpdate(number delta)
     -- VisualRevision 이 바뀔 때만 다시 그린다. 서버가 무변경 틱에는 올리지
     -- 않으므로 정지 상태에서는 비교 1회로 끝난다.
     if self._T.marker == nil then return end
+    self._T.settleElapsed = self._T.settleElapsed + delta
     if self._T.marker.VisualRevision ~= self._T.lastRevision then
         self:Repaint()
     end
@@ -228,6 +237,15 @@ method void Repaint()
         end
     else
         ruid = self:StageRuid(marker.ReserveStage)
+        -- vein_recover cue (F5 §4 / docs/21 §3 "화면 내 stage 상승"). 일반
+        -- 광맥의 회복 연출은 자산이 없어 스프라이트 교체 + 이 사운드가 전부다
+        -- (docs/21 §5.1). 첫 페인트·채굴(감소)은 제외하고 상승만 소리 낸다.
+        local lastStage = self._T.lastStage
+        local settled = self._T.settleElapsed ~= nil and self._T.settleElapsed >= self.RecoverySettleSeconds
+        if lastStage ~= nil and not isFirstPaint and settled and marker.ReserveStage > lastStage then
+            self:PlaySoundCue("vein_recover")
+        end
+        self._T.lastStage = marker.ReserveStage
     end
 
     -- 뱃지는 부모가 숨을 때 함께 숨어야 하므로 아래 조기 return 보다 먼저 부른다.
@@ -245,6 +263,21 @@ method void Repaint()
     -- 펄스가 끝나면 이 값으로 돌아간다. kind 별로 다르므로 여기서 기억해 둔다.
     self._T.restScale = scale
     self.Entity.TransformComponent.Scale = Vector3(scale, scale, 1)
+end
+
+@ExecSpace("ClientOnly")
+method void PlaySoundCue(string cue)
+    -- Forwards one cue to the map's sound controller (F5 §4, Phase 5).
+    -- marker별 쿨다운 단위는 이 엔티티 이름이다. 컨트롤러가 없으면 무음으로
+    -- 건너뛴다 (F5 §4) — 사운드 부재가 stage 표시를 멈추면 안 된다.
+    if self._T.soundFx == nil or not isvalid(self._T.soundFx) then
+        local map = self.Entity.CurrentMap
+        if map == nil then return end
+        ---@type MineSoundController
+        self._T.soundFx = map:GetComponent("script.MineSoundController")
+    end
+    if self._T.soundFx == nil then return end
+    self._T.soundFx:PlayCue(cue, self.Entity.Name)
 end
 
 @ExecSpace("ClientOnly")

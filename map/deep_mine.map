@@ -16,7 +16,7 @@
       {
         "id": "2cf67e7d-d98c-4c7f-a5d1-f6143b59ea24",
         "path": "/maps/deep_mine",
-        "componentNames": "MOD.Core.MapComponent,MOD.Core.FootholdComponent,script.VeinTickSimulator,script.MineNoticeController",
+        "componentNames": "MOD.Core.MapComponent,MOD.Core.FootholdComponent,script.VeinTickSimulator,script.MineNoticeController,script.MineSoundController",
         "jsonString": {
           "name": "deep_mine",
           "path": "/maps/deep_mine",
@@ -56,6 +56,10 @@
             },
             {
               "@type": "script.MineNoticeController",
+              "Enable": true
+            },
+            {
+              "@type": "script.MineSoundController",
               "Enable": true
             }
           ],

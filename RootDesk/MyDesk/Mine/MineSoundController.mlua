@@ -1,0 +1,108 @@
+-- F5 §1 CLIENT-SIDE SOUND — cue 재생과 쿨다운만 담당한다.
+-- 게임 이벤트 판정은 하지 않는다 (F5 §1 금지 사항). 이벤트의 중복 제거는
+-- 각 채널의 주인(WorkerVisualController 행동 이벤트 · MineNoticeController
+-- 중요 이벤트 · VeinMarkerController stage)이 이미 끝냈고, 여기는 그들이
+-- 넘겨준 cue 를 F5 §4 쿨다운 표로 거른 뒤 재생만 한다.
+--
+-- RUID 는 docs/21 §3 **잠정값**이다 (2026-08-06 오너 결정: 잠정값으로 먼저
+-- 배선하고 청취 판정은 Phase 6 에서 일괄). 교체 시 아래 property 만 바꾼다.
+-- 미승인·빈 RUID cue 는 무음으로 건너뛰고 시뮬레이션을 멈추지 않는다 (F5 §4).
+@Component
+script MineSoundController extends Component
+
+-- docs/21 §3 잠정 RUID 7종. 빈 문자열이면 그 cue 는 무음이다.
+property string MineHitRuid = "a225c774f95a41cc8752aa55ea7ec787"
+property string MineEmptyRuid = "d57351f8d95d44149cb641589d60707b"
+property string CartLoadRuid = "f399837e702843abb2c8196829101982"
+property string DepotUnloadRuid = "b47642347f4d4cbc93aafb1c8af9ba51"
+property string SpecialVeinSpawnRuid = "06cbeae2e59f4d118b4a13f30f983528"
+property string RareOreUnloadRuid = "655fec4efe3643d88eac1c686e5af922"
+property string VeinRecoverRuid = "556753bafdf14063b8e7236a6ca38675"
+
+-- 효과음 공용 볼륨. BGM 이 없는 월드라 1.0 이 기준이고, 청취 판정(Phase 6)에서
+-- 시끄러우면 여기 하나만 낮춘다.
+property number Volume = 1.0
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- Builds the cue table (RUID + F5 §4 cooldown rule) and the cooldown ledger.
+    -- perKey=true 면 key(일꾼 인덱스·marker 이름)별로, false 면 cue 전역으로 잰다.
+    -- selectedOnly 는 mine_empty 전용 — F5 §4 "선택 일꾼별"은 선택된 일꾼의
+    -- 헛방만 소리 낸다는 뜻이다. 5명이 동시에 헛치면 실패음이 매 틱 겹쳐서,
+    -- 지금 보고 있는 일꾼의 실패만 들려준다.
+    self._T.cues = {
+        mine_hit = { ruid = self.MineHitRuid, cooldown = 0.25, perKey = true, selectedOnly = false },
+        mine_empty = { ruid = self.MineEmptyRuid, cooldown = 0.8, perKey = true, selectedOnly = true },
+        cart_load = { ruid = self.CartLoadRuid, cooldown = 0.25, perKey = true, selectedOnly = false },
+        -- 전역 1틱 1회 (F5 §4). 틱은 0.4초다.
+        depot_unload = { ruid = self.DepotUnloadRuid, cooldown = 0.4, perKey = false, selectedOnly = false },
+        -- 중요 이벤트 2종은 발행측이 이벤트 ID당 1건을 보장한다 (F5 §2.2 한 틱
+        -- 1건 제약). 쿨다운은 지연 몰아치기 대비 안전망이다.
+        special_vein_spawn = { ruid = self.SpecialVeinSpawnRuid, cooldown = 0.4, perKey = false, selectedOnly = false },
+        rare_ore_unload = { ruid = self.RareOreUnloadRuid, cooldown = 0.4, perKey = false, selectedOnly = false },
+        vein_recover = { ruid = self.VeinRecoverRuid, cooldown = 1.0, perKey = true, selectedOnly = false },
+    }
+    self._T.lastPlay = {}
+    self._T.warned = {}
+    log("[MineSound] ready map=" .. self.Entity.Name)
+end
+
+@ExecSpace("ClientOnly")
+method void PlayCue(string cue, string key)
+    -- Plays one cue if its cooldown allows. key 는 perKey cue 의 쿨다운 단위다
+    -- (일꾼 cue 는 tostring(WorkerIndex), vein_recover 는 marker 엔티티 이름).
+    -- 전역 cue 는 key 를 무시한다.
+    if self._T.cues == nil then
+        -- 아직 OnBeginPlay 전이다. 컴포넌트 초기화 순서는 보장되지 않으므로
+        -- (다른 컨트롤러의 첫 프레임이 먼저 돌 수 있다) 오류가 아니라 침묵이다.
+        return
+    end
+
+    -- PlaySound 는 위치와 무관한 전역 재생이다. 이 컨트롤러는 맵마다 하나씩
+    -- 있으므로, 플레이어가 **이 맵에 있을 때만** 소리 낸다 — 아니면 맵 전환 뒤
+    -- 이전 맵의 회복음이 계속 들린다 (2026-08-06 Play 검증에서 실제 관측:
+    -- 플레이어는 farm01 인데 gem_mine 광맥 11개의 cue 가 재생됐다).
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap ~= self.Entity then return end
+    local spec = self._T.cues[cue]
+    if spec == nil then
+        log_error("[MineSound] unknown cue=" .. tostring(cue))
+        return
+    end
+
+    if spec.ruid == nil or spec.ruid == "" then
+        -- 미승인 cue 는 무음으로 건너뛴다 (F5 §4). 세션당 한 번만 알린다 —
+        -- 매번 찍으면 채굴 틱마다 로그가 쌓인다.
+        if self._T.warned[cue] == nil then
+            self._T.warned[cue] = true
+            log("[MineSound] cue=" .. cue .. " has no RUID - muted")
+        end
+        return
+    end
+
+    if spec.selectedOnly then
+        -- F5 §4 "선택 일꾼별" — 선택되지 않은 일꾼의 이 cue 는 재생하지 않는다.
+        local selected = _BlockProgramController:GetSelectedWorkerIndex()
+        if tostring(selected) ~= key then return end
+    end
+
+    local ledgerKey = cue
+    if spec.perKey then ledgerKey = cue .. "#" .. key end
+
+    -- ElapsedSeconds 는 세션을 넘어 증가하는 시계지만, 여기서는 "지난 재생과의
+    -- 간격"만 재므로 안전하다 — 이전 세션의 값은 항상 과거라 재생을 허용한다.
+    local now = _UtilLogic.ElapsedSeconds
+    local last = self._T.lastPlay[ledgerKey]
+    if last ~= nil and now - last < spec.cooldown then
+        -- 쿨다운 억제. F5-2("효과·사운드는 제한 내 재생") 검증의 양성 증거로
+        -- 남긴다 — 억제 빈도는 쿨다운 자체가 상한이라 로그가 폭주하지 않는다.
+        log("[MineSound] suppressed cue=" .. cue .. " key=" .. key)
+        return
+    end
+    self._T.lastPlay[ledgerKey] = now
+
+    _SoundService:PlaySound(spec.ruid, self.Volume)
+    log("[MineSound] play cue=" .. cue .. " key=" .. key)
+end
+
+end

@@ -70,6 +70,7 @@ method void PlayNotice(string kind, integer cellX, integer cellY, integer count)
     if kind == "special_vein_spawn" then
         local message = "특별 광맥 출현!  " .. tostring(count) .. "곳  ·  위치 (" .. tostring(cellX) .. ", " .. tostring(cellY) .. ")"
         self:ShowToast(message)
+        self:PlaySoundCue("special_vein_spawn")
         log("[MineNotice] special_vein_spawn count=" .. tostring(count) .. " cell=(" .. cellX .. "," .. cellY .. ")")
         return
     end
@@ -78,10 +79,24 @@ method void PlayNotice(string kind, integer cellX, integer cellY, integer count)
         -- 총합이며 종류는 싣지 않는다 — 종류별 내역은 인벤토리 팝업이 담당한다.
         local message = "희귀 광물 입고!  " .. tostring(count) .. "개  ·  위치 (" .. tostring(cellX) .. ", " .. tostring(cellY) .. ")"
         self:ShowToast(message)
+        self:PlaySoundCue("rare_ore_unload")
         log("[MineNotice] rare_ore_unload count=" .. tostring(count) .. " cell=(" .. cellX .. "," .. cellY .. ")")
         return
     end
     log("[MineNotice] unhandled kind=" .. tostring(kind))
+end
+
+@ExecSpace("ClientOnly")
+method void PlaySoundCue(string cue)
+    -- Forwards one cue to the sibling sound controller (F5 §4, Phase 5).
+    -- 중요 이벤트는 이 컨트롤러가 이벤트 ID당 1회를 이미 보장하므로 key 없이
+    -- 전역으로 넘긴다. 컨트롤러가 없으면 무음으로 건너뛴다 (F5 §4).
+    if self._T.soundFx == nil or not isvalid(self._T.soundFx) then
+        ---@type MineSoundController
+        self._T.soundFx = self.Entity:GetComponent("script.MineSoundController")
+    end
+    if self._T.soundFx == nil then return end
+    self._T.soundFx:PlayCue(cue, "global")
 end
 
 @ExecSpace("ClientOnly")

@@ -23,8 +23,23 @@
 | 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v7 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물은 하역 즉시 컬렉션 등록·10단계 패시브·11회째부터 수동/자동 판매까지 구현했으며, 맵 강화는 미구현이다(계약은 `docs/13` §5). 프로필에 `mineLevels` 필드가 아직 없어 맵 강화 착수 시 v8 마이그레이션이 필요하다. |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. 1~5 시작 셀은 향후 일꾼 구매 확장을 위한 데이터로 유지한다. marker·서버 맵 전환과 **F5 시각 표현(Phase 1~4)** 은 구현됐고, **사운드(Phase 5)와 F5-1~F5-6 최종 판정(Phase 6)은 미구현** |
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다** |
+| F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. RUID는 docs/21 §3 잠정값 — **청취 판정 전이므로 docs/21 §3 승인란은 비어 있는 게 맞다**. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
 
 ## 기록
+
+### 2026-08-06 — T-04 Phase 5: 사운드 7종 배선 (잠정 RUID)
+
+`MineSoundController` 신설(ClientOnly, 맵 3개 루트에 MapBuilder 로 부착) — cue 재생과
+F5 §4 쿨다운만 담당. 행동(WorkerVisual)·중요 이벤트(MineNotice)·stage(VeinMarker) 쪽이
+자기 채널의 중복 제거를 끝낸 뒤 cue 호출만 얹는다. 사운드 dedup 을 따로 만들면 두 추적이
+어긋나기 때문. RUID 는 docs/21 §3 잠정값이고 청취 판정은 Phase 6 오너 몫.
+
+- 검증: 7종 전부 실제 경로로 재생 로그 확보 + 쿨다운 play→suppressed 쌍. docs/16 §22.
+- **함정 2개를 첫 Play 가 잡았다**: ① 접속 직후 `@Sync` 도착이 첫 페인트(기본값)를 "상승"
+  으로 오인시켜 vein_recover 15개 일제 발사 → `RecoverySettleSeconds` 가드 (MineNotice 의
+  settle 과 같은 함정 — **@Sync 파생 이벤트를 새로 만들 때는 항상 settle 가드부터**).
+  ② `PlaySound` 는 전역이라 플레이어가 없는 맵의 cue 도 들린다 → `LocalPlayer.CurrentMap`
+  가드. 타 맵 가드의 런타임 실증은 Phase 6 맵 전환 검증에서.
 
 ### 2026-08-06 — 채굴 먼지 세로 pivot 보정 신설 · "수명만 늘려 찍기"가 위치 판정에 틀린 이유
 
