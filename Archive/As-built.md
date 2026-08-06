@@ -21,7 +21,8 @@
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. Worker01 손·수레 + 세션 Depot 합계를 표시하며, 계정 광물·판매 설정·광산 선택은 별도 F7-B UI가 담당한다. |
 | 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v7 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물은 하역 즉시 컬렉션 등록·10단계 패시브·11회째부터 수동/자동 판매까지 구현했으며, 맵 강화는 미구현이다(계약은 `docs/13` §5). 프로필에 `mineLevels` 필드가 아직 없어 맵 강화 착수 시 v8 마이그레이션이 필요하다. |
-| 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. 1~5 시작 셀은 향후 일꾼 구매 확장을 위한 데이터로 유지한다. marker와 서버 맵 전환은 구현됐고 F5 시각/사운드 표현은 미구현 |
+| 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. 1~5 시작 셀은 향후 일꾼 구매 확장을 위한 데이터로 유지한다. marker·서버 맵 전환과 **F5 시각 표현(Phase 1~4)** 은 구현됐고, **사운드(Phase 5)와 F5-1~F5-6 최종 판정(Phase 6)은 미구현** |
+| F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다** |
 
 ## 기록
 
