@@ -78,6 +78,8 @@
 > **작동한 방법**: `SpriteRendererComponent` 의 `PlayRate` 를 **0.02** 로 낮추고 `StartFrameIndex`/`EndFrameIndex` 를 **0~1** 로 고정한다. 그래야 실제로 보이는 앞부분 구간을 판정할 수 있다. `ShardPivotOffset*` 를 다시 잴 때도 반드시 이 방법을 쓴다.
 >
 > 그리고 **판정 대상 셀에 실제 광물이 있어야 한다.** 처음에 일꾼이 서 있던 `(0,0)` 은 Depot 이라 "광물 중심"과 대조할 기준이 화면에 없었다.
+>
+> **절차 전체는 `msw-asset-verify` 스킬 §"고른 뒤 — 제자리에 뜨는가 판정"에 있다** (2026-08-06 추가). 프레임 고정 · 기준 물체 · 좌표와 스크린샷 병행 · pivot 을 축마다 재고 `Scale` 에 비례시키는 규칙까지 한곳에 모아 뒀다.
 
 > **`rare_ore_unload` 를 넣으며 알게 된 채널 제약** — 중요 이벤트는 **한 틱에 2건 이상 내면 안 된다.** `MineNoticeController` 가 `noticeId > lastNoticeId + 1` 이면 "놓친 이벤트"로 보고 **재생을 통째로 건너뛰기** 때문이다(F5-5 중복 방지). 그래서 알림은 `AddToDepot`(광물 종류마다 호출됨)이 아니라 **`DoUnload` 에서 하역 1회당 1건**으로 낸다. 새 kind 를 추가할 때도 같은 규칙을 지킬 것 — 루프 안에서 `EmitMineNotice` 를 부르면 조용히 사라진다.
 
@@ -183,12 +185,15 @@ rareColl=0/0/0 rareStore=0/0/0 cart=0/20 lastMine=farm01
 
 > **2026-08-04 현재 `.claude/**` 90여 개가 갱신된 채 미커밋이다** — 스킬 플러그인 업데이트(신규 스킬 `msw-planning`·`maplestory-skill-maker`, `builder-protocol` 분할, `skills-lock.json`, `.omc/`). 오너 환경 갱신분이라 손대지 않았다. 커밋 여부는 오너 판단이며 **게임 동작에는 영향이 없다.**
 
-**Maker 재저장분은 별도 `chore:` 커밋으로 분리한다** (2026-08-04 합의). Play를 여러 번 돌리면 `Global/common.gamelogic`·`map/*.map`·`ui/*.ui`가 정규화 재저장된다. 기능 커밋에 섞으면 다음에 "무엇이 실제 변경인지" 구분할 수 없다. **분리 전에 §1 주의사항 6대로 `GroupOrder` 회귀를 먼저 확인할 것** — 밀집 수열 0~7이 유지되는지 본다.
+**Maker 재저장분은 별도 `chore:` 커밋으로 분리한다** (2026-08-04 합의). Play를 여러 번 돌리면 `Global/common.gamelogic`·`map/*.map`·`ui/*.ui`가 정규화 재저장된다. 기능 커밋에 섞으면 다음에 "무엇이 실제 변경인지" 구분할 수 없다.
+
+**분리 전에 `msw-resave-audit` 스킬을 부른다** (2026-08-06 신설). `node tools/audit_resave.cjs` 하나로 ① 엔티티·`componentNames`·`Values` 구조를 HEAD와 대조해 정규화인지 실제 변경인지 가르고 ② `GroupOrder` 밀집 수열(D-13)·렌더러 2개 동시 보유(D-14b) 회귀를 함께 본다. 종료 코드 0이면 그대로 `chore:` 로 분리해도 된다. **줄 수로 판정하지 말 것** — 1470줄 바뀐 `MineHUD.ui`가 순수 정규화였고, 2줄 바뀐 파일에 회귀가 있을 수 있다.
 
 **커밋 전 체크** (§0.7 DoD의 축약):
 
 ```bash
 node tools/audit_bindings.cjs      # 실패 0건이어야 한다
+node tools/audit_resave.cjs        # 재저장분 판정 — 0이면 chore 로 분리 가능
 git status --short -- docs RootDesk ui map tools Archive
 ```
 
@@ -225,6 +230,8 @@ node tools/audit_bindings.cjs
 4. **중앙 모달은 한 번에 하나만.** 열 때 다른 모달을 모두 끄고, 닫을 때 진입점 화면으로 복귀한다. 모달 배경 알파는 **0.96 이상** (F5 §6.1, D-8).
 5. **서버 거부 사유를 그릴 자리를 만들 것.** 없으면 사용자에게는 "그냥 안 되는 것"으로 보인다 (D-10).
 6. **Maker 재저장이 `UIGroupComponent.GroupOrder`를 덮어쓴다.** 엔진 26.7 업그레이드 재저장에서 `PopupGroup 10→3` / `ToastGroup 20→4` / `AccountRecoveryUI 50→6`으로 되돌아가 F5 §6.2 계층이 무효화된 적이 있다(2026-07-31 복구). **Maker에서 작업한 뒤에는 `git status`로 `.ui`/`.map` 재저장분을 반드시 확인**하고, 정규화(`Rotation`·`Position`·float 반올림·`CoreVersion`)에 계층 회귀가 섞여 있지 않은지 본다.
+
+   **판정 절차는 `msw-resave-audit` 스킬이다** — `node tools/audit_resave.cjs`. `.ui`/`.model`은 가드가 shell 접근을 막아 `git diff`로 눈으로 볼 수 없으므로, HEAD판과 작업 트리판을 **각각 빌더로 열어** 대조한다. 이 회귀 검사는 **파일 기준**이라 런타임을 증명하지 못한다는 점도 주의사항 10과 함께 본다.
 7. **`GroupOrder`의 절대값은 런타임에 남지 않는다.** 엔진이 로드 시 0..N 밀집 수열로 재압축하므로 **상대 순서만 의미가 있다.** 계층 검증은 파일이 아니라 Play 중 `maker_execute_script`(client)로 `/ui/<Group>`의 `UIGroupComponent.GroupOrder`를 찍어 판정한다.
    - **그래서 파일도 밀집 수열 `0~7`로 맞춰 뒀다** (2026-07-31). 희소값(10·20·50)을 쓰면 Maker가 저장할 때마다 압축값으로 덮어써서 diff가 계속 생기고, **일부 파일만 저장되면 압축값과 저자값이 섞여 순서가 깨진다** — D-13이 정확히 그 경우였다. 밀집 수열은 Maker가 쓰는 값과 같아서 더 이상 흔들리지 않는다.
    - 새 UIGroup을 추가할 때는 **끝에 붙이거나 중간 삽입 후 전체를 다시 0부터 매긴다.** 희소값으로 자리를 비워 두는 방식은 압축 때문에 의미가 없다.
