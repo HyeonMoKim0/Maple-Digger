@@ -205,16 +205,53 @@ end
 
 @ExecSpace("ClientOnly")
 method void PlayActionEvent(string kind, integer cellX, integer cellY)
-    -- Renders one F5 §2.2 action event. 사운드 cue 는 Phase 5 범위다.
+    -- Renders one F5 §2.2 action event + F5 §4 사운드 cue (Phase 5).
+    -- 쿨다운 판정은 MineSoundController 몫이다 — 여기서는 무조건 넘긴다.
+    local workerKey = tostring(self._T.worker.WorkerIndex)
     if kind == "mine_success" then
         self:ShowShard(cellX, cellY)
+        self:PlaySoundCue("mine_hit", workerKey)
+        return
+    end
+    if kind == "mine_fail" then
+        -- 시각 연출은 없다(의도). 선택 일꾼 여부는 사운드 쪽이 거른다.
+        self:PlaySoundCue("mine_empty", workerKey)
+        return
+    end
+    if kind == "load_success" then
+        self:PlaySoundCue("cart_load", workerKey)
         return
     end
     if kind == "unload_success" then
         self:EmphasizeDepot()
+        -- depot_unload 는 전역 쿨다운이라 key 가 무시되지만, 어느 일꾼이
+        -- 트리거했는지 로그에 남게 일꾼 인덱스를 그대로 넘긴다.
+        self:PlaySoundCue("depot_unload", workerKey)
         return
     end
-    -- move / mine_fail / load_success 는 아직 전용 연출이 없다. 조용히 넘어간다.
+    -- move 는 전용 연출·사운드가 없다. 조용히 넘어간다.
+end
+
+@ExecSpace("ClientOnly")
+method void PlaySoundCue(string cue, string key)
+    -- Forwards one cue to the map's sound controller (F5 §1 책임 분리).
+    -- 컨트롤러가 없으면 무음으로 건너뛴다 — 사운드 부재가 시각 연출을 멈추면
+    -- 안 된다 (F5 §4).
+    local sound = self:FindSoundController()
+    if sound == nil then return end
+    sound:PlayCue(cue, key)
+end
+
+@ExecSpace("ClientOnly")
+method MineSoundController FindSoundController()
+    -- Resolves the map's sound controller once and caches it.
+    if self._T.soundFx ~= nil and isvalid(self._T.soundFx) then return self._T.soundFx end
+    local map = self.Entity.CurrentMap
+    if map == nil then return nil end
+    ---@type MineSoundController
+    local sound = map:GetComponent("script.MineSoundController")
+    self._T.soundFx = sound
+    return sound
 end
 
 @ExecSpace("ClientOnly")
