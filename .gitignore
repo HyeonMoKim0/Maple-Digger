@@ -9,3 +9,10 @@
 # 다른 컴퓨터에서 의미가 없다. 규칙(docs/17 §10 "git add . 금지")에만
 # 기대지 않고 여기서 막는다.
 .omc/
+
+# UI 파츠 가공 산출물 — docs/ui-parts 원본에서 tools/ui_parts_prep.cjs 로 언제든 재생성된다.
+# 업로드 완료 후에는 RUID(docs/26)만 있으면 되므로 저장소에 넣지 않는다.
+build/
+
+# 빌더 1회용 스크립트 (msw-general 스킬 규약의 임시 작업 폴더)
+.builder-work/
