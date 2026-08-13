@@ -1,0 +1,23 @@
+{
+  "_note": "docs/ui-parts PNG → MSW 그룹 리소스(hyNDP) RUID 대응표. 사람이 읽는 판은 docs/26-UI-파츠-RUID.md.",
+  "_border": "9-slice 경계는 리소스 속성이다. tools/ui_parts_border.cjs 실측값 기준. Simple 로 쓸 파츠는 border 없음.",
+
+  "panel-frame-hud":          { "ruid": "7691424f38e647cdb4ac8d213d782bf7", "border": [34, 34, 34, 34] },
+  "panel-frame-large":        { "ruid": "9233b7bec7c34185aecffe956e6e679a", "border": [19, 19, 19, 19] },
+  "modal-frame-blank":        { "ruid": "ec1ee9eef69244f497f96fc87ef24a0f", "border": [41, 41, 41, 41] },
+  "toast-bar-blank":          { "ruid": "d4f8fe31613a42cfae8fb07846e0eb30", "border": [74, 30, 20, 20] },
+
+  "button-green-blank":       { "ruid": "4b726e80aa58409f8e1f03cc2a4e5da3", "border": [34, 34, 20, 20] },
+  "button-orange-blank":      { "ruid": "a5f9c4101165445a9a0aaefeb14b0c56", "border": [30, 30, 18, 18] },
+  "button-slate-blank":       { "ruid": "93024bfd2d324753ae92878d299e1ef6", "border": [28, 28, 17, 17] },
+
+  "command-tile-slate-blank": { "ruid": "3f659be019834b19aea6c14e0ac1da31", "border": [29, 29, 29, 29] },
+  "ledger-row-resource-blank":{ "ruid": "f312099962db4862adee65f13644aa64", "border": [82, 30, 17, 17] },
+  "button-close":             { "ruid": "5af542ecf45c4992bfe2eddebb7932ff" },
+
+  "tab-worker-selected":      { "ruid": "acfb0998854a4fb4b1a9927afd2a9993", "border": [22, 22, 17, 17] },
+  "tab-worker-normal":        { "ruid": "db0c502147114dbfb47a5e87322937b4", "border": [22, 22, 15, 15] },
+  "tab-worker-disabled":      { "ruid": "a864624d7b454085bcb76f86a0ed8d07", "border": [20, 20, 14, 14] },
+
+  "status-running-green":     { "ruid": "b3837d651fe7474b9632fec45153cfe2" }
+}
