@@ -803,8 +803,8 @@
                 "b": 0.050980392156862744,
                 "a": 1
               },
-              "FontSize": 24,
-              "FontStyle": 0,
+              "FontSize": 28,
+              "FontStyle": 1,
               "HorizontalAlignment": 2,
               "IgnoreMapLayerCheck": false,
               "MaxSize": 40,
@@ -1289,8 +1289,8 @@
                 "b": 0.058823529411764705,
                 "a": 1
               },
-              "FontSize": 18,
-              "FontStyle": 0,
+              "FontSize": 26,
+              "FontStyle": 1,
               "HorizontalAlignment": 2,
               "IgnoreMapLayerCheck": false,
               "MaxSize": 40,
@@ -1527,8 +1527,8 @@
                 "b": 1,
                 "a": 1
               },
-              "FontSize": 18,
-              "FontStyle": 0,
+              "FontSize": 26,
+              "FontStyle": 1,
               "HorizontalAlignment": 2,
               "IgnoreMapLayerCheck": false,
               "MaxSize": 40,
@@ -1552,11 +1552,17 @@
               "SizeFit": false,
               "SortingLayer": "UI",
               "Text": "새 계정으로 시작",
-              "Underlay": false,
+              "Underlay": true,
               "UseConstraintX": false,
               "UseConstraintY": false,
               "VerticalAlignment": 512,
-              "Enable": true
+              "Enable": true,
+              "UnderlayColor": {
+                "r": 0.25,
+                "g": 0.05,
+                "b": 0,
+                "a": 0.85
+              }
             }
           ],
           "@version": 1
