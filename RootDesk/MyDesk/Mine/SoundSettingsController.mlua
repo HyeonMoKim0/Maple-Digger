@@ -1,0 +1,192 @@
+-- T-12-A CLIENT-SIDE SOUND SETTINGS — 볼륨 2종의 단일 소유자 + BGM 재생 주체.
+-- 계약: docs/25-설정-사운드-기능명세.md (F10) §0.1 · §1 · §2 · §3.
+--
+-- **이 단계(T-12-A)는 배선만 한다.** 슬라이더(`ui/SettingsUI.ui`)와 프로필 저장은
+-- T-12-B 몫이고, `MineSoundController:PlayCue` 가 `GetSfxVolume()` 을 곱하도록
+-- 고치는 것도 T-12-B 범위다(F10 §0.1 산출물 3). 그래서 볼륨 내부값은 아직 상수다.
+--
+-- 그래도 `GetSfxVolume()` / `GetBgmVolume()` 은 **지금부터** 노출한다. B 단계에서
+-- 슬라이더를 붙일 때 호출부의 이름이 바뀌지 않게 하려는 것이다(F10 §0.1). 값을
+-- 컴포넌트 필드로 흩어 놓으면 B 가 §1.2 함정(맵 3개에 인스턴스가 3개인
+-- `MineSoundController.Volume` 에 설정값을 써 넣는 것)을 그대로 다시 밟는다.
+--
+-- BGM RUID 는 docs/21 §3-B **잠정값**이다. 청취 판정은 T-04 Phase 6 오너 몫이며
+-- (C215 — 배경음과 효과음의 균형은 둘을 함께 들어야만 판정된다), 교체가 생기면
+-- 아래 `BgmRuid` 한 줄만 바꾼다.
+@Logic
+script SoundSettingsController extends Logic
+
+-- docs/21 §3-B 잠정 RUID. 빈 문자열이면 BGM 은 무음이다 (F10 §6.3).
+property string BgmRuid = "8e366297ce4d469bb6b211e1945a4141"
+
+-- F10 §2.1. 화면에는 0~100% 로 보이지만 내부값은 0.0~1.0 이다.
+-- BGM 기본값이 1.0 이 아닌 이유: 효과음은 게임 정보(채굴 성공·실패·희귀 입고)를
+-- 전달하는 신호이고 BGM 은 배경이다. 둘을 같은 1.0 으로 시작하면 배경이 신호를
+-- 덮는다. 이 값도 Phase 6 청취에서 함께 조정한다 (F10 §9 U3 · C215).
+property number BgmVolume = 0.5
+property number SfxVolume = 1.0
+
+-- F10 §3.3 루프 여부 실측용. `.d.mlua` 의 `PlayBGM` 설명은 "Plays background
+-- music." 뿐이고 **반복 재생 여부가 명시돼 있지 않다.** SFX 쪽에는 `PlaySound` 와
+-- 별개로 `PlayLoopSound` 가 따로 있으므로 BGM 도 1회 재생일 가능성을 배제할 수
+-- 없다. "BGM 이니까 당연히 루프겠지"는 이 프로젝트에서 이미 두 번 틀린 종류의
+-- 추론이다(C206 부유석 condition · docs/21 §5 파편 자산 2종). 그래서 재 본다.
+-- 창은 잠정곡 길이(141.5초)보다 길게 둔다. 창이 닫히면 조용해진다 — 계속 찍으면
+-- Phase 6 의 다른 검증 로그가 묻힌다.
+property number ProbeWindowSeconds = 200
+property number ProbeIntervalSeconds = 10
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- 볼륨 2종을 정규화하고 BGM 을 1회 재생한다.
+    -- `@Logic` 인 이유는 F10 §1.1 — BGM 은 맵 전환에 끊기면 안 되고, 맵
+    -- `@Component` 로 두면 farm01 → deep_mine 전환마다 곡이 처음부터 다시 시작한다.
+    -- `OnMapEnter`/`OnMapLeave` 는 `@Logic` 에서 호출되지 않으므로(AGENTS "Script
+    -- lifecycle") 맵마다 다시 걸 훅 자체가 없고, 단일 BGM 이라 걸 필요도 없다
+    -- (F10 §3.2 · §6.2).
+    self.BgmVolume = self:ClampVolume(self.BgmVolume)
+    self.SfxVolume = self:ClampVolume(self.SfxVolume)
+    self._T.bgmStarted = false
+    self._T.bgmPaused = false
+    self._T.probeElapsed = 0
+    self._T.probeLastLog = 0
+    self._T.probeDone = false
+
+    if self.BgmRuid == "" then
+        -- 미승인·빈 RUID 는 무음으로 건너뛰고 아무것도 멈추지 않는다 (F10 §6.3).
+        -- 세션당 한 번만 남긴다.
+        log("[SoundSettings] bgm has no RUID - muted")
+        return
+    end
+    if self.BgmVolume <= 0 then
+        -- 볼륨 0 이면 재생하지 않는다 (F10 §3.2). 나중에 슬라이더가 올리면
+        -- SetBgmVolume 이 첫 재생을 시작한다.
+        log("[SoundSettings] bgm start skipped (volume 0) ruid=" .. self.BgmRuid)
+        return
+    end
+
+    _SoundService:PlayBGM(self.BgmRuid, self.BgmVolume)
+    self._T.bgmStarted = true
+    log("[SoundSettings] ready bgm=" .. self.BgmRuid .. " bgmVolume=" .. tostring(self.BgmVolume) .. " sfxVolume=" .. tostring(self.SfxVolume))
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- F10 §3.3 루프 실측 로그. BGM 이 실제로 시작된 뒤부터만 재고, 창이 닫히면
+    -- 멈춘다. 경과는 `delta` 누적으로 잰다 — `_UtilLogic.ElapsedSeconds` 는 월드
+    -- 인스턴스 수명 시계라 Maker 에서 Play 를 반복하면 초기화되지 않는다
+    -- (msw-scripting §13 "Per-session timers").
+    if self._T.probeDone then return end
+    if not self._T.bgmStarted then return end
+
+    self._T.probeElapsed = self._T.probeElapsed + delta
+    if self._T.probeElapsed >= self.ProbeWindowSeconds then
+        self._T.probeDone = true
+        log("[SoundSettings] bgm probe closed t=" .. tostring(math.floor(self._T.probeElapsed)) .. "s playing=" .. tostring(_SoundService:IsPlayBGM()))
+        return
+    end
+    if self._T.probeElapsed - self._T.probeLastLog < self.ProbeIntervalSeconds then return end
+    self._T.probeLastLog = self._T.probeElapsed
+    -- 곡 길이를 넘긴 시점에도 playing=true 면 루프다. false 로 바뀌면 루프가
+    -- 아니므로 `PlayLoopSound` 로 대체하고 F10 §2.2 표를 그에 맞게 다시 쓴다.
+    log("[SoundSettings] bgm probe t=" .. tostring(math.floor(self._T.probeElapsed)) .. "s playing=" .. tostring(_SoundService:IsPlayBGM()))
+end
+
+@ExecSpace("ClientOnly")
+method number GetBgmVolume()
+    -- 배경음 볼륨의 단일 출처 (F10 §1.2). 다른 컴포넌트가 이 값을 자기 필드에
+    -- 캐시하지 않는다 — 캐시하면 "누가 진짜 값인지"가 사라진다.
+    return self.BgmVolume
+end
+
+@ExecSpace("ClientOnly")
+method number GetSfxVolume()
+    -- 효과음 볼륨의 단일 출처 (F10 §1.2). `MineSoundController:PlayCue` 가 재생
+    -- 직전에 부르도록 배선하는 것은 T-12-B 범위다(F10 §0.1 산출물 3). 그때까지
+    -- 호출부가 없으므로 이 값은 아직 아무 cue 에도 적용되지 않는다.
+    -- 호출부는 이 Logic 이 초기화 전이면(`nil`) 1.0 을 가정한다 — 컴포넌트 초기화
+    -- 순서는 보장되지 않으므로 오류가 아니라 기본값이다.
+    return self.SfxVolume
+end
+
+@ExecSpace("ClientOnly")
+method void SetBgmVolume(number value)
+    -- 배경음 볼륨 변경. F10 §2.2 경계값 규칙을 그대로 따른다.
+    -- ⚠️ 0 에서 올라올 때 `PlayBGM` 을 다시 부르면 **곡이 처음으로 되감긴다.**
+    -- 이미 재생된 적이 있으면 `ResumeBGM` + `SetBGMVolume` 이다.
+    local clamped = self:ClampVolume(value)
+    self.BgmVolume = clamped
+
+    if clamped <= 0 then
+        -- 들리지도 않는 곡을 계속 디코딩할 이유가 없으므로 `SetBGMVolume(0)` 이
+        -- 아니라 `PauseBGM` 이다 (F10 §2.2).
+        if self._T.bgmStarted and not self._T.bgmPaused then
+            self._T.bgmPaused = true
+            _SoundService:PauseBGM()
+            log("[SoundSettings] bgm paused (volume 0)")
+        end
+        return
+    end
+
+    if not self._T.bgmStarted then
+        -- 한 번도 재생된 적이 없다 (BeginPlay 시점 볼륨이 0 이었던 경우). 이건
+        -- 되감기가 아니라 첫 재생이므로 `PlayBGM` 이 맞다.
+        if self.BgmRuid == "" then
+            self:LogMutedOnce()
+            return
+        end
+        _SoundService:PlayBGM(self.BgmRuid, clamped)
+        self._T.bgmStarted = true
+        self._T.bgmPaused = false
+        log("[SoundSettings] bgm first start volume=" .. tostring(clamped))
+        return
+    end
+
+    if self._T.bgmPaused then
+        self._T.bgmPaused = false
+        _SoundService:ResumeBGM()
+        log("[SoundSettings] bgm resumed")
+    end
+    _SoundService:SetBGMVolume(clamped)
+    log("[SoundSettings] bgm volume=" .. tostring(clamped))
+end
+
+@ExecSpace("ClientOnly")
+method void SetSfxVolume(number value)
+    -- 효과음 볼륨 변경. 실제 곱셈은 재생 시점의 `MineSoundController` 가 한다
+    -- (F10 §1.2) — 여기서 cue 를 직접 만지지 않는다. 그 호출부 배선은 T-12-B 다.
+    self.SfxVolume = self:ClampVolume(value)
+    log("[SoundSettings] sfx volume=" .. tostring(self.SfxVolume))
+end
+
+method number ClampVolume(number value)
+    -- F10 §2.2 — 슬라이더가 주는 값이지만 프로필에서 읽은 값은 손상돼 있을 수
+    -- 있으므로 0.0~1.0 으로 조인다. 범위를 벗어난 값은 거절이 아니라 클램프다
+    -- (F10 §4.3 — 볼륨에는 서버 거절 사유를 만들지 않는다).
+    if value < 0 then return 0 end
+    if value > 1 then return 1 end
+    return value
+end
+
+@ExecSpace("ClientOnly")
+method void LogMutedOnce()
+    -- 빈 RUID 안내는 세션당 한 번만 남긴다 (F10 §6.3). 매번 찍으면 슬라이더를
+    -- 움직일 때마다 로그가 쌓인다.
+    if self._T.mutedWarned then return end
+    self._T.mutedWarned = true
+    log("[SoundSettings] bgm has no RUID - muted")
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 월드 세션이 끝날 때만 호출된다 (`@Logic` 은 맵 전환에서 OnEndPlay 가
+    -- 돌지 않는다). 남은 BGM 핸들을 정리한다 — F5-6 "map leave / Play 종료 후
+    -- 남은 사운드 핸들 없음"과 같은 취지다.
+    if self._T.bgmStarted then
+        _SoundService:StopBGM(true)
+        self._T.bgmStarted = false
+        log("[SoundSettings] bgm stopped on end play")
+    end
+end
+
+end
