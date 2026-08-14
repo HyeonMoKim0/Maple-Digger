@@ -21,12 +21,25 @@
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. Worker01 손·수레 + 세션 Depot 합계를 표시하며, 계정 광물·판매 설정·광산 선택은 별도 F7-B UI가 담당한다. |
 | 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v7 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물은 하역 즉시 컬렉션 등록·10단계 패시브·11회째부터 수동/자동 판매까지 구현했으며, 맵 강화는 미구현이다(계약은 `docs/13` §5). 프로필에 `mineLevels` 필드가 아직 없어 맵 강화 착수 시 v8 마이그레이션이 필요하다. |
-| 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. 1~5 시작 셀은 향후 일꾼 구매 확장을 위한 데이터로 유지한다. marker·서버 맵 전환과 **F5 시각 표현(Phase 1~4)** 은 구현됐고, **사운드(Phase 5)와 F5-1~F5-6 최종 판정(Phase 6)은 미구현** |
+| 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. **1~5 시작 셀은 T-11(2026-08-14)로 광맥별 분산됐다** — 각 시작 셀의 **한 걸음 오른쪽이 광맥**이라 복사한 프로그램이 바로 캔다(배치표 `docs/18` T-11). 초보 광산 W2·W4는 광맥 셀 위에 서고 W5는 창고를 공유한다. marker·서버 맵 전환과 **F5 시각 표현(Phase 1~4)** 은 구현됐고, **사운드(Phase 5)와 F5-1~F5-6 최종 판정(Phase 6)은 미구현** |
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다** |
 | F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. RUID는 docs/21 §3 잠정값 — **청취 판정 전이므로 docs/21 §3 승인란은 비어 있는 게 맞다**. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). 잠정 BGM `8e366297…`(docs/21 §3-B, 승인란은 Phase 6까지 비움). **`PlayBGM` 이 루프임을 실측으로 확정**(곡 끝 +58.5초까지 `IsPlayBGM()`=true). 볼륨은 아직 **코드 상수** — 슬라이더·프로필 저장·`MineSoundController` 볼륨 조회 배선은 전부 **T-12-B** 몫이다(F10 §0.1 산출물 1·3·5) |
 
 ## 기록
+
+### 2026-08-14 — T-11: 일꾼 시작점 분산 (3광산) · 도구가 "정규화"라고 거짓말했다
+
+D9 §5.2 의 "일꾼을 사도 채굴량이 0"을 근본 해소했다. 시작 셀 5개가 창고에 뭉쳐 있어 **복사한 프로그램의 첫 동작 `동 E` 가 광맥에 닿지 않았던 것**이 원인이다. 그래서 **"앞"은 서쪽 인접 칸**으로 확정하고(그래야 한 걸음 오른쪽이 광맥) 3맵 전부 재배치했다. 배치표는 `docs/18` T-11, 검수는 `docs/16` §25.
+
+- **초보 광산은 광맥 칸 위에 세웠다** (오너 승인). 광맥 4개가 붙어 있어 두 광맥의 서쪽 앞칸이 다른 광맥 셀이다 — 피하면 5명 중 1명만 전용 광맥을 받는다. 일꾼은 발밑이 아니라 오른쪽 광맥을 캐므로 충돌이 없다.
+- **그 과정에서 문서와 코드가 어긋난 것을 찾았다.** `docs/09` F6 §4 는 시작 셀에 *"Depot 와의 겹침만 예외 허용"* 이라 적어 점유 검사가 있는 것처럼 읽히지만, `ValidateLayout` 의 시작점 검사는 **workerIndex 범위·중복·walkable 네 가지뿐**이고 점유는 아예 안 본다. **문서를 코드에 맞춰 정정**했다(반대가 아니다). 점유 검사를 넣는 것은 별도 결정이고, 넣는 순간 이 배start가 검증 실패로 바뀐다.
+- **검증 핵심**: 일꾼 2 를 사서 일꾼 1 의 프로그램을 **그대로 복사** 실행 → 같은 틱에 `mined cell 1,0`(W1) + `mined cell 2,0`(W2). 서로 다른 광맥 2개. 오류·경고 0건, 바인딩 114/0, 프로필 원복 `cart=0/20 workers=1`.
+- **W2 는 캤지만 하역은 못 한다 — 의도된 결과다.** `U` 는 창고 칸에서만 성립하고 창고는 하나뿐이라, "즉시 채굴"과 "복사만으로 완전한 왕복"은 동시에 성립할 수 없다. C209 가 요구한 것은 앞쪽이다.
+
+**⚠️ `audit_resave` 가 이 변경을 3개 맵 모두 `[정규화] · chore 로 분리해도 된다` 로 판정했다 — 거짓이다.** 함정 8 재발이고, 이번엔 `.ui` 가 아니라 `.map` 이었다. 그 도구의 값 신호 목록이 `.ui` 키 중심이라 `WorkerStartsJson` 같은 스크립트 컴포넌트 JSON 문자열을 못 본다. `docs/17` 함정 8 에 `.map` 4개 키를 보강했다. **근본 규칙 — 도구는 "Maker 가 건드린 것"과 "내가 건드린 것"을 구분하지 못한다.** 방금 `.map` 을 쓴 직후의 `[정규화]` 는 도구가 놓친 것이다.
+
+**남은 것**: `tools/balance_sim.cjs` 의 `STARTS` 상수가 아직 옛 배치다(맵 레이아웃은 `.map` 에서 읽지만 시작 셀만 상수). 그래서 D9 §3.1 의 30→29→29→29 는 분산 이전 수치다 — `docs/22` §6-7 로 추적한다.
 
 ### 2026-08-14 — T-04 Phase 6: AI 몫(A1~A8) 완료 · 측정 방법을 세 번 틀렸다
 

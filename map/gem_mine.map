@@ -51,7 +51,7 @@
               "SpecialVeinSpawnBatch": 2,
               "DepotDefinitionsJson": "[{\"id\":\"depot-main\",\"cellX\":0,\"cellY\":0,\"markerId\":\"depot-main-marker\"}]",
               "VeinDefinitionsJson": "[{\"id\":\"vein-stone-01\",\"cellX\":1,\"cellY\":0,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-01-marker\"},{\"id\":\"vein-stone-02\",\"cellX\":2,\"cellY\":-1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-02-marker\"},{\"id\":\"vein-stone-03\",\"cellX\":3,\"cellY\":1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-03-marker\"},{\"id\":\"vein-iron-01\",\"cellX\":6,\"cellY\":0,\"oreType\":\"iron\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-iron-01-marker\"},{\"id\":\"vein-iron-02\",\"cellX\":7,\"cellY\":-2,\"oreType\":\"iron\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-iron-02-marker\"},{\"id\":\"vein-iron-03\",\"cellX\":8,\"cellY\":1,\"oreType\":\"iron\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-iron-03-marker\"},{\"id\":\"vein-iron-04\",\"cellX\":9,\"cellY\":-1,\"oreType\":\"iron\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-iron-04-marker\"},{\"id\":\"vein-gold-01\",\"cellX\":12,\"cellY\":2,\"oreType\":\"gold\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-gold-01-marker\"},{\"id\":\"vein-gold-02\",\"cellX\":14,\"cellY\":-2,\"oreType\":\"gold\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-gold-02-marker\"},{\"id\":\"vein-gold-03\",\"cellX\":16,\"cellY\":0,\"oreType\":\"gold\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-gold-03-marker\"},{\"id\":\"vein-gold-04\",\"cellX\":15,\"cellY\":3,\"oreType\":\"gold\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-gold-04-marker\"}]",
-              "WorkerStartsJson": "[{\"workerIndex\":1,\"cellX\":0,\"cellY\":0},{\"workerIndex\":2,\"cellX\":0,\"cellY\":1},{\"workerIndex\":3,\"cellX\":-1,\"cellY\":0},{\"workerIndex\":4,\"cellX\":-1,\"cellY\":1},{\"workerIndex\":5,\"cellX\":-2,\"cellY\":0}]",
+              "WorkerStartsJson": "[{\"workerIndex\":1,\"cellX\":0,\"cellY\":0},{\"workerIndex\":2,\"cellX\":1,\"cellY\":-1},{\"workerIndex\":3,\"cellX\":2,\"cellY\":1},{\"workerIndex\":4,\"cellX\":5,\"cellY\":0},{\"workerIndex\":5,\"cellX\":11,\"cellY\":2}]",
               "SpecialVeinCandidatesJson": "[{\"id\":\"special-slot-01\",\"cellX\":5,\"cellY\":2,\"oreType\":\"iron\",\"recoverTicks\":5,\"markerId\":\"special-slot-01-marker\"},{\"id\":\"special-slot-02\",\"cellX\":10,\"cellY\":1,\"oreType\":\"gold\",\"recoverTicks\":5,\"markerId\":\"special-slot-02-marker\"},{\"id\":\"special-slot-03\",\"cellX\":12,\"cellY\":-1,\"oreType\":\"gold\",\"recoverTicks\":5,\"markerId\":\"special-slot-03-marker\"},{\"id\":\"special-slot-04\",\"cellX\":14,\"cellY\":1,\"oreType\":\"gold\",\"recoverTicks\":5,\"markerId\":\"special-slot-04-marker\"},{\"id\":\"special-slot-05\",\"cellX\":16,\"cellY\":-3,\"oreType\":\"gold\",\"recoverTicks\":5,\"markerId\":\"special-slot-05-marker\"},{\"id\":\"special-slot-06\",\"cellX\":11,\"cellY\":4,\"oreType\":\"gold\",\"recoverTicks\":5,\"markerId\":\"special-slot-06-marker\"}]"
             },
             {
@@ -88,7 +88,7 @@
                 "r": 0.2,
                 "g": 0.12,
                 "b": 0.3,
-                "a": 1.0
+                "a": 1
               },
               "TemplateRUID": "794ad8421e2543d8a6d2c70307637450",
               "Type": 2,
@@ -160,22 +160,22 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 1000.0
+                "x": 0,
+                "y": 0,
+                "z": 1000
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2136,39 +2136,39 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.MovementComponent",
-              "InputSpeed": 3.0,
+              "InputSpeed": 3,
               "Enable": true
             },
             {
               "@type": "MOD.Core.KinematicbodyComponent",
               "MoveVelocity": {
-                "x": 0.0,
-                "y": 0.0
+                "x": 0,
+                "y": 0
               },
               "Enable": true
             },
@@ -2188,7 +2188,7 @@
               "IgnoreMapLayerCheck": false,
               "MaterialId": "",
               "OrderInLayer": 2,
-              "PlayRate": 1.0,
+              "PlayRate": 1,
               "ShowDefaultWeaponEffects": true,
               "SortingLayer": "Default",
               "Enable": true
@@ -2246,27 +2246,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2317,27 +2317,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 1.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 1,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2388,27 +2388,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 2.0,
-                "y": -1.0,
-                "z": 0.0
+                "x": 2,
+                "y": -1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2459,27 +2459,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 3.0,
-                "y": 1.0,
-                "z": 0.0
+                "x": 3,
+                "y": 1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2530,27 +2530,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 6.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 6,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2601,27 +2601,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 7.0,
-                "y": -2.0,
-                "z": 0.0
+                "x": 7,
+                "y": -2,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2672,27 +2672,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 8.0,
-                "y": 1.0,
-                "z": 0.0
+                "x": 8,
+                "y": 1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2743,27 +2743,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 9.0,
-                "y": -1.0,
-                "z": 0.0
+                "x": 9,
+                "y": -1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2814,27 +2814,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 12.0,
-                "y": 2.0,
-                "z": 0.0
+                "x": 12,
+                "y": 2,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2885,27 +2885,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 14.0,
-                "y": -2.0,
-                "z": 0.0
+                "x": 14,
+                "y": -2,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2956,27 +2956,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 16.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 16,
+                "y": 0,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -3027,27 +3027,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 15.0,
-                "y": 3.0,
-                "z": 0.0
+                "x": 15,
+                "y": 3,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -3098,27 +3098,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 5.0,
-                "y": 2.0,
-                "z": 0.0
+                "x": 5,
+                "y": 2,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -3169,27 +3169,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 10.0,
-                "y": 1.0,
-                "z": 0.0
+                "x": 10,
+                "y": 1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -3240,27 +3240,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 12.0,
-                "y": -1.0,
-                "z": 0.0
+                "x": 12,
+                "y": -1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -3311,27 +3311,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 14.0,
-                "y": 1.0,
-                "z": 0.0
+                "x": 14,
+                "y": 1,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -3382,27 +3382,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 16.0,
-                "y": -3.0,
-                "z": 0.0
+                "x": 16,
+                "y": -3,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -3453,27 +3453,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0
+                "x": 0,
+                "y": 0,
+                "z": 0
               },
               "Position": {
-                "x": 11.0,
-                "y": 4.0,
-                "z": 0.0
+                "x": 11,
+                "y": 4,
+                "z": 0
               },
               "QuaternionRotation": {
-                "x": 0.0,
-                "y": 0.0,
-                "z": 0.0,
-                "w": 1.0
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
               },
               "Scale": {
-                "x": 1.0,
-                "y": 1.0,
-                "z": 1.0
+                "x": 1,
+                "y": 1,
+                "z": 1
               },
-              "ZRotation": 0.0,
+              "ZRotation": 0,
               "Enable": true
             },
             {
