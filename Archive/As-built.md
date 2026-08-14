@@ -24,8 +24,39 @@
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. 1~5 시작 셀은 향후 일꾼 구매 확장을 위한 데이터로 유지한다. marker·서버 맵 전환과 **F5 시각 표현(Phase 1~4)** 은 구현됐고, **사운드(Phase 5)와 F5-1~F5-6 최종 판정(Phase 6)은 미구현** |
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다** |
 | F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. RUID는 docs/21 §3 잠정값 — **청취 판정 전이므로 docs/21 §3 승인란은 비어 있는 게 맞다**. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
+| BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). 잠정 BGM `8e366297…`(docs/21 §3-B, 승인란은 Phase 6까지 비움). **`PlayBGM` 이 루프임을 실측으로 확정**(곡 끝 +58.5초까지 `IsPlayBGM()`=true). 볼륨은 아직 **코드 상수** — 슬라이더·프로필 저장·`MineSoundController` 볼륨 조회 배선은 전부 **T-12-B** 몫이다(F10 §0.1 산출물 1·3·5) |
 
 ## 기록
+
+### 2026-08-14 — T-04 Phase 6: AI 몫(A1~A8) 완료 · 측정 방법을 세 번 틀렸다
+
+Phase 6 의 AI 검증분을 끝냈다. **완료가 아니라 `⏳ 오너 청취·클릭 대기`** 다 — 소리와 버튼은 원천적으로 AI 가 판정하지 못한다. 결과·근거는 `docs/16` §24, 남은 오너 몫 목록은 §24.6.
+
+- **cue 7종 전부 실제 이벤트 경로로 재생**됐고 쿨다운 `play`→`suppressed` 짝까지 잡혔다. 먼지 pivot 실측이 문서값(`-1.1115 / -0.2795`)과 정확히 일치했다. F5-1 은 뱃지 3종·stage 4종이 전부 확정값과 일치.
+- **§22 가 남긴 숙제를 닫았다 — 타 맵 cue 차단의 런타임 직접 증거.** 플레이어가 `farm01` 에 있는 동안 `deep_mine` 에서 서버 이벤트 8건을 냈는데 cue 0건이었고, 같은 코드가 플레이어가 `gem_mine` 에 있을 때는 정상 재생했다. **양방향이 확인돼야 "가드가 동작한다"가 성립한다** — 한쪽만 보면 "그냥 안 나는 것"과 구분되지 않는다.
+- **맵 2회 전환 뒤에도 BGM 무중단**(`IsPlayBGM=true`). F10 §1.1 의 `@Logic` 선택 근거가 실증됐다.
+
+**측정 방법을 세 번 틀렸다. 이번 세션의 진짜 교훈은 이쪽이다.**
+
+1. **엉뚱한 맵의 워커를 돌렸다.** Maker 의 열린 맵과 **플레이어가 실제로 있는 맵은 다르다**(프로필 `lastMineId` 가 이긴다). cue 0건을 보고 "배선이 깨졌나" 의심했는데 가드가 옳게 동작한 것이었다. **런타임 검증 첫 줄은 항상 `LocalPlayer.CurrentMap` 을 찍는 것.** 역설적으로 이 실수가 A6 의 가장 어려운 증거를 만들었다.
+2. **marker 의 `@Sync ReserveStage` 에 직접 써서 stage 를 흩어 놓으려 했다.** 그건 시뮬레이터 상태의 **미러**라 다음 틱에 되돌아간다(되돌아가며 `vein_recover` 8건 발사가 증거). 권위 있는 경로는 `TryMine` 이다. 그리고 `TryMine` 으로 제대로 깎아도 `gem_mine` 은 6초 안에 전부 stage 3 으로 복귀해 **2홉 스크립트로는 라이브 분산을 못 잡는다** → stage 축은 매핑 계약을 읽어 판정하는 게 맞다.
+3. **`anchoredPosition` 을 캔버스 좌표로 읽었다.** 앵커 기준 오프셋이라 좌우가 반대로 나왔다. `docs/17` 의 "눈으로 재지 말고 좌표를 찍어라"는 **좌표계를 확인한 뒤에만** 유효하다. 계산은 `.builder-work/phase6_a8_rects.cjs` 로 옮겼고 §12.1 기존값과 일치했다.
+
+**남은 자동 검증 1건**: F5-2 의 5명 동시는 일꾼 1명이라 미실증. T-11 뒤에 함께 보는 게 싸다.
+
+### 2026-08-14 — T-12-A: BGM 배선 · `PlayBGM` 루프 실측 · 감사 도구가 죽어 있었다
+
+`SoundSettingsController` 신설(ClientOnly `@Logic`). **`@Logic` 인 이유가 이 티켓의 핵심**이다 — 맵 `@Component` 로 두면 `farm01 → deep_mine` 전환마다 곡이 처음부터 다시 시작한다(F10 §1.1). 볼륨 2종은 아직 코드 상수지만 `GetSfxVolume()`/`GetBgmVolume()` 은 **A 단계부터 노출**했다. B 단계가 값을 컴포넌트 필드로 흩어 놓으면 §1.2 함정(맵 3개에 인스턴스가 3개인 `MineSoundController.Volume` 에 설정값을 써 넣는 것)을 그대로 다시 밟는다.
+
+- **검증**: 빌드 16건 전부 Info(baseline 동일, 타임스탬프 갱신 확인) · 런타임 83건 전부 Info, 오류 0 · 바인딩 감사 114건 실패 0 · 재저장분 없음. docs/16 §23.
+- **`PlayBGM` 은 루프다 — 추정하지 않고 재서 알았다.** `.d.mlua` 설명은 `"Plays background music."` 뿐이고 반복 여부가 없는데, SFX 쪽엔 `PlaySound` 와 별개로 `PlayLoopSound` 가 있어서 1회 재생일 가능성이 남아 있었다. `IsPlayBGM()` 을 10초 간격으로 찍어 **곡 끝(141.5s)을 58.5초 넘긴 t=200s 까지 `playing=true`** 를 받았다. F10 §3.3 미결이 닫히고 §2.2 경계값 표(`SetBGMVolume` / Pause·Resume / `PlayBGM` 재호출 금지)가 그대로 유효해졌다.
+  - **얻은 규칙 — 프로브는 스스로 닫히게 만든다.** `ProbeWindowSeconds`(200초) 를 넘기면 로그를 멈춘다. 상시 프로브로 두면 Phase 6 의 다른 검증 로그가 10초마다 밀려 묻힌다. 이 실측은 자산이 아니라 **API 의 성질**을 잰 것이므로 곡을 교체해도 다시 재지 않아도 된다.
+- **`tools/audit_bindings.cjs` 와 `balance_sim.cjs` 가 이 컴퓨터에서 죽어 있었다.** `const ROOT = "D:/Develope_files/GitHub/Maple-Digger"` — 이전 컴퓨터의 절대 경로다. 저장소는 지금 `D:/Unity Project/Maple-Digger` 에 있어 `MODULE_NOT_FOUND` 로 즉사한다. 둘 다 `path.resolve(__dirname, "..")` 로 고쳤다.
+  - **`docs/17` §9-4 가 적어 둔 "여기서 실패하면 환경이 덜 옮겨진 것"과 증상은 같고 원인은 다르다.** 스킬은 정상적으로 있었고, 저장소 위치가 다르면 무조건 죽는 구조였다. 즉 **DoD 의 "audit_bindings 실패 0건"이 이 컴퓨터에서 한 번도 통과된 적 없을 수 있다** — 도구가 돌지 않으면 0건인지 알 방법이 없다. **도구가 죽은 것과 검사가 통과한 것은 로그에서 구분되지 않는다.**
+- **프로필은 원복할 것이 없었다.** 원장을 건드리지 않았고 `cart=0/20` 을 로그로 확인했다. 단 이 컴퓨터의 DataStorage 가 비어 `new profile ready` 로 새 프로필이 생성돼 `storage=0/0/0` 이다 — `docs/17` §0.2-A 의 baseline `stone=1` 과 다르지만 **이번 작업이 소비한 것이 아니라 새 계정 정상 초기값**이다.
+- **부수 확인**: Maker 열린 맵이 `deep_mine` 이어서 Play 가 거기서 시작됐고, 그 덕에 **BGM 이 맵과 무관하게 재생된다는 것**이 실증됐다 — `@Logic` 이라 `MineSoundController` 의 `CurrentMap` 가드에 걸리지 않는다(F10 §3.2 의도대로).
+
+**남은 것 (T-12-A 범위 밖)**: cue 볼륨 적용·슬라이더·프로필 저장은 T-12-B(선행 T-02). 곡·볼륨 균형 청취는 Phase 6 오너 몫이며 `docs/21` §3-B 승인란은 **그때 처음 채운다.**
 
 ### 2026-08-06 — T-04 Phase 5: 사운드 7종 배선 (잠정 RUID)
 
