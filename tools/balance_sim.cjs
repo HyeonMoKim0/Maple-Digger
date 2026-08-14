@@ -2,7 +2,9 @@
 // 상수는 VeinTickSimulator / EconomyService / ProgressionService 에서 그대로 옮겼다.
 // 틱 순서: AdvanceTick(회복) → AdvanceWorkers(일꾼당 액션 1개)
 const path = require('path');
-const { MapBuilder } = require(path.join('D:/Develope_files/GitHub/Maple-Digger',
+// 루트는 스크립트 위치에서 끌어낸다 (절대 경로 하드코딩 금지 — audit_bindings 주석 참조).
+const ROOT = path.resolve(__dirname, '..');
+const { MapBuilder } = require(path.join(ROOT,
   '.claude', 'skills', 'msw-general', 'scripts', 'map', 'msw_map_builder.cjs'));
 
 const TICK_SEC = 0.4, MAX_STAGE = 3, CART_CAP = 20;

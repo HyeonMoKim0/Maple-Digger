@@ -3,7 +3,12 @@
 // 돌려주고 기능이 조용히 사라진다 (docs/16 §14 D-11).
 const fs = require("fs");
 const path = require("path");
-const ROOT = "D:/Develope_files/GitHub/Maple-Digger";
+// 저장소 루트는 이 스크립트 위치에서 끌어낸다. 절대 경로를 박아 두면 저장소를
+// 클론한 컴퓨터마다 MODULE_NOT_FOUND 로 죽는다 — 실제로 그렇게 죽었다
+// (2026-08-14, D:/Develope_files/... 하드코딩이 D:/Unity Project/... 에서 실패).
+// docs/17 §9-4 가 "여기서 실패하면 환경이 덜 옮겨진 것"이라 적어 둔 증상의
+// 원인이 워크스페이스가 아니라 이 한 줄인 경우가 있다.
+const ROOT = path.resolve(__dirname, "..");
 const { UIBuilder } = require(path.join(ROOT, ".claude/skills/msw-ui-system/scripts/msw_ui_builder.cjs"));
 const { MapBuilder } = require(path.join(ROOT, ".claude/skills/msw-general/scripts/map/msw_map_builder.cjs"));
 
