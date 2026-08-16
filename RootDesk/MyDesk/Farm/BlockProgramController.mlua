@@ -44,6 +44,19 @@ property TextComponent worker2ButtonText = "f08a6c90-b376-411e-b6c9-859d694bb530
 property TextComponent worker3ButtonText = "a0ca4259-731b-4cc1-bcbd-d23e4e02aff5"
 property TextComponent worker4ButtonText = "d7a3b959-0a71-4742-9b94-fbd4f7135bce"
 property TextComponent worker5ButtonText = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
+-- 칩 배경 스프라이트. 라벨과 같은 엔티티라 UUID 도 같지만, 컴포넌트 타입이
+-- 다르므로 별도 프로퍼티가 필요하다. 문구를 대체하는 것이 아니라 함께 바뀐다
+-- (docs/20 §6 — 아이콘·색 단독 표기 금지).
+property SpriteGUIRendererComponent worker1ChipSprite = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
+property SpriteGUIRendererComponent worker2ChipSprite = "f08a6c90-b376-411e-b6c9-859d694bb530"
+property SpriteGUIRendererComponent worker3ChipSprite = "a0ca4259-731b-4cc1-bcbd-d23e4e02aff5"
+property SpriteGUIRendererComponent worker4ChipSprite = "d7a3b959-0a71-4742-9b94-fbd4f7135bce"
+property SpriteGUIRendererComponent worker5ChipSprite = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
+-- docs/26 §5.2 tab-worker-* 의 확정 RUID. 값을 바꿀 일이 생기면 그 문서가
+-- 단일 기준이며 여기와 함께 고친다.
+property string TabSpriteSelected = "acfb0998854a4fb4b1a9927afd2a9993"
+property string TabSpriteNormal = "db0c502147114dbfb47a5e87322937b4"
+property string TabSpriteDisabled = "a864624d7b454085bcb76f86a0ed8d07"
 property integer SelectedWorkerIndex = 1
 
 -- Panel collapse toggle (C201 / docs/08 §6.3). btnToggle is a sibling of the
@@ -89,6 +102,7 @@ method void OnBeginPlay()
     self.chatInput.Text = ""
     self.SelectedWorkerIndex = 1
     self:RefreshWorkerButtons()
+    self._T.lastOwnedCount = self:GetOwnedWorkerCount()
     self:RefreshDisplay()
     self:SetFeedback("문장을 입력하고 변환을 눌러 주세요.")
     log("[BlockProgram] MVP UI ready - Worker01 target wired")
@@ -248,31 +262,63 @@ method void SelectWorker(integer workerIndex)
 end
 
 @ExecSpace("ClientOnly")
-method void RefreshWorkerButtons()
-    local owned = 1
+method integer GetOwnedWorkerCount()
+    -- 보유 일꾼 수의 단일 조회 지점. 칩 갱신과 변화 감지가 같은 값을 본다.
     local player = _UserService.LocalPlayer
-    if player ~= nil then
-        local profile = player:GetComponent("script.AccountProfileService")
-        if profile ~= nil then owned = profile.OwnedWorkerCount end
-    end
-    self:SetWorkerButtonLabel(self.worker1ButtonText, 1, owned)
-    self:SetWorkerButtonLabel(self.worker2ButtonText, 2, owned)
-    self:SetWorkerButtonLabel(self.worker3ButtonText, 3, owned)
-    self:SetWorkerButtonLabel(self.worker4ButtonText, 4, owned)
-    self:SetWorkerButtonLabel(self.worker5ButtonText, 5, owned)
+    if player == nil then return 1 end
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil then return 1 end
+    return profile.OwnedWorkerCount
 end
 
 @ExecSpace("ClientOnly")
-method void SetWorkerButtonLabel(TextComponent label, integer workerIndex, integer owned)
+method string GetWorkerChipState(integer workerIndex, integer owned)
+    -- 칩 상태 결정의 단일 기준. 라벨·스프라이트·로그가 모두 이 값을 쓴다.
+    -- 셋이 각자 판단하면 문구와 그림이 어긋나는 것을 아무도 못 잡는다.
+    if workerIndex > owned then return "disabled" end
+    if self.SelectedWorkerIndex == workerIndex then return "selected" end
+    return "normal"
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshWorkerButtons()
+    -- 워커 칩 5개의 라벨과 배경 스프라이트를 현재 보유 수·선택 인덱스에 맞춘다.
+    local owned = self:GetOwnedWorkerCount()
+    self:SetWorkerButtonState(self.worker1ButtonText, self.worker1ChipSprite, 1, owned)
+    self:SetWorkerButtonState(self.worker2ButtonText, self.worker2ChipSprite, 2, owned)
+    self:SetWorkerButtonState(self.worker3ButtonText, self.worker3ChipSprite, 3, owned)
+    self:SetWorkerButtonState(self.worker4ButtonText, self.worker4ChipSprite, 4, owned)
+    self:SetWorkerButtonState(self.worker5ButtonText, self.worker5ChipSprite, 5, owned)
+    log("[BlockProgram] chips owned=" .. tostring(owned)
+        .. " 1=" .. self:GetWorkerChipState(1, owned)
+        .. " 2=" .. self:GetWorkerChipState(2, owned)
+        .. " 3=" .. self:GetWorkerChipState(3, owned)
+        .. " 4=" .. self:GetWorkerChipState(4, owned)
+        .. " 5=" .. self:GetWorkerChipState(5, owned))
+end
+
+@ExecSpace("ClientOnly")
+method void SetWorkerButtonState(TextComponent label, SpriteGUIRendererComponent chip, integer workerIndex, integer owned)
     -- 칩은 64x52 뿐이라 "일꾼 N (미보유)" 는 들어가지 않는다. 번호 + 짧은 표식만
-    -- 쓰고, 선택 결과는 피드백 줄이 문장으로 알려 준다.
-    if label == nil then return end
-    if workerIndex > owned then
-        label.Text = tostring(workerIndex) .. " X"
-    elseif self.SelectedWorkerIndex == workerIndex then
-        label.Text = "[" .. tostring(workerIndex) .. "]"
+    -- 쓰고, 선택 결과는 피드백 줄이 문장으로 알려 준다. 배경 스프라이트는 그
+    -- 문구를 대체하지 않고 함께 바뀐다 (docs/20 §6).
+    local state = self:GetWorkerChipState(workerIndex, owned)
+    if label ~= nil then
+        if state == "disabled" then
+            label.Text = tostring(workerIndex) .. " X"
+        elseif state == "selected" then
+            label.Text = "[" .. tostring(workerIndex) .. "]"
+        else
+            label.Text = tostring(workerIndex)
+        end
+    end
+    if chip == nil then return end
+    if state == "disabled" then
+        chip.ImageRUID = DataRef(self.TabSpriteDisabled)
+    elseif state == "selected" then
+        chip.ImageRUID = DataRef(self.TabSpriteSelected)
     else
-        label.Text = tostring(workerIndex)
+        chip.ImageRUID = DataRef(self.TabSpriteNormal)
     end
 end
 
@@ -755,6 +801,14 @@ end
 @ExecSpace("ClientOnly")
 method void OnUpdate(number delta)
     -- Mirrors the synchronized worker run state into the Run button label.
+    -- 보유 일꾼 수 변화를 먼저 본다. 구매 경로(MineSelectController)는 편집기를
+    -- 직접 부르지 않으므로, 이 감지가 없으면 방금 산 일꾼의 칩이 잠금 스프라이트로
+    -- 남는다. 아래 state 조기 return 보다 앞에 있어야 한다.
+    local ownedNow = self:GetOwnedWorkerCount()
+    if ownedNow ~= self._T.lastOwnedCount then
+        self._T.lastOwnedCount = ownedNow
+        self:RefreshWorkerButtons()
+    end
     local worker = self:GetSelectedWorker()
     if worker == nil then return end
     local state = worker.ProgramState
