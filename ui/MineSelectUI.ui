@@ -322,9 +322,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 22,
@@ -607,9 +607,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.47843137254901963,
-                "g": 0.23529411764705882,
-                "b": 0.050980392156862744,
+                "r": 0.478431374,
+                "g": 0.235294119,
+                "b": 0.0509803928,
                 "a": 1
               },
               "FontSize": 34,
@@ -801,9 +801,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 25,
@@ -995,9 +995,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.35294117647058826,
-                "g": 0.27450980392156865,
-                "b": 0.19607843137254902,
+                "r": 0.3529412,
+                "g": 0.274509817,
+                "b": 0.196078435,
                 "a": 1
               },
               "FontSize": 20,
@@ -1299,9 +1299,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 22,
@@ -1433,9 +1433,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 25,
@@ -1737,9 +1737,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 21,
@@ -1871,9 +1871,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 23,
@@ -2175,9 +2175,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 21,
@@ -2309,9 +2309,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 22,
@@ -2613,9 +2613,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 21,
@@ -3063,9 +3063,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 20,
@@ -3321,9 +3321,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 20,
@@ -3579,9 +3579,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -4017,9 +4017,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.47843137254901963,
-                "g": 0.23529411764705882,
-                "b": 0.050980392156862744,
+                "r": 0.478431374,
+                "g": 0.235294119,
+                "b": 0.0509803928,
                 "a": 1
               },
               "FontSize": 24,
@@ -4455,9 +4455,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 24,
@@ -4759,9 +4759,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -5003,9 +5003,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -5247,9 +5247,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -5441,9 +5441,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 18,
@@ -5707,9 +5707,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -5951,9 +5951,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -6195,9 +6195,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -6439,9 +6439,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -6683,9 +6683,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 16,
@@ -6927,9 +6927,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 18,
@@ -7121,9 +7121,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 18,
@@ -7387,9 +7387,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 18,
@@ -7631,9 +7631,9 @@
               "ConstraintY": 100,
               "Font": "",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 19,
@@ -7875,9 +7875,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 19,
@@ -8009,9 +8009,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.35294117647058826,
-                "g": 0.27450980392156865,
-                "b": 0.19607843137254902,
+                "r": 0.3529412,
+                "g": 0.274509817,
+                "b": 0.196078435,
                 "a": 1
               },
               "FontSize": 20,
@@ -8366,9 +8366,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.47843137254901963,
-                "g": 0.23529411764705882,
-                "b": 0.050980392156862744,
+                "r": 0.478431374,
+                "g": 0.235294119,
+                "b": 0.0509803928,
                 "a": 1
               },
               "FontSize": 32,
@@ -8832,9 +8832,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 22,
@@ -9090,9 +9090,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -9348,9 +9348,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -9606,9 +9606,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -9864,9 +9864,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -10122,9 +10122,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 18,
@@ -10380,9 +10380,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 23,
@@ -10588,9 +10588,9 @@
               "DropShadowDistance": 3,
               "Font": 0,
               "FontColor": {
-                "r": 0.35294117647058826,
-                "g": 0.27450980392156865,
-                "b": 0.19607843137254902,
+                "r": 0.3529412,
+                "g": 0.274509817,
+                "b": 0.196078435,
                 "a": 1
               },
               "FontSize": 18,
@@ -11026,9 +11026,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.47843137254901963,
-                "g": 0.23529411764705882,
-                "b": 0.050980392156862744,
+                "r": 0.478431374,
+                "g": 0.235294119,
+                "b": 0.0509803928,
                 "a": 1
               },
               "FontSize": 30,
@@ -11464,9 +11464,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.23137254901960785,
-                "g": 0.16470588235294117,
-                "b": 0.10196078431372549,
+                "r": 0.23137255,
+                "g": 0.164705887,
+                "b": 0.101960786,
                 "a": 1
               },
               "FontSize": 21,
@@ -11768,9 +11768,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 17,
@@ -12012,9 +12012,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 17,
@@ -12256,9 +12256,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.13333333333333333,
-                "g": 0.18823529411764706,
-                "b": 0.058823529411764705,
+                "r": 0.13333334,
+                "g": 0.1882353,
+                "b": 0.05882353,
                 "a": 1
               },
               "FontSize": 17,
@@ -12500,9 +12500,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 17,
@@ -12744,9 +12744,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 17,
@@ -12988,9 +12988,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.16862745098039217,
-                "g": 0.16862745098039217,
-                "b": 0.16862745098039217,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 17,
@@ -13122,9 +13122,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.35294117647058826,
-                "g": 0.27450980392156865,
-                "b": 0.19607843137254902,
+                "r": 0.3529412,
+                "g": 0.274509817,
+                "b": 0.196078435,
                 "a": 1
               },
               "FontSize": 18,
@@ -13186,6 +13186,441 @@
                 "g": 0.101960786,
                 "b": 0.101960786,
                 "a": 0
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "4bb1a54e-49e8-4308-89c0-a616f4a9bc34",
+        "path": "/ui/MineSelectUI/SelectPanel/BtnBeginner/MineNode",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
+        "jsonString": {
+          "name": "MineNode",
+          "path": "/ui/MineSelectUI/SelectPanel/BtnBeginner/MineNode",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 0,
+          "pathConstraints": "/////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UISprite",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uisprite",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 1,
+              "AnchorsMax": {
+                "x": 0,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 74,
+                "y": 32
+              },
+              "OffsetMin": {
+                "x": 10,
+                "y": -32
+              },
+              "Pivot": {
+                "x": 0,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 64,
+                "y": 64
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 10,
+                "y": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "1afd5d06d91744b3869a7283badf62db"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 1,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0.23529411764705882
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "908a366c-0a40-4ec6-afa1-281e97f61628",
+        "path": "/ui/MineSelectUI/SelectPanel/BtnDeep/MineNode",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
+        "jsonString": {
+          "name": "MineNode",
+          "path": "/ui/MineSelectUI/SelectPanel/BtnDeep/MineNode",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 0,
+          "pathConstraints": "/////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UISprite",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uisprite",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 1,
+              "AnchorsMax": {
+                "x": 0,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 74,
+                "y": 32
+              },
+              "OffsetMin": {
+                "x": 10,
+                "y": -32
+              },
+              "Pivot": {
+                "x": 0,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 64,
+                "y": 64
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 10,
+                "y": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "1afd5d06d91744b3869a7283badf62db"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 1,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0.23529411764705882
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "76df7eea-7479-4451-af02-600547f5abaf",
+        "path": "/ui/MineSelectUI/SelectPanel/BtnGem/MineNode",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
+        "jsonString": {
+          "name": "MineNode",
+          "path": "/ui/MineSelectUI/SelectPanel/BtnGem/MineNode",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 0,
+          "pathConstraints": "/////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UISprite",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uisprite",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 1,
+              "AnchorsMax": {
+                "x": 0,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 74,
+                "y": 32
+              },
+              "OffsetMin": {
+                "x": 10,
+                "y": -32
+              },
+              "Pivot": {
+                "x": 0,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 64,
+                "y": 64
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 10,
+                "y": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "1afd5d06d91744b3869a7283badf62db"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 1,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0.23529411764705882
               },
               "DropShadow": false,
               "DropShadowAngle": 120,

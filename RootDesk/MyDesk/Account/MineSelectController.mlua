@@ -11,6 +11,16 @@ property ButtonComponent btnSell = "21647cc6-ca6e-460f-aa6f-0ffcbf9bb385"
 property ButtonComponent btnBeginner = "54711815-5537-4bd1-8264-33fc12fdbec8"
 property ButtonComponent btnDeep = "ca11aa60-d838-48f3-bb72-215d57ce08a1"
 property ButtonComponent btnGem = "a8f1b7c8-d870-4044-bfe9-766610322ba8"
+-- 광산 노드 뱃지 (T-13 Phase C). 각 광산 버튼의 자식이며 입장/해금/잠금을
+-- 그림으로 보조한다. 버튼 라벨과 Beginner/Deep/GemText 는 그대로 남는다
+-- (docs/20 §6 — 아이콘 단독 표기 금지).
+property SpriteGUIRendererComponent beginnerNode = "4bb1a54e-49e8-4308-89c0-a616f4a9bc34"
+property SpriteGUIRendererComponent deepNode = "908a366c-0a40-4ec6-afa1-281e97f61628"
+property SpriteGUIRendererComponent gemNode = "76df7eea-7479-4451-af02-600547f5abaf"
+-- docs/26 §5.5 확정 RUID. 값을 바꿀 일이 생기면 그 문서가 단일 기준이다.
+property string MineNodeCurrent = "d39f51305bb541329e861e5ea151e63e"
+property string MineNodeNext = "56181d0bc5a84a608e8086f00c4191dc"
+property string MineNodeLocked = "1afd5d06d91744b3869a7283badf62db"
 property TextGUIRendererComponent resourceText = "92a7aa15-4a6d-44ce-95ee-23c2786b6452"
 property TextGUIRendererComponent deepText = "082a4413-d92e-4c74-818c-fbf0149ef560"
 property TextGUIRendererComponent gemText = "364fda59-3a44-454f-89d4-a476eccc0c53"
@@ -137,6 +147,9 @@ method void RefreshUI(boolean force)
     local state = tostring(profile.Gold) .. ":" .. tostring(profile.MineTokens) .. ":" .. tostring(profile.Stone) .. ":" .. tostring(profile.Iron) .. ":" .. tostring(profile.GoldOre) .. ":" .. tostring(profile.RareStoneCollectionLevel) .. ":" .. tostring(profile.RareIronCollectionLevel) .. ":" .. tostring(profile.RareGoldCollectionLevel) .. ":" .. tostring(profile.RareStoneStored) .. ":" .. tostring(profile.RareIronStored) .. ":" .. tostring(profile.RareGoldStored) .. ":" .. tostring(profile.OwnedWorkerCount) .. ":" .. tostring(profile.Worker1CartCapacity) .. ":" .. tostring(profile.Worker2CartCapacity) .. ":" .. tostring(profile.Worker3CartCapacity) .. ":" .. tostring(profile.Worker4CartCapacity) .. ":" .. tostring(profile.Worker5CartCapacity) .. ":" .. tostring(profile.StoneAutoSell) .. ":" .. tostring(profile.IronAutoSell) .. ":" .. tostring(profile.GoldOreAutoSell) .. ":" .. tostring(profile.StoneProtectedAmount) .. ":" .. tostring(profile.IronProtectedAmount) .. ":" .. tostring(profile.GoldOreProtectedAmount) .. ":" .. tostring(profile.DeepMineUnlocked) .. ":" .. tostring(profile.GemMineUnlocked) .. ":" .. profile.LastTransactionMessage .. ":" .. profile.RecoveryStatus
     state = state .. ":" .. tostring(profile.RareStoneAutoSell) .. ":" .. tostring(profile.RareIronAutoSell) .. ":" .. tostring(profile.RareGoldAutoSell)
     state = state .. ":" .. tostring(profile.StoneEffectiveProtection) .. ":" .. tostring(profile.IronEffectiveProtection) .. ":" .. tostring(profile.GoldOreEffectiveProtection)
+    -- 입장 중인 광산. 노드 뱃지가 이 값으로 갈리므로 감지 키에 반드시 있어야
+    -- 한다 — 빠지면 광산을 옮겨도 뱃지가 안 바뀐다 (D-11/D-12 계열 무증상 실패).
+    state = state .. ":" .. tostring(profile.LastMineId)
     if not force and state == self._T.lastState then return end
     self._T.lastState = state
 
@@ -151,6 +164,7 @@ method void RefreshUI(boolean force)
         if profile.GemMineUnlocked then self.gemText.Text = "보석 광산  ·  해금됨"
         else self.gemText.Text = "보석 광산  ·  700 골드 / 토큰 10 / 돌 200 / 철 60" end
     end
+    self:RefreshMineNodes(profile)
     if self.feedbackText ~= nil then
         if profile.LastTransactionMessage ~= "" then self.feedbackText.Text = profile.LastTransactionMessage
         elseif profile.RecoveryStatus ~= "" then self.feedbackText.Text = profile.RecoveryStatus
@@ -162,6 +176,44 @@ method void RefreshUI(boolean force)
     if self.cartSummaryText ~= nil then self.cartSummaryText.Text = self:GetCartSummary(profile) end
     if self.rareSummaryText ~= nil then self.rareSummaryText.Text = self:GetRareSummary(profile) end
     self:RefreshSaleSummary(profile)
+end
+
+@ExecSpace("ClientOnly")
+method string GetMineNodeState(string mineId, string currentMineId, boolean unlocked)
+    -- 노드 상태 결정의 단일 기준. 뱃지와 로그가 같은 값을 본다.
+    -- `beginner_mine` 도 받는 것은 레이아웃 mineId 와 맵 이름이 다르기 때문이며,
+    -- MineInventoryController 의 표시명 처리와 같은 이유다.
+    if mineId == currentMineId then return "current" end
+    if mineId == "farm01" and currentMineId == "beginner_mine" then return "current" end
+    if unlocked then return "next" end
+    return "locked"
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyMineNode(SpriteGUIRendererComponent node, string state)
+    -- 상태 문자열 하나를 RUID 로 옮긴다. 판정은 GetMineNodeState 가 이미 끝냈다.
+    if node == nil then return end
+    if state == "current" then
+        node.ImageRUID = DataRef(self.MineNodeCurrent)
+    elseif state == "next" then
+        node.ImageRUID = DataRef(self.MineNodeNext)
+    else
+        node.ImageRUID = DataRef(self.MineNodeLocked)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshMineNodes(AccountProfileService profile)
+    -- 세 광산 뱃지를 입장 중 / 해금 / 잠금으로 칠한다. 초보 광산은 항상 해금이다.
+    local current = profile.LastMineId
+    local beginner = self:GetMineNodeState("farm01", current, true)
+    local deep = self:GetMineNodeState("deep_mine", current, profile.DeepMineUnlocked)
+    local gem = self:GetMineNodeState("gem_mine", current, profile.GemMineUnlocked)
+    self:ApplyMineNode(self.beginnerNode, beginner)
+    self:ApplyMineNode(self.deepNode, deep)
+    self:ApplyMineNode(self.gemNode, gem)
+    log("[MineSelect] nodes current=" .. tostring(current)
+        .. " beginner=" .. beginner .. " deep=" .. deep .. " gem=" .. gem)
 end
 
 @ExecSpace("ClientOnly")
