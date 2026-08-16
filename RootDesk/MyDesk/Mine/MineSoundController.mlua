@@ -10,17 +10,26 @@
 @Component
 script MineSoundController extends Component
 
--- docs/21 §3 잠정 RUID 7종. 빈 문자열이면 그 cue 는 무음이다.
+-- docs/21 §3 **오너 승인 RUID 7종** (2026-08-16 청취 판정 완료). 빈 문자열이면
+-- 그 cue 는 무음이다. 값을 바꿀 일이 생기면 docs/21 §3 이 단일 기준이다.
 property string MineHitRuid = "a225c774f95a41cc8752aa55ea7ec787"
-property string MineEmptyRuid = "d57351f8d95d44149cb641589d60707b"
-property string CartLoadRuid = "f399837e702843abb2c8196829101982"
-property string DepotUnloadRuid = "b47642347f4d4cbc93aafb1c8af9ba51"
-property string SpecialVeinSpawnRuid = "06cbeae2e59f4d118b4a13f30f983528"
-property string RareOreUnloadRuid = "655fec4efe3643d88eac1c686e5af922"
+-- 헛방음이 파괴음 → 반짝임으로 바뀌면서 길이 초과(1.52s > 0.8s)가 해소됐다.
+property string MineEmptyRuid = "06cbeae2e59f4d118b4a13f30f983528"
+property string CartLoadRuid = "4d4f1db0e39e49bbbba519fa836e66b4"
+-- ⚠️ 1.52s 로 쿨다운 0.4s 를 3.8배 넘는다. 하역이 연속되면 최대 4겹까지 쌓인다.
+-- 오너 승인값이며, 겹침이 거슬리면 자산이 아니라 아래 cue 표의 쿨다운을 1.6s 로
+-- 올리는 쪽이 먼저다 (docs/21 §3).
+property string DepotUnloadRuid = "d57351f8d95d44149cb641589d60707b"
+property string SpecialVeinSpawnRuid = "71dc134a9a4e4285ab642a61c372a5b6"
+-- 3.89s 팡파르 → 1.18s. 뒤따르는 행동음을 묻지 않는다.
+property string RareOreUnloadRuid = "9308f474118c42ea99db91c64a71a850"
 property string VeinRecoverRuid = "556753bafdf14063b8e7236a6ca38675"
 
--- 효과음 공용 볼륨. BGM 이 없는 월드라 1.0 이 기준이고, 청취 판정(Phase 6)에서
--- 시끄러우면 여기 하나만 낮춘다.
+-- ⚠️ **폴백 전용이다. 실제 볼륨은 `SoundSettingsController` 가 소유한다** (F10 §1.2).
+-- 이 컨트롤러는 맵 3개에 인스턴스가 3개라 여기에 설정값을 써 넣으면 "누가 진짜
+-- 값인지"가 사라진다 — F10 §1.2 가 경고한 함정이 정확히 그것이다. 아래 PlayCue 는
+-- `_SoundSettingsController:GetSfxVolume()` 을 읽고, 그 Logic 이 아직 초기화 전일
+-- 때만 이 값으로 떨어진다.
 property number Volume = 1.0
 
 @ExecSpace("ClientOnly")
@@ -101,8 +110,13 @@ method void PlayCue(string cue, string key)
     end
     self._T.lastPlay[ledgerKey] = now
 
-    _SoundService:PlaySound(spec.ruid, self.Volume)
-    log("[MineSound] play cue=" .. cue .. " key=" .. key)
+    -- 볼륨의 단일 출처는 SoundSettingsController 다 (F10 §1.2 · §0.1 산출물 3).
+    -- 여기서 캐시하지 않고 재생 직전에 읽는다 — 슬라이더(T-12-B)가 값을 바꿔도
+    -- 다음 cue 부터 바로 반영되고, 맵 3개의 인스턴스가 서로 다른 값을 들 일이 없다.
+    local volume = self.Volume
+    if _SoundSettingsController ~= nil then volume = _SoundSettingsController:GetSfxVolume() end
+    _SoundService:PlaySound(spec.ruid, volume)
+    log("[MineSound] play cue=" .. cue .. " key=" .. key .. " vol=" .. tostring(volume))
 end
 
 end

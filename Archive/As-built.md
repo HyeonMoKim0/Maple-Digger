@@ -15,18 +15,67 @@
 | 시스템 | 구현 | 위치 | 주의사항 |
 |---|---|---|---|
 | 광맥·틱·창고 기반 | 맵 `@Component` | `RootDesk/MyDesk/Mine/VeinTickSimulator.mlua` | 0.4초 회복 후 등록 일꾼 실행. 세 광산의 JSON 레이아웃·Depot·일꾼 시작점 1~5·일반/특별 marker를 검증하며, 특별 광맥은 후보에서 생성하고 동시 활성 상한을 적용한다. |
-| 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램 |
+| 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램. **`ProgramState` 는 3값** — `Idle`(미실행·자연 완료) / `Running` / `Stopped`(사용자 정지·맵 전환·서버 거절), C217. `ResetExecution` 은 항상 `Idle` 로 착지하고 정지 계열 호출자만 덮어쓴다 |
 | 일꾼 공용 모델 | `.model` | `RootDesk/MyDesk/Models/Farm/Worker.model` | modelId `worker`, RectTile용 `KinematicbodyComponent`와 `WorkerController` 포함. `Drone.model`은 레거시 원본 |
-| 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. 신규 프로필은 Worker01만 실행 대상이며, 구매한 Worker02~05도 독립 선택한다. |
-| 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭 |
+| 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. 신규 프로필은 Worker01만 실행 대상이며, 구매한 Worker02~05도 독립 선택한다. **워커 칩은 선택/일반/잠금 3종 스프라이트를 런타임 스왑**하며(T-13 A1), 상태 결정은 `GetWorkerChipState` 하나가 소유한다 — 라벨·스프라이트·로그가 같은 값을 본다. |
+| 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭. **칩 배경은 파일에 `tab-worker-normal` 이 박혀 있고 런타임이 덮어쓴다** — 파일값만 보고 판단하면 안 된다 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. Worker01 손·수레 + 세션 Depot 합계를 표시하며, 계정 광물·판매 설정·광산 선택은 별도 F7-B UI가 담당한다. |
+| 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀 4패널. **광산 버튼 3개에 상태 뱃지(입장/해금/잠금)를 런타임 스왑**한다(T-13 C). 파일 초기값은 3개 다 `locked` 이고 런타임이 덮어쓴다. **`RefreshUI` 의 `state` 키에 `LastMineId` 가 반드시 있어야** 광산 전환이 뱃지에 반영된다 |
 | 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v7 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물은 하역 즉시 컬렉션 등록·10단계 패시브·11회째부터 수동/자동 판매까지 구현했으며, 맵 강화는 미구현이다(계약은 `docs/13` §5). 프로필에 `mineLevels` 필드가 아직 없어 맵 강화 착수 시 v8 마이그레이션이 필요하다. |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. **1~5 시작 셀은 T-11(2026-08-14)로 광맥별 분산됐다** — 각 시작 셀의 **한 걸음 오른쪽이 광맥**이라 복사한 프로그램이 바로 캔다(배치표 `docs/18` T-11). 초보 광산 W2·W4는 광맥 셀 위에 서고 W5는 창고를 공유한다. marker·서버 맵 전환과 **F5 시각 표현(Phase 1~4)** 은 구현됐고, **사운드(Phase 5)와 F5-1~F5-6 최종 판정(Phase 6)은 미구현** |
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다** |
-| F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. RUID는 docs/21 §3 잠정값 — **청취 판정 전이므로 docs/21 §3 승인란은 비어 있는 게 맞다**. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
-| BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). 잠정 BGM `8e366297…`(docs/21 §3-B, 승인란은 Phase 6까지 비움). **`PlayBGM` 이 루프임을 실측으로 확정**(곡 끝 +58.5초까지 `IsPlayBGM()`=true). 볼륨은 아직 **코드 상수** — 슬라이더·프로필 저장·`MineSoundController` 볼륨 조회 배선은 전부 **T-12-B** 몫이다(F10 §0.1 산출물 1·3·5) |
+| F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. **RUID 7종은 2026-08-16 오너 청취로 확정**(docs/21 §3 승인 완료 — 2종 유지·5종 교체). ⚠️ `depot_unload` 만 1.52s 로 쿨다운 0.4s 를 넘어 겹칠 수 있다. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
+| BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 2026-08-16 오너 청취로 `3512470b…`(`sound-604`, 87.3s) 확정** — 잠정 오케스트라 `8e366297…` 은 미채택(docs/21 §3-B). **`BgmVolume = 0.5` 는 아직 미판정(L5)** 이고 곡이 짧아져 루프 이음새가 약 1.6배 자주 온다. **`PlayBGM` 이 루프임을 실측으로 확정**(곡 끝 +58.5초까지 `IsPlayBGM()`=true). 볼륨은 아직 **코드 상수** — 슬라이더·프로필 저장·`MineSoundController` 볼륨 조회 배선은 전부 **T-12-B** 몫이다(F10 §0.1 산출물 1·3·5) |
 
 ## 기록
+
+### 2026-08-16 — T-13 A2: `Stopped` 신설 + 상태 램프 · 볼륨 판정이 배선을 앞당겼다
+
+램프 3상태(C217)와 볼륨(C220)을 구현했다. 검수 `docs/16` §29, 자산 `docs/26` §5.4.
+
+- **`ProgramState` 는 2값이 아니라 5가지 결말이 뭉개진 1값이었다.** `Idle` 하나에 미실행 · 자연 완료 · 사용자 정지 · 맵 전환 정지 · 서버 거절이 전부 들어 있었다(다섯 경로가 `ResetExecution()` 하나로 모인다). `Stopped` 는 그 정보가 **이미 호출 지점에 있어 분류만** 하면 됐고, `Blocked` 는 판정 로직 자체가 없어 보류했다.
+- **`ResetExecution` 안에 갈래를 만들지 않았다.** `RunProgram` 은 성공 경로에서도 맨 처음 그것을 부르므로, 거기에 `Stopped` 를 넣으면 **실행할 때마다 램프가 빨갛게 튄다.** 항상 `Idle` 로 착지시키고 "멈춰 세운" 호출자 세 곳만 뒤에서 덮어쓴다.
+- **착수 전에 회귀 위험을 먼저 갈랐다.** `ProgramState` 를 분기 조건으로 쓰는 코드가 있는지 전수 확인 — 표시 2곳뿐이고 유일한 비교(`== "Running"`)는 `Stopped` 를 `else` 로 떨어뜨려 의도대로다. `== "Idle"` 게이트가 하나라도 있었으면 새 상태가 조용히 깨뜨렸을 것이다.
+- **볼륨 판정(C220)이 배선 하나를 앞당기게 했다.** `SfxVolume` 은 아무도 읽지 않는 값이라(T-12-B 산출물 3) `0.7` 을 적기만 하면 **값은 적히고 효과음은 1.0 으로 나는** 상태가 됐다. `PlayCue` 가 재생 직전에 `GetSfxVolume()` 을 읽도록 배선했고 **캐시하지 않는다** — 맵 3개에 인스턴스가 3개라 캐시하면 F10 §1.2 함정을 그대로 밟는다. `MineSoundController.Volume` 은 폴백으로 격하.
+- **파일 초기값은 `stopped`(빨강).** 배선이 죽으면 "멈춤"으로 눈에 띈다 — 예전의 `running` 초록은 자동화가 도는 것처럼 보여 결함을 숨겼다.
+
+**남은 것**: 램프 3종의 육안 구분은 `docs/16` §24.6 **K2**(블록 실행·정지) 오너 몫. **T-12-B 에 남은 것은 슬라이더와 프로필 저장뿐이다.**
+
+### 2026-08-16 — T-04 Phase 6: cue 7종·BGM 청취 판정 반영 · 설명 텍스트가 두 자리에서 틀렸다
+
+오너 청취(L1~L4)로 사운드가 확정됐다. cue **2종 유지 · 5종 교체**, BGM 은 잠정 오케스트라 대신 **대체 A `sound-604`**(87.3s). 검수 `docs/16` §28, 확정표 `docs/21` §3·§3-B.
+
+- **교체 5종 중 2종이 기존 다른 cue 의 자산을 옮겨 온 것이다.** 파괴음은 "헛방"이 아니라 **"수레를 쏟아붓기"** 였고, 반짝임은 "출현 알림"보다 **"헛방"** 에 맞았다. 잠정 배치는 소리의 성격을 **AI 생성 설명 텍스트로 유추**한 결과였고 그 유추가 두 자리에서 틀렸다. **설명만 믿고 넣은 자산이 정정된 세 번째 사례**다(C206 부유석 · §5 파편 2종 · 여기) — 앞의 둘은 스크린샷으로 잡혔지만 **소리는 그 방법이 안 통해 오너 청취까지 와서야 잡혔다.**
+- **그 교차가 길이 문제까지 풀었다.** `mine_empty` 1.52s→0.55s(쿨다운 0.8s 안으로), `rare_ore_unload` 3.89s→1.18s.
+- **대신 `depot_unload` 가 1.52s 로 쿨다운 0.4s 를 3.8배 넘는다.** 하역 연속 시 최대 4겹. **거슬리면 자산이 아니라 쿨다운을 1.6s 로 올린다** — 오너가 고른 소리이고 겹침은 빈도 문제다.
+- **`msw-search` batch 로 6개 RUID 의 실존·타입·길이를 먼저 쟀다.** 오타 하나면 cue 가 조용히 죽는데(F5 §4 는 빈 RUID 만 무음 처리하고 *틀린* RUID 는 그냥 실패한다) 배선 전에 갈렸다.
+
+**남은 것**: **L5(`BgmVolume = 0.5`)는 미판정**이다. 곡이 바뀌어 이전 기준의 균형 감각은 무효다. 곡 길이도 141.5s→87.3s 라 루프 이음새가 약 1.6배 자주 온다 — 함께 본다.
+
+### 2026-08-16 — T-13 C: 광산 노드 뱃지 · 자리가 없어 배치를 바꿨다
+
+`docs/26` §5.8 후속 3의 광산 노드를 넣었다. 자산 3종 신규 업로드(`docs/26` §5.5). 검수 `docs/16` §27.
+
+- **README 원안(`SelectPanel/MineRoute` 가로 스트립)은 자리가 없다.** `SelectPanel`(780×980)을 재어 보니 **빈 세로 띠가 18px**, 광산 행 사이가 **24px**, 왼쪽 여백은 `GemText` 가 720px 폭이라 막혔다. 그래서 노드를 **각 광산 버튼(340×88)의 자식 뱃지**(64×64, 왼쪽 안쪽 10px)로 넣었다. 기존 배치를 하나도 안 건드리므로 **T-03(같은 `.ui` 에 모달 추가)과 충돌하지 않는다** — 이게 이 배치의 진짜 값어치다.
+- **커넥터는 업로드하지 않았다.** 눕혀도 24px 에 안 들어가고 줄이면 실오라기가 된다. 가로 경로로 재설계할 때 T-03 과 같이 잡는다.
+- **파일 초기값을 일부러 `locked` 로 뒀다.** 배선이 죽으면 "전부 잠금"이라는 눈에 띄는 화면이 되지, 그럴듯하게 위장되지 않는다. `current` 를 초기값으로 두면 초보 광산만은 맞아 보여 결함이 숨는다.
+- **감지 키에 `LastMineId` 를 넣어야 한다.** `RefreshUI` 의 `state` 키에 입장 중인 광산이 빠져 있었다 — 넣지 않으면 광산을 옮겨도 키가 같아 조기 return 하고 뱃지가 안 바뀐다(D-11/D-12 계열).
+- **판정은 A1 과 같은 방식.** 파일값(전부 locked)과 런타임 초기값(`beginner=current`)이 다른 것이 스왑의 증거다. `next` 는 원장을 건드리지 않고 `GetMineNodeState`/`ApplyMineNode` 를 인자만 달리해 직접 호출해 쳤다.
+- **곁다리로 baseline 을 정리했다 (C219).** `stone` baseline 이 설계값 `0` 이 아니라 과거 잔량 `1` 로 박혀 있었다. `0` 으로 정정하고 이 컴퓨터 프로필도 맞췄다(`cart=20 lastMine=farm01`, `saved=true`).
+
+**남은 것**: 노드가 눈으로 구분되는지·라벨을 방해하지 않는지는 `docs/16` §24.6 **K1** 오너 몫.
+
+### 2026-08-16 — T-13 A1: 워커 탭 상태 스프라이트 · 파일값과 런타임값이 다른 것이 증거였다
+
+`docs/26` §5.8 후속 1을 닫았다. 칩 5개가 문구(`[1]`/`1`/`1 X`)로만 상태를 말하던 것을 선택/일반/잠금 스프라이트 스왑으로 바꿨다. 자산은 이미 올라가 있었고 **배선만 없었다**. 검수 `docs/16` §26.
+
+- **상태 결정을 `GetWorkerChipState` 하나로 모았다.** 라벨·스프라이트·로그가 각자 판단하면 문구와 그림이 어긋나는 것을 아무도 못 잡는다. 실제로 이 구조 덕에 로그 한 줄(`1=selected 2=disabled …`)이 그대로 판정 근거가 됐다.
+- **`.ui` 는 건드리지 않았다.** 엔티티도 컴포넌트도 그대로고 `injectBindings` 로 프로퍼티 UUID만 넣었다. `.ui` 재저장분을 늘리지 않으려는 것이고, 실제로 `git status` 의 `.ui` 7개는 이번 작업과 무관한 정규화분 그대로다.
+- **판정 방법 — 파일값과 런타임값의 불일치를 증거로 썼다.** `.ui` 에는 5개 전부 `tab-worker-normal` 이 박혀 있는데 런타임 초기값이 `1=selected / 2~5=disabled` 로 나왔다. "값이 계약과 같다"보다 **"파일과 다르다"가 스왑이 돌았다는 더 강한 증거**다.
+- **`normal` 분기를 원장 무변경으로 쳤다.** `owned=1` 이라 그대로는 못 보는데, 일꾼을 사는 대신 **프로덕션 메서드 `SetWorkerButtonState` 를 `owned` 인자만 달리해** 호출했다. 테스트 전용 경로를 새로 판 것이 아니라 구매 후 탈 그 경로를 먼저 친 것이다. `RefreshWorkerButtons()` 한 줄로 복귀.
+- **곁가지로 결함 하나를 닫았다 — 구매 직후 칩이 갱신되지 않았다.** `RefreshWorkerButtons` 가 `OnBeginPlay`/`SelectWorker` 에서만 불려서, 일꾼을 사도 탭을 누르기 전까지 옛 상태였다. `OnUpdate` 에 보유 수 변화 감지를 넣었고 **기존 조기 `return` 보다 앞**에 뒀다 — 뒤에 두면 상태가 안 바뀌는 동안 영영 안 돈다.
+
+**남은 것**: 세 스프라이트가 눈으로 구분되는지는 `docs/16` §24.6 **K3** 오너 클릭 검수 몫이다. RUID 일치까지가 자동 검증의 한계다. A2(상태 램프)는 **`ProgramState` 가 `Idle`/`Running` 2값뿐**이라 착수 전 오너 결정이 필요하다(`docs/18` §3 공백 10번).
 
 ### 2026-08-14 — T-11: 일꾼 시작점 분산 (3광산) · 도구가 "정규화"라고 거짓말했다
 

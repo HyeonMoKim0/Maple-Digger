@@ -10,6 +10,14 @@ property TextGUIRendererComponent mineText = "365c199b-862d-462d-a8c9-64a9ad20bf
 property TextGUIRendererComponent storageText = "10e4c593-6ae5-4625-8828-20a2597f5175"
 property TextGUIRendererComponent currencyText = "a29041bf-f355-4b95-ab3c-eb0d5c38b8d5"
 property TextGUIRendererComponent workerStateText = "8241b596-fed7-42ec-a823-696ded08ed1f"
+-- 실행 상태 램프 (T-13 A2). **선택 일꾼** 기준이다 — H9(손·수레)와 같은 대상을
+-- 가리켜야 하고, 선택 기준은 `_BlockProgramController` 하나뿐이다(F5 §5.3).
+-- 램프는 위 workerStateText 를 대체하지 않고 함께 뜬다 (docs/20 §6).
+property SpriteGUIRendererComponent workerStateLamp = "e0cd2e0e-0067-43ff-9f1b-2ef1374d0e8b"
+-- docs/26 §5.4 확정 RUID. `Blocked` 는 판정 로직이 없어 보류다 (C217).
+property string LampRunning = "b3837d651fe7474b9632fec45153cfe2"
+property string LampIdle = "27e502e69b064e3bba82801c739740e5"
+property string LampStopped = "5e178be4569841139fa6252de9220130"
 property TextGUIRendererComponent depotText = "9395e38a-0b37-4c6e-ba68-ebd554c90fd3"
 -- F5 §2.2 특별 광맥 "HUD 아이콘". 토스트를 놓쳐도 여기서 현재 상태를 읽을 수
 -- 있어야 한다 (F5-5). 아이콘 자산 적용 자체는 T-08 범위라 지금은 텍스트다.
@@ -129,6 +137,7 @@ method void RefreshUI(boolean force)
     if self.workerStateText ~= nil then
         self.workerStateText.Text = "실행 상태  " .. workerStates
     end
+    self:ApplyStateLamp(worker.ProgramState)
     -- Session depot total is kept under its own label so it is never mistaken
     -- for the account ledger above (docs/16 §10.2 D-4).
     if self.depotText ~= nil then
@@ -189,6 +198,22 @@ method string GetMineDisplayName(VeinTickSimulator mineState, AccountProfileServ
     if mineId == "deep_mine" then return "깊은 광산" end
     if mineId == "gem_mine" then return "보석 광산" end
     return tostring(mineId)
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyStateLamp(string programState)
+    -- 선택 일꾼의 실행 상태를 램프 색으로 보조한다. 문구(`실행 상태  1 Running`)는
+    -- 그대로 남는다 — 색 단독 표기는 docs/20 §6 위반이다.
+    -- 모르는 상태는 Idle 로 떨어뜨린다. `Blocked` 가 나중에 생겨도 배선이 깨지지
+    -- 않고 파랑으로 보일 뿐이며, 그때 이 분기에 한 줄을 더한다 (C217).
+    if self.workerStateLamp == nil then return end
+    if programState == "Running" then
+        self.workerStateLamp.ImageRUID = DataRef(self.LampRunning)
+    elseif programState == "Stopped" then
+        self.workerStateLamp.ImageRUID = DataRef(self.LampStopped)
+    else
+        self.workerStateLamp.ImageRUID = DataRef(self.LampIdle)
+    end
 end
 
 @ExecSpace("ClientOnly")
