@@ -107,16 +107,21 @@ end
 @ExecSpace("Server")
 method void RunProgram(table commands)
     -- Replaces the current run only with a server-validated D2 program.
-    -- A new request always replaces the old run. Invalid input leaves the
-    -- worker Idle so an untrusted client cannot preserve hidden execution.
+    -- A new request always replaces the old run. Invalid input clears execution
+    -- so an untrusted client cannot preserve hidden execution.
+    -- `Stopped` 는 **조기 return 두 곳에만** 쓴다 (C217). ResetExecution 은 성공
+    -- 경로에서도 먼저 도므로, 거기에 Stopped 를 넣으면 Stopped→Running 깜빡임이
+    -- 생겨 램프가 매 실행마다 빨갛게 튄다.
     self:ResetExecution()
     if commands == nil or type(commands) ~= "table" or #commands == 0 then
-        log(self:WorkerTag() .. " empty program received - state=Idle")
+        self.ProgramState = "Stopped"
+        log(self:WorkerTag() .. " empty program received - state=Stopped")
         return
     end
 
     if not self:ValidateProgram(commands) then
-        log(self:WorkerTag() .. " program rejected: " .. tostring(self._T.validationError))
+        self.ProgramState = "Stopped"
+        log(self:WorkerTag() .. " program rejected: " .. tostring(self._T.validationError) .. " - state=Stopped")
         return
     end
 
@@ -132,16 +137,21 @@ end
 
 @ExecSpace("Server")
 method void StopProgram()
-    -- Stops the current interpreter and returns the synchronized state to Idle.
+    -- Stops the current interpreter. 사용자가 정지시킨 것은 `Stopped` 다 (C217) —
+    -- 자연 완료(`FinishProgram`)와 구분되지 않으면 "왜 멈췄지?" 에 답할 수 없다.
     self:ResetExecution()
-    log(self:WorkerTag() .. " stopped by user")
+    self.ProgramState = "Stopped"
+    log(self:WorkerTag() .. " stopped by user - state=Stopped")
 end
 
 @ExecSpace("ServerOnly")
 method void StopForMapTransition()
     -- Stops an active interpreter before its owner enters another mine map.
+    -- 맵을 옮겨서 멈춘 것도 `Stopped` 다 (C217). F7-C 계약상 맵 전환 뒤에는
+    -- 수동 실행 대기이므로, 플레이어에게 "멈춰 있다"가 보여야 맞다.
     self:ResetExecution()
-    log(self:WorkerTag() .. " stopped for map transition")
+    self.ProgramState = "Stopped"
+    log(self:WorkerTag() .. " stopped for map transition - state=Stopped")
 end
 
 @ExecSpace("ServerOnly")
@@ -260,7 +270,9 @@ end
 
 @ExecSpace("ServerOnly")
 method string GetProgramState()
-    -- Returns the synchronized Idle or Running state.
+    -- Returns the synchronized state — `Idle` / `Running` / `Stopped` (C217).
+    -- `Idle` = 아직 안 돌렸거나 프로그램이 끝까지 갔다 · `Stopped` = 사용자 정지 ·
+    -- 맵 전환 정지 · 서버 거절. `Blocked`(진행 불가)는 판정 로직이 없어 보류다.
     return self.ProgramState
 end
 
@@ -273,6 +285,9 @@ end
 @ExecSpace("ServerOnly")
 method void ResetExecution()
     -- Clears every stack frame, queued command, and action counter.
+    -- **항상 `Idle` 로 착지한다.** "멈춰 세운 것"을 뜻하는 호출자(StopProgram ·
+    -- StopForMapTransition · RunProgram 의 거절 경로)는 이 뒤에 `Stopped` 로
+    -- 덮어쓴다 (C217). 여기서 갈래를 만들면 성공 실행 경로까지 물든다.
     self.CommandQueue = {}
     self._T.frames = {}
     self._T.actionStep = 0

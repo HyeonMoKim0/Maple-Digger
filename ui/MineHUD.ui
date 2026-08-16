@@ -332,9 +332,14 @@
                 "x": 46,
                 "y": -42
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -42,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -348,6 +353,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -520,9 +526,14 @@
                 "x": 46,
                 "y": -282
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -282,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -536,6 +547,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -708,9 +720,14 @@
                 "x": 46,
                 "y": -196
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -196,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -724,6 +741,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -896,9 +914,14 @@
                 "x": 46,
                 "y": -166
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -166,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -912,6 +935,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1084,9 +1108,14 @@
                 "x": 46,
                 "y": -342
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -342,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -1100,6 +1129,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1322,9 +1352,14 @@
                 "x": 46,
                 "y": -76
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -76,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -1338,6 +1373,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1510,9 +1546,14 @@
                 "x": 46,
                 "y": -106
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -106,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -1526,6 +1567,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1698,9 +1740,14 @@
                 "x": 46,
                 "y": -136
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -136,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -1714,6 +1761,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1886,9 +1934,14 @@
                 "x": 86,
                 "y": -226
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -374,
+                "y": -226,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -1902,6 +1955,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2074,9 +2128,14 @@
                 "x": 46,
                 "y": -312
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -414,
+                "y": -312,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -2090,6 +2149,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -2262,6 +2322,11 @@
                 "x": 46,
                 "y": -236
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -2278,16 +2343,17 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.SpriteGUIRendererComponent",
               "AnimClipPlayType": 0,
               "EndFrameIndex": 2147483647,
-              "ImageRUID": {
-                "DataId": "b3837d651fe7474b9632fec45153cfe2"
-              },
               "IgnoreMapLayerCheck": false,
+              "ImageRUID": {
+                "DataId": "5e178be4569841139fa6252de9220130"
+              },
               "LocalPosition": {
                 "x": 0,
                 "y": 0
