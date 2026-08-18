@@ -33,10 +33,12 @@ property string ShardRuid = "de538ed75f964038b61d6d735cd9ae0b"
 property number ShardScale = 1.3
 property integer ShardOrderInLayer = 6
 
--- 먼지 엔티티의 최종 오프셋 — **광맥 셀 기준, 광맥 종류별** (2026-08-18 오너 지정).
--- 일반 광맥 (0.75, 0.25) · 특별 광맥 (0.75, 1). 특별 광맥 스프라이트가 더 높아
--- 먼지도 위에 얹어야 맞는다. 이 값은 엔티티 Position 오프셋 그 자체이며,
--- 자산의 pivot 쏠림까지 **오너가 눈으로 보정해 포함한 값**이다.
+-- 먼지 엔티티의 최종 오프셋 — **광맥 셀 기준, 광맥 종류별** (2026-08-18 오너 실측).
+-- 오너가 Play 중 Worker01_Shard 의 Position 을 직접 움직여 확정한 **맵 절대좌표**
+-- (일반: 광맥(1,0)에서 (0.75, 0.25) · 특별: 광맥(1,1)에서 (0.75, 1))를 셀 기준
+-- 오프셋으로 환산한 값이다: 일반 (-0.75, -0.25) · 특별 (-0.75, -0.5).
+-- 먼지는 광맥의 왼쪽(일꾼 쪽) 아래에 뜬다. 자산의 pivot 쏠림까지
+-- **오너가 눈으로 보정해 포함한 값**이다.
 --
 -- ⚠ 자산(`de538ed7`)의 pivot 은 중심이 아니다 — 시각 중심이 엔티티 위치에서
 -- ShardScale 에 비례해 밀린다 (1.3 배 실측: 가로 -1.11 / 세로 -0.28 unit).
@@ -44,10 +46,10 @@ property integer ShardOrderInLayer = 6
 -- 다시 잴 때는 수명만 늘려 찍지 말 것 — 애니메이션클립이라 재생 중 시각 중심이
 -- 프레임마다 이동한다. PlayRate 0.02 + StartFrameIndex/EndFrameIndex 0~1 로
 -- 앞부분 프레임에 고정해 판정한다 (2026-08-06 오독 사례).
-property number ShardOffsetNormalX = 0.75
-property number ShardOffsetNormalY = 0.25
-property number ShardOffsetSpecialX = 0.75
-property number ShardOffsetSpecialY = 1.0
+property number ShardOffsetNormalX = -0.75
+property number ShardOffsetNormalY = -0.25
+property number ShardOffsetSpecialX = -0.75
+property number ShardOffsetSpecialY = -0.5
 
 -- F5 §3 "0.3초 내 파편 효과".
 property number ShardSeconds = 0.3
