@@ -215,7 +215,9 @@ method void OnSaveClicked()
     -- 편집기의 현재 프로그램을 새 슬롯으로 저장. 선검증은 UX용 — 최종 판정은 서버.
     local profile = self:GetProfile()
     if profile == nil then return end
-    local program = _BlockProgramController:GetProgram()
+    -- 빈 body 제어 블록은 직렬화가 불가능하다 (LEA-3001 UnknownType). 정리된
+    -- 사본으로 저장한다 — 빈 반복/IF 는 실행 의미가 없어 제거해도 동작이 같다.
+    local program = _BlockProgramController:GetSanitizedProgram()
     if program == nil or #program == 0 then
         self.libraryFeedbackText.Text = "편집기에 저장할 블록이 없습니다. 먼저 블록을 조립하세요."
         return

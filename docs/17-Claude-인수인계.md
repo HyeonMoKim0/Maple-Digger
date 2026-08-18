@@ -46,6 +46,8 @@
 9. **`asset_update_resource_storage_info`는 넘기지 않은 필드를 빈 문자열로 덮는다.** `properties`만 넘겼더니 리소스의 `name`·`description`·`subcategory`가 전부 지워졌다(2026-08-13 실제 발생). **항상 4개를 함께 넘긴다.**
 10. **mlua 에서 `handler` 는 예약어다.** `local handler = ...` 는 파서 오류가 난다(2026-08-18 실제 발생 — `clickHandler` 로 회피). 이벤트 핸들러 선언 키워드(`handler HandleXxx(...)`)와 충돌하기 때문이다.
 11. **오너가 좌표·수치를 줄 때는 어느 엔티티의 어느 필드를 읽었는지부터 확인한다.** 먼지 오프셋 (0.75, 0.25)를 "광맥 기준 오프셋"으로 읽었다가, 실제로는 Play 중 `Worker01_Shard` 의 Position 에 직접 입력한 **맵 절대좌표**였다(2026-08-18, docs/16 §32.6). 해석이 갈리면 구현 전에 AskUserQuestion 으로 가른다.
+12-1. **MSW `JSONEncode` 는 빈 Lua 테이블을 죽인다.** `LEA-3001 LuaTableToJsonType.UnknownType` — 배열/객체를 구분할 수 없기 때문이다(2026-08-18 오너 실플레이 실측, docs/16 §36). 프로그램 blockTree 처럼 **빈 배열이 합법인 구조를 직렬화할 때는 빈 테이블을 먼저 걷어내거나 `pcall` 로 감싼다.** `WorkerController.SanitizeProgramForJson` / `BlockProgramController.GetSanitizedProgram` 이 그 정리 지점이다 — 새 직렬화 경로를 만들면 이 둘을 지나게 할 것.
+
 12. **불투명 스킨을 입힌 배경 엔티티는 displayOrder 가 형제 중 최소인지 확인한다.** D-15 — 리스킨이 반투명 배경을 불투명 프레임으로 바꾸자 `displayOrder=10` 이던 `CartPanel/Backdrop` 이 자식 전부를 덮었다. `audit_resave` 도 `ui_lint` 도 이 축은 보지 않는다 (docs/16 §32.2).
 
 > 5차 이전 세션의 상세는 `Archive/As-built.md`의 날짜별 기록을 본다. 요약하면 — **2차**(07-29) 희귀 광물 서버 규칙 전량 검증, **3차**(07-30) F5 §5·§6 계약 신설, **4차**(07-30) 화면 결함 D-1~D-12 전량 수정 + `docs/18`~`21` 신설, **5차**(07-31) `GroupOrder` 회귀 복구(D-13) + T-04 자산 확정(C206).

@@ -149,15 +149,56 @@ method string GetLastValidationError()
 end
 
 @ExecSpace("ServerOnly")
+method table SanitizeProgramForJson(table list)
+    -- 빈 body 제어 블록을 걷어낸 사본을 돌려준다. MSW `JSONEncode` 는 빈 Lua
+    -- 테이블(배열/객체 구분 불가)을 `LEA-3001 LuaTableToJsonType.UnknownType`
+    -- 으로 거부한다 (2026-08-18 오너 실플레이 실측). 빈 반복/IF 는 실행 의미가
+    -- 없으므로 제거해도 동작이 같다. 검증기(ValidateProgram)는 빈 body 를
+    -- 허용하므로 이 정리는 직렬화 직전에만 한다.
+    local sanitized = {}
+    for i = 1, #list do
+        local command = list[i]
+        if type(command) == "table" then
+            if command.type == "repeat" or command.type == "if" then
+                local body = {}
+                if type(command.body) == "table" then body = self:SanitizeProgramForJson(command.body) end
+                if #body > 0 then
+                    local copy = { type = command.type, body = body }
+                    if command.type == "repeat" then copy.count = command.count
+                    else copy.cond = command.cond end
+                    table.insert(sanitized, copy)
+                end
+            else
+                table.insert(sanitized, command)
+            end
+        end
+    end
+    return sanitized
+end
+
+@ExecSpace("ServerOnly")
 method void RecordLastValidProgram(table commands)
     -- MVP 는 광산 맵당 1인 세션이다. 프로필 서비스에 내용을 넘겨 자동 저장
     -- 배치로 영속화한다 (즉시 저장하지 않는다 — F7-C §3).
+    local sanitized = self:SanitizeProgramForJson(commands)
+    if #sanitized == 0 then
+        log(self:WorkerTag() .. " last valid program not recorded (empty after sanitize)")
+        return
+    end
+    -- 직렬화 불가 값이 남아 있어도 실행 자체를 죽이지 않는다 — 기록만 건너뛴다.
+    local encodeOk, encoded = pcall(function()
+        return _HttpService:JSONEncode(sanitized)
+    end)
+    if not encodeOk then
+        log_warning(self:WorkerTag() .. " last valid program encode failed - not recorded")
+        return
+    end
     for _, user in ipairs(_UserService.UserEntities.Values) do
         if isvalid(user) then
             ---@type AccountProfileService
             local profile = user:GetComponent("script.AccountProfileService")
             if profile ~= nil then
-                profile:RecordWorkerProgram(self.WorkerIndex, _HttpService:JSONEncode(commands))
+                profile:RecordWorkerProgram(self.WorkerIndex, encoded)
             end
             return
         end

@@ -32,6 +32,14 @@
 
 ## 기록
 
+### 2026-08-18 — T-07 후속: 빈 body 제어 블록이 JSONEncode 를 죽였다 (D-17)
+
+오너 실플레이 5단계에서 발견 (`main` 직접 수정, docs/16 §36). MSW `JSONEncode` 는 **빈 Lua 테이블을 `LEA-3001 UnknownType` 으로 거부**한다 — 빈 body 반복/IF 는 검증기를 통과하므로 실행은 되는데 직렬화(T-05 `RecordLastValidProgram` · 라이브러리 저장)가 죽고, 기록 실패가 **튜토리얼 5단계 재검증 무한 실패**로 번졌다.
+
+- 수정: 직렬화 직전 빈 body 제어 블록 제거(`WorkerController.SanitizeProgramForJson` · `BlockProgramController.GetSanitizedProgram`) + `pcall` 흡수(기록만 건너뛰고 실행은 유지). 실측: 재현 프로그램에서 LEA-3001 0건, 기록값에 정상 반복만 보존, 5단계가 재시도 루프로 자동 회복(`step=6 verify5=true`).
+- UX: 튜토리얼 1~6단계에 `초기화` 허용(실수 복구 — 이번 사고의 직접 원인) + 잠금 dim 0.35→0.25.
+- **교훈: "검증기가 통과시키는 값의 전 범위"가 직렬화 경로에도 들어온다.** 검증 규칙과 직렬화 제약이 다르면 그 틈이 런타임 크래시다.
+
 ### 2026-08-18 — T-07: 튜토리얼 8단계 · 자동 실행이 판정 신호를 오염시켰다
 
 브랜치 `feat/t07-tutorial`. 검수 `docs/16` §35 — E1~E12·E14 전 항목 `maker_execute_script` 핸들러 직접 호출로 자동 판정 통과.

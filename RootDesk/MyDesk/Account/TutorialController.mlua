@@ -95,7 +95,7 @@ method table GetStepConfig(integer step)
         return {
             guide = "일꾼을 오른쪽으로 한 칸 보내 봐요.\n[동 E]를 누르고 [실행]을 누르세요.",
             fail = "일꾼이 움직이지 못했어요. [동 E] 하나만 넣고 다시 실행해 보세요.",
-            allowed = { moveE = true, run = true },
+            allowed = { moveE = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 314, arrowDir = "left",
@@ -104,7 +104,7 @@ method table GetStepConfig(integer step)
         return {
             guide = "일꾼 발밑에 돌 광맥이 있어요.\n[채굴 M]을 넣고 [실행]으로 캐 봅시다.",
             fail = "여기엔 캘 광물이 없어요. 잠시 기다렸다가 다시 [채굴 M]을 실행해 보세요.",
-            allowed = { mine = true, run = true },
+            allowed = { mine = true, run = true, clear = true },
             reset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
@@ -113,7 +113,7 @@ method table GetStepConfig(integer step)
         return {
             guide = "손에 든 돌을 수레에 실어요.\n[적재 L]을 넣고 [실행]을 누르세요.",
             fail = "수레에 싣지 못했어요. [적재 L]을 넣고 다시 실행해 보세요.",
-            allowed = { load = true, run = true },
+            allowed = { load = true, run = true, clear = true },
             reset = { cellX = 1, cellY = 0, hand = "stone", handCount = 1, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
@@ -124,7 +124,7 @@ method table GetStepConfig(integer step)
         return {
             guide = "창고는 시작 자리예요.\n[서 W]로 돌아가 [하역 U]로 내리면 창고에 쌓입니다.",
             fail = "창고에 내리지 못했어요. [서 W]로 창고(시작 칸)에 돌아간 뒤 [하역 U]를 실행하세요.",
-            allowed = { moveW = true, unload = true, run = true },
+            allowed = { moveW = true, unload = true, run = true, clear = true },
             reset = nil,
             failReset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 1 },
             clearProgram = true,
@@ -134,7 +134,7 @@ method table GetStepConfig(integer step)
         return {
             guide = "같은 일을 여러 번 시키려면 [반복 추가]로 묶어요.\n횟수 5로 두고 안에 [동E]·[채굴M]·[적재L]·[서W]·[하역U]를 넣고 [끝 ]]으로 닫은 뒤 실행하세요.",
             fail = "반복이 끝났지만 목표를 채우지 못했어요. 안내대로 반복 안에 블록을 넣고 다시 실행해 보세요.",
-            allowed = { repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true },
+            allowed = { repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
@@ -143,7 +143,7 @@ method table GetStepConfig(integer step)
         return {
             guide = "광물이 있을 때만 캐게 하려면 [IF 추가]를 써요.\n반복 안에 IF(광물 있음)[채굴 M·적재 L]을 넣어 실행해 보세요.",
             fail = "조건 블록이 비어 있거나 실행이 끝나지 않았어요. IF 안에 블록을 넣고 다시 실행해 보세요.",
-            allowed = { ifAdd = true, condition = true, repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true },
+            allowed = { ifAdd = true, condition = true, repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
@@ -183,7 +183,9 @@ end
 
 @ExecSpace("ClientOnly")
 method void ApplyStepLocks(table allowed)
-    -- 결정 2·5: 활성 버튼 외 전부 잠금(Enable=false) + dim(알파 0.35).
+    -- 결정 2·5: 활성 버튼 외 전부 잠금(Enable=false) + dim. 알파는 명세 초안
+    -- 0.35 에서 0.25 로 낮췄다 — 오너 실플레이에서 잠긴 버튼과 활성 버튼의
+    -- 구분이 약해 잘못 누르려는 시도가 나왔다 (2026-08-18 피드백).
     -- 원래 색은 최초 1회 캐시하고 해제 시 캐시값으로 원복한다 (F7-E §5.1).
     for key, button in pairs(self:GetButtonRegistry()) do
         if button ~= nil and isvalid(button) then
@@ -198,7 +200,7 @@ method void ApplyStepLocks(table allowed)
                         self._T.dimCache[key] = sprite.Color
                     end
                     local original = self._T.dimCache[key]
-                    sprite.Color = Color(original.r, original.g, original.b, 0.35)
+                    sprite.Color = Color(original.r, original.g, original.b, 0.25)
                 end
             end
         end

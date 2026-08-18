@@ -233,6 +233,39 @@ method table GetProgram()
 end
 
 @ExecSpace("ClientOnly")
+method table GetSanitizedProgram()
+    -- 직렬화용 사본 — 빈 body 제어 블록을 걷어낸다. MSW `JSONEncode` 는 빈
+    -- Lua 테이블을 `LEA-3001 UnknownType` 으로 거부하므로 (2026-08-18 실측),
+    -- 라이브러리 저장 등 JSON 으로 나가는 경로는 이 사본을 쓴다.
+    return self:SanitizeListForJson(self._T.program)
+end
+
+@ExecSpace("ClientOnly")
+method table SanitizeListForJson(table list)
+    -- GetSanitizedProgram 의 재귀 본체. 빈 반복/IF 는 실행 의미가 없어 제거해도
+    -- 동작이 같다 (서버 WorkerController.SanitizeProgramForJson 과 같은 규칙).
+    local sanitized = {}
+    for i = 1, #list do
+        local command = list[i]
+        if type(command) == "table" then
+            if command.type == "repeat" or command.type == "if" then
+                local body = {}
+                if type(command.body) == "table" then body = self:SanitizeListForJson(command.body) end
+                if #body > 0 then
+                    local copy = { type = command.type, body = body }
+                    if command.type == "repeat" then copy.count = command.count
+                    else copy.cond = command.cond end
+                    table.insert(sanitized, copy)
+                end
+            else
+                table.insert(sanitized, command)
+            end
+        end
+    end
+    return sanitized
+end
+
+@ExecSpace("ClientOnly")
 method void LoadProgramFromLibrary(table program)
     -- T-05: 라이브러리 → 편집기. 호출자가 사본을 넘긴다 (원본 공유 금지, F7-C §4).
     if type(program) ~= "table" then return end
