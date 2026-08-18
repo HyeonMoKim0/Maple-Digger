@@ -1,0 +1,334 @@
+-- T-05 (F7-C) CLIENT PROGRAM LIBRARY
+-- 계정 공용 설계도 보관함 화면. 원장은 서버(AccountProfileService)가 소유하고,
+-- 이 컨트롤러는 @Sync ProgramLibraryJson 을 그대로 그리며 요청만 보낸다.
+-- 블록 렌더·대상 일꾼·편집기 연동은 _BlockProgramController 를 단일 기준으로 쓴다.
+@Logic
+script ProgramLibraryController extends Logic
+
+property Entity libraryPanel = "631cb6db-5789-43c2-88dc-17ad124e90e9"
+property TextGUIRendererComponent slotText = "a085b4d5-dac9-4e9e-aa37-82077950b705"
+property TextGUIRendererComponent detailText = "70f5a65b-90f3-4ca7-9882-8192624f5422"
+property TextGUIRendererComponent libraryFeedbackText = "5c59c85d-2277-4093-855f-2b57e3fa65e6"
+property TextGUIRendererInputComponent nameInput = "f78fae07-3892-4bfd-8b06-23c3668d0a28"
+property ButtonComponent btnSave = "91609715-8624-4f8a-a97b-f484f0f23157"
+property ButtonComponent btnLoad = "e4e165ba-a675-4e80-9e0e-b815ef8c4069"
+property ButtonComponent btnRunProgram = "30a6ff79-658e-45e3-9830-b6d980ec40c4"
+property ButtonComponent btnRename = "09d81638-0a80-44a8-9bd9-0946dfef1b0b"
+property ButtonComponent btnDuplicate = "f9e9d36e-cacd-4165-a6db-638ea8b9abf1"
+property ButtonComponent btnDelete = "c97eaecc-e677-42f0-b5f4-eb6169bd067e"
+property ButtonComponent btnBuySlot = "960eb124-467b-44ae-b755-100737c473a9"
+property ButtonComponent btnLibraryClose = "9f04745d-66fb-4243-9ecc-d14083a0d8ed"
+-- BlockProgramUI 쪽 진입 버튼 (별도 .ui — 두 write 가 각자 주입한다).
+property ButtonComponent btnLibraryOpen = "c3e33700-722c-4760-b75f-47a25662ec6f"
+-- 행 템플릿. ScrollLayout 자식이며 시작 시 숨기고 Clone 으로만 쓴다 (runtime-patterns §4).
+property Entity rowTemplate = "e005333f-5c58-4e1f-8fe9-53c045383646"
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    self._T.handlers = {}
+    self._T.rows = {}
+    self._T.rowHandlers = {}
+    self._T.selectedProgramId = ""
+    self._T.lastState = ""
+    self._T.msgAtOpen = ""
+    if self.libraryPanel ~= nil then self.libraryPanel.Enable = false end
+    if self.rowTemplate ~= nil then self.rowTemplate:SetEnable(false) end
+    self:Connect("open", self.btnLibraryOpen, self.OnOpenClicked)
+    self:Connect("close", self.btnLibraryClose, self.OnCloseClicked)
+    self:Connect("save", self.btnSave, self.OnSaveClicked)
+    self:Connect("load", self.btnLoad, self.OnLoadClicked)
+    self:Connect("run", self.btnRunProgram, self.OnRunClicked)
+    self:Connect("rename", self.btnRename, self.OnRenameClicked)
+    self:Connect("duplicate", self.btnDuplicate, self.OnDuplicateClicked)
+    self:Connect("delete", self.btnDelete, self.OnDeleteClicked)
+    self:Connect("buySlot", self.btnBuySlot, self.OnBuySlotClicked)
+    log("[ProgramLibrary] ready")
+end
+
+@ExecSpace("ClientOnly")
+method void Connect(string key, ButtonComponent button, any callback)
+    if button == nil then return end
+    self._T.handlers[key] = button.Entity:ConnectEvent(ButtonClickEvent, callback)
+end
+
+@ExecSpace("ClientOnly")
+method AccountProfileService GetProfile()
+    local player = _UserService.LocalPlayer
+    if player == nil then return nil end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    return profile
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- 열려 있는 동안만 갱신 감시. 라이브러리 JSON·메시지가 변경 감지 키다
+    -- (docs/23 §5-3 — 키에서 빠지면 무증상 미갱신).
+    if self.libraryPanel == nil or not self.libraryPanel.Enable then return end
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local state = profile.ProgramLibraryJson .. ":" .. profile.LastTransactionMessage
+        .. ":" .. tostring(_BlockProgramController:GetSelectedWorkerIndex())
+        .. ":" .. self._T.selectedProgramId
+    if state == self._T.lastState then return end
+    self._T.lastState = state
+    self:RefreshUI(profile)
+end
+
+@ExecSpace("ClientOnly")
+method table GetLibrary(AccountProfileService profile)
+    local decoded = nil
+    if profile.ProgramLibraryJson ~= "" then
+        local ok, parsed = pcall(function() return _HttpService:JSONDecode(profile.ProgramLibraryJson) end)
+        if ok then decoded = parsed end
+    end
+    if type(decoded) ~= "table" then decoded = {} end
+    if type(decoded.slots) ~= "number" then decoded.slots = 3 end
+    if type(decoded.programs) ~= "table" then decoded.programs = {} end
+    return decoded
+end
+
+@ExecSpace("ClientOnly")
+method any FindProgram(table library, string programId)
+    for i = 1, #library.programs do
+        if library.programs[i].programId == programId then return library.programs[i] end
+    end
+    return nil
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshUI(AccountProfileService profile)
+    local library = self:GetLibrary(profile)
+
+    if self.slotText ~= nil then
+        local slotLine = "슬롯 " .. tostring(#library.programs) .. " / " .. tostring(library.slots)
+        if library.slots < 20 then
+            slotLine = slotLine .. "   (다음 슬롯: 골드 " .. tostring(self:GetNextSlotCost(library.slots)) .. ")"
+        else
+            slotLine = slotLine .. "   (최대)"
+        end
+        self.slotText.Text = slotLine
+    end
+
+    self:RebuildRows(library)
+    self:RefreshDetail(library)
+    self:RefreshFeedback(profile)
+end
+
+@ExecSpace("ClientOnly")
+method integer GetNextSlotCost(integer currentSlots)
+    -- 표시 전용 미러 — 판정은 서버가 한다. 기본 50골드 · ×1.2 (C174).
+    local cost = 50
+    for i = 4, currentSlots do cost = math.floor(cost * 1.2 + 0.5) end
+    return cost
+end
+
+@ExecSpace("ClientOnly")
+method void ClearRows()
+    for i = 1, #self._T.rows do
+        local row = self._T.rows[i]
+        if row ~= nil and isvalid(row) then
+            if self._T.rowHandlers[i] ~= nil then
+                row:DisconnectEvent(ButtonClickEvent, self._T.rowHandlers[i])
+            end
+            row:Destroy()
+        end
+    end
+    self._T.rows = {}
+    self._T.rowHandlers = {}
+end
+
+@ExecSpace("ClientOnly")
+method void RebuildRows(table library)
+    -- 최대 20행이라 전체 재구성으로 충분하다 (ScrollLayout, GridView 불필요).
+    self:ClearRows()
+    if self.rowTemplate == nil then return end
+    for i = 1, #library.programs do
+        local record = library.programs[i]
+        local row = self.rowTemplate:Clone("Row_" .. record.programId)
+        row:SetEnable(true)
+        local label = row.TextGUIRendererComponent
+        if label ~= nil then
+            local marker = "  "
+            if record.programId == self._T.selectedProgramId then marker = "▶ " end
+            label.Text = marker .. record.name
+        end
+        local programId = record.programId
+        local clickHandler = row:ConnectEvent(ButtonClickEvent, function()
+            self._T.selectedProgramId = programId
+            local profile = self:GetProfile()
+            if profile ~= nil then self:RefreshUI(profile) end
+        end)
+        table.insert(self._T.rows, row)
+        table.insert(self._T.rowHandlers, clickHandler)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshDetail(table library)
+    if self.detailText == nil then return end
+    local record = self:FindProgram(library, self._T.selectedProgramId)
+    if record == nil then
+        self.detailText.Text = "왼쪽 목록에서 프로그램을 선택하세요.\n\n'현재 프로그램 저장'은 편집기에 조립된 블록을 새 슬롯에 저장합니다."
+        return
+    end
+    local blocks = "(비어 있음)"
+    if type(record.blockTree) == "table" and #record.blockTree > 0 then
+        blocks = _BlockProgramController:RenderList(record.blockTree, 0)
+    end
+    self.detailText.Text = record.name
+        .. "\n검증: " .. tostring(record.lastValidation)
+        .. "   수정: " .. tostring(record.updatedAt)
+        .. "\n대상 일꾼: " .. tostring(_BlockProgramController:GetSelectedWorkerIndex())
+        .. " (편집기 탭에서 변경)\n────────────\n" .. blocks
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshFeedback(AccountProfileService profile)
+    -- 모달 연 시점 이후의 서버 결과만 그린다 (docs/23 §5-2 R5, T-03 과 같은 방식).
+    if self.libraryFeedbackText == nil then return end
+    if profile.LastTransactionMessage ~= "" and profile.LastTransactionMessage ~= self._T.msgAtOpen then
+        self.libraryFeedbackText.Text = profile.LastTransactionMessage
+        return
+    end
+    self.libraryFeedbackText.Text = "저장·불러오기·실행은 위 목록에서 프로그램을 선택한 뒤 사용하세요."
+end
+
+@ExecSpace("ClientOnly")
+method void OnOpenClicked()
+    if self.libraryPanel == nil then return end
+    local profile = self:GetProfile()
+    if profile ~= nil then self._T.msgAtOpen = profile.LastTransactionMessage end
+    self._T.lastState = ""
+    self.libraryPanel.Enable = true
+    if profile ~= nil then self:RefreshUI(profile) end
+    log("[ProgramLibrary] opened")
+end
+
+@ExecSpace("ClientOnly")
+method void OnCloseClicked()
+    if self.libraryPanel ~= nil then self.libraryPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OnSaveClicked()
+    -- 편집기의 현재 프로그램을 새 슬롯으로 저장. 선검증은 UX용 — 최종 판정은 서버.
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local program = _BlockProgramController:GetProgram()
+    if program == nil or #program == 0 then
+        self.libraryFeedbackText.Text = "편집기에 저장할 블록이 없습니다. 먼저 블록을 조립하세요."
+        return
+    end
+    local name = ""
+    if self.nameInput ~= nil then name = self.nameInput.Text end
+    log("[ProgramLibrary] save request name='" .. tostring(name) .. "'")
+    profile:RequestSaveProgram(name, _HttpService:JSONEncode(program))
+end
+
+@ExecSpace("ClientOnly")
+method any GetSelectedRecord()
+    local profile = self:GetProfile()
+    if profile == nil then return nil end
+    local library = self:GetLibrary(profile)
+    return self:FindProgram(library, self._T.selectedProgramId)
+end
+
+@ExecSpace("ClientOnly")
+method void OnLoadClicked()
+    -- 라이브러리 → 편집기. 사본을 넘겨 원본 레코드와 참조를 공유하지 않는다.
+    local record = self:GetSelectedRecord()
+    if record == nil then
+        self.libraryFeedbackText.Text = "먼저 목록에서 프로그램을 선택하세요."
+        return
+    end
+    local copy = _HttpService:JSONDecode(_HttpService:JSONEncode(record.blockTree))
+    _BlockProgramController:LoadProgramFromLibrary(copy)
+    self.libraryFeedbackText.Text = "'" .. record.name .. "'을(를) 편집기로 불러왔습니다."
+    log("[ProgramLibrary] loaded to editor id=" .. record.programId)
+end
+
+@ExecSpace("ClientOnly")
+method void OnRunClicked()
+    -- F7-C §2: 실행 요청 — 서버 WorkerController 가 재검증 후 기존 실행을 교체한다.
+    local record = self:GetSelectedRecord()
+    if record == nil then
+        self.libraryFeedbackText.Text = "먼저 목록에서 프로그램을 선택하세요."
+        return
+    end
+    local worker = _BlockProgramController:GetSelectedWorker()
+    if worker == nil then
+        self.libraryFeedbackText.Text = "선택한 일꾼을 찾을 수 없습니다."
+        return
+    end
+    local copy = _HttpService:JSONDecode(_HttpService:JSONEncode(record.blockTree))
+    worker:RunProgram(copy)
+    self.libraryFeedbackText.Text = "'" .. record.name .. "'을(를) 일꾼 " .. tostring(_BlockProgramController:GetSelectedWorkerIndex()) .. "에게 실행 요청했습니다."
+    log("[ProgramLibrary] run request id=" .. record.programId .. " worker=" .. tostring(_BlockProgramController:GetSelectedWorkerIndex()))
+end
+
+@ExecSpace("ClientOnly")
+method void OnRenameClicked()
+    local record = self:GetSelectedRecord()
+    if record == nil then
+        self.libraryFeedbackText.Text = "먼저 목록에서 프로그램을 선택하세요."
+        return
+    end
+    local name = ""
+    if self.nameInput ~= nil then name = self.nameInput.Text end
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestRenameProgram(record.programId, name) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnDuplicateClicked()
+    local record = self:GetSelectedRecord()
+    if record == nil then
+        self.libraryFeedbackText.Text = "먼저 목록에서 프로그램을 선택하세요."
+        return
+    end
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestDuplicateProgram(record.programId) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnDeleteClicked()
+    local record = self:GetSelectedRecord()
+    if record == nil then
+        self.libraryFeedbackText.Text = "먼저 목록에서 프로그램을 선택하세요."
+        return
+    end
+    local profile = self:GetProfile()
+    if profile ~= nil then
+        self._T.selectedProgramId = ""
+        profile:RequestDeleteProgram(record.programId)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void OnBuySlotClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestPurchaseLibrarySlot() end
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    self:ClearRows()
+    self:Disconnect("open", self.btnLibraryOpen)
+    self:Disconnect("close", self.btnLibraryClose)
+    self:Disconnect("save", self.btnSave)
+    self:Disconnect("load", self.btnLoad)
+    self:Disconnect("run", self.btnRunProgram)
+    self:Disconnect("rename", self.btnRename)
+    self:Disconnect("duplicate", self.btnDuplicate)
+    self:Disconnect("delete", self.btnDelete)
+    self:Disconnect("buySlot", self.btnBuySlot)
+end
+
+@ExecSpace("ClientOnly")
+method void Disconnect(string key, ButtonComponent button)
+    if button == nil or self._T.handlers[key] == nil then return end
+    button.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers[key])
+end
+
+end

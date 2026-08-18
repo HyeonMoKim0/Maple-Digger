@@ -219,6 +219,26 @@ method integer GetSelectedWorkerIndex()
 end
 
 @ExecSpace("ClientOnly")
+method table GetProgram()
+    -- T-05: 라이브러리 저장이 읽는 현재 편집기 프로그램 (F7-C §1).
+    return self._T.program
+end
+
+@ExecSpace("ClientOnly")
+method void LoadProgramFromLibrary(table program)
+    -- T-05: 라이브러리 → 편집기. 호출자가 사본을 넘긴다 (원본 공유 금지, F7-C §4).
+    if type(program) ~= "table" then return end
+    self._T.program = program
+    self._T.openBodies = { self._T.program }
+    self._T.openControls = {}
+    self._T.repeatPreset = 2
+    self:RefreshRepeatButton(2)
+    self:RefreshDisplay()
+    self:SetFeedback("라이브러리에서 프로그램을 불러왔습니다. 실행 전 내용을 확인하세요.")
+    log("[BlockProgram] program loaded from library blocks=" .. tostring(self:CountBlocks(self._T.program)))
+end
+
+@ExecSpace("ClientOnly")
 method void OnWorker1Clicked()
     -- Selects the first worker as the Run and Stop target.
     self:SelectWorker(1)
