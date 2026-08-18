@@ -14,20 +14,35 @@
 
 | 시스템 | 구현 | 위치 | 주의사항 |
 |---|---|---|---|
-| 광맥·틱·창고 기반 | 맵 `@Component` | `RootDesk/MyDesk/Mine/VeinTickSimulator.mlua` | 0.4초 회복 후 등록 일꾼 실행. 세 광산의 JSON 레이아웃·Depot·일꾼 시작점 1~5·일반/특별 marker를 검증하며, 특별 광맥은 후보에서 생성하고 동시 활성 상한을 적용한다. |
-| 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램. **`ProgramState` 는 3값** — `Idle`(미실행·자연 완료) / `Running` / `Stopped`(사용자 정지·맵 전환·서버 거절), C217. `ResetExecution` 은 항상 `Idle` 로 착지하고 정지 계열 호출자만 덮어쓴다 |
+| 광맥·틱·창고 기반 | 맵 `@Component` | `RootDesk/MyDesk/Mine/VeinTickSimulator.mlua` | 0.4초 회복 후 등록 일꾼 실행. 세 광산의 JSON 레이아웃·Depot·일꾼 시작점 1~5·일반/특별 marker를 검증하며, 특별 광맥은 후보에서 생성하고 동시 활성 상한을 적용한다. **맵 강화 4효과 캐시(T-02)**: `_T.bonus*` 4종은 맵 진입·강화 성공 시 `PushMineBonusesToSimulator` 만 갱신한다(매 틱 프로필 조회 금지). 희귀 판정은 **만분율**(`RareDropChanceBasisPoint` 100/500, 테스트 훅 `RareDropTestBasisPoint` — 옛 `*Percent` 3종은 제거됨), 회복 배율은 희귀 철 + 맵 recovery **가산 합성**, 특별 스폰은 `max(60, floor(750/(1+b)))` |
+| 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램. **`ProgramState` 는 3값** — `Idle`(미실행·자연 완료) / `Running` / `Stopped`(사용자 정지·맵 전환·서버 거절), C217. `ResetExecution` 은 항상 `Idle` 로 착지하고 정지 계열 호출자만 덮어쓴다. **손은 `PendingOre` + `PendingOreCount`(0~2) 쌍**(T-02 yield) — 채굴은 손이 완전히 빌 때만, `load` 는 수레 여유만큼 부분 적재하고 잔량을 손에 남긴다. `ConfigureFromProfile` 은 5인자(count 추가) |
 | 일꾼 공용 모델 | `.model` | `RootDesk/MyDesk/Models/Farm/Worker.model` | modelId `worker`, RectTile용 `KinematicbodyComponent`와 `WorkerController` 포함. `Drone.model`은 레거시 원본 |
 | 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. 신규 프로필은 Worker01만 실행 대상이며, 구매한 Worker02~05도 독립 선택한다. **워커 칩은 선택/일반/잠금 3종 스프라이트를 런타임 스왑**하며(T-13 A1), 상태 결정은 `GetWorkerChipState` 하나가 소유한다 — 라벨·스프라이트·로그가 같은 값을 본다. |
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭. **칩 배경은 파일에 `tab-worker-normal` 이 박혀 있고 런타임이 덮어쓴다** — 파일값만 보고 판단하면 안 된다 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. Worker01 손·수레 + 세션 Depot 합계를 표시하며, 계정 광물·판매 설정·광산 선택은 별도 F7-B UI가 담당한다. |
 | 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀 4패널. **광산 버튼 3개에 상태 뱃지(입장/해금/잠금)를 런타임 스왑**한다(T-13 C). 파일 초기값은 3개 다 `locked` 이고 런타임이 덮어쓴다. **`RefreshUI` 의 `state` 키에 `LastMineId` 가 반드시 있어야** 광산 전환이 뱃지에 반영된다 |
-| 계정·경제·광산 해금 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | 새 v7 프로필은 Gold 0에서 시작한다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·소유 일꾼별 손/수레 복구, 일꾼별 수레 20→50 강화, 정상 백업 복구/포기, 만료형 동시 접속 잠금을 구현했다. 희귀 광물은 하역 즉시 컬렉션 등록·10단계 패시브·11회째부터 수동/자동 판매까지 구현했으며, 맵 강화는 미구현이다(계약은 `docs/13` §5). 프로필에 `mineLevels` 필드가 아직 없어 맵 강화 착수 시 v8 마이그레이션이 필요하다. |
+| 계정·경제·광산 해금·맵 강화 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | **프로필 스키마는 v8**(T-02, 2026-08-18) — v7 대비 `mineLevels`·worker `pendingOreCount`·`crystal`·`tutorial`·`settings` 5필드가 늘었고 v7 은 로드 시 기본값으로 변환된다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·손/수레 복구, 수레 20→50 강화, 백업 복구/포기, 동시 접속 잠금. **맵 강화(레벨 0~10·4효과·비용)는 구현 완료** — `RequestMineUpgrade`/`PurchaseMineUpgrade`/`GetMineBonus` + 표기용 @Sync(`MineLevel*` 3종 + `MineUpgradeInfoJson`). 거절 문구는 `DescribeShortfall`(부족분 숫자)·`SetReject*`(단일 정의) 체계다. `tutorial`(T-07)·`settings`(T-12-B) 필드는 저장만 되고 소비자는 아직 없다 |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. **1~5 시작 셀은 T-11(2026-08-14)로 광맥별 분산됐다** — 각 시작 셀의 **한 걸음 오른쪽이 광맥**이라 복사한 프로그램이 바로 캔다(배치표 `docs/18` T-11). 초보 광산 W2·W4는 광맥 셀 위에 서고 W5는 창고를 공유한다. marker·서버 맵 전환과 **F5 시각 표현(Phase 1~4)** 은 구현됐고, **사운드(Phase 5)와 F5-1~F5-6 최종 판정(Phase 6)은 미구현** |
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다** |
 | F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. **RUID 7종은 2026-08-16 오너 청취로 확정**(docs/21 §3 승인 완료 — 2종 유지·5종 교체). ⚠️ `depot_unload` 만 1.52s 로 쿨다운 0.4s 를 넘어 겹칠 수 있다. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 2026-08-16 오너 청취로 `3512470b…`(`sound-604`, 87.3s) 확정** — 잠정 오케스트라 `8e366297…` 은 미채택(docs/21 §3-B). **`BgmVolume = 0.5` 는 아직 미판정(L5)** 이고 곡이 짧아져 루프 이음새가 약 1.6배 자주 온다. **`PlayBGM` 이 루프임을 실측으로 확정**(곡 끝 +58.5초까지 `IsPlayBGM()`=true). 볼륨은 아직 **코드 상수** — 슬라이더·프로필 저장·`MineSoundController` 볼륨 조회 배선은 전부 **T-12-B** 몫이다(F10 §0.1 산출물 1·3·5) |
 
 ## 기록
+
+### 2026-08-18 — T-02: 맵 강화 서버 + v8 마이그레이션 · 병목이 풀렸다
+
+브랜치 `feat/t02-mine-upgrade`(웜업 `5fc9947` · 본 구현 `2538181`). B8~B18 전량 서버 경로로 판정 — 검수 `docs/16` §30.
+
+- **v8 은 5필드를 한 번에 넣었다** (`docs/12` §2.1 경고대로): `mineLevels` · `pendingOreCount` · `crystal` · `tutorial` · `settings`. 나눠 넣었으면 v9 마이그레이션이 한 번 더 필요했다. v7 변환은 전부 "없으면 기본값" — 변환 실패 경로를 만들지 않았다.
+- **웜업(거절 문구 정리)을 먼저 커밋한 것이 옳았다.** 본 구현의 거절 5종(`docs/23` §6.1)이 웜업이 만든 `DescribeShortfall`/`SetReject*` 체계를 그대로 썼다 — 부족분 숫자 문구가 공짜로 얻어졌다.
+- **효과 4종은 자료형이 달라 계산 방식을 각각 고정했다** (`docs/13` §5.3): recovery 는 연속값 가산 합성(1.60 실측), rareChance 는 만분율 승격(130bp/650bp 실측), specialSpawn 은 floor+하한(681/60 실측), yield 는 만분율 롤(60회 표본 16회≈27%).
+- **B12·B14 는 캐시 주입으로 판정했다** — `ApplyMineBonuses` 에 깊은 광산 L10 값(별도 검증)을 직접 넣고 공식 메서드를 호출. 미해금 맵 실입장 없이 서버 실행 경로를 쳤다.
+- **테스트 훅이 켜지면 보너스를 적용하지 않는다** — `RareDropTestBasisPoint` 는 최종값이다. 결정적 테스트(=10000 강제 등)에 보너스가 곱해지면 기대값이 흔들린다.
+- **표기 계약은 JSON 한 장 + 레벨 3종**으로 내렸다. §5.6.5 의 7종을 스칼라 @Sync 로 다 펴면 속성이 15개쯤 늘어난다 — `MineUpgradeInfoJson` 하나에 현재/다음 보너스·bp·틱·합성 배율·비용을 담고, 선택 화면용 `Lv.n` 만 `MineLevelBeginner/Deep/Gem` 스칼라로 뒀다. **T-03 은 이 JSON 을 파싱만 하면 되고 재계산은 금지다**(§5.6.3).
+- **D-6 을 곁들여 닫았다** — HUD 의 `Lv.0 / 10`·`크리스탈 0` placeholder 상수를 실값으로 교체. `RefreshUI` 변경 감지 키에 레벨·크리스탈·`PendingOreCount` 를 함께 넣었다(빠지면 무증상 미갱신 — D-11 계열).
+- **검증 중 Maker 가 한 번 죽었다.** baseline 원복 스크립트 제출 직후 연결 단절 — 재실행 후 `[T02-BASELINE-CHECK]` 로 원복 커밋을 확인하기 전까지 미확정으로 취급했다(도구 사망과 검사 통과는 로그에서 구분되지 않는다).
+
+**남은 것**: 오너 PR 병합(C213). 병합되면 **T-03·T-05·T-06·T-07·T-12-B 5개 티켓의 선행이 풀린다.** `tutorial`/`settings` 필드의 소비자(T-07/T-12-B)는 아직 없다.
 
 ### 2026-08-16 — T-13 A2: `Stopped` 신설 + 상태 램프 · 볼륨 판정이 배선을 앞당겼다
 
