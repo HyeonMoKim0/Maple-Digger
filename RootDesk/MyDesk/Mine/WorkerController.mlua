@@ -29,9 +29,13 @@ property string ProgramState = "Idle"
 @Sync
 property string PendingOre = ""
 
--- F7-B §5.3: 손 기본 1칸. `yield` 추가 지급이 발동한 경우에 한해 같은 광물 최대 2개.
+-- 2026-08-18 오너 결정 (docs/13 §5.3 개정): 손 용량 기본 3. 같은 광물이면 손이
+-- 찰 때까지 이어 캘 수 있다 (M,M,M → L 로 한 번에 적재). 희귀는 종류가 달라
+-- 이어 캐기가 성립하지 않으므로 사실상 1개 단독 운반이 유지된다.
 @Sync
 property integer PendingOreCount = 0
+
+property integer HandCapacity = 3
 
 @Sync
 property integer CartCount = 0
@@ -254,8 +258,8 @@ method void ConfigureFromProfile(integer workerIndex, integer cartCapacity, tabl
     self.PendingOreCount = 0
     if pendingOre == "stone" or pendingOre == "iron" or pendingOre == "gold" or pendingOre == "rare_stone" or pendingOre == "rare_iron" or pendingOre == "rare_gold" then
         self.PendingOre = pendingOre
-        -- v7 기록(개수 없음)은 1개로 복구한다 (F7-B §5.7 · B18은 2개 복구).
-        self.PendingOreCount = math.max(1, math.min(2, math.floor(pendingOreCount or 1)))
+        -- v7 기록(개수 없음)은 1개로 복구한다. 상한은 손 용량 3 (2026-08-18 개정).
+        self.PendingOreCount = math.max(1, math.min(self.HandCapacity, math.floor(pendingOreCount or 1)))
     end
     if self._T.mineState ~= nil then
         local configuredStart = self._T.mineState:GetWorkerStart(workerIndex)
@@ -529,9 +533,11 @@ end
 @ExecSpace("ServerOnly")
 method void DoMine()
     -- Atomically checks the hand before consuming a reserve stage.
-    if self.PendingOre ~= "" then
+    -- 손이 가득 찼을 때만 실패한다 — 같은 광물이면 용량(3)까지 이어 캔다
+    -- (2026-08-18 오너 결정). 종류 불일치는 TryMine 이 소모 없이 거른다.
+    if self.PendingOre ~= "" and self.PendingOreCount >= self.HandCapacity then
         self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand full ore=" .. self.PendingOre)
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand full ore=" .. self.PendingOre .. " x" .. tostring(self.PendingOreCount))
         return
     end
     if not self._T.mineState:IsVein(self._T.cellX, self._T.cellY) then
@@ -545,15 +551,21 @@ method void DoMine()
         return
     end
 
-    local oreType = self._T.mineState:TryMine(self._T.cellX, self._T.cellY)
+    local oreType = self._T.mineState:TryMine(self._T.cellX, self._T.cellY, self.PendingOre)
     if oreType == "" then
         self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no minable ore at (" .. self._T.cellX .. "," .. self._T.cellY .. ") hand=" .. self.PendingOre)
         return
     end
-    self.PendingOre = oreType
-    -- F7-B §5.3 yield: 희귀 승격이 아닐 때만 확률로 같은 광물 1개 추가 (최대 2개).
-    self.PendingOreCount = self._T.mineState:RollYieldCount(oreType)
+    -- F7-B §5.3 yield: 희귀 승격이 아닐 때만 확률로 같은 광물 1개 추가.
+    -- 이어 캐기 합산은 손 용량(3)에서 자른다 (2026-08-18 오너 결정).
+    local gained = self._T.mineState:RollYieldCount(oreType)
+    if self.PendingOre == "" then
+        self.PendingOre = oreType
+        self.PendingOreCount = math.min(self.HandCapacity, gained)
+    else
+        self.PendingOreCount = math.min(self.HandCapacity, self.PendingOreCount + gained)
+    end
     self:EmitVisualEvent("mine_success", self._T.cellX, self._T.cellY)
     local stage = self._T.mineState:GetReserveStage(self._T.cellX, self._T.cellY)
     log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " x" .. tostring(self.PendingOreCount) .. " -> hand at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
@@ -635,7 +647,7 @@ method void ResetToTutorialState(integer cellX, integer cellY, string hand, inte
     self.PendingOreCount = 0
     if hand == "stone" and handCount > 0 then
         self.PendingOre = "stone"
-        self.PendingOreCount = math.min(2, handCount)
+        self.PendingOreCount = math.min(self.HandCapacity, handCount)
     end
     self.Cart = { stone = 0 }
     self.CartCount = 0

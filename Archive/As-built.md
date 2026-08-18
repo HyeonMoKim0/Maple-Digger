@@ -16,7 +16,7 @@
 | 시스템 | 구현 | 위치 | 주의사항 |
 |---|---|---|---|
 | 광맥·틱·창고 기반 | 맵 `@Component` | `RootDesk/MyDesk/Mine/VeinTickSimulator.mlua` | 0.4초 회복 후 등록 일꾼 실행. 세 광산의 JSON 레이아웃·Depot·일꾼 시작점 1~5·일반/특별 marker를 검증하며, 특별 광맥은 후보에서 생성하고 동시 활성 상한을 적용한다. **맵 강화 4효과 캐시(T-02)**: `_T.bonus*` 4종은 맵 진입·강화 성공 시 `PushMineBonusesToSimulator` 만 갱신한다(매 틱 프로필 조회 금지). 희귀 판정은 **만분율**(`RareDropChanceBasisPoint` 100/500, 테스트 훅 `RareDropTestBasisPoint` — 옛 `*Percent` 3종은 제거됨), 회복 배율은 희귀 철 + 맵 recovery **가산 합성**, 특별 스폰은 `max(60, floor(750/(1+b)))` |
-| 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램. **`ProgramState` 는 3값** — `Idle`(미실행·자연 완료) / `Running` / `Stopped`(사용자 정지·맵 전환·서버 거절), C217. `ResetExecution` 은 항상 `Idle` 로 착지하고 정지 계열 호출자만 덮어쓴다. **손은 `PendingOre` + `PendingOreCount`(0~2) 쌍**(T-02 yield) — 채굴은 손이 완전히 빌 때만, `load` 는 수레 여유만큼 부분 적재하고 잔량을 손에 남긴다. `ConfigureFromProfile` 은 5인자(count 추가) |
+| 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램. **`ProgramState` 는 3값** — `Idle`(미실행·자연 완료) / `Running` / `Stopped`(사용자 정지·맵 전환·서버 거절), C217. `ResetExecution` 은 항상 `Idle` 로 착지하고 정지 계열 호출자만 덮어쓴다. **손은 `PendingOre` + `PendingOreCount`(0~3) 쌍** — 용량 3, 같은 광물 이어 캐기(2026-08-18 오너 결정, docs/13 §5.3 개정). 다른 종류 광맥은 소모 없이 실패, `load` 는 수레 여유만큼 부분 적재하고 잔량을 손에 남긴다. `ConfigureFromProfile` 은 5인자(count 추가) |
 | 일꾼 공용 모델 | `.model` | `RootDesk/MyDesk/Models/Farm/Worker.model` | modelId `worker`, RectTile용 `KinematicbodyComponent`와 `WorkerController` 포함. `Drone.model`은 레거시 원본 |
 | 프로그램 라이브러리 (T-05) | 서버 원장 + 클라 `@Logic` + `.ui` | `AccountProfileService.mlua`(원장) · `RootDesk/MyDesk/Farm/ProgramLibraryController.mlua` · `ui/ProgramLibraryUI.ui` | 계정 공용 3→20슬롯(기본가 50골드 ×1.2 — **제안값, 오너 확정 대상** `LibrarySlotBaseCost`). 저장/개명/복제/삭제/슬롯구매, 최종 검증은 `WorkerController.ValidateProgram` 단일 소유. **재접속 시 각 일꾼 마지막 유효 프로그램 자동 실행**(`ScheduleAutoRun` — 로그인 경로 전용, 맵 전환은 수동 대기). worker record 에 `lastValidProgramJson` 추가(스키마 v8 유지 — 누락 시 기본값이라 무버전 확장). GroupOrder: 라이브러리 5, Popup 6·Toast 7·Recovery 8 로 +1 밀림 (밀집 0..8) |
 | 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. 신규 프로필은 Worker01만 실행 대상이며, 구매한 Worker02~05도 독립 선택한다. **워커 칩은 선택/일반/잠금 3종 스프라이트를 런타임 스왑**하며(T-13 A1), 상태 결정은 `GetWorkerChipState` 하나가 소유한다 — 라벨·스프라이트·로그가 같은 값을 본다. |
@@ -31,6 +31,14 @@
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-18 — 손 용량 3 + 이어 캐기 (오너 결정, docs/13 §5.3 개정)
+
+손 1칸(+yield 2)이 너무 짜다는 오너 판단으로 **손 용량 기본 3 + 같은 광물 이어 캐기**로 개정했다. `M,M,M → L` 로 왕복당 최대 3개 — **docs/22 밸런스 수치(왕복당 1개 전제)는 낡았다.**
+
+- 구현: `WorkerController.HandCapacity=3` · `TryMine(cellX, cellY, currentHandOre)` — 손과 다른 종류 광맥은 **소모 없이** 실패, 이어 캐기 중 희귀 승격은 그 1회에 한해 승격을 접고 기본 광물 지급(유실 방지 — 희귀는 종류 불일치라 이어 캐기 자체가 안 되므로 1개 단독 운반 유지). yield 합산 상한 3.
+- 저장: `pendingOreCount` 클램프 2→3 (스키마 v8 유지 — 필드 무버전 확장).
+- 실측: M×4+L 프로그램에서 손 1→2→3 누적 · 4번째 M `hand full x3` 거절 · L 1회에 `cart=3/20`.
 
 ### 2026-08-18 — T-07 후속 2: 8단계 골드 보정 (오너 결정)
 

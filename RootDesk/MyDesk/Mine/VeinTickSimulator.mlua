@@ -709,17 +709,27 @@ method integer RollYieldCount(string deliveredOre)
 end
 
 @ExecSpace("ServerOnly")
-method string TryMine(integer cellX, integer cellY)
+method string TryMine(integer cellX, integer cellY, string currentHandOre)
     -- Atomically consumes one reserve stage and returns its ore type on success.
+    -- 이어 캐기 (2026-08-18 오너 결정 — 손 용량 3, docs/13 §5.3 개정): 손에
+    -- 광물이 있으면 같은 종류의 광맥에서만 캘 수 있다 — 다르면 **소모 없이**
+    -- 실패한다. 이어 캐는 중 희귀 승격이 나오면 손과 섞을 수 없으므로 이번
+    -- 1회는 승격을 접고 기본 광물을 준다 (유실 방지 우선 — 희귀 EV 감소는
+    -- 스택 채굴 중 ~1% 롤에 한정). 손의 희귀 광물은 종류가 달라 이어 캐기
+    -- 자체가 성립하지 않는다 (1개 단독 운반 유지).
     local key = self:CellKey(cellX, cellY)
     local vein = self.VeinState[key]
     if vein == nil or vein.stage <= 0 then return "" end
+    if currentHandOre ~= nil and currentHandOre ~= "" and vein.ore ~= currentHandOre then return "" end
 
     vein.stage = vein.stage - 1
     vein.recoverElapsed = 0
     local deliveredOre = vein.ore
     if self:RollRareDrop(vein.isSpecial == true) then
         deliveredOre = "rare_" .. vein.ore
+    end
+    if currentHandOre ~= nil and currentHandOre ~= "" and deliveredOre ~= currentHandOre then
+        deliveredOre = vein.ore
     end
     log("[VeinTick] mined cell " .. key .. " ore=" .. deliveredOre .. " stage=" .. vein.stage)
     return deliveredOre

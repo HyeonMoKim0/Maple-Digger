@@ -327,7 +327,7 @@ method table CreateWorkerRecord(integer workerIndex)
         cart = { stone = 0, iron = 0, gold = 0, rare_stone = 0, rare_iron = 0, rare_gold = 0 },
         cartCount = 0,
         pendingOre = "",
-        -- v8 (F7-B §5.3): yield 추가 지급이 발동하면 손에 같은 광물 최대 2개.
+        -- 손 개수. 용량 3 — 같은 광물 이어 캐기 (2026-08-18 오너 결정, docs/13 §5.3 개정).
         pendingOreCount = 0,
         lastValidProgramId = "default-worker-" .. suffix,
         -- T-05 (F7-C): 서버 검증을 통과한 마지막 프로그램 내용. 재접속 자동 실행의
@@ -706,10 +706,11 @@ method table NormalizeWorkers(any workers, integer rareStoneLevel)
             record.pendingOre = source.pendingOre
         end
         -- v7 기록은 개수 필드가 없다: 손에 광물이 있으면 1, 없으면 0 (F7-A §2.1 ②).
+        -- 상한 3 = 손 용량 (2026-08-18 오너 결정, WorkerController.HandCapacity 와 동기).
         if record.pendingOre == "" then
             record.pendingOreCount = 0
         elseif type(source.pendingOreCount) == "number" then
-            record.pendingOreCount = math.max(1, math.min(2, math.floor(source.pendingOreCount)))
+            record.pendingOreCount = math.max(1, math.min(3, math.floor(source.pendingOreCount)))
         else
             record.pendingOreCount = 1
         end
@@ -907,7 +908,8 @@ method void CaptureCurrentWorkerState()
             record.pendingOreCount = 0
             if self:IsKnownOre(worker.PendingOre) then
                 record.pendingOre = worker.PendingOre
-                record.pendingOreCount = math.max(1, math.min(2, math.floor(worker.PendingOreCount or 1)))
+                -- 상한 3 = 손 용량 (2026-08-18 오너 결정).
+                record.pendingOreCount = math.max(1, math.min(3, math.floor(worker.PendingOreCount or 1)))
             end
         end
     end
