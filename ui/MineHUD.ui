@@ -2296,20 +2296,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 78,
-                "y": -236
+                "x": 82,
+                "y": -232
               },
               "OffsetMin": {
-                "x": 46,
-                "y": -268
+                "x": 42,
+                "y": -272
               },
               "Pivot": {
                 "x": 0,
                 "y": 1
               },
               "RectSize": {
-                "x": 32,
-                "y": 32
+                "x": 40,
+                "y": 40
               },
               "UIMode": 1,
               "UIScale": {
@@ -2319,13 +2319,8 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 46,
-                "y": -236
-              },
-              "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 42,
+                "y": -232
               },
               "Position": {
                 "x": 0,
@@ -2343,7 +2338,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
