@@ -8,14 +8,20 @@ const { MapBuilder } = require(path.join(ROOT,
   '.claude', 'skills', 'msw-general', 'scripts', 'map', 'msw_map_builder.cjs'));
 
 const TICK_SEC = 0.4, MAX_STAGE = 3, CART_CAP = 20;
-const STARTS = [{x:0,y:0},{x:0,y:1},{x:-1,y:0},{x:-1,y:1},{x:-2,y:0}];
+// 손 용량 3 + 같은 광물 이어 캐기 (2026-08-18 오너 결정, docs/13 §5.3 개정).
+const HAND_CAP = 3;
 const kx = (x,y) => `${x},${y}`;
 
 function loadMap(name) {
   const b = MapBuilder.read('map/' + name + '.map');
   const c = b.component(name, 'script.VeinTickSimulator');
   const defs = JSON.parse(c.VeinDefinitionsJson || '[]');
-  return { name, mineId: c.MineId, depot: {x:0,y:0},
+  // 시작 셀은 상수가 아니라 맵의 WorkerStartsJson 에서 읽는다 (docs/22 §6-7 해소 —
+  // T-11 분산 배치 이후 상수가 낡아 있었다).
+  const starts = JSON.parse(c.WorkerStartsJson || '[]')
+    .sort((a,b) => a.workerIndex - b.workerIndex)
+    .map(s => ({x:s.cellX, y:s.cellY}));
+  return { name, mineId: c.MineId, depot: {x:0,y:0}, starts,
            veins: defs.map(d => ({x:d.cellX, y:d.cellY, ore:d.oreType, rt:d.recoverTicks})) };
 }
 
@@ -24,7 +30,7 @@ function run(layout, assign, ticks) {
   const veins = new Map();
   for (const v of layout.veins) veins.set(kx(v.x,v.y), {stage:MAX_STAGE, elapsed:0, rt:v.rt, ore:v.ore});
   const out = {};
-  const ws = assign.map((order, i) => ({pos:{...STARTS[i]}, hand:null, cart:0, cartOre:null,
+  const ws = assign.map((order, i) => ({pos:{...layout.starts[i]}, handCount:0, cart:0, cartOre:null,
                                         order, vi:0, sub:0, mode:'toVein'}));
   for (let t = 1; t <= ticks; t++) {
     for (const v of veins.values()) {                       // AdvanceTick
@@ -46,12 +52,14 @@ function run(layout, assign, ticks) {
       if (w.mode === 'work') {
         if (w.cart >= CART_CAP) { w.mode = 'toDepot'; continue; }
         const v = veins.get(kx(tg.x, tg.y));
-        if (w.hand !== null) {
-          w.cart += 1; w.cartOre = w.hand; w.hand = null; w.sub += 1;
+        // 이어 캐기: 손이 찰 때까지 M 반복, 그다음 L 1회가 손 전량을 옮긴다.
+        if (w.handCount >= HAND_CAP || (w.handCount > 0 && v.stage < 1)) {
+          const moved = Math.min(CART_CAP - w.cart, w.handCount);
+          w.cart += moved; w.cartOre = v.ore; w.handCount -= moved; w.sub += moved;
           if (w.sub >= MAX_STAGE) { w.sub = 0; w.vi = (w.vi+1) % w.order.length; w.mode = 'toVein'; }
           continue;
         }
-        if (v.stage >= 1) { v.stage -= 1; w.hand = v.ore; continue; }
+        if (v.stage >= 1) { v.stage -= 1; w.handCount += 1; continue; }
         w.sub = 0; w.vi = (w.vi+1) % w.order.length; w.mode = 'toVein';
       }
     }
@@ -72,7 +80,7 @@ function assignOre(layout, n, ore) {     // 특정 광물만 담당
 }
 function assignSingle(layout, n) {       // P1: 각 일꾼이 가장 가까운 광맥 1개만 왕복
   return Array.from({length:n}, (_,i) => {
-    const s = STARTS[i];
+    const s = layout.starts[i];
     const best = layout.veins.slice().sort((a,b) =>
       (Math.abs(a.x-s.x)+Math.abs(a.y-s.y)) - (Math.abs(b.x-s.x)+Math.abs(b.y-s.y)))[0];
     return [best];
