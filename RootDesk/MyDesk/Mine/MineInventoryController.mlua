@@ -299,6 +299,10 @@ method void OnInventoryClicked()
     -- Toggles the inventory popup and forces a fresh value render when opened.
     if self.inventoryPanel == nil then return end
     self.inventoryPanel.Enable = not self.inventoryPanel.Enable
+    -- T-12-B: 열 때는 설정 모달을 닫는다 — 중앙 모달은 한 번에 하나 (F5 §6.1).
+    if self.inventoryPanel.Enable and _SettingsPanelController ~= nil then
+        _SettingsPanelController:ClosePanel()
+    end
     self:RefreshUI(true)
 end
 

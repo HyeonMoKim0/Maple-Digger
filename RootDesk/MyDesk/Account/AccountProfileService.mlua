@@ -53,6 +53,15 @@ property boolean TutorialCompleted = false
 @Sync
 property boolean TutorialSkipped = false
 
+-- T-12-B (F10 §4.2): 사운드 설정 표시·적용용 미러. 원장은 profile.settings 이고
+-- NormalizeSettings 가 tuned 여부까지 반영한 **유효값**을 내린다 — 클라이언트
+-- (SettingsPanelController)는 이 두 값을 그대로 SoundSettingsController 에 적용한다.
+@Sync
+property number SettingsBgmVolume = 0.8
+
+@Sync
+property number SettingsSfxVolume = 0.7
+
 @Sync
 property integer MineTokens = 0
 
@@ -252,7 +261,13 @@ method table CreateDefaultProfile()
             midRewards = { s4 = false, s6 = false },
         },
         -- v8 (F10 §4.2 · C214): 표현 설정 그룹. 원장이 아니므로 별도 최상위 그룹.
-        settings = { bgmVolume = 0.5, sfxVolume = 1.0 },
+        -- 기본값은 C220 오너 청취 확정값(BGM 0.8 · 효과음 0.7)이다 — §2.1 설계
+        -- 초안(0.5/1.0)은 L5 판정으로 대체됐다. `tuned` 는 T-12-B 무버전 확장
+        -- 필드: 사용자가 슬라이더로 저장한 적이 있는지. false 면 저장된 볼륨을
+        -- 무시하고 설계 기본값을 쓴다 — T-02 v8 마이그레이션이 슬라이더 없던
+        -- 시절 0.5/1.0 을 프로필에 박아 뒀기 때문에, 이 구분 없이는 오너 청취로
+        -- 확정한 균형(C220)이 기존 계정에서 영영 무시된다.
+        settings = { bgmVolume = 0.8, sfxVolume = 0.7, tuned = false },
         deepMineUnlocked = false,
         gemMineUnlocked = false,
         stoneTokenProgress = 0,
@@ -618,9 +633,15 @@ end
 
 @ExecSpace("ServerOnly")
 method table NormalizeSettings(any source)
-    -- F10 §4.2 (C214): 서버는 0.0~1.0 클램프만 하고 거절하지 않는다.
-    local settings = { bgmVolume = 0.5, sfxVolume = 1.0 }
+    -- T-12-B (F10 §4.2): `tuned` 는 사용자가 슬라이더로 저장한 적이 있는지의
+    -- 무버전 확장 필드다 (누락 시 기본값 — pendingOreCount 와 같은 방식, v8 유지).
+    -- tuned=false 인 프로필의 저장 볼륨은 슬라이더 도입 전 마이그레이션 잔재
+    -- (0.5/1.0)라서 **버리고 C220 설계 기본값을 쓴다.** tuned=true 여야만 저장값을
+    -- 존중한다. 범위 밖 값은 거절이 아니라 클램프다 (F10 §4.3).
+    local settings = { bgmVolume = 0.8, sfxVolume = 0.7, tuned = false }
     if type(source) ~= "table" then return settings end
+    settings.tuned = source.tuned == true
+    if not settings.tuned then return settings end
     if type(source.bgmVolume) == "number" then settings.bgmVolume = math.max(0.0, math.min(1.0, source.bgmVolume)) end
     if type(source.sfxVolume) == "number" then settings.sfxVolume = math.max(0.0, math.min(1.0, source.sfxVolume)) end
     return settings
@@ -792,6 +813,10 @@ method void SyncRuntimeState()
     self.TutorialStep = self._T.profile.tutorial.step or 0
     self.TutorialCompleted = self._T.profile.tutorial.completed == true
     self.TutorialSkipped = self._T.profile.tutorial.skipped == true
+    -- T-12-B: NormalizeSettings 가 tuned 미저장 프로필을 설계 기본값으로 정규화해
+    -- 두므로 여기서는 원장값을 그대로 미러만 한다.
+    self.SettingsBgmVolume = self._T.profile.settings.bgmVolume
+    self.SettingsSfxVolume = self._T.profile.settings.sfxVolume
     self.MineTokens = self._T.profile.mineTokens
     self.Stone = self._T.profile.stone
     self.Iron = self._T.profile.iron
@@ -1965,6 +1990,28 @@ end
 method boolean RequestMineUpgrade()
     -- Routes the local player's mine-upgrade request to the progression authority.
     return _ProgressionService:RequestMineUpgrade(self.Entity)
+end
+
+@ExecSpace("Server")
+method void RequestUpdateSoundSettings(number bgmVolume, number sfxVolume)
+    -- T-12-B (F10 §4.2): 슬라이더를 놓았을 때 클라이언트가 1회 호출한다.
+    -- 볼륨은 원장이 아니므로 거절 경로가 없다 — 범위 밖 값은 클램프다 (F10 §4.3).
+    -- LastTransactionMessage 도 건드리지 않는다 (docs/23 에 이 화면의 행이 없다).
+    if not self:CanWriteProfile() then return end
+    local settings = self._T.profile.settings
+    settings.bgmVolume = math.max(0.0, math.min(1.0, bgmVolume))
+    settings.sfxVolume = math.max(0.0, math.min(1.0, sfxVolume))
+    -- tuned: 이 순간부터 저장 볼륨이 사용자 선택이다 — NormalizeSettings 가
+    -- 다음 로드에서 설계 기본값 대신 이 값을 존중한다.
+    settings.tuned = true
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        -- F10 §4.2: 저장 실패는 플레이를 멈추지 않는다. 세션 볼륨(클라이언트
+        -- SoundSettingsController)은 이미 적용돼 있으므로 경고만 남긴다.
+        log_warning("[AccountProfile] sound settings save failed - session volumes kept")
+    end
+    log("[AccountProfile] sound settings bgm=" .. tostring(settings.bgmVolume) .. " sfx=" .. tostring(settings.sfxVolume))
 end
 
 @ExecSpace("ServerOnly")

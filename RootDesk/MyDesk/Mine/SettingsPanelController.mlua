@@ -1,0 +1,194 @@
+-- T-12-B (F10 §5) SETTINGS PANEL — 슬라이더 표시·입력 전달만 담당한다.
+-- 볼륨 값의 소유자는 SoundSettingsController(단일 출처, F10 §1.2)이고, 영구
+-- 저장의 소유자는 서버 AccountProfileService(profile.settings, §4.2)다. 이
+-- 컨트롤러는 값을 자체 보관하지 않는다 (F10 §1 "SettingsUI 금지" 준수).
+--
+-- 저장 시점: 슬라이더를 놓았을 때 1회 (§4.2 — 드래그 중 매 프레임 저장 금지).
+-- SliderComponent 에는 "놓았다" 이벤트가 없으므로 마지막 변경 후
+-- SaveDebounceSeconds 동안 조용하면 1회 저장으로 간주한다.
+--
+-- 프로필 → 세션 적용: AccountProfileService 의 @Sync 미러 2종을 감시하고,
+-- 값이 바뀌면(=로그인 복원·다른 세션 저장) SoundSettingsController 에 적용한다.
+-- 단, 최근 SyncApplyGraceSeconds 안에 사용자가 슬라이더를 만졌으면 적용하지
+-- 않는다 — 저장 왕복 echo 가 드래그 중인 손을 되돌리는 것을 막는다 (@Sync 파생
+-- 적용을 새로 만들 때는 "누가 또 이 상태를 움직이는가"부터 — T-07 교훈).
+@Logic
+script SettingsPanelController extends Logic
+
+property Entity settingsPanel = "426b082b-296e-4dd0-89e6-23fd3cda9b8b"
+property ButtonComponent btnSettingsOpen = "c738f043-fffc-45c9-a99d-4e6020e9a108"
+property ButtonComponent btnSettingsClose = "44abb9a7-99a6-4ef0-8e40-5afdcc8825af"
+property SliderComponent bgmSlider = "94e1d03c-8491-492c-b5f8-9c7e34beefdd"
+property SliderComponent sfxSlider = "8dd1f991-1118-4873-87d2-c0798d69f993"
+property TextGUIRendererComponent bgmValueText = "e0620dbb-85e6-4848-9d91-cb9451e42fbc"
+property TextGUIRendererComponent sfxValueText = "217b609e-8f67-4319-abe9-749e2b805985"
+
+-- 마지막 슬라이더 변경 후 이 시간 동안 조용하면 "놓았다"로 보고 1회 저장한다.
+property number SaveDebounceSeconds = 0.6
+-- 이 시간 안에 사용자가 슬라이더를 만졌으면 @Sync 미러 적용을 건너뛴다.
+property number SyncApplyGraceSeconds = 1.5
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- 패널을 닫힌 상태로 초기화하고 버튼·슬라이더 이벤트를 연결한다.
+    self._T.handlers = {}
+    self._T.applying = false
+    self._T.pendingSave = false
+    self._T.elapsed = 0
+    self._T.lastEditElapsed = -100
+    self._T.lastSyncedKey = ""
+    if self.settingsPanel ~= nil then self.settingsPanel.Enable = false end
+    self:ConnectButton("open", self.btnSettingsOpen, self.OnOpenClicked)
+    self:ConnectButton("close", self.btnSettingsClose, self.OnCloseClicked)
+    if self.bgmSlider ~= nil then
+        self._T.handlers["bgm"] = self.bgmSlider.Entity:ConnectEvent(SliderValueChangedEvent, self.OnBgmSliderChanged)
+    end
+    if self.sfxSlider ~= nil then
+        self._T.handlers["sfx"] = self.sfxSlider.Entity:ConnectEvent(SliderValueChangedEvent, self.OnSfxSliderChanged)
+    end
+    self:RefreshControls()
+    log("[SettingsPanel] F10 settings panel ready")
+end
+
+@ExecSpace("ClientOnly")
+method void ConnectButton(string key, ButtonComponent button, any callback)
+    -- MineSelectController 와 같은 연결 패턴 — 핸들러는 OnEndPlay 에서 해제한다.
+    if button == nil then return end
+    self._T.handlers[key] = button.Entity:ConnectEvent(ButtonClickEvent, callback)
+end
+
+@ExecSpace("ClientOnly")
+method AccountProfileService GetProfile()
+    -- 로컬 플레이어의 프로필 컴포넌트. 로그인 직후에는 nil 일 수 있다.
+    local player = _UserService.LocalPlayer
+    if player == nil then return nil end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    return profile
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- (1) 프로필 @Sync 미러 감시 → 세션 볼륨 적용, (2) 저장 디바운스.
+    self._T.elapsed = self._T.elapsed + delta
+
+    local profile = self:GetProfile()
+    if profile ~= nil then
+        local key = tostring(profile.SettingsBgmVolume) .. ":" .. tostring(profile.SettingsSfxVolume)
+        if key ~= self._T.lastSyncedKey then
+            self._T.lastSyncedKey = key
+            if self._T.elapsed - self._T.lastEditElapsed > self.SyncApplyGraceSeconds and _SoundSettingsController ~= nil then
+                -- 로그인 복원 경로 (SET8). 저장 echo 는 같은 값이라 적용해도 무해하다.
+                _SoundSettingsController:SetBgmVolume(profile.SettingsBgmVolume)
+                _SoundSettingsController:SetSfxVolume(profile.SettingsSfxVolume)
+                self:RefreshControls()
+                log("[SettingsPanel] profile volumes applied bgm=" .. tostring(profile.SettingsBgmVolume) .. " sfx=" .. tostring(profile.SettingsSfxVolume))
+            end
+        end
+    end
+
+    if self._T.pendingSave and self._T.elapsed - self._T.lastEditElapsed >= self.SaveDebounceSeconds then
+        self._T.pendingSave = false
+        if profile ~= nil and _SoundSettingsController ~= nil then
+            -- 슬라이더를 놓았다 — 1회 저장 (F10 §4.2). 서버는 클램프만 한다.
+            profile:RequestUpdateSoundSettings(_SoundSettingsController:GetBgmVolume(), _SoundSettingsController:GetSfxVolume())
+            log("[SettingsPanel] save requested")
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void OnBgmSliderChanged(SliderValueChangedEvent event)
+    -- 드래그 중 실시간 반영. 저장은 디바운스가 담당한다.
+    if self._T.applying then return end
+    if _SoundSettingsController ~= nil then _SoundSettingsController:SetBgmVolume(event.Value) end
+    self:UpdateValueTexts()
+    self._T.lastEditElapsed = self._T.elapsed
+    self._T.pendingSave = true
+end
+
+@ExecSpace("ClientOnly")
+method void OnSfxSliderChanged(SliderValueChangedEvent event)
+    -- 드래그 중 실시간 반영. 저장은 디바운스가 담당한다.
+    if self._T.applying then return end
+    if _SoundSettingsController ~= nil then _SoundSettingsController:SetSfxVolume(event.Value) end
+    self:UpdateValueTexts()
+    self._T.lastEditElapsed = self._T.elapsed
+    self._T.pendingSave = true
+end
+
+@ExecSpace("ClientOnly")
+method void OnOpenClicked()
+    -- 설정 모달을 연다. 중앙 모달은 한 번에 하나 — 광산 선택 계열 패널과
+    -- 인벤토리 팝업을 모두 닫는다 (F5 §6.1 · F10 §5.2).
+    if self.settingsPanel == nil then return end
+    if self.settingsPanel.Enable then
+        self.settingsPanel.Enable = false
+        return
+    end
+    if _MineSelectController ~= nil then _MineSelectController:CloseAllPanelsForTutorial() end
+    if _MineInventoryController ~= nil then _MineInventoryController:OnCloseClicked() end
+    self:RefreshControls()
+    self.settingsPanel.Enable = true
+    log("[SettingsPanel] opened")
+end
+
+@ExecSpace("ClientOnly")
+method void OnCloseClicked()
+    -- 설정 모달을 닫는다. 볼륨은 이미 적용·저장 경로에 있으므로 상태 변경 없음.
+    if self.settingsPanel ~= nil then self.settingsPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void ClosePanel()
+    -- 다른 중앙 모달이 열릴 때 호출된다 (모달 배타 — F5 §6.1).
+    if self.settingsPanel ~= nil then self.settingsPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshControls()
+    -- 슬라이더 위치·% 텍스트를 세션 볼륨(단일 출처)과 일치시킨다.
+    -- applying 가드: Value 대입이 SliderValueChangedEvent 를 되쏘아도 저장
+    -- 디바운스를 건드리지 않게 한다.
+    if _SoundSettingsController == nil then return end
+    self._T.applying = true
+    if self.bgmSlider ~= nil then self.bgmSlider.Value = _SoundSettingsController:GetBgmVolume() end
+    if self.sfxSlider ~= nil then self.sfxSlider.Value = _SoundSettingsController:GetSfxVolume() end
+    self._T.applying = false
+    self:UpdateValueTexts()
+end
+
+@ExecSpace("ClientOnly")
+method void UpdateValueTexts()
+    -- 내부값 0.0~1.0 → 표시 0~100% 변환은 표시 직전에만 한다 (F10 §2.1).
+    if _SoundSettingsController == nil then return end
+    if self.bgmValueText ~= nil then self.bgmValueText.Text = self:FormatPercent(_SoundSettingsController:GetBgmVolume()) end
+    if self.sfxValueText ~= nil then self.sfxValueText.Text = self:FormatPercent(_SoundSettingsController:GetSfxVolume()) end
+end
+
+@ExecSpace("ClientOnly")
+method string FormatPercent(number value)
+    -- 0.0~1.0 → "0%"~"100%" (반올림).
+    return tostring(math.floor(value * 100 + 0.5)) .. "%"
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 연결한 이벤트 핸들러를 전부 해제한다.
+    if self._T.handlers == nil then return end
+    if self.btnSettingsOpen ~= nil and self._T.handlers["open"] ~= nil then
+        self.btnSettingsOpen.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers["open"])
+    end
+    if self.btnSettingsClose ~= nil and self._T.handlers["close"] ~= nil then
+        self.btnSettingsClose.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers["close"])
+    end
+    if self.bgmSlider ~= nil and self._T.handlers["bgm"] ~= nil then
+        self.bgmSlider.Entity:DisconnectEvent(SliderValueChangedEvent, self._T.handlers["bgm"])
+    end
+    if self.sfxSlider ~= nil and self._T.handlers["sfx"] ~= nil then
+        self.sfxSlider.Entity:DisconnectEvent(SliderValueChangedEvent, self._T.handlers["sfx"])
+    end
+    self._T.handlers = {}
+end
+
+end
