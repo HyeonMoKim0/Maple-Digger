@@ -155,8 +155,24 @@ method void AdvanceTick()
 
     local effectiveSpawnTicks = self:GetEffectiveSpecialSpawnTicks()
     if effectiveSpawnTicks > 0 and self.CurrentTick % effectiveSpawnTicks == 0 then
-        self:TrySpawnSpecialVeins()
+        -- T-07 완화 C3 (F7-E §8): 튜토리얼 1회차 동안 특별 광맥 스폰 억제.
+        if self._T.tutorialSuppression == true then
+            log("[VeinTick] special spawn suppressed reason=tutorial")
+        else
+            self:TrySpawnSpecialVeins()
+        end
     end
+end
+
+@ExecSpace("ServerOnly")
+method void SetTutorialSuppression(boolean suppressed)
+    -- T-07 완화 C3 캐시. AccountProfileService:PushMineBonusesToSimulator 가
+    -- 맵 진입·강화 성공·튜토리얼 상태 전환 시 갱신한다 (매 틱 프로필 조회 금지).
+    local nextValue = suppressed == true
+    if self._T.tutorialSuppression ~= nextValue then
+        log("[VeinTick] tutorial suppression=" .. tostring(nextValue) .. " mineId=" .. self.MineId)
+    end
+    self._T.tutorialSuppression = nextValue
 end
 
 @ExecSpace("ServerOnly")
@@ -662,6 +678,11 @@ end
 method boolean RollRareDrop(boolean isSpecial)
     -- F7-B §5.3: 만분율 판정. 테스트 훅이 켜져 있으면 그 값을 최종값으로 쓴다
     -- (보너스 미적용 — 결정적 테스트를 위해).
+    -- T-07 완화 C3 (F7-E §8): 튜토리얼 1회차 동안 희귀 승격 억제. 단 테스트 훅이
+    -- 켜져 있으면 훅이 최종값이다 — 결정적 테스트가 튜토리얼 상태에 흔들리면 안 된다.
+    if self._T.tutorialSuppression == true and self.RareDropTestBasisPoint < 0 then
+        return false
+    end
     local bp = self.RareDropChanceBasisPoint
     if isSpecial then bp = self.SpecialRareDropChanceBasisPoint end
     if self.RareDropTestBasisPoint >= 0 then

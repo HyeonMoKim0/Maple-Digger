@@ -28,8 +28,22 @@
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다**. **채굴 먼지 오프셋은 광맥 종류별 오너 실측값**(2026-08-18): 셀 기준 일반 `(-0.75, -0.25)` · 특별 `(-0.75, -0.5)` — 먼지는 광맥의 왼쪽(일꾼 쪽) 아래. 옛 `HitFxOffsetY`+`ShardPivotOffset*` 2계층을 대체했고, pivot 쏠림이 실측값에 포함돼 있어 **자산·`ShardScale` 변경 시 오너와 재측정**. 특별 판정은 marker `MarkerKind=="special"`. ⚠ 오너가 준 원본 수치는 Position 직접 입력한 **맵 절대좌표**였다 — 좌표를 받으면 어느 필드를 읽었는지부터 확인 (docs/16 §32.6) |
 | F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. **RUID 7종은 2026-08-16 오너 청취로 확정**(docs/21 §3 승인 완료 — 2종 유지·5종 교체). ⚠️ `depot_unload` 만 1.52s 로 쿨다운 0.4s 를 넘어 겹칠 수 있다. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 2026-08-16 오너 청취로 `3512470b…`(`sound-604`, 87.3s) 확정** — 잠정 오케스트라 `8e366297…` 은 미채택(docs/21 §3-B). **`BgmVolume = 0.5` 는 아직 미판정(L5)** 이고 곡이 짧아져 루프 이음새가 약 1.6배 자주 온다. **`PlayBGM` 이 루프임을 실측으로 확정**(곡 끝 +58.5초까지 `IsPlayBGM()`=true). 볼륨은 아직 **코드 상수** — 슬라이더·프로필 저장·`MineSoundController` 볼륨 조회 배선은 전부 **T-12-B** 몫이다(F10 §0.1 산출물 1·3·5) |
+| 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-18 — T-07: 튜토리얼 8단계 · 자동 실행이 판정 신호를 오염시켰다
+
+브랜치 `feat/t07-tutorial`. 검수 `docs/16` §35 — E1~E12·E14 전 항목 `maker_execute_script` 핸들러 직접 호출로 자동 판정 통과.
+
+- **판정은 기존 `@Sync` 변화로 한다** (F7-E §3 — VisualEvent* 채널 미사용). 클라이언트가 신호를 보고 통과를 요청하면 서버 `TutorialService.VerifyStep` 이 같은 서버 소유 값으로 재검증한다. 5·6단계는 `RunProgram` 이 기록한 `lastValidProgramJson` 에서 `"repeat"`/`"if"` 존재를 확인 — 클라이언트가 위조할 수 없는 경로다.
+- **첫 Play 가 결함 2개를 잡았다.** ① T-05 재접속 자동 실행이 일꾼을 움직여 **1단계가 저절로 통과**됐다 → `AutoRunSavedPrograms` 에 완화 활성 게이트. ② 로그인 복구(0.5s)·자동 실행(1.5s)과 클라 활성화가 경합 → `WarmupSeconds=3.0` 유예 후 활성화. **@Sync 파생 판정을 새로 만들 때는 "누가 또 이 상태를 움직이는가"부터 전수 확인할 것** — settle 가드(Phase 5)와 같은 계열의 함정이다.
+- **다시 보기에서 completed/skipped 를 되돌리지 않는다.** 되돌리면 완화(C1~C3)가 재적용된다 — 완화 활성 판정이 그 플래그 둘로만 갈리기 때문. 8단계 재완주가 completed 를 다시 세운다. 보상 재지급 방지는 rewardsClaimed/midRewards 플래그 (E11 실측 goldDelta=0).
+- **테스트 프로필 오염이 가짜 실패를 만들었다.** 7단계 판매가 "보호 수량 포함" 거절 — C2(해금 보호 면제)는 정상이었고, 개발 프로필에 남아 있던 **사용자 설정 보호 10·자동판매**가 원인 (신규 계정은 0). 판정 전에 `GetEffectiveProtection` 을 직접 찍어 완화 축과 설정 축을 갈랐다.
+- **화살표는 자산 없이 `polygon()`** 으로 그렸다 (PolygonGUIRendererComponent, msw-asset-verify 대상 아님). 좌/우는 UIScale.x 반전.
+- 잠금·dim 실측: 잠금 버튼 `Enable=false`+α0.35, 허용 버튼 α1.0. dim 원색은 최초 1회 캐시 후 원복 (F7-E §5.1).
+
+**남은 것**: 오너 실플레이 **K8** (E13 화면 최종 판정 포함) · PR 병합 · 병합 후 **공개 전환** (docs/16 §32 계획의 마지막 조각).
 
 ### 2026-08-18 — T-03: 맵 강화 UI 패널 · 신규 배치는 lint 가 먼저 판정했다
 

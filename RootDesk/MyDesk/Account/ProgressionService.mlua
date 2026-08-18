@@ -69,7 +69,13 @@ method boolean RequestWorkerPurchase(Entity player)
     if profile == nil or not profile.IsLoaded then return false end
     local nextWorkerIndex = #profile:GetProfile().workers + 1
     if nextWorkerIndex == 2 then
-        return profile:PurchaseNextWorker(self.Worker2GoldCost, 0, 0, 0)
+        -- T-07 완화 C1 (F7-E §8 · U1): 튜토리얼 1회차 동안 일꾼 2 가격 인하.
+        -- 완료·스킵 즉시 정상가로 복귀한다 — 판정은 서버 플래그뿐이다.
+        local goldCost = self.Worker2GoldCost
+        if _TutorialService:IsRelaxationActive(profile:GetProfile()) then
+            goldCost = _TutorialService.TutorialWorker2GoldCost
+        end
+        return profile:PurchaseNextWorker(goldCost, 0, 0, 0)
     end
     if nextWorkerIndex == 3 then
         if not profile.DeepMineUnlocked then

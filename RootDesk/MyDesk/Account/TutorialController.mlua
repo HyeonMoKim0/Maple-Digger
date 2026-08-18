@@ -1,0 +1,535 @@
+-- TUTORIAL CLIENT CONTROLLER (T-07 / F7-E)
+-- 단계 안내·툴팁 배치·버튼 잠금/dim·판정 신호 감시·통과 요청만 담당한다.
+-- 원장 변경·진행도 확정·보상은 전부 서버(TutorialService) 몫이다 (F7-E §10.1).
+-- 판정 신호는 기존 @Sync 값의 변화다 (F7-E §3 — VisualEvent* 채널을 쓰지 않는다).
+@Logic
+script TutorialController extends Logic
+
+-- ui/TutorialUI.ui 바인딩 (UUID 는 UIBuilder injectBindings 가 주입한다).
+property Entity tutorialRoot = "2cad9ae1-57fb-44d4-95b1-4f76de3675b4"
+property Entity dimmer = "ff1ec330-2963-4e4a-83ae-1ccde331debe"
+property Entity tooltip = "e8afc725-2b46-4045-b8ba-b50440342198"
+property TextGUIRendererComponent guideText = "514225e8-de47-4262-96e3-99dafc33028a"
+property TextGUIRendererComponent progressText = "c4c129f3-991a-4d59-abbf-25a3993add3d"
+property Entity arrow = "2483e6d5-7360-466b-b060-59acd95d9f44"
+property ButtonComponent btnSkip = "47bafc69-2e67-422f-86c8-e5e8a584e0e9"
+property any skipHandler = nil
+-- 단계 진입 직후 신호 평가를 미루는 정착 시간. 일꾼 리셋 RPC 왕복 전의 낡은
+-- @Sync 값을 스냅숏하는 것을 막는다.
+property number SettleSeconds = 0.6
+-- 접속 직후 활성화 유예. 로그인 복구(RestoreLastMineAndWorker, 0.5초)와 자동
+-- 실행 판단(1.5초)이 끝난 뒤에 튜토리얼을 켜야 복구가 단계 시작 상태를 덮지
+-- 않는다 (검증 중 실제 경합 관측).
+property number WarmupSeconds = 3.0
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- 초기 상태: 비활성. 활성화는 OnUpdate 의 @Sync 감시가 결정한다.
+    self._T.active = false
+    self._T.replayActive = false
+    self._T.replayRequested = false
+    self._T.stepShown = 0
+    self._T.settle = 0
+    self._T.warmup = 0
+    self._T.advanceCooldown = 0
+    self._T.startCooldown = 0
+    self._T.runSeen = false
+    self._T.lastProgramState = ""
+    self._T.lastRunHadRepeat = false
+    self._T.lastRunHadIf = false
+    self._T.snapshot = nil
+    self._T.buttons = nil
+    self._T.dimCache = {}
+    self._T.completionToastShown = false
+    if self.tutorialRoot ~= nil then self.tutorialRoot.Enable = false end
+    if self.btnSkip ~= nil then
+        self.skipHandler = self.btnSkip.Entity:ConnectEvent(ButtonClickEvent, self.OnSkipClicked)
+    end
+    log("[Tutorial] controller ready")
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 이벤트 해제와 잠금 원복. Play 종료 시 dim 이 남지 않게 한다.
+    if self.btnSkip ~= nil and self.skipHandler ~= nil then
+        self.btnSkip.Entity:DisconnectEvent(ButtonClickEvent, self.skipHandler)
+    end
+    if self._T.active then self:ReleaseAllLocks() end
+end
+
+@ExecSpace("ClientOnly")
+method AccountProfileService GetProfile()
+    -- 로컬 플레이어의 프로필 @Sync 미러.
+    local player = _UserService.LocalPlayer
+    if player == nil then return nil end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    return profile
+end
+
+@ExecSpace("ClientOnly")
+method WorkerController GetWorker()
+    -- 튜토리얼 대상은 항상 일꾼 1이다 (워커 탭이 잠겨 있어 바뀌지 않는다).
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return nil end
+    local workerEntity = player.CurrentMap:GetChildByName("Worker01", false)
+    if workerEntity == nil then return nil end
+    ---@type WorkerController
+    local worker = workerEntity:GetComponent("script.WorkerController")
+    return worker
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsOnBeginnerMine()
+    -- 기준 맵은 초보 광산(farm01) 하나다 (F7-E §4).
+    local player = _UserService.LocalPlayer
+    return player ~= nil and player.CurrentMap ~= nil and player.CurrentMap.Name == "farm01"
+end
+
+@ExecSpace("ClientOnly")
+method table GetStepConfig(integer step)
+    -- 단계별 안내·활성 버튼·시작 상태·툴팁/화살표 배치의 단일 정의.
+    -- 5·6단계 팔레트에 이미 배운 행동 블록(L/W/U)을 포함한다 — U3(C213)의
+    -- "R×5 로 돌 5개"는 왕복 1회당 돌 1개 적립을 전제하기 때문이다 (docs/16 기록).
+    if step == 1 then
+        return {
+            guide = "일꾼을 오른쪽으로 한 칸 보내 봐요.\n[동 E]를 누르고 [실행]을 누르세요.",
+            fail = "일꾼이 움직이지 못했어요. [동 E] 하나만 넣고 다시 실행해 보세요.",
+            allowed = { moveE = true, run = true },
+            reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
+            clearProgram = true,
+            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 314, arrowDir = "left",
+        }
+    elseif step == 2 then
+        return {
+            guide = "일꾼 발밑에 돌 광맥이 있어요.\n[채굴 M]을 넣고 [실행]으로 캐 봅시다.",
+            fail = "여기엔 캘 광물이 없어요. 잠시 기다렸다가 다시 [채굴 M]을 실행해 보세요.",
+            allowed = { mine = true, run = true },
+            reset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 0 },
+            clearProgram = true,
+            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+        }
+    elseif step == 3 then
+        return {
+            guide = "손에 든 돌을 수레에 실어요.\n[적재 L]을 넣고 [실행]을 누르세요.",
+            fail = "수레에 싣지 못했어요. [적재 L]을 넣고 다시 실행해 보세요.",
+            allowed = { load = true, run = true },
+            reset = { cellX = 1, cellY = 0, hand = "stone", handCount = 1, cart = 0 },
+            clearProgram = true,
+            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+        }
+    elseif step == 4 then
+        -- §4 예외: 4단계는 진입 시 시작 셀 복귀를 하지 않는다 (1~3단계의 결과
+        -- 상태 — (1,0)·수레 돌 1 — 를 유지). 실패 복귀만 그 상태로 되돌린다.
+        return {
+            guide = "창고는 시작 자리예요.\n[서 W]로 돌아가 [하역 U]로 내리면 창고에 쌓입니다.",
+            fail = "창고에 내리지 못했어요. [서 W]로 창고(시작 칸)에 돌아간 뒤 [하역 U]를 실행하세요.",
+            allowed = { moveW = true, unload = true, run = true },
+            reset = nil,
+            failReset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 1 },
+            clearProgram = true,
+            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+        }
+    elseif step == 5 then
+        return {
+            guide = "같은 일을 여러 번 시키려면 [반복 추가]로 묶어요.\n횟수 5로 두고 안에 [동E]·[채굴M]·[적재L]·[서W]·[하역U]를 넣고 [끝 ]]으로 닫은 뒤 실행하세요.",
+            fail = "반복이 끝났지만 목표를 채우지 못했어요. 안내대로 반복 안에 블록을 넣고 다시 실행해 보세요.",
+            allowed = { repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true },
+            reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
+            clearProgram = true,
+            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
+        }
+    elseif step == 6 then
+        return {
+            guide = "광물이 있을 때만 캐게 하려면 [IF 추가]를 써요.\n반복 안에 IF(광물 있음)[채굴 M·적재 L]을 넣어 실행해 보세요.",
+            fail = "조건 블록이 비어 있거나 실행이 끝나지 않았어요. IF 안에 블록을 넣고 다시 실행해 보세요.",
+            allowed = { ifAdd = true, condition = true, repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true },
+            reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
+            clearProgram = true,
+            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
+        }
+    elseif step == 7 then
+        return {
+            guide = "창고의 돌을 팔아 골드를 벌어요.\n[광산 선택] → [판매]에서 돌을 파세요. 돌이 10개보다 적으면 [전량]을 누르면 됩니다.",
+            fail = "",
+            allowed = { selectOpen = true, selectClose = true, sellOpen = true, saleClose = true, oreStone = true, quickOne = true, quickTen = true, quickAll = true, sellSelected = true },
+            reset = nil,
+            clearProgram = true,
+            tooltipX = -360, tooltipY = 150, arrowX = 485, arrowY = -6, arrowDir = "right",
+        }
+    end
+    return {
+        guide = "골드로 두 번째 일꾼을 고용해요.\n[광산 선택]에서 [일꾼 구매]를 누르세요.",
+        fail = "",
+        allowed = { selectOpen = true, selectClose = true, buyWorker = true },
+        reset = nil,
+        clearProgram = false,
+        tooltipX = -360, tooltipY = 150, arrowX = 200, arrowY = 164, arrowDir = "right",
+    }
+end
+
+@ExecSpace("ClientOnly")
+method table GetButtonRegistry()
+    -- 잠금 대상 버튼 전체 { key → ButtonComponent }. 각 소유 컨트롤러가 자기
+    -- 버튼을 내놓는다 — UUID 를 여기 중복 선언하지 않는다.
+    if self._T.buttons ~= nil then return self._T.buttons end
+    local registry = {}
+    for key, button in pairs(_BlockProgramController:GetTutorialButtons()) do registry[key] = button end
+    for key, button in pairs(_MineSelectController:GetTutorialButtons()) do registry[key] = button end
+    for key, button in pairs(_MineInventoryController:GetTutorialButtons()) do registry[key] = button end
+    self._T.buttons = registry
+    return registry
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyStepLocks(table allowed)
+    -- 결정 2·5: 활성 버튼 외 전부 잠금(Enable=false) + dim(알파 0.35).
+    -- 원래 색은 최초 1회 캐시하고 해제 시 캐시값으로 원복한다 (F7-E §5.1).
+    for key, button in pairs(self:GetButtonRegistry()) do
+        if button ~= nil and isvalid(button) then
+            local sprite = button.Entity.SpriteGUIRendererComponent
+            if allowed[key] == true then
+                button.Enable = true
+                self:RestoreButtonColor(key, sprite)
+            else
+                button.Enable = false
+                if sprite ~= nil then
+                    if self._T.dimCache[key] == nil then
+                        self._T.dimCache[key] = sprite.Color
+                    end
+                    local original = self._T.dimCache[key]
+                    sprite.Color = Color(original.r, original.g, original.b, 0.35)
+                end
+            end
+        end
+    end
+    -- 패널 접기 토글은 잠그되 패널은 펼친 상태로 고정한다 (§5.1).
+    _BlockProgramController:ForceExpandPanelForTutorial()
+end
+
+@ExecSpace("ClientOnly")
+method void RestoreButtonColor(string key, SpriteGUIRendererComponent sprite)
+    -- dim 캐시가 있으면 원래 색으로 되돌린다.
+    if sprite ~= nil and self._T.dimCache[key] ~= nil then
+        sprite.Color = self._T.dimCache[key]
+        self._T.dimCache[key] = nil
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void ReleaseAllLocks()
+    -- 종료·스킵·완료 시 전 버튼 잠금과 dim 을 원복한다.
+    for key, button in pairs(self:GetButtonRegistry()) do
+        if button ~= nil and isvalid(button) then
+            button.Enable = true
+            self:RestoreButtonColor(key, button.Entity.SpriteGUIRendererComponent)
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void TakeSnapshot()
+    -- 판정 신호 비교 기준. 정착 시간(SettleSeconds) 뒤에 찍는다.
+    local profile = self:GetProfile()
+    local worker = self:GetWorker()
+    local snapshot = { stone = 0, gold = 0, owned = 1, cellX = 0, cellY = 0, cartCount = 0 }
+    if profile ~= nil then
+        snapshot.stone = profile.Stone
+        snapshot.gold = profile.Gold
+        snapshot.owned = profile.OwnedWorkerCount
+    end
+    if worker ~= nil then
+        snapshot.cellX = worker.CellX
+        snapshot.cellY = worker.CellY
+        snapshot.cartCount = worker.CartCount
+    end
+    self._T.snapshot = snapshot
+end
+
+@ExecSpace("ClientOnly")
+method void EnterStep(integer step)
+    -- 단계 진입: 상태 정리(§4) → 잠금 → 안내 → 정착 후 스냅숏.
+    local config = self:GetStepConfig(step)
+    self._T.stepShown = step
+    self._T.runSeen = false
+    self._T.lastProgramState = ""
+    self._T.lastRunHadRepeat = false
+    self._T.lastRunHadIf = false
+    self._T.snapshot = nil
+    self._T.settle = self.SettleSeconds
+    self._T.advanceCooldown = 0
+    if config.clearProgram then _BlockProgramController:ClearProgramForTutorial() end
+    if step <= 6 then
+        -- 편집기 단계에서는 광산 선택 계열 패널을 닫는다. 다시 보기 진입점이
+        -- SelectPanel 이라 열린 채로 남으면 편집기·안내를 덮는다.
+        _MineSelectController:CloseAllPanelsForTutorial()
+    end
+    if config.reset ~= nil then
+        local profile = self:GetProfile()
+        if profile ~= nil then
+            profile:RequestTutorialWorkerReset(config.reset.cellX, config.reset.cellY, config.reset.hand, config.reset.handCount, config.reset.cart)
+        end
+    end
+    self:ApplyStepLocks(config.allowed)
+    self:ShowTooltip(step, "")
+    log("[Tutorial] step enter step=" .. tostring(step) .. " replay=" .. tostring(self._T.replayActive))
+end
+
+@ExecSpace("ClientOnly")
+method void ShowTooltip(integer step, string reason)
+    -- 결정 4·6: 안내 문구 + 진행도 n / 8. 실패 사유가 있으면 덧붙인다 (§5.2-4).
+    local config = self:GetStepConfig(step)
+    if self.tutorialRoot ~= nil then self.tutorialRoot.Enable = true end
+    if self.guideText ~= nil then
+        local text = config.guide
+        if reason ~= "" then text = reason .. "\n" .. config.guide end
+        self.guideText.Text = text
+    end
+    if self.progressText ~= nil then self.progressText.Text = tostring(step) .. " / 8" end
+    if self.tooltip ~= nil then
+        self.tooltip.UITransformComponent.anchoredPosition = Vector2(config.tooltipX, config.tooltipY)
+    end
+    if self.arrow ~= nil then
+        self.arrow.UITransformComponent.anchoredPosition = Vector2(config.arrowX, config.arrowY)
+        local flip = 1
+        if config.arrowDir == "right" then flip = -1 end
+        self.arrow.UITransformComponent.UIScale = Vector3(flip, 1, 1)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method string PreRunCheck(table program)
+    -- 5·6단계 Run 직전 선검증 (F7-E §3 보강·E5). 비활성이면 빈 문자열.
+    if not self._T.active then return "" end
+    local step = self._T.stepShown
+    if step == 5 then
+        if not self:HasControlWithBody(program, "repeat") then
+            return "반복 블록 안에 실행할 블록을 넣고 [끝 ]]으로 닫아 주세요."
+        end
+    elseif step == 6 then
+        if not self:HasControlWithBody(program, "if") then
+            return "IF 블록 안에 실행할 블록을 넣고 [끝 ]]으로 닫아 주세요."
+        end
+    end
+    if step == 5 then self._T.lastRunHadRepeat = true end
+    if step == 6 then self._T.lastRunHadIf = true end
+    return ""
+end
+
+@ExecSpace("ClientOnly")
+method boolean HasControlWithBody(table list, string controlType)
+    -- 재귀: 해당 제어 블록이 존재하고 body 가 비어 있지 않은지 확인한다.
+    if type(list) ~= "table" then return false end
+    for i = 1, #list do
+        local command = list[i]
+        if type(command) == "table" then
+            if command.type == controlType and type(command.body) == "table" and #command.body > 0 then
+                return true
+            end
+            if (command.type == "repeat" or command.type == "if") and self:HasControlWithBody(command.body, controlType) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsStepSignalMet(integer step)
+    -- F7-E §3 판정표. 스냅숏 대비 @Sync 변화를 본다.
+    local snapshot = self._T.snapshot
+    if snapshot == nil then return false end
+    local profile = self:GetProfile()
+    local worker = self:GetWorker()
+    if step <= 6 and worker == nil then return false end
+    if step == 1 then
+        return worker.CellX ~= snapshot.cellX or worker.CellY ~= snapshot.cellY
+    elseif step == 2 then
+        return worker.PendingOre ~= "" or worker.CartCount > snapshot.cartCount
+    elseif step == 3 then
+        return worker.CartCount > snapshot.cartCount
+    elseif step == 4 then
+        return profile ~= nil and worker.CartCount == 0 and snapshot.cartCount > 0 and profile.Stone > snapshot.stone
+    elseif step == 5 then
+        return self._T.lastRunHadRepeat and self._T.runSeen and worker.ProgramState == "Idle"
+    elseif step == 6 then
+        return self._T.lastRunHadIf and self._T.runSeen and worker.ProgramState == "Idle"
+    elseif step == 7 then
+        return profile ~= nil and profile.Gold > snapshot.gold
+    end
+    return profile ~= nil and profile.OwnedWorkerCount > snapshot.owned
+end
+
+@ExecSpace("ClientOnly")
+method void HandleStepFailure(integer step)
+    -- 결정 3: 자동 되돌리기 + 사유를 덧붙인 재안내. 진행도는 줄지 않는다 (§5.2).
+    local config = self:GetStepConfig(step)
+    local reset = config.failReset
+    if reset == nil then reset = config.reset end
+    local profile = self:GetProfile()
+    if reset ~= nil and profile ~= nil then
+        profile:RequestTutorialWorkerReset(reset.cellX, reset.cellY, reset.hand, reset.handCount, reset.cart)
+    end
+    if config.clearProgram then _BlockProgramController:ClearProgramForTutorial() end
+    self._T.runSeen = false
+    self._T.settle = self.SettleSeconds
+    self._T.snapshot = nil
+    self:ShowTooltip(step, config.fail)
+    log("[Tutorial] step failed step=" .. tostring(step) .. " - reset and re-guide")
+end
+
+@ExecSpace("ClientOnly")
+method void Activate(integer step, boolean replay)
+    -- 튜토리얼 UI·잠금 가동.
+    self._T.active = true
+    self._T.replayActive = replay
+    self:EnterStep(step)
+    log("[Tutorial] activated step=" .. tostring(step) .. " replay=" .. tostring(replay))
+end
+
+@ExecSpace("ClientOnly")
+method void Deactivate(boolean showCompletionHint)
+    -- 잠금·dim 원복 + UI 숨김 (§9.1 스킵·§7 완료 공통).
+    self._T.active = false
+    self._T.replayActive = false
+    self._T.replayRequested = false
+    self._T.stepShown = 0
+    self:ReleaseAllLocks()
+    if self.tutorialRoot ~= nil then self.tutorialRoot.Enable = false end
+    if showCompletionHint and not self._T.completionToastShown then
+        -- §9.3: 완료 직후 자연어 변환창 1회 힌트.
+        self._T.completionToastShown = true
+        _UIToast:ShowMessage("문장으로도 블록을 만들 수 있어요 — \"오른쪽으로 두 칸 가서 캐\"")
+    end
+    log("[Tutorial] deactivated hint=" .. tostring(showCompletionHint))
+end
+
+@ExecSpace("ClientOnly")
+method void OnSkipClicked()
+    -- 결정: 스킵은 확인 팝업을 거친다 (§9.1).
+    if self._T.replayActive then
+        -- 다시 보기는 이미 완료·스킵된 원장을 바꾸지 않는다 — 화면만 닫는다.
+        _UIPopup:Open("튜토리얼 다시 보기를 끝낼까요?", function()
+            self:Deactivate(false)
+        end, nil)
+        return
+    end
+    _UIPopup:Open("튜토리얼을 건너뛸까요?\n지금까지 받은 보상은 유지되고, 완료 보상은 지급되지 않습니다.", function()
+        local profile = self:GetProfile()
+        if profile ~= nil then profile:RequestTutorialSkip() end
+    end, nil)
+end
+
+@ExecSpace("ClientOnly")
+method void OnReplayEntry()
+    -- 광산 선택 화면의 "튜토리얼 다시 보기" (결정 8·9, §9.2).
+    local profile = self:GetProfile()
+    if profile == nil or self._T.active then return end
+    local step = profile.TutorialStep
+    if profile.TutorialCompleted or step <= 1 or step > 8 then
+        self._T.replayRequested = true
+        profile:RequestTutorialReplay(true)
+        return
+    end
+    _UIPopup:Open("튜토리얼을 처음부터 볼까요?\n확인 = 처음부터 · 취소 = 이어서 (" .. tostring(step) .. "단계부터)", function()
+        self._T.replayRequested = true
+        local requestProfile = self:GetProfile()
+        if requestProfile ~= nil then requestProfile:RequestTutorialReplay(true) end
+    end, function()
+        self._T.replayRequested = true
+        local requestProfile = self:GetProfile()
+        if requestProfile ~= nil then requestProfile:RequestTutorialReplay(false) end
+    end)
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- 활성/비활성 전환과 단계 신호 감시를 한 곳에서 돈다.
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local step = profile.TutorialStep
+
+    if not self._T.active then
+        if not self:IsOnBeginnerMine() then return end
+        -- 접속 직후 유예: 복구·자동 실행 판단이 끝난 뒤에만 켠다.
+        if (self._T.warmup or 0) < self.WarmupSeconds then
+            self._T.warmup = (self._T.warmup or 0) + delta
+            return
+        end
+        local pristine = not profile.TutorialCompleted and not profile.TutorialSkipped
+        if self._T.replayRequested and step >= 1 and step <= 8 then
+            self:Activate(step, true)
+        elseif pristine and step >= 1 and step <= 8 then
+            -- E12: 첫 1회차 진행 중 재접속 — 저장된 단계부터 이어 간다.
+            self:Activate(step, false)
+        elseif pristine and step == 0 then
+            -- E1·E14: 초보 광산 첫 진입 자동 시작 (재시도 쿨다운 3초).
+            self._T.startCooldown = (self._T.startCooldown or 0) - delta
+            if self._T.startCooldown <= 0 then
+                self._T.startCooldown = 3.0
+                profile:RequestTutorialStart()
+            end
+        end
+        return
+    end
+
+    -- 활성 중 서버 상태 전환 감시.
+    if step == 0 then
+        -- 방어선: 서버 원장이 초기화된 비정상 경로 — 잠금을 남기지 않는다.
+        self:Deactivate(false)
+        return
+    end
+    if profile.TutorialSkipped and not self._T.replayActive then
+        self:Deactivate(false)
+        return
+    end
+    if step == 9 or (profile.TutorialCompleted and step > 8) then
+        self:Deactivate(true)
+        return
+    end
+    if step >= 1 and step <= 8 and step ~= self._T.stepShown then
+        self:EnterStep(step)
+        return
+    end
+
+    -- 정착 시간: 리셋 RPC 왕복 전의 낡은 값을 스냅숏하지 않는다.
+    if self._T.settle > 0 then
+        self._T.settle = self._T.settle - delta
+        if self._T.settle <= 0 then self:TakeSnapshot() end
+        return
+    end
+    if self._T.snapshot == nil then self:TakeSnapshot() end
+
+    -- 실행 상태 추적 (실패 판정용 — 결정 3).
+    local worker = self:GetWorker()
+    if worker ~= nil then
+        local state = worker.ProgramState
+        if state ~= self._T.lastProgramState then
+            local previous = self._T.lastProgramState
+            self._T.lastProgramState = state
+            if state == "Running" then
+                self._T.runSeen = true
+            elseif state == "Stopped" and previous ~= "" then
+                -- 서버 거부·정지 계열 (§5.2 실패 조건).
+                self:HandleStepFailure(self._T.stepShown)
+                return
+            elseif state == "Idle" and self._T.runSeen then
+                -- 완주 후 신호 미충족이면 실패 (E4). 신호 충족이면 아래에서 통과.
+                if not self:IsStepSignalMet(self._T.stepShown) then
+                    self:HandleStepFailure(self._T.stepShown)
+                    return
+                end
+            end
+        end
+    end
+
+    -- 통과 요청 (쿨다운 2초 — 서버 재검증 거부 시 재시도 여지).
+    self._T.advanceCooldown = math.max(0, (self._T.advanceCooldown or 0) - delta)
+    if self._T.advanceCooldown <= 0 and self:IsStepSignalMet(self._T.stepShown) then
+        self._T.advanceCooldown = 2.0
+        profile:RequestTutorialAdvance(self._T.stepShown)
+        log("[Tutorial] advance requested step=" .. tostring(self._T.stepShown))
+    end
+end
+
+end

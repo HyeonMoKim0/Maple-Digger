@@ -78,6 +78,8 @@ property ButtonComponent btnCartWorker4 = "68b01220-83bb-47a6-8b64-524aec3e2323"
 property ButtonComponent btnCartWorker5 = "22a4e518-aaa1-4b95-8938-98a34550a4ba"
 property ButtonComponent btnCartUpgrade = "dff1aaae-2536-4fc1-b8eb-6734a9403f85"
 property TextComponent cartSummaryText = "6845ae6a-932f-4bac-8509-fb3a6b323fcb"
+-- T-07 (F7-E §9.2 결정 9): 광산 선택 화면의 "튜토리얼 다시 보기" 진입점.
+property ButtonComponent btnTutorialReplay = "39393c63-382c-4667-8557-3942a8a6b471"
 
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
@@ -131,6 +133,7 @@ method void OnBeginPlay()
     self:ConnectButton("cartWorker4", self.btnCartWorker4, self.OnCartWorker4Clicked)
     self:ConnectButton("cartWorker5", self.btnCartWorker5, self.OnCartWorker5Clicked)
     self:ConnectButton("cartUpgrade", self.btnCartUpgrade, self.OnCartUpgradeClicked)
+    self:ConnectButton("tutorialReplay", self.btnTutorialReplay, self.OnTutorialReplayClicked)
     self:RefreshUI(true)
     log("[MineSelectUI] F7-B selector ready")
 end
@@ -761,6 +764,61 @@ method void OnCartUpgradeClicked()
 end
 
 @ExecSpace("ClientOnly")
+method void OnTutorialReplayClicked()
+    -- T-07: 다시 보기 진입은 튜토리얼 컨트롤러가 처음부터/이어서 선택을 소유한다.
+    _TutorialController:OnReplayEntry()
+end
+
+@ExecSpace("ClientOnly")
+method table GetTutorialButtons()
+    -- T-07 (F7-E §5.1): 이 컨트롤러 소유 버튼의 튜토리얼 잠금 대상 목록.
+    return {
+        selectOpen = self.btnOpen,
+        selectClose = self.btnClose,
+        sellOpen = self.btnSell,
+        mineBeginner = self.btnBeginner,
+        mineDeep = self.btnDeep,
+        mineGem = self.btnGem,
+        buyWorker = self.btnBuyWorker,
+        cartOpen = self.btnCartOpen,
+        upgradeOpen = self.btnUpgradeOpen,
+        rareOpen = self.btnRareOpen,
+        saleClose = self.btnSaleClose,
+        oreStone = self.btnOreStone,
+        oreIron = self.btnOreIron,
+        oreGold = self.btnOreGold,
+        quickOne = self.btnQuickOne,
+        quickTen = self.btnQuickTen,
+        quickHundred = self.btnQuickHundred,
+        quickAll = self.btnQuickAll,
+        sellSelected = self.btnSellSelected,
+        toggleProtected = self.btnToggleProtected,
+        saveProtection = self.btnSaveProtection,
+        toggleAutoSell = self.btnToggleAutoSell,
+        tutorialReplay = self.btnTutorialReplay,
+    }
+end
+
+@ExecSpace("ClientOnly")
+method void CloseAllPanelsForTutorial()
+    -- T-07: 편집기 단계(1~6) 진입 시 광산 선택 계열 패널을 전부 닫는다. "다시
+    -- 보기"가 SelectPanel 에서 진입하므로, 닫지 않으면 열린 패널이 편집기와
+    -- 안내를 덮는다 (검증 스크린샷에서 실측).
+    if self.selectPanel ~= nil then self.selectPanel.Enable = false end
+    if self.salePanel ~= nil then self.salePanel.Enable = false end
+    if self.rarePanel ~= nil then self.rarePanel.Enable = false end
+    if self.cartPanel ~= nil then self.cartPanel.Enable = false end
+    if self.upgradePanel ~= nil then self.upgradePanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OpenSelectPanelForTutorial()
+    -- T-07: 7·8단계 안내가 광산 선택 화면을 열어야 할 때 쓴다 (클릭 대체 아님 —
+    -- 실제 열기는 플레이어의 버튼 클릭이 하고, 이것은 실패 복귀용이다).
+    if self.selectPanel ~= nil then self.selectPanel.Enable = true end
+end
+
+@ExecSpace("ClientOnly")
 method void RequestEntry(string targetMapName)
     local profile = self:GetProfile()
     if profile == nil then return end
@@ -799,6 +857,7 @@ method void OnEndPlay()
     self:DisconnectButton("rareStoneAuto", self.btnRareStoneAuto)
     self:DisconnectButton("rareIronAuto", self.btnRareIronAuto)
     self:DisconnectButton("rareGoldAuto", self.btnRareGoldAuto)
+    self:DisconnectButton("tutorialReplay", self.btnTutorialReplay)
 end
 
 @ExecSpace("ClientOnly")

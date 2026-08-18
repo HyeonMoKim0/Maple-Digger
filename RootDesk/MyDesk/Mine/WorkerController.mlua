@@ -586,6 +586,35 @@ method boolean IsRareOre(string oreType)
 end
 
 @ExecSpace("ServerOnly")
+method void ResetToTutorialState(integer cellX, integer cellY, string hand, integer handCount, integer cartStone)
+    -- T-07 (F7-E §5.2): 서버 권위로 일꾼을 지정한 튜토리얼 단계 시작 상태로 되돌린다.
+    -- 호출 창구는 TutorialService 하나뿐이며 값은 그쪽에서 이미 클램프됐다.
+    self:ResetExecution()
+    self.PendingOre = ""
+    self.PendingOreCount = 0
+    if hand == "stone" and handCount > 0 then
+        self.PendingOre = "stone"
+        self.PendingOreCount = math.min(2, handCount)
+    end
+    self.Cart = { stone = 0 }
+    self.CartCount = 0
+    if cartStone > 0 then
+        self.Cart.stone = math.min(2, cartStone)
+        self.CartCount = self.Cart.stone
+    end
+    if self:IsCellWalkable(cellX, cellY) then
+        self._T.cellX = cellX
+        self._T.cellY = cellY
+        self.CellX = cellX
+        self.CellY = cellY
+        self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(cellX, cellY))
+    else
+        log_warning(self:WorkerTag() .. " tutorial reset cell not walkable (" .. tostring(cellX) .. "," .. tostring(cellY) .. ") - position kept")
+    end
+    log(self:WorkerTag() .. " tutorial reset cell=(" .. tostring(self.CellX) .. "," .. tostring(self.CellY) .. ") hand=" .. self.PendingOre .. " cart=" .. tostring(self.CartCount))
+end
+
+@ExecSpace("ServerOnly")
 method void ResetInventory()
     -- Session-local reset used by restart flows and deterministic verification.
     self.PendingOre = ""

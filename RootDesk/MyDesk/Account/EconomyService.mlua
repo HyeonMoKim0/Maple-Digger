@@ -45,6 +45,9 @@ end
 
 @ExecSpace("ServerOnly")
 method integer GetMandatoryProtection(table data, string oreType)
+    -- T-07 완화 C2 (F7-E §8): 튜토리얼 1회차 동안 해금 보호 수량 면제. 이것이
+    -- 없으면 돌 120 자동 보호에 막혀 7단계 판매가 성립하지 않는다.
+    if _TutorialService:IsRelaxationActive(data) then return 0 end
     local protectedStone = 0
     local protectedIron = 0
     if not data.deepMineUnlocked then

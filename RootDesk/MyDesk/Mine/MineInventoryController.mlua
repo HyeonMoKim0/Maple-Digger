@@ -309,6 +309,12 @@ method void OnCloseClicked()
 end
 
 @ExecSpace("ClientOnly")
+method table GetTutorialButtons()
+    -- T-07 (F7-E §5.1): 튜토리얼 잠금 대상 — 인벤토리 열기 버튼.
+    return { inventoryOpen = self.btnInventory }
+end
+
+@ExecSpace("ClientOnly")
 method void OnEndPlay()
     -- Disconnects every UI event handler created during begin play.
     if self.btnInventory ~= nil and self._T.handlers.inventory ~= nil then

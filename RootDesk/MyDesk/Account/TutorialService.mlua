@@ -1,0 +1,210 @@
+-- TUTORIAL AUTHORITY (T-07 / F7-E)
+-- 단계 통과 재검증·진행도 저장·보상 지급·완화(C1~C3) 판정은 전부 서버가 소유한다.
+-- 클라이언트(TutorialController)는 안내·잠금·판정 신호 감시만 하고, 통과는 이
+-- 서비스에 요청한다 (F7-E §3·§10.1). 진행 상태 원장은 AccountProfileService 의
+-- profile.tutorial 이며, 이 서비스는 그 원장을 읽고 쓰는 유일한 창구다.
+@Logic
+script TutorialService extends Logic
+
+-- U1 (C204): 튜토리얼 완화 C1 — 일꾼 2 가격. 정상가 60은 ProgressionService 소유.
+property integer TutorialWorker2GoldCost = 10
+-- F7-E §7: 중간 크리스탈 (4단계·6단계) + 완료 일괄 (골드 20 + 크리스탈 15).
+property integer MidRewardCrystalS4 = 5
+property integer MidRewardCrystalS6 = 5
+property integer FinalRewardGold = 20
+property integer FinalRewardCrystal = 15
+
+@ExecSpace("ServerOnly")
+method boolean IsRelaxationActive(table profileData)
+    -- F7-E §8: 완화 C1~C3 는 "첫 1회차 진행 중"에만 유효하다. 완료·스킵 즉시 해제,
+    -- 다시 보기(§9.2)에서도 미적용 — completed/skipped 플래그가 그 판정을 겸한다.
+    if type(profileData) ~= "table" or type(profileData.tutorial) ~= "table" then return false end
+    local tutorial = profileData.tutorial
+    local step = tutorial.step or 0
+    return tutorial.completed ~= true and tutorial.skipped ~= true and step >= 1 and step <= 8
+end
+
+@ExecSpace("ServerOnly")
+method AccountProfileService GetProfileService(Entity player)
+    -- 요청 플레이어의 프로필 서비스. 로드 전이면 nil 을 돌려 모든 요청을 거른다.
+    if player == nil then return nil end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return nil end
+    return profile
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestStart(Entity player)
+    -- E1·E14: step 0 인 계정의 첫 진입 자동 시작. 이미 시작·완료된 계정은 무시.
+    local profile = self:GetProfileService(player)
+    if profile == nil then return false end
+    local data = profile:GetProfile()
+    local tutorial = data.tutorial
+    if tutorial.completed or tutorial.skipped or (tutorial.step or 0) ~= 0 then return false end
+    local snapshot = _HttpService:JSONEncode(data)
+    tutorial.step = 1
+    profile:SyncRuntimeState()
+    profile:MarkProfileDirty()
+    if not profile:SaveProfileAndWait() then
+        profile:RestoreProfileSnapshot(snapshot)
+        return false
+    end
+    profile:PushMineBonusesToSimulator()
+    log("[Tutorial] started step=1")
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean VerifyStep(AccountProfileService profile, integer step)
+    -- F7-E §3: 클라이언트 판정을 서버 권위 상태로 재검증한다. 각 단계의 사후
+    -- 조건을 현재 @Sync 원본 값(서버 소유)으로 확인한다.
+    local data = profile:GetProfile()
+    ---@type WorkerController
+    local worker = profile:GetWorkerByIndex(1)
+    if step <= 6 and worker == nil then return false end
+    if step == 1 then
+        -- 이동: 시작 셀(Depot 0,0)을 벗어났다.
+        return worker.CellX ~= 0 or worker.CellY ~= 0
+    elseif step == 2 then
+        -- 채굴: 손에 광물이 있다 (적재까지 해 버린 경우 수레도 인정).
+        return worker.PendingOre ~= "" or worker.CartCount > 0
+    elseif step == 3 then
+        -- 적재: 수레에 실렸다.
+        return worker.CartCount > 0
+    elseif step == 4 then
+        -- 하역: 수레가 비고 계정 돌이 적립됐다.
+        return worker.CartCount == 0 and (data.stone or 0) > 0
+    elseif step == 5 or step == 6 then
+        -- 반복/조건: 서버 최종 검증을 통과한 마지막 프로그램에 해당 제어 블록이
+        -- 있다 (RunProgram 이 기록한 lastValidProgramJson — 클라이언트 위조 불가).
+        local record = data.workers[1]
+        if record == nil or type(record.lastValidProgramJson) ~= "string" then return false end
+        local needle = "\"repeat\""
+        if step == 6 then needle = "\"if\"" end
+        return string.find(record.lastValidProgramJson, needle, 1, true) ~= nil
+    elseif step == 7 then
+        -- 판매: 골드가 생겼다 (판매 자체는 서버 EconomyService 경로만 가능).
+        return (data.gold or 0) > 0
+    elseif step == 8 then
+        -- 일꾼 구매: 보유 일꾼이 2명 이상이다.
+        return #data.workers >= 2
+    end
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestAdvance(Entity player, integer step)
+    -- 단계 통과 확정 + 보상 + 즉시 저장 (F7-E §10.2 결정 7). 저장 실패 시 보상과
+    -- 진행도를 함께 롤백한다 (F7-A §3.3).
+    local profile = self:GetProfileService(player)
+    if profile == nil or step < 1 or step > 8 then return false end
+    local data = profile:GetProfile()
+    local tutorial = data.tutorial
+    if (tutorial.step or 0) ~= step then
+        log_warning("[Tutorial] advance rejected step=" .. tostring(step) .. " current=" .. tostring(tutorial.step))
+        return false
+    end
+    if not self:VerifyStep(profile, step) then
+        log_warning("[Tutorial] advance verify failed step=" .. tostring(step))
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(data)
+    tutorial.step = step + 1
+    -- 중간 보상 (결정 10): 지급 여부 플래그로 다시 보기 중복 지급을 막는다 (§9.2).
+    if step == 4 and tutorial.midRewards.s4 ~= true then
+        data.crystal = (data.crystal or 0) + self.MidRewardCrystalS4
+        tutorial.midRewards.s4 = true
+    elseif step == 6 and tutorial.midRewards.s6 ~= true then
+        data.crystal = (data.crystal or 0) + self.MidRewardCrystalS6
+        tutorial.midRewards.s6 = true
+    elseif step == 8 then
+        tutorial.step = 9
+        tutorial.completed = true
+        tutorial.skipped = false
+        if tutorial.rewardsClaimed ~= true then
+            data.gold = (data.gold or 0) + self.FinalRewardGold
+            data.crystal = (data.crystal or 0) + self.FinalRewardCrystal
+            profile:GrantTutorialDefaultProgram()
+            tutorial.rewardsClaimed = true
+        end
+    end
+    profile:SyncRuntimeState()
+    profile:MarkProfileDirty()
+    if not profile:SaveProfileAndWait() then
+        profile:RestoreProfileSnapshot(snapshot)
+        profile:SetTransactionMessage("튜토리얼 진행 저장에 실패해 되돌렸습니다. 다시 시도해 주세요.")
+        return false
+    end
+    -- 완료(8→9) 시 완화 C3 캐시가 즉시 꺼지도록 갱신한다 (E8).
+    profile:PushMineBonusesToSimulator()
+    log("[Tutorial] advanced step=" .. tostring(step) .. " -> " .. tostring(tutorial.step))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestSkip(Entity player)
+    -- F7-E §9.1: 스킵은 completed=false·skipped=true·step 유지. 완화 즉시 해제,
+    -- 이미 받은 중간 보상은 회수하지 않고 완료 일괄 보상은 지급하지 않는다.
+    local profile = self:GetProfileService(player)
+    if profile == nil then return false end
+    local data = profile:GetProfile()
+    local tutorial = data.tutorial
+    if tutorial.completed or tutorial.skipped then return false end
+    local snapshot = _HttpService:JSONEncode(data)
+    tutorial.skipped = true
+    profile:SyncRuntimeState()
+    profile:MarkProfileDirty()
+    if not profile:SaveProfileAndWait() then
+        profile:RestoreProfileSnapshot(snapshot)
+        return false
+    end
+    profile:PushMineBonusesToSimulator()
+    log("[Tutorial] skipped at step=" .. tostring(tutorial.step))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestReplay(Entity player, boolean fromStart)
+    -- F7-E §9.2 다시 보기: 처음부터 / 이어서. step 1 이하·완료 상태는 처음부터
+    -- 고정. 완화·보상 플래그(completed/skipped/midRewards/rewardsClaimed)는
+    -- 건드리지 않는다 — 재지급 방지와 완화 미적용이 그 플래그로 판정된다.
+    local profile = self:GetProfileService(player)
+    if profile == nil then return false end
+    local data = profile:GetProfile()
+    local tutorial = data.tutorial
+    local snapshot = _HttpService:JSONEncode(data)
+    if fromStart or tutorial.completed or (tutorial.step or 0) <= 1 or (tutorial.step or 0) > 8 then
+        tutorial.step = 1
+    end
+    -- completed/skipped 는 여기서 바꾸지 않는다: true 로 남아 있어야 다시 보기
+    -- 중 완화(C1~C3)가 계속 꺼져 있고(§9.2), 8단계 재완주가 completed 를 다시
+    -- 확정한다. 클라이언트는 자체 replay 플래그로 UI 를 돌린다.
+    profile:SyncRuntimeState()
+    profile:MarkProfileDirty()
+    if not profile:SaveProfileAndWait() then
+        profile:RestoreProfileSnapshot(snapshot)
+        return false
+    end
+    log("[Tutorial] replay start step=" .. tostring(tutorial.step) .. " rewardsClaimed=" .. tostring(tutorial.rewardsClaimed))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestWorkerReset(Entity player, integer cellX, integer cellY, string hand, integer handCount, integer cartStone)
+    -- F7-E §5.2 실패 되돌리기: 서버 권위로 일꾼 1을 지정 상태로 복귀. 튜토리얼
+    -- 진행 중(1~8)에만 허용하고, 값은 돌 1개 이내로 클램프해 악용을 막는다.
+    local profile = self:GetProfileService(player)
+    if profile == nil then return false end
+    local tutorial = profile:GetProfile().tutorial
+    local step = tutorial.step or 0
+    if step < 1 or step > 8 then return false end
+    if hand ~= "" and hand ~= "stone" then return false end
+    ---@type WorkerController
+    local worker = profile:GetWorkerByIndex(1)
+    if worker == nil then return false end
+    worker:ResetToTutorialState(cellX, cellY, hand, math.max(0, math.min(1, handCount)), math.max(0, math.min(1, cartStone)))
+    return true
+end
+
+end

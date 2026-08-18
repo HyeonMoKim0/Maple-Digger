@@ -42,6 +42,17 @@ property string ProgramLibraryJson = ""
 -- ⚠ 기본값 50골드는 첫 Play 테스트 제안값이다 — 오너 확정 대상.
 property integer LibrarySlotBaseCost = 50
 
+-- T-07 (F7-E): 튜토리얼 진행 표시용 미러. 판정·보상·저장은 TutorialService 가
+-- 소유하며, 클라이언트(TutorialController)는 이 세 값만 읽는다.
+@Sync
+property integer TutorialStep = 0
+
+@Sync
+property boolean TutorialCompleted = false
+
+@Sync
+property boolean TutorialSkipped = false
+
 @Sync
 property integer MineTokens = 0
 
@@ -777,6 +788,9 @@ method void SyncRuntimeState()
     self.MineLevelGem = self._T.profile.mineLevels.gem_mine
     self.MineUpgradeInfoJson = self:BuildMineUpgradeInfoJson()
     self.ProgramLibraryJson = self._T.profile.programLibraryJson or "{}"
+    self.TutorialStep = self._T.profile.tutorial.step or 0
+    self.TutorialCompleted = self._T.profile.tutorial.completed == true
+    self.TutorialSkipped = self._T.profile.tutorial.skipped == true
     self.MineTokens = self._T.profile.mineTokens
     self.Stone = self._T.profile.stone
     self.Iron = self._T.profile.iron
@@ -1345,6 +1359,55 @@ method void PushMineBonusesToSimulator()
         self:GetMineBonus(mineId, "recovery"),
         self:GetMineBonus(mineId, "rareChance"),
         self:GetMineBonus(mineId, "specialSpawn"))
+    -- T-07 완화 C3 (F7-E §8): 튜토리얼 1회차 동안 희귀 드롭·특별 광맥 스폰 억제.
+    -- 맵 진입·강화 성공·튜토리얼 상태 전환이 전부 이 경로를 지나므로 캐시가
+    -- 최신으로 유지된다 (매 틱 프로필 조회 금지 원칙과 같은 구조).
+    sim:SetTutorialSuppression(_TutorialService:IsRelaxationActive(self._T.profile))
+end
+
+@ExecSpace("ServerOnly")
+method void RestoreProfileSnapshot(string snapshot)
+    -- T-07: 외부 서비스(TutorialService)의 저장 실패 롤백 창구. 내부 롤백과 같은
+    -- NormalizeProfile 경로를 지난다.
+    self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+    self:SyncRuntimeState()
+end
+
+@ExecSpace("ServerOnly")
+method boolean GrantTutorialDefaultProgram()
+    -- F7-E §7: 완료 일괄 보상의 "기본 프로그램 1개" — 4단계에서 배운 왕복 루프를
+    -- 무한 반복으로 감싼 ProgramRecord 를 라이브러리에 넣는다. 저장은 호출자
+    -- (TutorialService)가 튜토리얼 상태와 함께 원자적으로 수행한다.
+    local library = self:GetLibrary()
+    if #library.programs >= library.slots then
+        log_warning("[AccountProfile] tutorial default program skipped reason=slots-full")
+        return false
+    end
+    local record = {
+        programId = "prog-" .. tostring(library.seq),
+        name = "기본왕복",
+        blockTree = {
+            {
+                type = "repeat",
+                count = "inf",
+                body = {
+                    { type = "move", dir = "E" },
+                    { type = "mine" },
+                    { type = "load" },
+                    { type = "move", dir = "W" },
+                    { type = "unload" },
+                },
+            },
+        },
+        dataVersion = 1,
+        updatedAt = self:NowStamp(),
+        lastValidation = "valid",
+    }
+    library.seq = library.seq + 1
+    table.insert(library.programs, record)
+    self:SetLibrary(library)
+    log("[AccountProfile] tutorial default program granted id=" .. record.programId)
+    return true
 end
 
 @ExecSpace("ServerOnly")
@@ -1756,6 +1819,12 @@ method void AutoRunSavedPrograms()
     -- F7-C §3 재접속: 각 보유 일꾼의 마지막 유효 프로그램을 처음부터 자동 실행.
     -- 무효/손상 프로그램은 실행하지 않고 Idle 유지 + 안내 (§4: 자동 수정 금지).
     if not self:CanWriteProfile() then return end
+    -- T-07: 튜토리얼 1회차 진행 중에는 자동 실행하지 않는다. 자동 실행이 일꾼을
+    -- 움직여 단계 판정 신호를 오염시킨다 (검증 중 실제로 1단계가 저절로 통과됐다).
+    if _TutorialService:IsRelaxationActive(self._T.profile) then
+        log("[AccountProfile] auto-run skipped reason=tutorial-active step=" .. tostring(self._T.profile.tutorial.step))
+        return
+    end
     local ranCount = 0
     local invalidCount = 0
     for workerIndex = 1, #self._T.profile.workers do
@@ -1851,6 +1920,36 @@ end
 @ExecSpace("Server")
 method boolean RequestCartUpgrade(integer workerIndex)
     return _ProgressionService:RequestCartUpgrade(self.Entity, workerIndex)
+end
+
+@ExecSpace("Server")
+method boolean RequestTutorialStart()
+    -- T-07: 클라이언트 자동 시작 요청을 튜토리얼 권위 서비스로 넘긴다.
+    return _TutorialService:RequestStart(self.Entity)
+end
+
+@ExecSpace("Server")
+method boolean RequestTutorialAdvance(integer step)
+    -- T-07: 단계 통과 요청. 서버가 같은 @Sync 원본 값으로 재검증한다 (F7-E §3).
+    return _TutorialService:RequestAdvance(self.Entity, step)
+end
+
+@ExecSpace("Server")
+method boolean RequestTutorialSkip()
+    -- T-07: 건너뛰기 확정 (F7-E §9.1).
+    return _TutorialService:RequestSkip(self.Entity)
+end
+
+@ExecSpace("Server")
+method boolean RequestTutorialReplay(boolean fromStart)
+    -- T-07: 다시 보기 진입 (F7-E §9.2).
+    return _TutorialService:RequestReplay(self.Entity, fromStart)
+end
+
+@ExecSpace("Server")
+method boolean RequestTutorialWorkerReset(integer cellX, integer cellY, string hand, integer handCount, integer cartStone)
+    -- T-07: 실패 되돌리기 — 일꾼 1을 단계 시작 상태로 (F7-E §5.2).
+    return _TutorialService:RequestWorkerReset(self.Entity, cellX, cellY, hand, handCount, cartStone)
 end
 
 @ExecSpace("Server")
