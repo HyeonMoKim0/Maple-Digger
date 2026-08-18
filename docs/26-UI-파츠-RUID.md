@@ -132,6 +132,8 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | 파츠 | RUID | 크기 | 9-slice border | 상태 |
 |---|---|---:|---:|:--:|
 | `ledger-row-resource-blank` | `f312099962db4862adee65f13644aa64` | 384×83 | **82** 30 17 17 | ✅ |
+| `settings-slider-track` | `bd6dae92677e4274b7e79910939173e4` | 384×49 | 24 24 16 16 | ✅ (T-12-B, 2026-08-18) |
+| `settings-slider-thumb` | `b05198669456485faa7dfe24594c206e` | 92×96 | Simple (`SliderComponent.HandleImageRUID`) | ✅ (T-12-B, 2026-08-18) |
 | `inventory-slot-blank` | | 126×128 | | ⬜ |
 | `inventory-slot-selected` | | 128×123 | | ⬜ |
 | `quantity-badge-blank` | | 192×105 | | ⬜ |
@@ -191,7 +193,7 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | 파츠 | 대기 티켓 |
 |---|---|
 | `library-row-blank` · `library-slot-locked` · `validation-badge-ok` · `validation-badge-error` | **T-05** 프로그램 라이브러리 |
-| `settings-slider-track` · `settings-slider-thumb` | **T-12-B** 설정 패널 |
+| ~~`settings-slider-track` · `settings-slider-thumb`~~ | **✅ T-12-B 로 업로드 완료 (2026-08-18)** — §5.3 대장 참조. `ui/SettingsUI.ui` 슬라이더 2개에 적용 |
 
 ---
 
