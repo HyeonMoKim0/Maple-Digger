@@ -137,7 +137,31 @@ method void RunProgram(table commands)
     self._T.actionStep = 0
     self._T.running = true
     self.ProgramState = "Running"
+    -- T-05 (F7-C §1): 최종 검증을 통과한 프로그램만 마지막 유효 프로그램으로 기록.
+    self:RecordLastValidProgram(commands)
     log(self:WorkerTag() .. " RunProgram accepted blocks=" .. tostring(self._T.validationBlockCount) .. " - state=Running")
+end
+
+@ExecSpace("ServerOnly")
+method string GetLastValidationError()
+    -- 라이브러리 저장 검증(F7-C)이 거절 사유·수정안을 만들 때 읽는다.
+    return tostring(self._T.validationError)
+end
+
+@ExecSpace("ServerOnly")
+method void RecordLastValidProgram(table commands)
+    -- MVP 는 광산 맵당 1인 세션이다. 프로필 서비스에 내용을 넘겨 자동 저장
+    -- 배치로 영속화한다 (즉시 저장하지 않는다 — F7-C §3).
+    for _, user in ipairs(_UserService.UserEntities.Values) do
+        if isvalid(user) then
+            ---@type AccountProfileService
+            local profile = user:GetComponent("script.AccountProfileService")
+            if profile ~= nil then
+                profile:RecordWorkerProgram(self.WorkerIndex, _HttpService:JSONEncode(commands))
+            end
+            return
+        end
+    end
 end
 
 @ExecSpace("Server")

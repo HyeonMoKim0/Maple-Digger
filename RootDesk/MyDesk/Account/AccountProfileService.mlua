@@ -34,6 +34,14 @@ property integer MineLevelGem = 0
 @Sync
 property string MineUpgradeInfoJson = ""
 
+-- T-05 (F7-C): 프로그램 라이브러리 전체를 표시용으로 하향. 클라이언트는 읽기 전용.
+@Sync
+property string ProgramLibraryJson = ""
+
+-- T-05: 슬롯 구매 기본 비용 (4번째 슬롯). 이후 직전 비용의 1.2배 (C174).
+-- ⚠ 기본값 50골드는 첫 Play 테스트 제안값이다 — 오너 확정 대상.
+property integer LibrarySlotBaseCost = 50
+
 @Sync
 property integer MineTokens = 0
 
@@ -197,6 +205,10 @@ method void OnEndPlay()
         _TimerService:ClearTimer(self._T.restoreTimer)
         self._T.restoreTimer = 0
     end
+    if self._T.autoRunTimer ~= nil and self._T.autoRunTimer ~= 0 then
+        _TimerService:ClearTimer(self._T.autoRunTimer)
+        self._T.autoRunTimer = 0
+    end
     if self._T.lockRefreshTimer ~= nil and self._T.lockRefreshTimer ~= 0 then
         _TimerService:ClearTimer(self._T.lockRefreshTimer)
         self._T.lockRefreshTimer = 0
@@ -307,6 +319,9 @@ method table CreateWorkerRecord(integer workerIndex)
         -- v8 (F7-B §5.3): yield 추가 지급이 발동하면 손에 같은 광물 최대 2개.
         pendingOreCount = 0,
         lastValidProgramId = "default-worker-" .. suffix,
+        -- T-05 (F7-C): 서버 검증을 통과한 마지막 프로그램 내용. 재접속 자동 실행의
+        -- 원본이다. 실행 중 frame/인덱스는 저장하지 않는다 (§2).
+        lastValidProgramJson = "",
     }
 end
 
@@ -690,6 +705,11 @@ method table NormalizeWorkers(any workers, integer rareStoneLevel)
         if type(source.lastValidProgramId) == "string" and source.lastValidProgramId ~= "" then
             record.lastValidProgramId = source.lastValidProgramId
         end
+        -- T-05: 내용이 유효한 JSON 이 아니면 버리지 않고 그대로 보존한다 — 자동
+        -- 실행 쪽이 검증 실패로 Idle 처리한다 (F7-C §4: 원본 자동 수정 금지).
+        if type(source.lastValidProgramJson) == "string" then
+            record.lastValidProgramJson = source.lastValidProgramJson
+        end
         if type(source.cart) == "table" then
             for oreType, count in pairs(source.cart) do
                 if self:IsKnownOre(oreType) and type(count) == "number" and count > 0 then
@@ -756,6 +776,7 @@ method void SyncRuntimeState()
     self.MineLevelDeep = self._T.profile.mineLevels.deep_mine
     self.MineLevelGem = self._T.profile.mineLevels.gem_mine
     self.MineUpgradeInfoJson = self:BuildMineUpgradeInfoJson()
+    self.ProgramLibraryJson = self._T.profile.programLibraryJson or "{}"
     self.MineTokens = self._T.profile.mineTokens
     self.Stone = self._T.profile.stone
     self.Iron = self._T.profile.iron
@@ -1013,10 +1034,22 @@ method void RestoreLastMineAndWorker()
         self.Entity.PlayerComponent:MoveToMapPosition(targetMine, Vector2(0, 0))
         self._T.restoreTimer = _TimerService:SetTimerOnce(function()
             self:RestoreCurrentWorkerState()
+            self:ScheduleAutoRun()
         end, 0.5)
         return
     end
     self:RestoreCurrentWorkerState()
+    self:ScheduleAutoRun()
+end
+
+@ExecSpace("ServerOnly")
+method void ScheduleAutoRun()
+    -- 재접속 자동 실행은 F7-A 복구·F6 초기화가 끝난 뒤에만 (F7-C §3). 이 메서드는
+    -- 로그인 경로(RestoreLastMineAndWorker)에서만 불린다 — 맵 전환은 수동 대기가
+    -- 우선이므로 MineTransitionService 경로에서는 부르지 않는다.
+    self._T.autoRunTimer = _TimerService:SetTimerOnce(function()
+        self:AutoRunSavedPrograms()
+    end, 1.0)
 end
 
 @ExecSpace("ServerOnly")
@@ -1403,6 +1436,374 @@ method string BuildMineUpgradeInfoJson()
         info.nextCostOre = self:GetMineUpgradeOreCost(level)
     end
     return _HttpService:JSONEncode(info)
+end
+
+@ExecSpace("ServerOnly")
+method table GetLibrary()
+    -- F7-C §1: 계정 공용 라이브러리. profile.programLibraryJson(문자열) 을 정규화해
+    -- 돌려준다 — 초기 3슬롯 / 최대 20, ProgramRecord 배열.
+    local decoded = self:DecodeJsonSafely(self._T.profile.programLibraryJson or "")
+    local library = { slots = 3, seq = 1, programs = {} }
+    if type(decoded) ~= "table" then return library end
+    if type(decoded.slots) == "number" then library.slots = math.max(3, math.min(20, math.floor(decoded.slots))) end
+    if type(decoded.seq) == "number" then library.seq = math.max(1, math.floor(decoded.seq)) end
+    if type(decoded.programs) == "table" then
+        for i = 1, #decoded.programs do
+            local record = decoded.programs[i]
+            if type(record) == "table" and type(record.programId) == "string" and record.programId ~= "" and type(record.name) == "string" then
+                table.insert(library.programs, {
+                    programId = record.programId,
+                    name = record.name,
+                    blockTree = record.blockTree,
+                    dataVersion = record.dataVersion or 1,
+                    updatedAt = record.updatedAt or "",
+                    lastValidation = record.lastValidation or "unknown",
+                })
+            end
+        end
+    end
+    return library
+end
+
+@ExecSpace("ServerOnly")
+method void SetLibrary(table library)
+    self._T.profile.programLibraryJson = _HttpService:JSONEncode(library)
+end
+
+@ExecSpace("ServerOnly")
+method string NowStamp()
+    -- 수정일 표시용 "YYYY-MM-DD HH:MM". 서버 UTC 기준.
+    local now = DateTime.UtcNow
+    return string.format("%04d-%02d-%02d %02d:%02d", now.Year, now.Month, now.Day, now.Hour, now.Minute)
+end
+
+@ExecSpace("ServerOnly")
+method integer GetProgramNameLength(string name)
+    -- UTF-8 문자 수. 한글 1글자 = 1로 센다.
+    local count = 0
+    for _ in string.gmatch(name, "[%z\1-\127\194-\244][\128-\191]*") do count = count + 1 end
+    return count
+end
+
+@ExecSpace("ServerOnly")
+method string ValidateProgramName(string name)
+    -- F7-C §1: 한글/영문/숫자 최대 12자. 위반 사유를 구체적으로 돌려준다 (docs/23 §6.2).
+    if name == nil or name == "" then return "이름을 입력해 주세요." end
+    local length = self:GetProgramNameLength(name)
+    if length > 12 then return "이름은 최대 12자입니다. (현재 " .. tostring(length) .. "자)" end
+    for ch in string.gmatch(name, "[%z\1-\127\194-\244][\128-\191]*") do
+        if #ch == 1 then
+            if not string.match(ch, "[%w]") then
+                return "이름에는 한글·영문·숫자만 쓸 수 있습니다. ('" .. ch .. "' 제외)"
+            end
+        end
+    end
+    return ""
+end
+
+@ExecSpace("ServerOnly")
+method integer GetNextSlotCost(integer currentSlots)
+    -- 4번째 슬롯부터 구매. 비용은 직전 비용의 1.2배 (C174). 기본 50골드는 제안값.
+    local cost = self.LibrarySlotBaseCost
+    for i = 4, currentSlots do cost = math.floor(cost * 1.2 + 0.5) end
+    return cost
+end
+
+@ExecSpace("ServerOnly")
+method any FindProgram(table library, string programId)
+    for i = 1, #library.programs do
+        if library.programs[i].programId == programId then return library.programs[i] end
+    end
+    return nil
+end
+
+@ExecSpace("ServerOnly")
+method string SuggestProgramFix(string validationError)
+    -- LIB_PROGRAM_INVALID (docs/23 §6.2): 자동 수정하지 않고 문제와 수정안을 제시한다.
+    if string.find(validationError, "block limit", 1, true) then return "블록 수가 30개를 넘습니다. 블록을 줄여 주세요." end
+    if string.find(validationError, "depth limit", 1, true) then return "제어 블록 중첩이 3단계를 넘습니다. 중첩을 줄여 주세요." end
+    if string.find(validationError, "infinite repeat", 1, true) then return "무한 반복은 최상위에 1개만 둘 수 있습니다." end
+    if string.find(validationError, "invalid repeat", 1, true) then return "반복 횟수는 2~99 사이 정수여야 합니다." end
+    return "블록 구성을 확인해 주세요. (" .. tostring(validationError) .. ")"
+end
+
+@ExecSpace("ServerOnly")
+method any GetProgramValidator()
+    -- 서버 최종 검증은 WorkerController 가 소유한다 (F7-C §1). 맵의 일꾼 1을 쓴다.
+    return self:GetWorkerByIndex(1)
+end
+
+@ExecSpace("ServerOnly")
+method boolean SaveProgramToLibrary(string name, string programJson)
+    if not self:CanWriteProfile() then return false end
+    local nameError = self:ValidateProgramName(name)
+    if nameError ~= "" then
+        self:SetTransactionMessage("저장할 수 없습니다: " .. nameError)
+        return false
+    end
+    local library = self:GetLibrary()
+    if #library.programs >= library.slots then
+        -- LIB_SLOT_FULL: 확장 비용을 함께 안내 (docs/23 §6.2).
+        if library.slots >= 20 then
+            self:SetTransactionMessage("슬롯이 가득 찼습니다. (최대 20개)")
+        else
+            self:SetTransactionMessage("슬롯이 가득 찼습니다. (" .. tostring(library.slots) .. "개) 다음 슬롯 비용: 골드 " .. tostring(self:GetNextSlotCost(library.slots)))
+        end
+        return false
+    end
+    local program = self:DecodeJsonSafely(programJson)
+    if type(program) ~= "table" or #program == 0 then
+        self:SetTransactionMessage("저장할 블록이 없습니다.")
+        return false
+    end
+    ---@type WorkerController
+    local validator = self:GetProgramValidator()
+    if validator == nil then
+        log_error("[AccountProfile] program validator missing (Worker01 not found)")
+        self:SetTransactionMessage("요청을 처리하지 못했습니다.")
+        return false
+    end
+    if not validator:ValidateProgram(program) then
+        self:SetTransactionMessage("저장할 수 없습니다: " .. self:SuggestProgramFix(validator:GetLastValidationError()))
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(self._T.profile)
+    local record = {
+        programId = "prog-" .. tostring(library.seq),
+        name = name,
+        blockTree = program,
+        dataVersion = 1,
+        updatedAt = self:NowStamp(),
+        lastValidation = "valid",
+    }
+    library.seq = library.seq + 1
+    table.insert(library.programs, record)
+    self:SetLibrary(library)
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("프로그램 저장에 실패해 되돌렸습니다. 다시 시도해 주세요.")
+        return false
+    end
+    self:SetTransactionMessage("프로그램 '" .. name .. "' 저장 완료 (" .. tostring(#library.programs) .. "/" .. tostring(library.slots) .. " 슬롯)")
+    log("[AccountProfile] program saved id=" .. record.programId .. " name=" .. name)
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RenameProgram(string programId, string newName)
+    if not self:CanWriteProfile() then return false end
+    local nameError = self:ValidateProgramName(newName)
+    if nameError ~= "" then
+        self:SetTransactionMessage("이름을 바꿀 수 없습니다: " .. nameError)
+        return false
+    end
+    local library = self:GetLibrary()
+    local record = self:FindProgram(library, programId)
+    if record == nil then
+        self:SetTransactionMessage("요청을 처리하지 못했습니다.")
+        log_error("[AccountProfile] rename target missing id=" .. tostring(programId))
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(self._T.profile)
+    record.name = newName
+    record.updatedAt = self:NowStamp()
+    self:SetLibrary(library)
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("이름 변경 저장에 실패해 되돌렸습니다. 다시 시도해 주세요.")
+        return false
+    end
+    self:SetTransactionMessage("이름을 '" .. newName .. "'(으)로 바꿨습니다.")
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean DuplicateProgram(string programId)
+    if not self:CanWriteProfile() then return false end
+    local library = self:GetLibrary()
+    if #library.programs >= library.slots then
+        if library.slots >= 20 then
+            self:SetTransactionMessage("슬롯이 가득 찼습니다. (최대 20개)")
+        else
+            self:SetTransactionMessage("슬롯이 가득 찼습니다. (" .. tostring(library.slots) .. "개) 다음 슬롯 비용: 골드 " .. tostring(self:GetNextSlotCost(library.slots)))
+        end
+        return false
+    end
+    local record = self:FindProgram(library, programId)
+    if record == nil then
+        self:SetTransactionMessage("요청을 처리하지 못했습니다.")
+        log_error("[AccountProfile] duplicate target missing id=" .. tostring(programId))
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(self._T.profile)
+    -- 이름 12자 제한 안에서 복제 표식을 붙인다.
+    local copyName = record.name
+    if self:GetProgramNameLength(copyName) > 10 then
+        local trimmed = ""
+        local count = 0
+        for ch in string.gmatch(copyName, "[%z\1-\127\194-\244][\128-\191]*") do
+            count = count + 1
+            if count > 10 then break end
+            trimmed = trimmed .. ch
+        end
+        copyName = trimmed
+    end
+    copyName = copyName .. "사본"
+    local copy = {
+        programId = "prog-" .. tostring(library.seq),
+        name = copyName,
+        blockTree = self:DecodeJsonSafely(_HttpService:JSONEncode(record.blockTree)),
+        dataVersion = record.dataVersion,
+        updatedAt = self:NowStamp(),
+        lastValidation = record.lastValidation,
+    }
+    library.seq = library.seq + 1
+    table.insert(library.programs, copy)
+    self:SetLibrary(library)
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("복제 저장에 실패해 되돌렸습니다. 다시 시도해 주세요.")
+        return false
+    end
+    self:SetTransactionMessage("'" .. record.name .. "'을(를) 복제했습니다.")
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean DeleteProgram(string programId)
+    if not self:CanWriteProfile() then return false end
+    local library = self:GetLibrary()
+    local removed = false
+    for i = #library.programs, 1, -1 do
+        if library.programs[i].programId == programId then
+            table.remove(library.programs, i)
+            removed = true
+        end
+    end
+    if not removed then
+        self:SetTransactionMessage("요청을 처리하지 못했습니다.")
+        log_error("[AccountProfile] delete target missing id=" .. tostring(programId))
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(self._T.profile)
+    self:SetLibrary(library)
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("삭제 저장에 실패해 되돌렸습니다. 다시 시도해 주세요.")
+        return false
+    end
+    self:SetTransactionMessage("프로그램을 삭제했습니다. (" .. tostring(#library.programs) .. "/" .. tostring(library.slots) .. " 슬롯)")
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean PurchaseLibrarySlot()
+    if not self:CanWriteProfile() then return false end
+    local library = self:GetLibrary()
+    if library.slots >= 20 then
+        self:SetTransactionMessage("슬롯은 최대 20개입니다. 비용은 차감되지 않았습니다.")
+        return false
+    end
+    local cost = self:GetNextSlotCost(library.slots)
+    local profile = self._T.profile
+    if profile.gold < cost then
+        -- LIB_SLOT_PURCHASE_FUNDS: 부족분을 숫자로 (docs/23 §4.1).
+        self:SetTransactionMessage("슬롯 구매 골드가 부족합니다. " .. self:DescribeShortfall(cost, 0, 0, 0, 0))
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(profile)
+    profile.gold = profile.gold - cost
+    library.slots = library.slots + 1
+    self:SetLibrary(library)
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("슬롯 구매 저장에 실패해 비용을 되돌렸습니다. 다시 시도해 주세요.")
+        return false
+    end
+    self:SetTransactionMessage("슬롯을 " .. tostring(library.slots) .. "개로 늘렸습니다. (골드 -" .. tostring(cost) .. ")")
+    log("[AccountProfile] library slot purchased slots=" .. tostring(library.slots) .. " cost=" .. tostring(cost))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method void RecordWorkerProgram(integer workerIndex, string programJson)
+    -- F7-C §1: 서버 최종 검증을 통과한 프로그램만 이 경로로 들어온다.
+    -- 즉시 저장하지 않고 자동 저장 배치에 맡긴다 (§3 "참조만 계정에 저장").
+    if not self:CanWriteProfile() then return end
+    local record = self._T.profile.workers[workerIndex]
+    if record == nil then return end
+    record.lastValidProgramJson = programJson
+    self:MarkProfileDirty()
+end
+
+@ExecSpace("ServerOnly")
+method void AutoRunSavedPrograms()
+    -- F7-C §3 재접속: 각 보유 일꾼의 마지막 유효 프로그램을 처음부터 자동 실행.
+    -- 무효/손상 프로그램은 실행하지 않고 Idle 유지 + 안내 (§4: 자동 수정 금지).
+    if not self:CanWriteProfile() then return end
+    local ranCount = 0
+    local invalidCount = 0
+    for workerIndex = 1, #self._T.profile.workers do
+        local record = self._T.profile.workers[workerIndex]
+        if record ~= nil and type(record.lastValidProgramJson) == "string" and record.lastValidProgramJson ~= "" then
+            ---@type WorkerController
+            local worker = self:GetWorkerByIndex(workerIndex)
+            if worker ~= nil then
+                local program = self:DecodeJsonSafely(record.lastValidProgramJson)
+                if type(program) == "table" and #program > 0 and worker:ValidateProgram(program) then
+                    worker:RunProgram(program)
+                    ranCount = ranCount + 1
+                else
+                    invalidCount = invalidCount + 1
+                    log_warning("[AccountProfile] saved program invalid worker=" .. tostring(workerIndex) .. " - staying Idle")
+                end
+            end
+        end
+    end
+    if invalidCount > 0 then
+        self:SetTransactionMessage("저장된 프로그램 " .. tostring(invalidCount) .. "개가 유효하지 않아 자동 실행하지 않았습니다. 편집기에서 내용을 확인해 주세요.")
+    end
+    log("[AccountProfile] auto-run complete ran=" .. tostring(ranCount) .. " invalid=" .. tostring(invalidCount))
+end
+
+@ExecSpace("Server")
+method boolean RequestSaveProgram(string name, string programJson)
+    return self:SaveProgramToLibrary(name, programJson)
+end
+
+@ExecSpace("Server")
+method boolean RequestRenameProgram(string programId, string newName)
+    return self:RenameProgram(programId, newName)
+end
+
+@ExecSpace("Server")
+method boolean RequestDuplicateProgram(string programId)
+    return self:DuplicateProgram(programId)
+end
+
+@ExecSpace("Server")
+method boolean RequestDeleteProgram(string programId)
+    return self:DeleteProgram(programId)
+end
+
+@ExecSpace("Server")
+method boolean RequestPurchaseLibrarySlot()
+    return self:PurchaseLibrarySlot()
 end
 
 @ExecSpace("Server")
