@@ -1,6 +1,6 @@
 # Claude 작업 인수인계
 
-> 기준일: 2026-08-18 4차 (T-12-B 설정 패널 구현 세션)
+> 기준일: 2026-08-18 5차 (T-14 블록 편집기 개편 세션)
 > 대상: Maple-Digger MSW 프로젝트를 이어 개발할 Claude 작업자
 > **세션별 상세 기록은 [`Archive/As-built.md`](../Archive/As-built.md)에 있다.** 이 문서는 "다음에 무엇을 할지"에 집중하며, 최근 1개 세션 요약만 유지한다.
 
@@ -8,7 +8,15 @@
 
 ### 0.0 최근 세션 요약 — 가장 최신
 
-**진행 중인 브랜치: `feat/t12b-settings` — T-12-B 구현 완료, 오너 PR 병합 대기.** 다음 착수 후보는 **T-06(외형·도감·가챠, 마지막 미착수 기능 티켓)** 이다.
+**진행 중인 브랜치: `feat/t14-block-strip` — T-14 구현·검증 완료, PR #14 병합 대기.** T-12-B 는 PR #13 으로 병합됐다. 다음 착수 후보는 **T-06(외형·도감·가챠, 마지막 미착수 기능 티켓 — docs/15 상세화 완료, U1~U7 확정 대기)** 이다.
+
+**2026-08-18 5차 세션 (T-14 블록 편집기 개편) 핵심 요약**
+- **자연어 입력 MVP 제거 (오너 결정)**: 편집기의 라벨·입력창·변환 버튼 + `BlockProgramController` 파서 9메서드 + 튜토리얼 §9.3 완료 후 힌트 전면 삭제 (docs/03 §6·§8 폐지, docs/19 개정). 부활은 git 이력.
+- **블록 스트립 그리드**: `ProgramText` 줄글 → `ProgramGrid` 56×56 셀 9×4=36칸, "칸 하나 = 블록 하나"(평탄 토큰, 열린 제어는 `]` 칸 없음), 문자+계열 틴트, 초과 `+N` 접기. 셀 배경은 미사용이던 `command-tile-slate-blank` 채택 (docs/26 §5.2). **칸 클릭 = 그 블록 삭제**(제어는 몸통 통째, 열림 스택 동기 정리).
+- **첫 빌드 로그가 결함 1건을 잡았다**: `ProgramLibraryController.RefreshDetail` 이 삭제한 `RenderList` 를 쓰고 있었다 → 라이브러리 미리보기 전용으로 복원. **렌더 헬퍼도 삭제 전 grep 전수** (docs/16 §39).
+- 검증 T14-1~8 전량 통과 (docs/16 §39). **엔티티 제거는 재임포트에 반영된다는 실측**(주의사항 10은 컴포넌트 제거 얘기 — ghosts=0).
+- 같은 날 앞서: docs/27(UI 파츠 2차 목록) 신설 · 희귀도 뱃지 5종 AI 제작·업로드(docs/26 §5.9, 채택 판단 U6 대기) · docs/15(T-06) 상세화(U1~U7) · 오너 생성 A급 파츠 원본 4종 도착(가공·업로드 대기).
+- ⚠ 미커밋 잔여물: `Global/defaultuserenterleavelogic.logic`(Maker 생성, 이전부터) · `tools/ui_parts_prep.cjs`·`tools/ui_parts_ruids.json` 수정분(오너 편집 추정 — T-14 와 무관해 커밋에서 제외).
 
 **2026-08-18 4차 세션 (T-12-B 설정 패널) 핵심 요약**
 - 신규: `ui/SettingsUI.ui`(**GroupOrder 6 삽입 — Popup 7·Toast 8·Tutorial 9·Recovery 10, 밀집 0..10**) · `Mine/SettingsPanelController.mlua`(클라 `@Logic` — 슬라이더 표시·입력 전달만) · 슬라이더 파츠 2종 업로드(`docs/26` §5.3). 진입 버튼은 우측 스택 3번째 `(-260,-602)` (U4 확정 — `MineHUD.ui` 무변경, 버튼은 `SettingsUI.ui` 루트).

@@ -304,6 +304,40 @@ method void CollectControls(table node, table out)
 end
 
 @ExecSpace("ClientOnly")
+method string RenderList(table list, integer depth)
+    -- ⚠️ 편집기 표시는 T-14 로 스트립 그리드가 대체했지만, **라이브러리 상세
+    -- 미리보기(ProgramLibraryController.RefreshDetail)가 이 텍스트 렌더를 쓴다.**
+    -- 지우면 라이브러리 상세가 nil 호출로 죽는다 — T-14 첫 빌드 로그가 실제로
+    -- 잡았던 결함이다. 편집기 쪽에서는 더 이상 부르지 않는다.
+    local rendered = ""
+    local indent = string.rep("  ", depth)
+    for i = 1, #list do
+        local command = list[i]
+        if command.type == "move" then
+            rendered = rendered .. indent .. command.dir .. "\n"
+        elseif command.type == "mine" then
+            rendered = rendered .. indent .. "M\n"
+        elseif command.type == "load" then
+            rendered = rendered .. indent .. "L\n"
+        elseif command.type == "unload" then
+            rendered = rendered .. indent .. "U\n"
+        elseif command.type == "repeat" then
+            local countLabel = tostring(command.count)
+            if command.count == "inf" then countLabel = "∞" end
+            rendered = rendered .. indent .. "R×" .. countLabel .. " [\n"
+            rendered = rendered .. self:RenderList(command.body, depth + 1)
+            rendered = rendered .. indent .. "]\n"
+        elseif command.type == "if" then
+            local conditionLabel = self:ConditionLabel(command.cond)
+            rendered = rendered .. indent .. "IF " .. conditionLabel .. " [\n"
+            rendered = rendered .. self:RenderList(command.body, depth + 1)
+            rendered = rendered .. indent .. "]\n"
+        end
+    end
+    return rendered
+end
+
+@ExecSpace("ClientOnly")
 method void OnRunClicked()
     -- Closes open blocks and sends the reviewed program to the server worker.
     if #self._T.program == 0 then
