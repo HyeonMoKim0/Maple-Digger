@@ -68,6 +68,16 @@
 | `maple-digger-icon-special-vein.png` | Special vein / rare collection marker |
 | `maple-digger-library-slot-locked.png` | Locked or unpurchased library slot |
 
+## 2차 제작 파츠 (docs/27, 2026-08-18)
+
+| 파일 | 용도 |
+| --- | --- |
+| `maple-digger-rarity-badge-common.png` | 희귀도 뱃지 — 일반 (핍 1, AI 직접 제작) |
+| `maple-digger-rarity-badge-uncommon.png` | 희귀도 뱃지 — 고급 (핍 2) |
+| `maple-digger-rarity-badge-rare.png` | 희귀도 뱃지 — 희귀 (핍 3) |
+| `maple-digger-rarity-badge-epic.png` | 희귀도 뱃지 — 영웅 (핍 4) |
+| `maple-digger-rarity-badge-legendary.png` | 희귀도 뱃지 — 전설 (핍 5) |
+
 ## 적용 인수인계 (2026-08-13)
 
 ### 1. 이 폴더의 PNG를 사용하는 방식
