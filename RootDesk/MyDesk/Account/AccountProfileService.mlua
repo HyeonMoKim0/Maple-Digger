@@ -1947,6 +1947,13 @@ method boolean RequestTutorialReplay(boolean fromStart)
 end
 
 @ExecSpace("Server")
+method boolean RequestTutorialFundsCheck()
+    -- T-07: 8단계 골드 보정 (2026-08-18 오너 결정). 클라이언트가 8단계 진입 시
+    -- 부른다 — 판정·지급은 전부 서버(TutorialService) 몫이다.
+    return _TutorialService:EnsureWorkerPurchaseFunds(self.Entity)
+end
+
+@ExecSpace("Server")
 method boolean RequestTutorialWorkerReset(integer cellX, integer cellY, string hand, integer handCount, integer cartStone)
     -- T-07: 실패 되돌리기 — 일꾼 1을 단계 시작 상태로 (F7-E §5.2).
     return _TutorialService:RequestWorkerReset(self.Entity, cellX, cellY, hand, handCount, cartStone)

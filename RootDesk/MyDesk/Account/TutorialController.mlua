@@ -272,6 +272,12 @@ method void EnterStep(integer step)
             profile:RequestTutorialWorkerReset(config.reset.cellX, config.reset.cellY, config.reset.hand, config.reset.handCount, config.reset.cart)
         end
     end
+    if step == 8 then
+        -- 8단계 골드 보정 (2026-08-18 오너 결정): 판매 결과가 갈려 골드가 10
+        -- 미만이면 구매가 막힌다 — 서버가 인하가까지 채운다 (재개 경로 포함).
+        local fundsProfile = self:GetProfile()
+        if fundsProfile ~= nil then fundsProfile:RequestTutorialFundsCheck() end
+    end
     self:ApplyStepLocks(config.allowed)
     self:ShowTooltip(step, "")
     log("[Tutorial] step enter step=" .. tostring(step) .. " replay=" .. tostring(self._T.replayActive))
