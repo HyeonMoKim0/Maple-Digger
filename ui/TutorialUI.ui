@@ -24,7 +24,7 @@
           "enable": true,
           "visible": true,
           "localize": true,
-          "displayOrder": 8,
+          "displayOrder": 9,
           "pathConstraints": "//",
           "revision": 0,
           "origin": {
@@ -453,7 +453,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "d3ffbf345575474aa06d0e4a2ad96447"
               },
               "LocalPosition": {
                 "x": 0,
@@ -471,10 +471,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.08,
-                "g": 0.09,
-                "b": 0.12,
-                "a": 0.96
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
