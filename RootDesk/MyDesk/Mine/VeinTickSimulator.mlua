@@ -21,9 +21,11 @@ property integer LayoutVersion = 2
 property integer SpecialVeinSpawnTicks = 750
 property integer SpecialVeinMaxActive = 3
 property integer SpecialVeinSpawnBatch = 2
-property integer RareDropChancePercent = 1
-property integer SpecialRareDropChancePercent = 5
-property integer RareDropTestPercent = -1
+-- F7-B §5.3: 기준 단위는 만분율(basis point)이다. 정수 백분율로는 1% 에 +10% 를
+-- 적용한 1.1%(110bp)를 표현할 수 없어 승격했다. 판정도 1..10000 을 쓴다.
+property integer RareDropChanceBasisPoint = 100
+property integer SpecialRareDropChanceBasisPoint = 500
+property integer RareDropTestBasisPoint = -1
 -- These tables are map-authored configuration injection points. They remain
 -- empty in the existing prototype map, where the explicit fallback layout
 -- below preserves the validated beginner-mine route.
@@ -78,6 +80,12 @@ property integer ActiveSpecialCount = 0
 method void OnBeginPlay()
     -- Initializes the map-scoped vein ledger, shared depot, and worker registry.
     self._T.tickAccumulator = 0
+    -- F7-B §5.5: 맵 강화 4효과 캐시. 매 틱 프로필을 조회하지 않는다 — 맵 진입 시와
+    -- 강화 성공 시 AccountProfileService:PushMineBonusesToSimulator 가 갱신한다.
+    self._T.bonusYield = 0.0
+    self._T.bonusRecovery = 0.0
+    self._T.bonusRareChance = 0.0
+    self._T.bonusSpecialSpawn = 0.0
     self._T.workers = {}
     self._T.markers = {}
     self._T.markerList = {}
@@ -128,8 +136,9 @@ end
 method void AdvanceTick()
     -- Applies one recovery step to every authored vein before workers act.
     local recoveredCount = 0
+    local recoveryMultiplier = self:GetRecoveryMultiplier()
     for key, vein in pairs(self.VeinState) do
-        vein.recoverElapsed = vein.recoverElapsed + self:GetRareIronRecoveryMultiplier()
+        vein.recoverElapsed = vein.recoverElapsed + recoveryMultiplier
         if vein.recoverElapsed >= vein.recoverTicks then
             vein.recoverElapsed = 0
             if vein.stage < self.MaxReserveStage then
@@ -144,9 +153,34 @@ method void AdvanceTick()
         log("[VeinTick] tick " .. self.CurrentTick .. " - recovered cells=" .. recoveredCount)
     end
 
-    if self.SpecialVeinSpawnTicks > 0 and self.CurrentTick % self.SpecialVeinSpawnTicks == 0 then
+    local effectiveSpawnTicks = self:GetEffectiveSpecialSpawnTicks()
+    if effectiveSpawnTicks > 0 and self.CurrentTick % effectiveSpawnTicks == 0 then
         self:TrySpawnSpecialVeins()
     end
+end
+
+@ExecSpace("ServerOnly")
+method void ApplyMineBonuses(number yieldBonus, number recoveryBonus, number rareChanceBonus, number specialSpawnBonus)
+    -- F7-B §5.5: 프로필 서비스가 맵 진입·강화 성공 시에만 부르는 캐시 갱신 지점.
+    self._T.bonusYield = math.max(0.0, yieldBonus)
+    self._T.bonusRecovery = math.max(0.0, recoveryBonus)
+    self._T.bonusRareChance = math.max(0.0, rareChanceBonus)
+    self._T.bonusSpecialSpawn = math.max(0.0, specialSpawnBonus)
+    log("[VeinTick] mine bonuses cached mineId=" .. self.MineId
+        .. " yield=" .. tostring(self._T.bonusYield)
+        .. " recovery=" .. tostring(self._T.bonusRecovery)
+        .. " rareChance=" .. tostring(self._T.bonusRareChance)
+        .. " specialSpawn=" .. tostring(self._T.bonusSpecialSpawn)
+        .. " effectiveSpawnTicks=" .. tostring(self:GetEffectiveSpecialSpawnTicks()))
+end
+
+@ExecSpace("ServerOnly")
+method integer GetEffectiveSpecialSpawnTicks()
+    -- F7-B §5.3 (C200): max(60, floor(기본 / (1 + specialSpawn 보너스))). 하한 60틱.
+    if self.SpecialVeinSpawnTicks <= 0 then return 0 end
+    local bonus = self._T.bonusSpecialSpawn or 0.0
+    if bonus <= 0 then return self.SpecialVeinSpawnTicks end
+    return math.max(60, math.floor(self.SpecialVeinSpawnTicks / (1 + bonus)))
 end
 
 @ExecSpace("ServerOnly")
@@ -611,26 +645,46 @@ method boolean HasOre(integer cellX, integer cellY)
 end
 
 @ExecSpace("ServerOnly")
-method number GetRareIronRecoveryMultiplier()
-    -- This MVP has one active player per mine map. The passive changes recovery
-    -- speed continuously, avoiding integer-tick rounding that would erase early levels.
-    if self.Entity.MapComponent == nil then return 1.0 end
+method number GetRecoveryMultiplier()
+    -- This MVP has one active player per mine map. The rare-iron passive changes
+    -- recovery speed continuously; the map `recovery` bonus is ADDED, not
+    -- multiplied — C198 가산 합성: 1.0 + 희귀 철 + 맵 recovery 보너스 (최대 1.60).
+    local mapBonus = self._T.bonusRecovery or 0.0
+    if self.Entity.MapComponent == nil then return 1.0 + mapBonus end
     local users = _UserService:GetUsersByMapComponent(self.Entity.MapComponent)
-    if users == nil or #users ~= 1 then return 1.0 end
+    if users == nil or #users ~= 1 then return 1.0 + mapBonus end
     local profile = users[1]:GetComponent("script.AccountProfileService")
-    if profile == nil or not profile.IsLoaded then return 1.0 end
-    return 1.0 + profile.RareIronCollectionLevel * 0.03
+    if profile == nil or not profile.IsLoaded then return 1.0 + mapBonus end
+    return 1.0 + profile.RareIronCollectionLevel * 0.03 + mapBonus
 end
 
 @ExecSpace("ServerOnly")
 method boolean RollRareDrop(boolean isSpecial)
-    local chance = self.RareDropChancePercent
-    if isSpecial then chance = self.SpecialRareDropChancePercent end
-    if self.RareDropTestPercent >= 0 then chance = self.RareDropTestPercent end
-    chance = math.max(0, math.min(100, chance))
-    if chance <= 0 then return false end
-    if chance >= 100 then return true end
-    return _UtilLogic:RandomIntegerRange(1, 100) <= chance
+    -- F7-B §5.3: 만분율 판정. 테스트 훅이 켜져 있으면 그 값을 최종값으로 쓴다
+    -- (보너스 미적용 — 결정적 테스트를 위해).
+    local bp = self.RareDropChanceBasisPoint
+    if isSpecial then bp = self.SpecialRareDropChanceBasisPoint end
+    if self.RareDropTestBasisPoint >= 0 then
+        bp = self.RareDropTestBasisPoint
+    else
+        bp = math.floor(bp * (1 + (self._T.bonusRareChance or 0.0)))
+    end
+    bp = math.max(0, math.min(10000, bp))
+    if bp <= 0 then return false end
+    if bp >= 10000 then return true end
+    return _UtilLogic:RandomIntegerRange(1, 10000) <= bp
+end
+
+@ExecSpace("ServerOnly")
+method integer RollYieldCount(string deliveredOre)
+    -- F7-B §5.3 (C199): 확률(yield 보너스)로 같은 광물 1개 추가 지급, 최대 2개.
+    -- 희귀로 승격된 채굴에는 적용하지 않는다 — 적용하면 희귀 획득량이 실질 2배가 된다.
+    if deliveredOre == "rare_stone" or deliveredOre == "rare_iron" or deliveredOre == "rare_gold" then return 1 end
+    local bonus = self._T.bonusYield or 0.0
+    if bonus <= 0 then return 1 end
+    local bp = math.max(0, math.min(10000, math.floor(bonus * 10000 + 0.5)))
+    if _UtilLogic:RandomIntegerRange(1, 10000) <= bp then return 2 end
+    return 1
 end
 
 @ExecSpace("ServerOnly")

@@ -29,6 +29,10 @@ property string ProgramState = "Idle"
 @Sync
 property string PendingOre = ""
 
+-- F7-B §5.3: 손 기본 1칸. `yield` 추가 지급이 발동한 경우에 한해 같은 광물 최대 2개.
+@Sync
+property integer PendingOreCount = 0
+
 @Sync
 property integer CartCount = 0
 
@@ -69,6 +73,7 @@ method void OnBeginPlay()
     self.CommandQueue = {}
     self.ProgramState = "Idle"
     self.PendingOre = ""
+    self.PendingOreCount = 0
     self.CartCount = 0
     self.Cart = { stone = 0 }
 
@@ -155,7 +160,7 @@ method void StopForMapTransition()
 end
 
 @ExecSpace("ServerOnly")
-method void ConfigureFromProfile(integer workerIndex, integer cartCapacity, table cart, string pendingOre)
+method void ConfigureFromProfile(integer workerIndex, integer cartCapacity, table cart, string pendingOre, integer pendingOreCount)
     -- Dynamic workers are spawned from one shared model. Rebind their stable index
     -- and authored start cell only after the spawn lifecycle has completed.
     self:ResetExecution()
@@ -181,7 +186,12 @@ method void ConfigureFromProfile(integer workerIndex, integer cartCapacity, tabl
         log_warning(self:WorkerTag() .. " profile cart exceeded capacity and was cleared")
     end
     self.PendingOre = ""
-    if pendingOre == "stone" or pendingOre == "iron" or pendingOre == "gold" or pendingOre == "rare_stone" or pendingOre == "rare_iron" or pendingOre == "rare_gold" then self.PendingOre = pendingOre end
+    self.PendingOreCount = 0
+    if pendingOre == "stone" or pendingOre == "iron" or pendingOre == "gold" or pendingOre == "rare_stone" or pendingOre == "rare_iron" or pendingOre == "rare_gold" then
+        self.PendingOre = pendingOre
+        -- v7 기록(개수 없음)은 1개로 복구한다 (F7-B §5.7 · B18은 2개 복구).
+        self.PendingOreCount = math.max(1, math.min(2, math.floor(pendingOreCount or 1)))
+    end
     if self._T.mineState ~= nil then
         local configuredStart = self._T.mineState:GetWorkerStart(workerIndex)
         if configuredStart ~= nil then
@@ -192,7 +202,7 @@ method void ConfigureFromProfile(integer workerIndex, integer cartCapacity, tabl
             self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
         end
     end
-    log(self:WorkerTag() .. " configured cart=" .. tostring(self.CartCount) .. "/" .. tostring(self.CartCapacity) .. " hand=" .. self.PendingOre)
+    log(self:WorkerTag() .. " configured cart=" .. tostring(self.CartCount) .. "/" .. tostring(self.CartCapacity) .. " hand=" .. self.PendingOre .. " handCount=" .. tostring(self.PendingOreCount))
 end
 
 @ExecSpace("ServerOnly")
@@ -477,32 +487,40 @@ method void DoMine()
         return
     end
     self.PendingOre = oreType
+    -- F7-B §5.3 yield: 희귀 승격이 아닐 때만 확률로 같은 광물 1개 추가 (최대 2개).
+    self.PendingOreCount = self._T.mineState:RollYieldCount(oreType)
     self:EmitVisualEvent("mine_success", self._T.cellX, self._T.cellY)
     local stage = self._T.mineState:GetReserveStage(self._T.cellX, self._T.cellY)
-    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " -> hand at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
+    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " x" .. tostring(self.PendingOreCount) .. " -> hand at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
     if self._T.mineState.AutoLoadOnMine then self:DoLoad() end
 end
 
 @ExecSpace("ServerOnly")
 method void DoLoad()
-    -- Moves the hand item into this worker's cart without losing it on failure.
-    if self.PendingOre == "" then
+    -- Moves the hand stack into this worker's cart without losing it on failure.
+    -- F7-B §5.3: 손의 전량을 옮기되, 수레 여유가 1칸뿐이면 1개만 싣고 나머지는 손에 남긴다.
+    if self.PendingOre == "" or self.PendingOreCount <= 0 then
         log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand empty")
         return
     end
-    local loadCount = self._T.mineState.MineYield
-    if self.CartCount + loadCount > self.CartCapacity then
+    local space = self.CartCapacity - self.CartCount
+    if space <= 0 then
         log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - cart full count=" .. self.CartCount)
         return
     end
+    local moved = math.min(space, self.PendingOreCount)
     local oreType = self.PendingOre
     local oreCount = self.Cart[oreType]
     if oreCount == nil then oreCount = 0 end
-    self.Cart[oreType] = oreCount + loadCount
-    self.CartCount = self.CartCount + loadCount
-    self.PendingOre = ""
+    self.Cart[oreType] = oreCount + moved
+    self.CartCount = self.CartCount + moved
+    self.PendingOreCount = self.PendingOreCount - moved
+    if self.PendingOreCount <= 0 then
+        self.PendingOre = ""
+        self.PendingOreCount = 0
+    end
     self:EmitVisualEvent("load_success", self._T.cellX, self._T.cellY)
-    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - load " .. oreType .. " cart=" .. self.CartCount .. "/" .. self.CartCapacity)
+    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - load " .. oreType .. " x" .. tostring(moved) .. " cart=" .. self.CartCount .. "/" .. self.CartCapacity .. " handLeft=" .. tostring(self.PendingOreCount))
 end
 
 @ExecSpace("ServerOnly")
@@ -547,6 +565,7 @@ end
 method void ResetInventory()
     -- Session-local reset used by restart flows and deterministic verification.
     self.PendingOre = ""
+    self.PendingOreCount = 0
     self.Cart = { stone = 0, rare_stone = 0 }
     self.CartCount = 0
 end

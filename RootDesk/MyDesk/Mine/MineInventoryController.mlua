@@ -36,9 +36,7 @@ property Entity inventoryPanel = "3434f74e-d21b-4493-a1f7-9406a7796a4c"
 
 -- H2/H7 are constants until the v8 profile adds mineLevels and Crystal
 -- (docs/08 §5.1 "미구현 필드의 처리", docs/16 §10.2 D-6).
-property integer MineLevelPlaceholder = 0
 property integer MineLevelMax = 10
-property integer CrystalPlaceholder = 0
 
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
@@ -91,7 +89,10 @@ method void RefreshUI(boolean force)
     state = state .. ":" .. tostring(mineState.MineId) .. ":" .. tostring(profile.LastMineId)
     state = state .. ":" .. tostring(profile.Stone) .. ":" .. tostring(profile.Iron) .. ":" .. tostring(profile.GoldOre)
     state = state .. ":" .. tostring(profile.Gold) .. ":" .. tostring(profile.MineTokens)
-    state = state .. ":" .. tostring(worker.PendingOre) .. ":" .. tostring(worker.CartCount) .. ":" .. tostring(worker.CartCapacity)
+    state = state .. ":" .. tostring(worker.PendingOre) .. ":" .. tostring(worker.PendingOreCount) .. ":" .. tostring(worker.CartCount) .. ":" .. tostring(worker.CartCapacity)
+    -- D-6 해소 (T-02): 맵 강화 레벨·크리스탈이 상수에서 @Sync 로 바뀌었다. 키에서
+    -- 빠지면 강화해도 화면이 갱신되지 않는다 (무증상 실패).
+    state = state .. ":" .. tostring(self:GetMineLevel(mineState, profile)) .. ":" .. tostring(profile.Crystal)
     state = state .. ":" .. tostring(mineState.DepotStone) .. ":" .. tostring(mineState.DepotIron) .. ":" .. tostring(mineState.DepotGold)
     state = state .. ":" .. workerStates
     -- 특별 광맥 현재 상태 + 최근 출현 위치. 키에서 빠지면 값이 바뀌어도 화면이
@@ -107,12 +108,12 @@ method void RefreshUI(boolean force)
     if not force and state == self._T.lastState then return end
     self._T.lastState = state
     if force then
-        log("[MineInventoryUI] fields mine=" .. self:GetMineDisplayName(mineState, profile) .. " lv=" .. tostring(self.MineLevelPlaceholder) .. " storage=" .. tostring(profile.Stone) .. "/" .. tostring(profile.Iron) .. "/" .. tostring(profile.GoldOre) .. " gold=" .. tostring(profile.Gold) .. " crystal=" .. tostring(self.CrystalPlaceholder) .. " token=" .. tostring(profile.MineTokens) .. " worker=" .. tostring(workerIndex) .. " cart=" .. tostring(worker.CartCount) .. "/" .. tostring(worker.CartCapacity) .. " states=" .. workerStates)
+        log("[MineInventoryUI] fields mine=" .. self:GetMineDisplayName(mineState, profile) .. " lv=" .. tostring(self:GetMineLevel(mineState, profile)) .. " storage=" .. tostring(profile.Stone) .. "/" .. tostring(profile.Iron) .. "/" .. tostring(profile.GoldOre) .. " gold=" .. tostring(profile.Gold) .. " crystal=" .. tostring(profile.Crystal) .. " token=" .. tostring(profile.MineTokens) .. " worker=" .. tostring(workerIndex) .. " cart=" .. tostring(worker.CartCount) .. "/" .. tostring(worker.CartCapacity) .. " states=" .. workerStates)
     end
 
     -- H1 + H2: current mine and its permanent upgrade level.
     if self.mineText ~= nil then
-        self.mineText.Text = self:GetMineDisplayName(mineState, profile) .. "   Lv." .. tostring(self.MineLevelPlaceholder) .. " / " .. tostring(self.MineLevelMax)
+        self.mineText.Text = self:GetMineDisplayName(mineState, profile) .. "   Lv." .. tostring(self:GetMineLevel(mineState, profile)) .. " / " .. tostring(self.MineLevelMax)
     end
     -- H3~H5: account storage ledger, NOT the session depot total.
     if self.storageText ~= nil then
@@ -120,12 +121,15 @@ method void RefreshUI(boolean force)
     end
     -- H6~H8: currencies.
     if self.currencyText ~= nil then
-        self.currencyText.Text = "골드 " .. tostring(profile.Gold) .. "  크리스탈 " .. tostring(self.CrystalPlaceholder) .. "  토큰 " .. tostring(profile.MineTokens)
+        self.currencyText.Text = "골드 " .. tostring(profile.Gold) .. "  크리스탈 " .. tostring(profile.Crystal) .. "  토큰 " .. tostring(profile.MineTokens)
     end
     -- H9: selected worker's hand and cart.
     if self.handText ~= nil then
         if worker.PendingOre == "" then
             self.handText.Text = "일꾼 " .. tostring(workerIndex) .. " 손: 비어 있음"
+        elseif worker.PendingOreCount > 1 then
+            -- F7-B §5.3 yield: 손에 같은 광물 2개가 들어올 수 있다.
+            self.handText.Text = "일꾼 " .. tostring(workerIndex) .. " 손: " .. self:OreLabel(worker.PendingOre) .. " x" .. tostring(worker.PendingOreCount)
         else
             self.handText.Text = "일꾼 " .. tostring(workerIndex) .. " 손: " .. self:OreLabel(worker.PendingOre)
         end
@@ -198,6 +202,17 @@ method string GetMineDisplayName(VeinTickSimulator mineState, AccountProfileServ
     if mineId == "deep_mine" then return "깊은 광산" end
     if mineId == "gem_mine" then return "보석 광산" end
     return tostring(mineId)
+end
+
+@ExecSpace("ClientOnly")
+method integer GetMineLevel(VeinTickSimulator mineState, AccountProfileService profile)
+    -- D-6 해소 (T-02): 현재 광산의 맵 강화 레벨. 서버 @Sync 3종에서 고른다 (재계산 금지).
+    local mineId = ""
+    if mineState ~= nil then mineId = mineState.MineId end
+    if mineId == "" or mineId == nil then mineId = profile.LastMineId end
+    if mineId == "deep_mine" then return profile.MineLevelDeep end
+    if mineId == "gem_mine" then return profile.MineLevelGem end
+    return profile.MineLevelBeginner
 end
 
 @ExecSpace("ClientOnly")
