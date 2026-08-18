@@ -28,9 +28,13 @@ property TextGUIRendererComponent repeatButtonText = "b18e993e-4ec7-4ef7-8eb4-34
 property TextGUIRendererComponent repeatCountButtonText = "792785ab-3d61-4a96-8ba1-ab1892c4785e"
 property TextGUIRendererComponent conditionButtonText = "b8ebfcf3-7135-4eca-9e05-6884c867e13a"
 property TextGUIRendererComponent runButtonText = "c8de2465-2f5f-42c7-8fe0-e5511682bdec"
-property TextGUIRendererComponent programText = "dcd7e02a-48e4-4350-bacd-b571ee0710f3"
-property TextGUIRendererInputComponent chatInput = "82c35bd9-3fb9-41ea-a73e-e5f5d49ddfba"
-property ButtonComponent btnConvert = "bf0948e9-fc7b-41ef-80f8-fdc6925bd2b2"
+-- T-14 (docs/28): 줄글 표시(ProgramText)와 자연어 입력(ChatInput·변환)은 제거됐다.
+-- 프로그램은 ProgramGrid 의 셀 36칸에 "칸 하나 = 블록 하나"로 표시하고,
+-- ProgramLabel 이 빈/채움 상태 안내를 겸한다.
+property TextGUIRendererComponent programLabelText = "0aa4c8fa-c647-466d-96f2-990c4bc0e2f9"
+property Entity programGrid = "af4877f2-c4d8-451a-a15b-5b8cb1670cce"
+-- 그리드 셀 수 (ui/BlockProgramUI.ui 의 Cell01..CellNN 과 일치해야 한다).
+property integer StripCellCount = 36
 property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
 property ButtonComponent btnWorker1 = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
 -- 워커 칩 5개는 레거시 TextComponent 를 쓴다. TextGUIRendererComponent 로
@@ -86,8 +90,7 @@ method void OnBeginPlay()
     self._T.handlers.run = self.btnRun.Entity:ConnectEvent(ButtonClickEvent, self.OnRunClicked)
     self._T.handlers.stop = self.btnStop.Entity:ConnectEvent(ButtonClickEvent, self.OnStopClicked)
     self._T.handlers.clear = self.btnClear.Entity:ConnectEvent(ButtonClickEvent, self.OnClearClicked)
-    self._T.handlers.convert = self.btnConvert.Entity:ConnectEvent(ButtonClickEvent, self.OnConvertClicked)
-    self._T.handlers.submit = self.chatInput.Entity:ConnectEvent(TextInputSubmitEvent, function() self:OnConvertClicked() end)
+    self:ConnectStripCells()
     if self.btnWorker1 ~= nil then
         self._T.handlers.worker1 = self.btnWorker1.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker1Clicked)
     end
@@ -99,13 +102,12 @@ method void OnBeginPlay()
         self._T.handlers.toggle = self.btnToggle.Entity:ConnectEvent(ButtonClickEvent, self.OnToggleClicked)
     end
     self:RefreshToggleLabel()
-    self.chatInput.Text = ""
     self.SelectedWorkerIndex = 1
     self:RefreshWorkerButtons()
     self._T.lastOwnedCount = self:GetOwnedWorkerCount()
     self:RefreshDisplay()
-    self:SetFeedback("문장을 입력하고 변환을 눌러 주세요.")
-    log("[BlockProgram] MVP UI ready - Worker01 target wired")
+    self:SetFeedback("블록을 눌러 프로그램을 만들어 주세요.")
+    log("[BlockProgram] MVP UI ready - strip cells=" .. tostring(#self._T.cells))
 end
 
 @ExecSpace("ClientOnly")
@@ -126,13 +128,213 @@ method void AddCommand(table command, string label)
 end
 
 @ExecSpace("ClientOnly")
-method void RefreshDisplay()
-    -- Renders the nested program into the review text area.
-    if #self._T.program == 0 then
-        self.programText.Text = "(비어 있음 - 블록을 눌러 추가)"
-    else
-        self.programText.Text = self:RenderList(self._T.program, 0)
+method void ConnectStripCells()
+    -- T-14: ProgramGrid 의 Cell01..CellNN 을 이름으로 찾아 클릭 핸들러를 건다.
+    -- 셀 36개를 property 로 하나씩 바인딩하는 대신 컨테이너 하나만 바인딩하고
+    -- 이름 규칙으로 순회한다 — 이름이 곧 표시 순서다.
+    self._T.cells = {}
+    self._T.cellHandlers = {}
+    if self.programGrid == nil then return end
+    for i = 1, self.StripCellCount do
+        local suffix = tostring(i)
+        if i < 10 then suffix = "0" .. suffix end
+        local cellEntity = self.programGrid:GetChildByName("Cell" .. suffix, false)
+        if cellEntity == nil then break end
+        self._T.cells[i] = cellEntity
+        local cellIndex = i
+        self._T.cellHandlers[i] = cellEntity:ConnectEvent(ButtonClickEvent, function() self:OnStripCellClicked(cellIndex) end)
     end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshDisplay()
+    -- T-14 (docs/28 §2): 프로그램을 평탄 토큰 스트립으로 펴서 "칸 하나 = 블록
+    -- 하나"로 그린다. 중첩은 괄호 칸(반복/IF ~ ])이 말하고 들여쓰기는 없다.
+    self._T.strip = {}
+    self:FlattenList(self._T.program)
+    local total = #self._T.strip
+    if self.programLabelText ~= nil then
+        if total == 0 then
+            self.programLabelText.Text = "프로그램 (비어 있음 - 블록을 눌러 추가)"
+        else
+            self.programLabelText.Text = "프로그램 (칸을 누르면 그 블록 삭제)"
+        end
+    end
+    local cellCount = #self._T.cells
+    for i = 1, cellCount do
+        local cell = self._T.cells[i]
+        if i > total then
+            cell.Enable = false
+        elseif i == cellCount and total > cellCount then
+            -- 초과 접기: 마지막 칸을 +N 으로 표시. 접힌 블록은 클릭 삭제 불가 —
+            -- 앞쪽을 지워 펼친 뒤 지운다.
+            self._T.strip[i] = { kind = "overflow" }
+            self:PaintCell(cell, "+" .. tostring(total - cellCount + 1), "overflow")
+        else
+            local token = self._T.strip[i]
+            self:PaintCell(cell, token.label, token.tint)
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void PaintCell(any cell, string label, string tint)
+    -- 셀 하나의 문구·틴트를 칠한다. 문자 + 계열 틴트 병행 (docs/20 §6 —
+    -- 색 단독 표기 금지). 배경 파츠는 command-tile-slate-blank 이고 틴트만 바꾼다.
+    cell.Enable = true
+    local text = cell.TextGUIRendererComponent
+    if text ~= nil then text.Text = label end
+    local sprite = cell.SpriteGUIRendererComponent
+    if sprite == nil then return end
+    if tint == "work" then
+        sprite.Color = Color(0.78, 0.93, 0.78, 1)      -- 채굴·적재·하역 = 녹색 계열
+    elseif tint == "ctrl" then
+        sprite.Color = Color(0.99, 0.86, 0.64, 1)      -- 반복·IF·끝 = 주황 계열
+    elseif tint == "overflow" then
+        sprite.Color = Color(0.82, 0.82, 0.82, 1)
+    else
+        sprite.Color = Color(1, 1, 1, 1)               -- 이동 = 슬레이트 원색
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void FlattenList(table list)
+    -- 트리를 표시 순서의 토큰으로 편다. 각 토큰은 원본 노드 참조를 들고 있어
+    -- 클릭 삭제가 트리를 직접 수술할 수 있다. 아직 닫히지 않은(열림 스택의)
+    -- 제어 블록은 ] 토큰을 내지 않는다 — 열려 있음이 화면에서도 보인다.
+    for i = 1, #list do
+        local command = list[i]
+        if command.type == "move" then
+            table.insert(self._T.strip, { label = command.dir, tint = "move", node = command, list = list })
+        elseif command.type == "mine" then
+            table.insert(self._T.strip, { label = "M", tint = "work", node = command, list = list })
+        elseif command.type == "load" then
+            table.insert(self._T.strip, { label = "L", tint = "work", node = command, list = list })
+        elseif command.type == "unload" then
+            table.insert(self._T.strip, { label = "U", tint = "work", node = command, list = list })
+        elseif command.type == "repeat" then
+            local countLabel = tostring(command.count)
+            if command.count == "inf" then countLabel = "∞" end
+            table.insert(self._T.strip, { label = "×" .. countLabel, tint = "ctrl", node = command, list = list })
+            self:FlattenList(command.body)
+            if not self:IsOpenControl(command) then
+                table.insert(self._T.strip, { label = "]", tint = "ctrl", node = command, list = list })
+            end
+        elseif command.type == "if" then
+            table.insert(self._T.strip, { label = "IF", tint = "ctrl", node = command, list = list })
+            self:FlattenList(command.body)
+            if not self:IsOpenControl(command) then
+                table.insert(self._T.strip, { label = "]", tint = "ctrl", node = command, list = list })
+            end
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsOpenControl(table command)
+    -- 열림 스택에 아직 남아 있는(= 끝]을 안 누른) 제어 블록인지.
+    for i = 1, #self._T.openControls do
+        if self._T.openControls[i] == command then return true end
+    end
+    return false
+end
+
+@ExecSpace("ClientOnly")
+method void OnStripCellClicked(integer cellIndex)
+    -- T-14 (docs/28 §2.3): 칸 클릭 = 그 블록 삭제. 제어 블록은 시작 칸이든 ] 칸이든
+    -- 몸통까지 통째로 지운다 — 괄호 짝이 깨진 상태를 만들지 않는다.
+    local token = self._T.strip[cellIndex]
+    if token == nil then return end
+    if token.kind == "overflow" then
+        self:SetFeedback("접힌 블록은 앞쪽 블록을 지워 펼친 뒤 삭제할 수 있습니다.")
+        return
+    end
+    local removedLabel = token.label
+    local removed = false
+    for i = 1, #token.list do
+        if token.list[i] == token.node then
+            table.remove(token.list, i)
+            removed = true
+            break
+        end
+    end
+    if not removed then
+        -- 스트립과 트리가 어긋났다 — 다시 그리는 것으로 복구한다 (무증상 방지 로그).
+        log("[BlockProgram] strip token missing from tree - repaint")
+        self:RefreshDisplay()
+        return
+    end
+    if token.node.type == "repeat" or token.node.type == "if" then
+        self:RemoveNodeFromOpenStacks(token.node)
+    end
+    self:RefreshDisplay()
+    self:SetFeedback("'" .. removedLabel .. "' 블록을 삭제했습니다.")
+    log("[BlockProgram] strip delete '" .. removedLabel .. "' at cell " .. tostring(cellIndex))
+end
+
+@ExecSpace("ClientOnly")
+method void RemoveNodeFromOpenStacks(table node)
+    -- 삭제한 제어 블록(과 그 몸통 안의 제어 블록)이 열림 스택에 남지 않게 한다.
+    -- openControls[k].body == openBodies[k+1] 쌍을 유지하며 함께 제거한다.
+    local doomed = {}
+    self:CollectControls(node, doomed)
+    for i = #self._T.openControls, 1, -1 do
+        for d = 1, #doomed do
+            if self._T.openControls[i] == doomed[d] then
+                table.remove(self._T.openControls, i)
+                table.remove(self._T.openBodies, i + 1)
+                break
+            end
+        end
+    end
+    self:RefreshRepeatControlFromOpenStack()
+end
+
+@ExecSpace("ClientOnly")
+method void CollectControls(table node, table out)
+    -- node 자신 + 몸통 안의 모든 제어 블록을 모은다 (RemoveNodeFromOpenStacks 용).
+    table.insert(out, node)
+    if type(node.body) ~= "table" then return end
+    for i = 1, #node.body do
+        local child = node.body[i]
+        if type(child) == "table" and (child.type == "repeat" or child.type == "if") then
+            self:CollectControls(child, out)
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method string RenderList(table list, integer depth)
+    -- ⚠️ 편집기 표시는 T-14 로 스트립 그리드가 대체했지만, **라이브러리 상세
+    -- 미리보기(ProgramLibraryController.RefreshDetail)가 이 텍스트 렌더를 쓴다.**
+    -- 지우면 라이브러리 상세가 nil 호출로 죽는다 — T-14 첫 빌드 로그가 실제로
+    -- 잡았던 결함이다. 편집기 쪽에서는 더 이상 부르지 않는다.
+    local rendered = ""
+    local indent = string.rep("  ", depth)
+    for i = 1, #list do
+        local command = list[i]
+        if command.type == "move" then
+            rendered = rendered .. indent .. command.dir .. "\n"
+        elseif command.type == "mine" then
+            rendered = rendered .. indent .. "M\n"
+        elseif command.type == "load" then
+            rendered = rendered .. indent .. "L\n"
+        elseif command.type == "unload" then
+            rendered = rendered .. indent .. "U\n"
+        elseif command.type == "repeat" then
+            local countLabel = tostring(command.count)
+            if command.count == "inf" then countLabel = "∞" end
+            rendered = rendered .. indent .. "R×" .. countLabel .. " [\n"
+            rendered = rendered .. self:RenderList(command.body, depth + 1)
+            rendered = rendered .. indent .. "]\n"
+        elseif command.type == "if" then
+            local conditionLabel = self:ConditionLabel(command.cond)
+            rendered = rendered .. indent .. "IF " .. conditionLabel .. " [\n"
+            rendered = rendered .. self:RenderList(command.body, depth + 1)
+            rendered = rendered .. indent .. "]\n"
+        end
+    end
+    return rendered
 end
 
 @ExecSpace("ClientOnly")
@@ -403,7 +605,6 @@ method table GetTutorialButtons()
         run = self.btnRun,
         stop = self.btnStop,
         clear = self.btnClear,
-        convert = self.btnConvert,
         worker1 = self.btnWorker1,
         worker2 = self.btnWorker2,
         worker3 = self.btnWorker3,
@@ -662,216 +863,6 @@ method void SetFeedback(string message)
 end
 
 @ExecSpace("ClientOnly")
-method string RenderList(table list, integer depth)
-    -- Serializes a nested D2 block list into indented review text.
-    local rendered = ""
-    local indent = string.rep("  ", depth)
-    for i = 1, #list do
-        local command = list[i]
-        if command.type == "move" then
-            rendered = rendered .. indent .. command.dir .. "\n"
-        elseif command.type == "mine" then
-            rendered = rendered .. indent .. "M\n"
-        elseif command.type == "load" then
-            rendered = rendered .. indent .. "L\n"
-        elseif command.type == "unload" then
-            rendered = rendered .. indent .. "U\n"
-        elseif command.type == "repeat" then
-            local countLabel = tostring(command.count)
-            if command.count == "inf" then countLabel = "∞" end
-            rendered = rendered .. indent .. "R×" .. countLabel .. " [\n"
-            rendered = rendered .. self:RenderList(command.body, depth + 1)
-            rendered = rendered .. indent .. "]\n"
-        elseif command.type == "if" then
-            local conditionLabel = self:ConditionLabel(command.cond)
-            rendered = rendered .. indent .. "IF " .. conditionLabel .. " [\n"
-            rendered = rendered .. self:RenderList(command.body, depth + 1)
-            rendered = rendered .. indent .. "]\n"
-        end
-    end
-    return rendered
-end
-
-@ExecSpace("ClientOnly")
-method void ParseChatCommand(string text)
-    -- Converts supported Korean natural language into blocks without auto-running them.
-    self:ResetEditor()
-    if text == nil or text == "" then
-        self:RefreshDisplay()
-        self:SetFeedback("이해하지 못했어요. 예: 오른쪽으로 두 칸 가서 캐")
-        return
-    end
-
-    self._T.parsedActions = {}
-    self._T.unrecognized = {}
-    self._T.parseTruncated = false
-    local condition = self:DetectCondition(text)
-    local repeatCount = self:DetectRepeatCount(text)
-    local reservedControls = 0
-    if condition ~= "" then reservedControls = reservedControls + 1 end
-    if repeatCount ~= nil then reservedControls = reservedControls + 1 end
-    self._T.parseBudget = self.MaxProgramBlocks - reservedControls
-    local pendingDir = ""
-    local pendingCount = 0
-    for token in string.gmatch(text, "%S+") do
-        local recognized = false
-        if string.find(token, "채굴", 1, true) or string.find(token, "캐", 1, true) then
-            self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
-            pendingDir = ""
-            pendingCount = 0
-            self:TryAppendParsedAction({ type = "mine" })
-            recognized = true
-        elseif string.find(token, "실어", 1, true) or string.find(token, "싣", 1, true) or string.find(token, "담아", 1, true) then
-            self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
-            pendingDir = ""
-            pendingCount = 0
-            self:TryAppendParsedAction({ type = "load" })
-            recognized = true
-        elseif string.find(token, "내려", 1, true) or string.find(token, "비워", 1, true) then
-            self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
-            pendingDir = ""
-            pendingCount = 0
-            self:TryAppendParsedAction({ type = "unload" })
-            recognized = true
-        else
-            local dir = self:DetectDir(token)
-            local cnt = self:DetectCount(token)
-            if dir ~= "" then
-                if pendingDir ~= "" then
-                    self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
-                    pendingCount = 0
-                end
-                pendingDir = dir
-                recognized = true
-            elseif cnt > 0 and pendingDir ~= "" and not string.find(token, "번", 1, true) then
-                pendingCount = cnt
-                recognized = true
-            elseif self:IsControlOrFillerToken(token) then
-                recognized = true
-            end
-        end
-
-        if not recognized then
-            table.insert(self._T.unrecognized, token)
-        end
-    end
-    self:FlushMoveToList(self._T.parsedActions, pendingDir, pendingCount)
-
-    if #self._T.parsedActions == 0 then
-        self:RefreshDisplay()
-        self:SetFeedback("이해하지 못했어요. 예: 오른쪽으로 두 칸 가서 캐")
-        log("[ChatParse] no executable blocks parsed from '" .. text .. "'")
-        return
-    end
-
-    local program = self._T.parsedActions
-    if condition ~= "" then
-        program = { { type = "if", cond = condition, body = program } }
-    end
-
-    if repeatCount ~= nil then
-        program = { { type = "repeat", count = repeatCount, body = program } }
-    end
-
-    self._T.program = program
-    self._T.openBodies = { self._T.program }
-    self._T.openControls = {}
-    self:RefreshRepeatButton(2)
-    self:RefreshDisplay()
-
-    local blockCount = self:CountBlocks(self._T.program)
-    if self._T.parseTruncated then
-        self:SetFeedback("최대 30블록까지만 변환했습니다. 실행 전 내용을 확인하세요.")
-    elseif #self._T.unrecognized > 0 then
-        self:SetFeedback("'" .. table.concat(self._T.unrecognized, " ") .. "'는 이해하지 못했어요. 나머지 " .. tostring(blockCount) .. "개 블록을 변환했습니다.")
-    else
-        self:SetFeedback(tostring(blockCount) .. "개 블록으로 변환했어요. 실행 전 내용을 확인하세요.")
-    end
-    log("[ChatParse] parsed '" .. text .. "' blocks=" .. tostring(blockCount) .. " - waiting for explicit Run")
-end
-
-@ExecSpace("ClientOnly")
-method void OnConvertClicked()
-    -- Converts the current text-input value into a reviewable block program.
-    self:ParseChatCommand(self.chatInput.Text)
-end
-
-@ExecSpace("ClientOnly")
-method void FlushMoveToList(table target, string dir, integer count)
-    -- Expands one parsed direction/count pair into atomic move actions.
-    if dir == "" then return end
-    local n = count
-    if n <= 0 then n = 1 end
-    local remaining = self._T.parseBudget - #target
-    if remaining <= 0 then
-        self._T.parseTruncated = true
-        return
-    end
-    local safeCount = math.min(n, remaining)
-    for i = 1, safeCount do
-        table.insert(target, { type = "move", dir = dir })
-    end
-    if safeCount < n then self._T.parseTruncated = true end
-end
-
-@ExecSpace("ClientOnly")
-method boolean TryAppendParsedAction(table command)
-    -- Appends one parsed action without exceeding the shared 30-block budget.
-    if #self._T.parsedActions >= self._T.parseBudget then
-        self._T.parseTruncated = true
-        return false
-    end
-    table.insert(self._T.parsedActions, command)
-    return true
-end
-
-@ExecSpace("ClientOnly")
-method string DetectCondition(string text)
-    -- Detects D2 ore phrases and D3 cart-state phrases.
-    if string.find(text, "가득 차면", 1, true) or string.find(text, "가득차면", 1, true) then return "cart_full" end
-    if string.find(text, "수레가 비면", 1, true) or string.find(text, "수레 비면", 1, true) or string.find(text, "비어 있으면", 1, true) then return "cart_empty" end
-    if string.find(text, "없으면", 1, true) then return "ore_absent" end
-    if string.find(text, "있으면", 1, true) then return "ore_present" end
-    return ""
-end
-
-@ExecSpace("ClientOnly")
-method any DetectRepeatCount(string text)
-    -- Detects a bounded repeat count or the infinite-repeat phrase.
-    if string.find(text, "계속", 1, true) or string.find(text, "끝까지", 1, true) then
-        return "inf"
-    end
-    if not string.find(text, "반복", 1, true) then return nil end
-
-    local digit = string.match(text, "(%d+)%s*번")
-    if digit ~= nil then
-        local count = tonumber(digit)
-        if count < 2 then count = 2 end
-        if count > 99 then count = 99 end
-        return count
-    end
-    if string.find(text, "열 번", 1, true) or string.find(text, "열번", 1, true) then return 10 end
-    if string.find(text, "다섯 번", 1, true) or string.find(text, "다섯번", 1, true) then return 5 end
-    if string.find(text, "세 번", 1, true) or string.find(text, "세번", 1, true) then return 3 end
-    if string.find(text, "두 번", 1, true) or string.find(text, "두번", 1, true) then return 2 end
-    return 2
-end
-
-@ExecSpace("ClientOnly")
-method boolean IsControlOrFillerToken(string token)
-    -- Recognizes grammar words that should not be reported as unknown input.
-    if string.find(token, "광물", 1, true) then return true end
-    if string.find(token, "있으면", 1, true) or string.find(token, "없으면", 1, true) then return true end
-    if string.find(token, "가득", 1, true) or string.find(token, "차면", 1, true) or string.find(token, "수레", 1, true) then return true end
-    if string.find(token, "비면", 1, true) or string.find(token, "비어", 1, true) then return true end
-    if string.find(token, "반복", 1, true) or string.find(token, "계속", 1, true) or string.find(token, "끝까지", 1, true) then return true end
-    if string.find(token, "번", 1, true) or string.find(token, "칸", 1, true) then return true end
-    if string.find(token, "가서", 1, true) or string.find(token, "이동", 1, true) then return true end
-    if token == "하고" or token == "후" or token == "그리고" then return true end
-    return false
-end
-
-@ExecSpace("ClientOnly")
 method integer CountBlocks(table list)
     -- Counts action and control blocks recursively for parser feedback.
     local count = 0
@@ -883,29 +874,6 @@ method integer CountBlocks(table list)
         end
     end
     return count
-end
-
-@ExecSpace("ClientOnly")
-method string DetectDir(string token)
-    -- Maps a Korean direction word in the token to a compass code, or "" if none found.
-    if string.find(token, "오른", 1, true) or string.find(token, "동쪽", 1, true) then return "E" end
-    if string.find(token, "왼", 1, true) or string.find(token, "서쪽", 1, true) then return "W" end
-    if string.find(token, "아래", 1, true) or string.find(token, "남쪽", 1, true) then return "S" end
-    if string.find(token, "위", 1, true) or string.find(token, "북쪽", 1, true) then return "N" end
-    return ""
-end
-
-@ExecSpace("ClientOnly")
-method integer DetectCount(string token)
-    -- Parses a count (1..9) from a digit or native Korean numeral in the token, or 0 if none.
-    local d = string.match(token, "(%d+)")
-    if d then return tonumber(d) end
-    if string.find(token, "다섯", 1, true) then return 5 end
-    if string.find(token, "하나", 1, true) or string.find(token, "한", 1, true) then return 1 end
-    if string.find(token, "둘", 1, true) or string.find(token, "두", 1, true) then return 2 end
-    if string.find(token, "셋", 1, true) or string.find(token, "세", 1, true) then return 3 end
-    if string.find(token, "넷", 1, true) or string.find(token, "네", 1, true) then return 4 end
-    return 0
 end
 
 @ExecSpace("ClientOnly")
@@ -937,6 +905,13 @@ end
 @ExecSpace("ClientOnly")
 method void OnEndPlay()
     -- Disconnects every UI event handler registered during begin play.
+    if self._T.cells ~= nil and self._T.cellHandlers ~= nil then
+        for i = 1, #self._T.cells do
+            if self._T.cellHandlers[i] ~= nil then
+                self._T.cells[i]:DisconnectEvent(ButtonClickEvent, self._T.cellHandlers[i])
+            end
+        end
+    end
     self.btnMoveE.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveE)
     self.btnMoveW.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveW)
     self.btnMoveN.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.moveN)
@@ -952,8 +927,6 @@ method void OnEndPlay()
     self.btnRun.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.run)
     self.btnStop.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.stop)
     self.btnClear.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.clear)
-    self.btnConvert.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.convert)
-    self.chatInput.Entity:DisconnectEvent(TextInputSubmitEvent, self._T.handlers.submit)
     if self.btnWorker1 ~= nil and self._T.handlers.worker1 ~= nil then
         self.btnWorker1.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker1)
     end

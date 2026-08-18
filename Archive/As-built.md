@@ -19,7 +19,7 @@
 | 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램. **`ProgramState` 는 3값** — `Idle`(미실행·자연 완료) / `Running` / `Stopped`(사용자 정지·맵 전환·서버 거절), C217. `ResetExecution` 은 항상 `Idle` 로 착지하고 정지 계열 호출자만 덮어쓴다. **손은 `PendingOre` + `PendingOreCount`(0~3) 쌍** — 용량 3, 같은 광물 이어 캐기(2026-08-18 오너 결정, docs/13 §5.3 개정). 다른 종류 광맥은 소모 없이 실패, `load` 는 수레 여유만큼 부분 적재하고 잔량을 손에 남긴다. `ConfigureFromProfile` 은 5인자(count 추가) |
 | 일꾼 공용 모델 | `.model` | `RootDesk/MyDesk/Models/Farm/Worker.model` | modelId `worker`, RectTile용 `KinematicbodyComponent`와 `WorkerController` 포함. `Drone.model`은 레거시 원본 |
 | 프로그램 라이브러리 (T-05) | 서버 원장 + 클라 `@Logic` + `.ui` | `AccountProfileService.mlua`(원장) · `RootDesk/MyDesk/Farm/ProgramLibraryController.mlua` · `ui/ProgramLibraryUI.ui` | 계정 공용 3→20슬롯(기본가 50골드 ×1.2 — **제안값, 오너 확정 대상** `LibrarySlotBaseCost`). 저장/개명/복제/삭제/슬롯구매, 최종 검증은 `WorkerController.ValidateProgram` 단일 소유. **재접속 시 각 일꾼 마지막 유효 프로그램 자동 실행**(`ScheduleAutoRun` — 로그인 경로 전용, 맵 전환은 수동 대기). worker record 에 `lastValidProgramJson` 추가(스키마 v8 유지 — 누락 시 기본값이라 무버전 확장). GroupOrder: 라이브러리 5, Popup 6·Toast 7·Recovery 8 로 +1 밀림 (밀집 0..8) |
-| 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. 신규 프로필은 Worker01만 실행 대상이며, 구매한 Worker02~05도 독립 선택한다. **워커 칩은 선택/일반/잠금 3종 스프라이트를 런타임 스왑**하며(T-13 A1), 상태 결정은 `GetWorkerChipState` 하나가 소유한다 — 라벨·스프라이트·로그가 같은 값을 본다. |
+| 블록 편집기 (T-14 개편) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. **자연어 입력은 2026-08-18 T-14 로 MVP 에서 제거됐다** (docs/03 §6·§8 폐지). 프로그램 표시는 `ProgramGrid` 56×56 셀 9×4=36칸 스트립 — 평탄 토큰(열린 제어는 `]` 칸 없음), 문자+계열 틴트, 초과 `+N` 접기, **칸 클릭 = 그 블록 삭제**(제어는 몸통 통째 + 열림 스택 동기 정리). ⚠️ `RenderList` 는 편집기에서 안 쓰지만 **라이브러리 상세 미리보기가 소비한다 — 지우면 안 된다** (docs/16 §39). 워커 칩 3종 스왑(T-13 A1)은 그대로, 상태 결정은 `GetWorkerChipState` 단일 소유 |
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭. **칩 배경은 파일에 `tab-worker-normal` 이 박혀 있고 런타임이 덮어쓴다** — 파일값만 보고 판단하면 안 된다 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. Worker01 손·수레 + 세션 Depot 합계를 표시하며, 계정 광물·판매 설정·광산 선택은 별도 F7-B UI가 담당한다. |
 | 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀·**맵 강화(T-03)** 5패널. **광산 버튼 3개에 상태 뱃지(입장/해금/잠금)를 런타임 스왑**한다(T-13 C). 파일 초기값은 3개 다 `locked` 이고 런타임이 덮어쓴다. **`RefreshUI` 의 `state` 키에 `LastMineId` 가 반드시 있어야** 광산 전환이 뱃지에 반영된다 |
@@ -32,6 +32,20 @@
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-18 — T-14: 블록 편집기 개편 · 첫 빌드 로그가 렌더 헬퍼의 숨은 소비자를 잡았다
+
+브랜치 `feat/t14-block-strip` (PR #14). 검수 `docs/16` §39 — T14-1~8 전량 통과. 계약 `docs/28` (U1~U3 권장안, U4 후속).
+
+- **자연어를 전면 삭제했다 (U1).** UI 3엔티티 + 파서 9메서드 + 튜토리얼 §9.3 힌트. UI 만 떼고 파서를 남기는 안을 기각한 이유 — 죽은 코드가 다음 세션의 grep 을 오염시키고, 부활은 git 이력으로 충분하다.
+- **그 삭제가 바로 함정을 밟았고, 빌드 로그가 잡았다.** `RenderList`(줄글 렌더)는 편집기 전용처럼 보였지만 **`ProgramLibraryController.RefreshDetail`(라이브러리 상세 미리보기)이 쓰고 있었다.** 라이브러리 전용으로 복원하고 소비자를 주석에 박았다. **교훈: 표시 계층을 갈아엎을 때 렌더 헬퍼는 "안 쓰이는 것 같아도" grep 전수 후 지운다.**
+- **스트립은 트리를 평탄 토큰으로 펴되 각 토큰이 원본 노드 참조를 든다** — 클릭 삭제가 인덱스 재계산 없이 트리를 직접 수술한다. 제어 블록 삭제는 몸통 통째 + `openControls/openBodies` 쌍 동기 정리(`RemoveNodeFromOpenStacks` — 삭제 서브트리 안의 열림 항목까지 걷는다).
+- **열린 제어 블록은 `]` 칸을 내지 않는다** — "아직 안 닫혔다"가 화면에서 보인다. 30블록 상한에서 `]` 토큰이 붙으면 이론상 45토큰이라 `+N` 접기가 실제로 동작해야 했고, 반복 15개로 실측했다(`tokens=45 cells=36 lastCellKind=overflow`).
+- **틴트는 눈이 아니라 값으로 판정했다** (docs/16 §24 교훈 계열) — ctrl `0.99/0.86/0.64` · work `0.78/0.93/0.78` 정확 일치. 파츠 원색이 회청이라 육안 구분이 약하면 틴트 상수 조정은 오너 K 판정 후 한 줄.
+- **주의사항 10 의 경계를 실측으로 갱신했다**: 컴포넌트 제거는 임포트본에 소급되지 않지만, **엔티티 제거는 재임포트에 반영된다** (`ghosts=0`).
+- 미사용 판정이던 `command-tile-slate-blank` 가 셀 배경으로 채택됐다 — docs/26 §5.2 의 "정사각 용처가 생기면" 조건 성취.
+
+**남은 것**: 오너 K 실클릭(셀 삭제 실감·틴트 육안 구분·새 배치 판정) · **PR #14 병합**.
 
 ### 2026-08-18 — T-12-B: 설정 패널 + 프로필 저장 · 마이그레이션 초안값이 오너 판정을 덮을 뻔했다
 

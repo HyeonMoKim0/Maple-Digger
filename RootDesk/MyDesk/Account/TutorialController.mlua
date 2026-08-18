@@ -404,11 +404,8 @@ method void Deactivate(boolean showCompletionHint)
     self._T.stepShown = 0
     self:ReleaseAllLocks()
     if self.tutorialRoot ~= nil then self.tutorialRoot.Enable = false end
-    if showCompletionHint and not self._T.completionToastShown then
-        -- §9.3: 완료 직후 자연어 변환창 1회 힌트.
-        self._T.completionToastShown = true
-        _UIToast:ShowMessage("문장으로도 블록을 만들 수 있어요 — \"오른쪽으로 두 칸 가서 캐\"")
-    end
+    -- T-14 (docs/28): §9.3 완료 후 자연어 힌트는 자연어 입력 제거와 함께 폐지됐다.
+    -- showCompletionHint 인자는 호출부 호환을 위해 남기되 아무것도 하지 않는다.
     log("[Tutorial] deactivated hint=" .. tostring(showCompletionHint))
 end
 

@@ -117,15 +117,12 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | `button-orange-blank` | `a5f9c4101165445a9a0aaefeb14b0c56` | 192×71 | 30 30 18 18 | ✅ |
 | `button-slate-blank` | `93024bfd2d324753ae92878d299e1ef6` | 192×68 | 28 28 17 17 | ✅ |
 | `button-close` | `5af542ecf45c4992bfe2eddebb7932ff` | 96×94 | Simple | ✅ |
-| `command-tile-slate-blank` | `3f659be019834b19aea6c14e0ac1da31` | 192×187 | 29 29 29 29 | ✅ **미사용** |
+| `command-tile-slate-blank` | `3f659be019834b19aea6c14e0ac1da31` | 192×187 | 29 29 29 29 (블록 셀에서는 Simple 렌더) | ✅ **T-14 블록 스트립 셀 배경으로 채택 (2026-08-18)** |
 | `tab-worker-selected` | `acfb0998854a4fb4b1a9927afd2a9993` | 192×68 | 22 22 17 17 | ✅ |
 | `tab-worker-normal` | `db0c502147114dbfb47a5e87322937b4` | 192×62 | 22 22 15 15 | ✅ |
 | `tab-worker-disabled` | `a864624d7b454085bcb76f86a0ed8d07` | 192×56 | 20 20 14 14 | ✅ |
 
-> **`command-tile-slate-blank` 은 쓰지 않기로 했다.** `docs/ui-parts/README.md` §3 은 이 타일을 명령 버튼
-> 12개에 지정했지만, 원본이 거의 정사각(192×187)이라 136~186×88 버튼에 9-slice 로 늘리면 모서리 볼트만
-> 커지고 가운데가 눌려 지저분해진다(1차 적용 실측 확인). 가로 비율이 맞는 `button-slate-blank` 로 대체하고
-> 카테고리 구분은 연한 틴트 + 다크 문구가 맡는다. 정사각 아이콘 버튼이 생기면 그때 이 타일을 쓴다.
+> ~~`command-tile-slate-blank` 은 쓰지 않기로 했다.~~ → **T-14 (2026-08-18) 에서 블록 스트립 그리드의 56×56 정사각 셀 배경으로 채택됐다** — "정사각 아이콘 버튼이 생기면 그때 쓴다"던 그 용처다. 셀에서는 9-slice 가 아니라 **Simple 렌더**(정사각→정사각 축소)로 쓰고, 계열 구분은 런타임 틴트(이동 원색 / 채·적·하 녹색 / 제어 주황)가 맡는다. 명령 버튼 12개에는 여전히 쓰지 않는다 — 136~186×88 에 9-slice 로 늘리면 모서리 볼트만 커지고 가운데가 눌린다(1차 적용 실측).
 
 ### 5.3 행 · 슬롯 · 게이지
 
@@ -187,6 +184,19 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | `rarity-badge-rare` | `3c34787ff2e44d7e99036d07ebcaaba8` | 96×96 | 3 | 🟡 |
 | `rarity-badge-epic` | `7745e36e8a9a47b08bffc194f071b91b` | 96×96 | 4 | 🟡 |
 | `rarity-badge-legendary` | `0cb30501bd6b4d24b4f54c5d6245c48e` | 96×96 | 5 | 🟡 |
+
+### 5.10 2차 제작 목록 신규 파츠 (docs/27 §2 · 2026-08-18)
+
+| 파츠 | RUID | 크기 | 9-slice border | 상태 |
+|---|---|---:|---:|:--:|
+| `input-field-blank` | `561a0737a9c8468889b6eb8075cc354e` | 384×85 | 21 21 21 21 | ✅ 업로드 · 기존 4개 입력창 적용 |
+| `tooltip-frame-blank` | `d3ffbf345575474aa06d0e4a2ad96447` | 384×115 | 19 19 19 19 | ✅ 업로드 · `TutorialUI/Root/Tooltip` 적용 |
+| `piece-card-frame` | `01bb848f974843089fc999bd01680b35` | 177×256 | Simple | ✅ 업로드 · T-06 화면 배선 대기 |
+| `equipped-badge` | `6f9095d2a23142ba99a76fa71a8e816d` | 96×86 | Simple | ✅ 업로드 · T-06 화면 배선 대기 |
+
+> 입력창·툴팁은 기존 `.ui` 트리와 컨트롤러 Entity ID를 보존한 채 UIBuilder로 스프라이트만 교체했다.
+> 카드·장착 배지는 리소스와 RUID만 준비했다. 현재 프로젝트에는 T-06 결과/외형 화면과 컨트롤러가 없으므로 임의의 신규 화면은 만들지 않았다.
+> `rarity-badge-*` 는 docs/27 §3의 오너 채택 판단 대기 항목이다. 이번 범위에서는 기존 파일·RUID를 변경하지 않고 그 상태를 유지했다.
 
 ### 5.6 보조 아이콘 (docs/20 승인 목록에 없는 것들)
 
