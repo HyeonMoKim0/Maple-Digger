@@ -11,7 +11,9 @@ property string FxModelId = "fxsprite"
 
 -- 선택 일꾼 발밑 링 (docs/21 §5 승인). 116x40 = 1.16x0.40 world unit.
 property string RingRuid = "76e2d942cc264558aad35f78be17b109"
-property number RingOffsetY = -0.32
+-- 2026-08-18 오너 실측: 링이 일꾼보다 너무 아래에 떠서 -0.32 → -0.1 로 보정
+-- (Play 중 직접 수치 편집으로 확정 — 시작 셀 기준 WorldPosition Y = 0.4).
+property number RingOffsetY = -0.1
 property integer RingOrderInLayer = 0
 
 -- 채굴 파편 (docs/21 §5). **일꾼이 아니라 채굴한 광맥 셀 중심에 띄운다**
