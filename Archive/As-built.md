@@ -20,7 +20,7 @@
 | 블록·자연어 편집기 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. 신규 프로필은 Worker01만 실행 대상이며, 구매한 Worker02~05도 독립 선택한다. **워커 칩은 선택/일반/잠금 3종 스프라이트를 런타임 스왑**하며(T-13 A1), 상태 결정은 `GetWorkerChipState` 하나가 소유한다 — 라벨·스프라이트·로그가 같은 값을 본다. |
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭. **칩 배경은 파일에 `tab-worker-normal` 이 박혀 있고 런타임이 덮어쓴다** — 파일값만 보고 판단하면 안 된다 |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. Worker01 손·수레 + 세션 Depot 합계를 표시하며, 계정 광물·판매 설정·광산 선택은 별도 F7-B UI가 담당한다. |
-| 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀 4패널. **광산 버튼 3개에 상태 뱃지(입장/해금/잠금)를 런타임 스왑**한다(T-13 C). 파일 초기값은 3개 다 `locked` 이고 런타임이 덮어쓴다. **`RefreshUI` 의 `state` 키에 `LastMineId` 가 반드시 있어야** 광산 전환이 뱃지에 반영된다 |
+| 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀·**맵 강화(T-03)** 5패널. **광산 버튼 3개에 상태 뱃지(입장/해금/잠금)를 런타임 스왑**한다(T-13 C). 파일 초기값은 3개 다 `locked` 이고 런타임이 덮어쓴다. **`RefreshUI` 의 `state` 키에 `LastMineId` 가 반드시 있어야** 광산 전환이 뱃지에 반영된다 |
 | 계정·경제·광산 해금·맵 강화 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | **프로필 스키마는 v8**(T-02, 2026-08-18) — v7 대비 `mineLevels`·worker `pendingOreCount`·`crystal`·`tutorial`·`settings` 5필드가 늘었고 v7 은 로드 시 기본값으로 변환된다. 계정 광물 원장, 수량·보호·자동 판매, 깊은/보석 광산 첫 해금, 일꾼 2~5 구매·맵 재배치·손/수레 복구, 수레 20→50 강화, 백업 복구/포기, 동시 접속 잠금. **맵 강화(레벨 0~10·4효과·비용)는 구현 완료** — `RequestMineUpgrade`/`PurchaseMineUpgrade`/`GetMineBonus` + 표기용 @Sync(`MineLevel*` 3종 + `MineUpgradeInfoJson`). 거절 문구는 `DescribeShortfall`(부족분 숫자)·`SetReject*`(단일 정의) 체계다. `tutorial`(T-07)·`settings`(T-12-B) 필드는 저장만 되고 소비자는 아직 없다 |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile이며 Worker01만 실제 배치된다. **1~5 시작 셀은 T-11(2026-08-14)로 광맥별 분산됐다** — 각 시작 셀의 **한 걸음 오른쪽이 광맥**이라 복사한 프로그램이 바로 캔다(배치표 `docs/18` T-11). 초보 광산 W2·W4는 광맥 셀 위에 서고 W5는 창고를 공유한다. marker·서버 맵 전환과 **F5 시각 표현(Phase 1~4)** 은 구현됐고, **사운드(Phase 5)와 F5-1~F5-6 최종 판정(Phase 6)은 미구현** |
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다** |
@@ -28,6 +28,18 @@
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 2026-08-16 오너 청취로 `3512470b…`(`sound-604`, 87.3s) 확정** — 잠정 오케스트라 `8e366297…` 은 미채택(docs/21 §3-B). **`BgmVolume = 0.5` 는 아직 미판정(L5)** 이고 곡이 짧아져 루프 이음새가 약 1.6배 자주 온다. **`PlayBGM` 이 루프임을 실측으로 확정**(곡 끝 +58.5초까지 `IsPlayBGM()`=true). 볼륨은 아직 **코드 상수** — 슬라이더·프로필 저장·`MineSoundController` 볼륨 조회 배선은 전부 **T-12-B** 몫이다(F10 §0.1 산출물 1·3·5) |
 
 ## 기록
+
+### 2026-08-18 — T-03: 맵 강화 UI 패널 · 신규 배치는 lint 가 먼저 판정했다
+
+T-02 병합(PR #9) 직후 이어서 구현. 브랜치 `feat/t03-mine-upgrade-ui` `cd90dd4`. 검수 `docs/16` §31.
+
+- **C202 ① 그대로** — `MineSelectUI` 에 `UpgradePanel` 을 CartPanel 과 같은 계층 모달로 신설. 별도 `.ui` 를 만들지 않았고 **기존 엔티티는 하나도 안 건드렸다**(신규 9개만) — `audit_resave` 가 그것을 증명한다.
+- **표기는 `MineUpgradeInfoJson` 파싱만.** 4효과 4줄 · `(주)` · `현재 → 다음` · 절대값 병기(합산 배율/bp/분초)를 전부 서버 값으로 그린다. 클라 재계산 0줄 (§5.6.3).
+- **진입 버튼 첫 배치를 lint L023 이 반려했다.** 광산 목록 아래 "빈" 공간은 하단 고정 `BtnClose` 자리였다(T-13 C 의 18px 실측 재확인). 하단 닫기 옆으로 옮겼다. **새 배치는 쓰기 전에 L023 을 본다.**
+- **거절 표시는 스냅숏 방식** — 모달 연 시점의 `LastTransactionMessage` 를 기억하고 그 이후 변화만 그린다. 전역 슬롯을 지울 수 없는 제약에서 R5 를 지키는 표준 패턴으로 삼을 만하다.
+- 신규 텍스트 5곳의 레거시 `TextComponent` 는 만들자마자 제거 (docs/17 §1-9).
+
+**남은 것**: 실클릭 검수 **K5** (`docs/16` §31.3) — §24.6 클릭 묶음에 추가됐다.
 
 ### 2026-08-18 — T-02: 맵 강화 서버 + v8 마이그레이션 · 병목이 풀렸다
 

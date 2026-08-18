@@ -13656,6 +13656,1805 @@
           ],
           "@version": 1
         }
+      },
+      {
+        "id": "38e67b66-fe32-4a5d-8b19-677e8e0aa8e3",
+        "path": "/ui/MineSelectUI/SelectPanel/BtnUpgradeOpen",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.ButtonComponent,MOD.Core.TextGUIRendererComponent",
+        "jsonString": {
+          "name": "BtnUpgradeOpen",
+          "path": "/ui/MineSelectUI/SelectPanel/BtnUpgradeOpen",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 14,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UIButton",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uibutton",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 6,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": -130,
+                "y": 118
+              },
+              "OffsetMin": {
+                "x": -370,
+                "y": 30
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0
+              },
+              "RectSize": {
+                "x": 240,
+                "y": 88
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": -250,
+                "y": 30
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "4b726e80aa58409f8e1f03cc2a4e5da3"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0.23529411764705882
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": true,
+              "Type": 1,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.ButtonComponent",
+              "Colors": {
+                "NormalColor": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1,
+                  "a": 1
+                },
+                "HighlightedColor": {
+                  "r": 0.9607843,
+                  "g": 0.9607843,
+                  "b": 0.9607843,
+                  "a": 1
+                },
+                "PressedColor": {
+                  "r": 0.784313738,
+                  "g": 0.784313738,
+                  "b": 0.784313738,
+                  "a": 1
+                },
+                "SelectedColor": {
+                  "r": 0.9607843,
+                  "g": 0.9607843,
+                  "b": 0.9607843,
+                  "a": 1
+                },
+                "DisabledColor": {
+                  "r": 0.784313738,
+                  "g": 0.784313738,
+                  "b": 0.784313738,
+                  "a": 0.5019608
+                },
+                "ColorMultiplier": 1,
+                "FadeDuration": 0.1
+              },
+              "IgnoreMapLayerCheck": false,
+              "ImageRUIDs": {
+                "HighlightedSprite": null,
+                "PressedSprite": null,
+                "SelectedSprite": null,
+                "DisabledSprite": null
+              },
+              "KeyCode": 0,
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "SortingLayer": "UI",
+              "Transition": 1,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.TextGUIRendererComponent",
+              "BestFit": false,
+              "ConstraintX": 100,
+              "ConstraintY": 100,
+              "Font": "Default",
+              "FontColor": {
+                "r": 0.23137254901960785,
+                "g": 0.16470588235294117,
+                "b": 0.10196078431372549,
+                "a": 1
+              },
+              "FontSize": 26,
+              "FontStyle": 0,
+              "HorizontalAlignment": 2,
+              "IgnoreMapLayerCheck": false,
+              "MaxSize": 40,
+              "MinSize": 10,
+              "OrderInLayer": 0,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 0,
+              "Overflow": 0,
+              "OverrideSorting": false,
+              "Padding": {
+                "left": 0,
+                "right": 0,
+                "top": 0,
+                "bottom": 0
+              },
+              "SizeFit": false,
+              "SortingLayer": "UI",
+              "Text": "광산 강화",
+              "Underlay": false,
+              "UseConstraintX": false,
+              "UseConstraintY": false,
+              "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "c9ada0c5-054f-4906-92c3-f3d18be98ab5",
+        "path": "/ui/MineSelectUI/UpgradePanel",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
+        "jsonString": {
+          "name": "UpgradePanel",
+          "path": "/ui/MineSelectUI/UpgradePanel",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 5,
+          "pathConstraints": "///",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UISprite",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uisprite",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 380,
+                "y": 310
+              },
+              "OffsetMin": {
+                "x": -380,
+                "y": -310
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 760,
+                "y": 620
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "9233b7bec7c34185aecffe956e6e679a"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": true,
+              "Type": 1,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "3385060f-c869-4035-ad16-d6ac3eefaaac",
+        "path": "/ui/MineSelectUI/UpgradePanel/Title",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.TextGUIRendererComponent",
+        "jsonString": {
+          "name": "Title",
+          "path": "/ui/MineSelectUI/UpgradePanel/Title",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 0,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UITextGUIRenderer",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uitextguirenderer",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 260,
+                "y": 274
+              },
+              "OffsetMin": {
+                "x": -260,
+                "y": 226
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 520,
+                "y": 48
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 0,
+                "y": 250
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": ""
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.TextGUIRendererComponent",
+              "BestFit": false,
+              "ConstraintX": 100,
+              "ConstraintY": 100,
+              "Font": "Default",
+              "FontColor": {
+                "r": 0.47843137254901963,
+                "g": 0.23529411764705882,
+                "b": 0.050980392156862744,
+                "a": 1
+              },
+              "FontSize": 32,
+              "FontStyle": 1,
+              "HorizontalAlignment": 2,
+              "IgnoreMapLayerCheck": false,
+              "MaxSize": 44,
+              "MinSize": 10,
+              "OrderInLayer": 0,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 0,
+              "Overflow": 0,
+              "OverrideSorting": false,
+              "Padding": {
+                "left": 0,
+                "right": 0,
+                "top": 0,
+                "bottom": 0
+              },
+              "SizeFit": false,
+              "SortingLayer": "UI",
+              "Text": "광산 강화",
+              "Underlay": false,
+              "UseConstraintX": false,
+              "UseConstraintY": false,
+              "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "5ac76093-d618-4fff-80a7-4b7ea3c5f001",
+        "path": "/ui/MineSelectUI/UpgradePanel/LevelText",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.TextGUIRendererComponent",
+        "jsonString": {
+          "name": "LevelText",
+          "path": "/ui/MineSelectUI/UpgradePanel/LevelText",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 1,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UITextGUIRenderer",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uitextguirenderer",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 250,
+                "y": 212
+              },
+              "OffsetMin": {
+                "x": -250,
+                "y": 172
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 500,
+                "y": 40
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 0,
+                "y": 192
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": ""
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.TextGUIRendererComponent",
+              "BestFit": false,
+              "ConstraintX": 100,
+              "ConstraintY": 100,
+              "Font": "Default",
+              "FontColor": {
+                "r": 0.23137254901960785,
+                "g": 0.16470588235294117,
+                "b": 0.10196078431372549,
+                "a": 1
+              },
+              "FontSize": 26,
+              "FontStyle": 0,
+              "HorizontalAlignment": 2,
+              "IgnoreMapLayerCheck": false,
+              "MaxSize": 40,
+              "MinSize": 10,
+              "OrderInLayer": 0,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 0,
+              "Overflow": 0,
+              "OverrideSorting": false,
+              "Padding": {
+                "left": 0,
+                "right": 0,
+                "top": 0,
+                "bottom": 0
+              },
+              "SizeFit": false,
+              "SortingLayer": "UI",
+              "Text": "초보 광산   Lv.0 / 10",
+              "Underlay": false,
+              "UseConstraintX": false,
+              "UseConstraintY": false,
+              "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "bcbdff3f-4284-4d47-bf66-cabcc09a78a4",
+        "path": "/ui/MineSelectUI/UpgradePanel/EffectsText",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.TextGUIRendererComponent",
+        "jsonString": {
+          "name": "EffectsText",
+          "path": "/ui/MineSelectUI/UpgradePanel/EffectsText",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 2,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UITextGUIRenderer",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uitextguirenderer",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 320,
+                "y": 160
+              },
+              "OffsetMin": {
+                "x": -320,
+                "y": -50
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 640,
+                "y": 210
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 0,
+                "y": 55
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": ""
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.TextGUIRendererComponent",
+              "BestFit": false,
+              "ConstraintX": 100,
+              "ConstraintY": 100,
+              "Font": "Default",
+              "FontColor": {
+                "r": 0.23137254901960785,
+                "g": 0.16470588235294117,
+                "b": 0.10196078431372549,
+                "a": 1
+              },
+              "FontSize": 22,
+              "FontStyle": 0,
+              "HorizontalAlignment": 1,
+              "IgnoreMapLayerCheck": false,
+              "MaxSize": 40,
+              "MinSize": 10,
+              "OrderInLayer": 0,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 0,
+              "Overflow": 0,
+              "OverrideSorting": false,
+              "Padding": {
+                "left": 0,
+                "right": 0,
+                "top": 0,
+                "bottom": 0
+              },
+              "SizeFit": false,
+              "SortingLayer": "UI",
+              "Text": "효과 정보를 불러오는 중...",
+              "Underlay": false,
+              "UseConstraintX": false,
+              "UseConstraintY": false,
+              "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "d443a231-d989-43e8-899c-04d33d6b588e",
+        "path": "/ui/MineSelectUI/UpgradePanel/CostText",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.TextGUIRendererComponent",
+        "jsonString": {
+          "name": "CostText",
+          "path": "/ui/MineSelectUI/UpgradePanel/CostText",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 3,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UITextGUIRenderer",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uitextguirenderer",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 320,
+                "y": -65
+              },
+              "OffsetMin": {
+                "x": -320,
+                "y": -105
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 640,
+                "y": 40
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 0,
+                "y": -85
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": ""
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.TextGUIRendererComponent",
+              "BestFit": false,
+              "ConstraintX": 100,
+              "ConstraintY": 100,
+              "Font": "Default",
+              "FontColor": {
+                "r": 0.47843137254901963,
+                "g": 0.23529411764705882,
+                "b": 0.050980392156862744,
+                "a": 1
+              },
+              "FontSize": 24,
+              "FontStyle": 1,
+              "HorizontalAlignment": 2,
+              "IgnoreMapLayerCheck": false,
+              "MaxSize": 40,
+              "MinSize": 10,
+              "OrderInLayer": 0,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 0,
+              "Overflow": 0,
+              "OverrideSorting": false,
+              "Padding": {
+                "left": 0,
+                "right": 0,
+                "top": 0,
+                "bottom": 0
+              },
+              "SizeFit": false,
+              "SortingLayer": "UI",
+              "Text": "다음 강화: -",
+              "Underlay": false,
+              "UseConstraintX": false,
+              "UseConstraintY": false,
+              "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "2a60b2d6-93d8-47a7-8f6b-44b90267e732",
+        "path": "/ui/MineSelectUI/UpgradePanel/BtnUpgrade",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.ButtonComponent,MOD.Core.TextGUIRendererComponent",
+        "jsonString": {
+          "name": "BtnUpgrade",
+          "path": "/ui/MineSelectUI/UpgradePanel/BtnUpgrade",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 4,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UIButton",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uibutton",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 160,
+                "y": -106
+              },
+              "OffsetMin": {
+                "x": -160,
+                "y": -194
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 320,
+                "y": 88
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 0,
+                "y": -150
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "4b726e80aa58409f8e1f03cc2a4e5da3"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0.23529411764705882
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": true,
+              "Type": 1,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.ButtonComponent",
+              "Colors": {
+                "NormalColor": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1,
+                  "a": 1
+                },
+                "HighlightedColor": {
+                  "r": 0.9607843,
+                  "g": 0.9607843,
+                  "b": 0.9607843,
+                  "a": 1
+                },
+                "PressedColor": {
+                  "r": 0.784313738,
+                  "g": 0.784313738,
+                  "b": 0.784313738,
+                  "a": 1
+                },
+                "SelectedColor": {
+                  "r": 0.9607843,
+                  "g": 0.9607843,
+                  "b": 0.9607843,
+                  "a": 1
+                },
+                "DisabledColor": {
+                  "r": 0.784313738,
+                  "g": 0.784313738,
+                  "b": 0.784313738,
+                  "a": 0.5019608
+                },
+                "ColorMultiplier": 1,
+                "FadeDuration": 0.1
+              },
+              "IgnoreMapLayerCheck": false,
+              "ImageRUIDs": {
+                "HighlightedSprite": null,
+                "PressedSprite": null,
+                "SelectedSprite": null,
+                "DisabledSprite": null
+              },
+              "KeyCode": 0,
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "SortingLayer": "UI",
+              "Transition": 1,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.TextGUIRendererComponent",
+              "BestFit": false,
+              "ConstraintX": 100,
+              "ConstraintY": 100,
+              "Font": "Default",
+              "FontColor": {
+                "r": 0.23137254901960785,
+                "g": 0.16470588235294117,
+                "b": 0.10196078431372549,
+                "a": 1
+              },
+              "FontSize": 26,
+              "FontStyle": 0,
+              "HorizontalAlignment": 2,
+              "IgnoreMapLayerCheck": false,
+              "MaxSize": 40,
+              "MinSize": 10,
+              "OrderInLayer": 0,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 0,
+              "Overflow": 0,
+              "OverrideSorting": false,
+              "Padding": {
+                "left": 0,
+                "right": 0,
+                "top": 0,
+                "bottom": 0
+              },
+              "SizeFit": false,
+              "SortingLayer": "UI",
+              "Text": "강화하기",
+              "Underlay": false,
+              "UseConstraintX": false,
+              "UseConstraintY": false,
+              "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "a6b622b8-8cdb-424b-af7a-537c162eb1c6",
+        "path": "/ui/MineSelectUI/UpgradePanel/Feedback",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.TextGUIRendererComponent",
+        "jsonString": {
+          "name": "Feedback",
+          "path": "/ui/MineSelectUI/UpgradePanel/Feedback",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 5,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UITextGUIRenderer",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uitextguirenderer",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 330,
+                "y": -194
+              },
+              "OffsetMin": {
+                "x": -330,
+                "y": -242
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 660,
+                "y": 48
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 0,
+                "y": -218
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": ""
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.TextGUIRendererComponent",
+              "BestFit": false,
+              "ConstraintX": 100,
+              "ConstraintY": 100,
+              "Font": "Default",
+              "FontColor": {
+                "r": 0.35294117647058826,
+                "g": 0.27450980392156865,
+                "b": 0.19607843137254902,
+                "a": 1
+              },
+              "FontSize": 20,
+              "FontStyle": 0,
+              "HorizontalAlignment": 2,
+              "IgnoreMapLayerCheck": false,
+              "MaxSize": 40,
+              "MinSize": 10,
+              "OrderInLayer": 0,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 0,
+              "Overflow": 0,
+              "OverrideSorting": false,
+              "Padding": {
+                "left": 0,
+                "right": 0,
+                "top": 0,
+                "bottom": 0
+              },
+              "SizeFit": false,
+              "SortingLayer": "UI",
+              "Text": "",
+              "Underlay": false,
+              "UseConstraintX": false,
+              "UseConstraintY": false,
+              "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "2378aa23-8236-4829-ab5b-60e27c47de5e",
+        "path": "/ui/MineSelectUI/UpgradePanel/BtnClose",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.ButtonComponent,MOD.Core.TextGUIRendererComponent",
+        "jsonString": {
+          "name": "BtnClose",
+          "path": "/ui/MineSelectUI/UpgradePanel/BtnClose",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 6,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UIButton",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uibutton",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 365,
+                "y": 294
+              },
+              "OffsetMin": {
+                "x": 265,
+                "y": 206
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 100,
+                "y": 88
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 315,
+                "y": 250
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "a5f9c4101165445a9a0aaefeb14b0c56"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 0.10196078431372549,
+                "g": 0.10196078431372549,
+                "b": 0.10196078431372549,
+                "a": 0.23529411764705882
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": true,
+              "Type": 1,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.ButtonComponent",
+              "Colors": {
+                "NormalColor": {
+                  "r": 1,
+                  "g": 1,
+                  "b": 1,
+                  "a": 1
+                },
+                "HighlightedColor": {
+                  "r": 0.9607843,
+                  "g": 0.9607843,
+                  "b": 0.9607843,
+                  "a": 1
+                },
+                "PressedColor": {
+                  "r": 0.784313738,
+                  "g": 0.784313738,
+                  "b": 0.784313738,
+                  "a": 1
+                },
+                "SelectedColor": {
+                  "r": 0.9607843,
+                  "g": 0.9607843,
+                  "b": 0.9607843,
+                  "a": 1
+                },
+                "DisabledColor": {
+                  "r": 0.784313738,
+                  "g": 0.784313738,
+                  "b": 0.784313738,
+                  "a": 0.5019608
+                },
+                "ColorMultiplier": 1,
+                "FadeDuration": 0.1
+              },
+              "IgnoreMapLayerCheck": false,
+              "ImageRUIDs": {
+                "HighlightedSprite": null,
+                "PressedSprite": null,
+                "SelectedSprite": null,
+                "DisabledSprite": null
+              },
+              "KeyCode": 0,
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "SortingLayer": "UI",
+              "Transition": 1,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.TextGUIRendererComponent",
+              "BestFit": false,
+              "ConstraintX": 100,
+              "ConstraintY": 100,
+              "Font": "Default",
+              "FontColor": {
+                "r": 0.23137254901960785,
+                "g": 0.16470588235294117,
+                "b": 0.10196078431372549,
+                "a": 1
+              },
+              "FontSize": 22,
+              "FontStyle": 0,
+              "HorizontalAlignment": 2,
+              "IgnoreMapLayerCheck": false,
+              "MaxSize": 40,
+              "MinSize": 10,
+              "OrderInLayer": 0,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 0,
+              "Overflow": 0,
+              "OverrideSorting": false,
+              "Padding": {
+                "left": 0,
+                "right": 0,
+                "top": 0,
+                "bottom": 0
+              },
+              "SizeFit": false,
+              "SortingLayer": "UI",
+              "Text": "닫기",
+              "Underlay": false,
+              "UseConstraintX": false,
+              "UseConstraintY": false,
+              "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
       }
     ]
   }
