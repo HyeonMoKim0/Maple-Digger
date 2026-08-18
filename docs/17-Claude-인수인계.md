@@ -1,6 +1,6 @@
 # Claude 작업 인수인계
 
-> 기준일: 2026-08-06 (T-04 Phase 4가 PR #4로 `main`에 병합된 뒤, 기록 정합화 세션)
+> 기준일: 2026-08-18 (T-02·T-03·T-05 가 PR #9·#10·#11 로 `main` 병합, 출시 준비 정리까지 끝난 세션)
 > 대상: Maple-Digger MSW 프로젝트를 이어 개발할 Claude 작업자
 > **세션별 상세 기록은 [`Archive/As-built.md`](../Archive/As-built.md)에 있다.** 이 문서는 "다음에 무엇을 할지"에 집중하며, 최근 1개 세션 요약만 유지한다.
 
@@ -8,32 +8,19 @@
 
 ### 0.0 최근 세션 요약 — 가장 최신
 
-**⚠ 진행 중인 브랜치 `feat/ui-parts-skin` — PR 리뷰 대기 (2026-08-13).** UI 키트 적용(`bbee20d`)이 올라가 있다. **병합 전에는 `ui/` 를 `main`에서 건드리지 않는다** — 7개 파일 전부를 만진 커밋이라 충돌하면 되돌리기 비싸다. 그 외 작업은 `main`에서 이어가도 된다.
+**진행 중인 브랜치 없음 — 전부 `main` 에 병합돼 있다 (`c41bab3`).** 다음 작업은 **T-07 튜토리얼**이며 선행(T-02·T-05)이 전부 충족됐다. 아래 §0.1-T7 이 착수 지침이다.
 
-T-04 **Phase 1~5가 전부 `main`에 병합 완료**다(PR #2~#5, 마지막 `10898d1`). 다음은 **Phase 6(F5-1~F5-6 일괄 판정 + 사운드 청취 판정)** — T-04의 마지막 단계이고 **오너 참여가 필요하다**(청취·버튼 클릭). 아래 §0.1-A가 이어가는 지점이다.
+**2026-08-18 (통합 세션 — T-02 → T-03 → 출시 준비 → T-05)** 한 세션에서 티켓 3개 + 출시 정리가 끝났다. 상세는 `Archive/As-built.md` 2026-08-18 항목들과 `docs/16` §30~§34.
 
-**2026-08-13 (UI 키트 적용 세션)** — `docs/ui-parts` PNG 48장 중 **14종을 그룹 리소스로 등록**하고 `.ui` **7개를 목재 프레임 + 크림 양피지 톤으로 리스킨**했다(`feat/ui-parts-skin` `bbee20d`). 검증: `ui_lint` ERROR 0(남은 L007 25건은 T-09 baseline과 동일) · 런타임 로그 173건 전부 Info · `audit_bindings` 114건 실패 0 · 화면별 Play 스크린샷. **원본 PNG는 그대로 못 쓴다** — AI 생성물이라 1254×1254~2172×724에 투명 여백이 붙어 있어 트리밍·축소 도구(`tools/ui_parts_prep.cjs`)를 만들었다. **9-slice 경계는 `.ui`가 아니라 리소스 속성(`border_*`)에 넣어야 동작한다.** 프레임을 씌우면 좌표 기준이 바뀌어 **콘텐츠 기준선 = border + 12** 규칙이 새로 생겼다(파일럿에서 이걸 안 지켜 4곳이 깨졌다). `AccountRecoveryUI`에서 **앵커 모드 혼용(D-9)** 을 발견해 단일 좌표계로 통일했다. 규칙·RUID·잔여 목록은 **[`26-UI-파츠-RUID.md`](26-UI-파츠-RUID.md)** 하나에 모았다.
-
-**2026-08-06 (Phase 5 세션)** — `MineSoundController` 신설(맵 3개 부착) + 배선 3곳. cue 7종 전부 실제 경로 재생 로그 확보, 쿨다운 억제 쌍 확인 (`docs/16` §22). 첫 Play가 함정 2개를 잡았다 — 접속 직후 `@Sync` 오재생(settle 가드로 해결)과 타 맵 cue 전역 재생(`CurrentMap` 가드). **@Sync 파생 이벤트를 새로 만들면 항상 settle 가드부터 챙길 것.**
-
-**2026-08-06 (기록 정합화 세션)** — 코드 변경 없음. ① Maker 정규화 재저장분 8개를 `chore:` 로 분리 커밋(`bef447f`) — 빌더로 HEAD와 대조해 순수 정규화임을 확인하고 `GroupOrder` 밀집 수열·`SpecialText` 레거시 컴포넌트 두 회귀를 함께 점검했다. ② `docs/18`·`docs/00`·이 문서의 T-04 상태가 "Phase 1~3 완료 / 브랜치 `p3`"로 낡아 있어 실제와 맞췄다. ③ Phase 5 사운드 진행 방식과 Phase 4가 남긴 시각 판단 2건을 아래 §0.1-A에 명시했다.
-
-| 범위 | 상태 |
+| 병합 | 내용 |
 |---|---|
-| **T-04 Phase 3** (`main`) | 중요 이벤트 채널 — `VeinTickSimulator`에 `NoticeId`/`NoticeKind`/`NoticeCell*`/`NoticeCount` + 상태 복구용 `ActiveSpecialCount`. `MineNoticeController`(ClientOnly, 맵 컴포넌트) → **특별 광맥 출현 토스트**. 스폰 강조 펄스, HUD 특별 광맥 행 |
-| **T-04 Phase 3.5** (`main`) | **D-14** — 돌·철·금이 화면에서 구분되지 않던 결함. `OreBadge` 모델 + `VeinMarkerController`가 marker의 자식으로 아이콘 뱃지를 세운다 |
-| **T-04 Phase 4** (`main`) | 일꾼 연출 — **선택 링 · 채굴 먼지 · Depot 강조 · 아바타 교체 · `rare_ore_unload`**. `WorkerVisualController`(ClientOnly) 신설. Phase 1이 만든 `VisualEvent*` 채널을 처음으로 소비한다 |
-| 결정 카드 | **C208** — F5-3의 "지도 위치"를 **셀 좌표 표기**로 판정. 미니맵은 만들지 않는다 |
-| 자산 판정 | `docs/21` §5 — 채굴 파편 후보 2종 **기각**, **흰 먼지 퍼짐(`78ea5621`)으로 확정** |
+| **T-02** (PR #9) | 맵 강화 서버 + **프로필 v8**(`mineLevels`·손 개수 `pendingOreCount`·`Crystal`·`tutorial`·`settings` 5필드 일괄). 4효과: recovery 가산 합성 1.60배 실측 · rareChance **만분율 승격**(`RareDropTestBasisPoint`) · specialSpawn 하한 60틱 · yield 손 2개+부분 적재. 보너스는 맵 진입·강화 성공 시에만 시뮬레이터 캐시. 표기용 @Sync: 맵별 레벨 3종 + `MineUpgradeInfoJson`. 거절 문구 체계 정리(`DescribeShortfall`·`SetReject*` 단일 정의). B8~B18 전량 통과 (§30) |
+| **T-03** (PR #10) | `MineSelectUI` 에 `UpgradePanel` 모달 + 진입 버튼. `MineUpgradeInfoJson` **파싱만**(재계산 0줄). 거절 사유는 모달 연 시점 스냅숏 방식(R5). 오너 클릭 K5 통과 (§31) |
+| **출시 준비** (`main` 직접) | **`map01` 삭제**(참조 0건 확인) · **플레이어 아바타 비표시**(DefaultPlayer 렌더러·이름표·말풍선·그림자 off — **이동·카메라는 카메라 팬 수단으로 유지**). 오너가 출시 절차 진행 중 (§33) |
+| **T-05** (PR #11) | 프로그램 라이브러리(3→20슬롯, 저장/개명/복제/삭제/구매) + **재접속 자동 실행**(`auto-run ran=1` 실측). 최종 검증은 `WorkerController.ValidateProgram` 단일 소유. 별도 `ui/ProgramLibraryUI.ui`(GroupOrder 5 삽입, Popup·Toast·Recovery +1). C1~C6 전량 통과 (§34) |
+| 결함 수정 | **D-15**(수레 강화 패널이 빈 프레임 — `Backdrop` displayOrder 10 이 자식 전부를 덮음, 8/13 리스킨 잠복 회귀) 당일 수정. 상태 램프 32→40px. 채굴 먼지 오프셋을 광맥 종류별 오너 실측값으로 (§32) |
 
-**오너 검수에서 나온 지적과 반영** (2026-08-04)
-
-| 지적 | 반영 |
-|---|---|
-| 선택 링 | 이상 없음 |
-| "채굴 파편이 안 보임 — 그림자가 생기는 느낌" | 자산이 **어두운 얼룩**이었다. 흰 먼지로 교체 |
-| "Depot은 커진 상태에서 작아진 것만 보임" | 펄스가 최대 크기에서 시작해 줄기만 했다. `sin` 곡선으로 교체 → **해결 확인** |
-| "파편은 광석 위치 중심에 발생할 것" | 일꾼 자식 → **맵 자식 + `VisualEventCellX/Y`**로 광맥 셀에 배치 |
+**오너 미결 2건**: ① 라이브러리 **슬롯 기본가 50골드**(`AccountProfileService.LibrarySlotBaseCost`) 확정 ② 클릭 검수 **K7**(라이브러리 버튼 일괄). K1~K5·K2-R·K5-R·K6 은 전부 통과했다.
 
 **반복하면 안 되는 함정 9개**
 
@@ -50,6 +37,9 @@ T-04 **Phase 1~5가 전부 `main`에 병합 완료**다(PR #2~#5, 마지막 `108
 
    **근본 규칙: 도구는 "Maker가 건드린 것"과 "내가 건드린 것"을 구분하지 못한다.** 내가 방금 무엇을 바꿨는지 아는 상태에서 판정을 읽어야 한다. 이번 세션에 방금 `.map`을 쓴 직후에 `[정규화]`가 나왔다면 그건 도구가 못 본 것이다.
 9. **`asset_update_resource_storage_info`는 넘기지 않은 필드를 빈 문자열로 덮는다.** `properties`만 넘겼더니 리소스의 `name`·`description`·`subcategory`가 전부 지워졌다(2026-08-13 실제 발생). **항상 4개를 함께 넘긴다.**
+10. **mlua 에서 `handler` 는 예약어다.** `local handler = ...` 는 파서 오류가 난다(2026-08-18 실제 발생 — `clickHandler` 로 회피). 이벤트 핸들러 선언 키워드(`handler HandleXxx(...)`)와 충돌하기 때문이다.
+11. **오너가 좌표·수치를 줄 때는 어느 엔티티의 어느 필드를 읽었는지부터 확인한다.** 먼지 오프셋 (0.75, 0.25)를 "광맥 기준 오프셋"으로 읽었다가, 실제로는 Play 중 `Worker01_Shard` 의 Position 에 직접 입력한 **맵 절대좌표**였다(2026-08-18, docs/16 §32.6). 해석이 갈리면 구현 전에 AskUserQuestion 으로 가른다.
+12. **불투명 스킨을 입힌 배경 엔티티는 displayOrder 가 형제 중 최소인지 확인한다.** D-15 — 리스킨이 반투명 배경을 불투명 프레임으로 바꾸자 `displayOrder=10` 이던 `CartPanel/Backdrop` 이 자식 전부를 덮었다. `audit_resave` 도 `ui_lint` 도 이 축은 보지 않는다 (docs/16 §32.2).
 
 > 5차 이전 세션의 상세는 `Archive/As-built.md`의 날짜별 기록을 본다. 요약하면 — **2차**(07-29) 희귀 광물 서버 규칙 전량 검증, **3차**(07-30) F5 §5·§6 계약 신설, **4차**(07-30) 화면 결함 D-1~D-12 전량 수정 + `docs/18`~`21` 신설, **5차**(07-31) `GroupOrder` 회귀 복구(D-13) + T-04 자산 확정(C206).
 
@@ -57,7 +47,16 @@ T-04 **Phase 1~5가 전부 `main`에 병합 완료**다(PR #2~#5, 마지막 `108
 
 > **프로그래머 팀원에게 작업을 넘길 때는 [18-작업-할당서.md](18-작업-할당서.md)를 쓴다.** 티켓 T-01~T-10, MSW 미경험자용 온보딩, 조용한 실패 5개, 완료 정의(DoD)가 정리돼 있다. 아래는 AI 세션용 요약이다.
 
-**화면 결함 0건, 기획 공백은 F9 하나뿐이다.** 지금 진행 중인 것은 T-04다.
+**화면 결함 0건(D-15 까지 해소), 기획 공백은 F9 하나뿐이다.** 다음 착수는 **T-07 튜토리얼**이다.
+
+#### 0.1-T7 · T-07 튜토리얼 착수 지침 (다음 세션은 여기부터)
+
+- **선행 전부 충족**: T-02(프로필 v8 의 `tutorial` 필드 — step 0·completed·skipped·rewardsClaimed·midRewards) · T-05(기본 프로그램을 라이브러리에 저장하는 구조). **미결 0건** — U1~U5 는 C204·C213 으로 전부 확정.
+- **계약**: `docs/19`(F7-E) **전체를 먼저 읽는다** — 8단계 정의·완료 판정·강제 흐름·안내 UI·저장 스키마(§10.2)·보상(§7)·완화 규칙(§8)·수용 기준 E1~E14. 티켓 상세는 `docs/18` T-07.
+- **건드릴 파일**: 신규 `TutorialService`(서버) / `TutorialController`(클라 `@Logic`) / `ui/TutorialUI.ui` + `AccountProfileService` · `EconomyService` · `ProgressionService` · `WorkerController` · `ui/MineSelectUI.ui`.
+- **이미 준비된 것**: `tutorial` 필드는 v8 에 들어 있고 `NormalizeTutorial` 이 정규화한다. **모든 기존 계정이 step=0 이라 튜토리얼 배포 즉시 전원에게 처음부터 발동한다** — 의도된 동작(docs/19 E14).
+- **신규 `.ui` 는 GroupOrder 를 확인하고 넣는다** — 현재 밀집 수열 0..8 (5=ProgramLibraryUI · 6=Popup · 7=Toast · 8=Recovery). 튜토리얼 안내는 Popup 아래(5.5 자리 → 6 삽입 + 상위 +1)일지 Recovery 바로 아래일지 F7-E §의 안내 UI 요구를 보고 정한다.
+- **완료 후**: 오너에게 **공개 전환** 신호 — §32 대화 기록의 "제한 공개 → T-07 후 공개" 계획의 마지막 조각이다.
 
 | 순위 | 할 일 | 상태 | 비고 |
 |:-:|---|---|---|
