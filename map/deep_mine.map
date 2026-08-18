@@ -7,7 +7,7 @@
   "Usage": 0,
   "UsePublish": 1,
   "UseService": 0,
-  "CoreVersion": "26.5.0.0",
+  "CoreVersion": "26.7.0.0",
   "StudioVersion": "0.1.0.0",
   "DynamicLoading": 0,
   "ContentProto": {
@@ -43,9 +43,9 @@
             {
               "@type": "script.VeinTickSimulator",
               "Enable": true,
+              "RequiredWorkerStartCount": 5,
               "MineId": "deep_mine",
               "LayoutVersion": 2,
-              "RequiredWorkerStartCount": 5,
               "SpecialVeinSpawnTicks": 750,
               "SpecialVeinMaxActive": 3,
               "SpecialVeinSpawnBatch": 2,
@@ -88,7 +88,7 @@
                 "r": 0.17,
                 "g": 0.22,
                 "b": 0.28,
-                "a": 1
+                "a": 1.0
               },
               "TemplateRUID": "794ad8421e2543d8a6d2c70307637450",
               "Type": 2,
@@ -112,6 +112,13 @@
           "displayOrder": 1,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "maplemaplayer",
+            "sub_entity_id": null,
+            "root_entity_id": "f317cb03-70dc-486f-a34b-40b2ed000c23",
+            "replaced_model_id": null
+          },
           "modelId": "maplemaplayer",
           "@components": [
             {
@@ -124,14 +131,7 @@
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "maplemaplayer",
-            "sub_entity_id": null,
-            "root_entity_id": "f317cb03-70dc-486f-a34b-40b2ed000c23",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -148,21 +148,34 @@
           "displayOrder": 2,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "recttilemap",
+            "sub_entity_id": null,
+            "root_entity_id": "42a61ea0-6f58-474c-8c3e-d2fb2e3c8125",
+            "replaced_model_id": null
+          },
           "modelId": "recttilemap",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 1000
+                "x": 0.0,
+                "y": 0.0,
+                "z": 1000.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1070,14 +1083,7 @@
               ]
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "recttilemap",
-            "sub_entity_id": null,
-            "root_entity_id": "42a61ea0-6f58-474c-8c3e-d2fb2e3c8125",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1091,54 +1097,63 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 0,
+          "displayOrder": 3,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "worker",
+            "sub_entity_id": null,
+            "root_entity_id": "2821c65e-01ba-4504-b920-6a350a06d729",
+            "replaced_model_id": null
+          },
           "modelId": "worker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.MovementComponent",
-              "Enable": true,
-              "InputSpeed": 3
+              "InputSpeed": 3.0,
+              "Enable": true
             },
             {
               "@type": "MOD.Core.KinematicbodyComponent",
               "MoveVelocity": {
-                "x": 0,
-                "y": 0
-              },
-              "RealMoveVelocity": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "Enable": true
             },
             {
               "@type": "script.WorkerController",
               "Enable": true,
-              "WorkerIndex": 1,
               "StartCellX": 0,
-              "StartCellY": 0
+              "StartCellY": 0,
+              "WorkerIndex": 1
             },
             {
               "@type": "script.WorkerVisualController",
@@ -1149,7 +1164,7 @@
               "IgnoreMapLayerCheck": false,
               "MaterialId": "",
               "OrderInLayer": 2,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "ShowDefaultWeaponEffects": true,
               "SortingLayer": "Default",
               "Enable": true
@@ -1178,14 +1193,7 @@
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "worker",
-            "sub_entity_id": null,
-            "root_entity_id": "2821c65e-01ba-4504-b920-6a350a06d729",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1199,29 +1207,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 2,
+          "displayOrder": 4,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "5110e2ff-92f5-43ae-af63-44eb27085614",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1232,23 +1253,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "5110e2ff-92f5-43ae-af63-44eb27085614",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1262,29 +1278,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 3,
+          "displayOrder": 5,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "25a3fd52-fbf1-414b-84af-dde494f962e5",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 1,
-                "y": 0,
-                "z": 0
+                "x": 1.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1295,23 +1324,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "25a3fd52-fbf1-414b-84af-dde494f962e5",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1325,29 +1349,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 4,
+          "displayOrder": 6,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "297327dc-e766-47de-805f-131541506dc7",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 2,
-                "y": -1,
-                "z": 0
+                "x": 2.0,
+                "y": -1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1358,23 +1395,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "297327dc-e766-47de-805f-131541506dc7",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1388,29 +1420,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 5,
+          "displayOrder": 7,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "80c74b9b-3d3f-45a0-a69a-d0b32e49fe0d",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 3,
-                "y": 1,
-                "z": 0
+                "x": 3.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1421,23 +1466,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "80c74b9b-3d3f-45a0-a69a-d0b32e49fe0d",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1451,29 +1491,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 6,
+          "displayOrder": 8,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "4330bb4d-cdc0-4924-961b-766afb713d37",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 6,
-                "y": 0,
-                "z": 0
+                "x": 6.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1484,23 +1537,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "4330bb4d-cdc0-4924-961b-766afb713d37",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1514,29 +1562,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 7,
+          "displayOrder": 9,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "45819ba7-90e2-4edd-962c-d32e983557aa",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 7,
-                "y": -2,
-                "z": 0
+                "x": 7.0,
+                "y": -2.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1547,23 +1608,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "45819ba7-90e2-4edd-962c-d32e983557aa",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1577,29 +1633,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 8,
+          "displayOrder": 10,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "9e24e1e5-5483-43a4-b6ce-365db5182c49",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 8,
-                "y": 1,
-                "z": 0
+                "x": 8.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1610,23 +1679,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "9e24e1e5-5483-43a4-b6ce-365db5182c49",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1640,29 +1704,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 9,
+          "displayOrder": 11,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "8aa56dee-e604-4430-906b-7712360970be",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 10,
-                "y": -1,
-                "z": 0
+                "x": 10.0,
+                "y": -1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1673,23 +1750,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "8aa56dee-e604-4430-906b-7712360970be",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1703,29 +1775,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 10,
+          "displayOrder": 12,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "32003dbb-1e96-4624-82ec-3798258eef19",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 5,
-                "y": 2,
-                "z": 0
+                "x": 5.0,
+                "y": 2.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1736,23 +1821,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "32003dbb-1e96-4624-82ec-3798258eef19",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1766,29 +1846,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 11,
+          "displayOrder": 13,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "f87894da-8faa-4700-b439-b8d5ad0bcd02",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 7,
-                "y": 1,
-                "z": 0
+                "x": 7.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1799,23 +1892,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "f87894da-8faa-4700-b439-b8d5ad0bcd02",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1829,29 +1917,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 12,
+          "displayOrder": 14,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "e5855d74-c854-471a-ab91-a89852d143f0",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 9,
-                "y": 0,
-                "z": 0
+                "x": 9.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1862,23 +1963,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "e5855d74-c854-471a-ab91-a89852d143f0",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       },
       {
@@ -1892,29 +1988,42 @@
           "enable": true,
           "visible": true,
           "localize": false,
-          "displayOrder": 13,
+          "displayOrder": 15,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "25a25775-97ae-4fcc-bb04-8e1efaa36b14",
+            "replaced_model_id": null
+          },
           "modelId": "minemarker",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
               "Position": {
-                "x": 10,
-                "y": -3,
-                "z": 0
+                "x": 10.0,
+                "y": -3.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1925,23 +2034,18 @@
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
-              "Enable": true,
+              "ActionSheet": {},
+              "OrderInLayer": 1,
+              "RenderSetting": 0,
               "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
-              "OrderInLayer": 1
+              "Enable": true
             },
             {
               "@type": "script.VeinMarkerController",
               "Enable": true
             }
           ],
-          "@version": 1,
-          "origin": {
-            "type": "Model",
-            "entry_id": "minemarker",
-            "sub_entity_id": null,
-            "root_entity_id": "25a25775-97ae-4fcc-bb04-8e1efaa36b14",
-            "replaced_model_id": null
-          }
+          "@version": 1
         }
       }
     ]

@@ -24,7 +24,7 @@
           "enable": true,
           "visible": true,
           "localize": true,
-          "displayOrder": 3,
+          "displayOrder": 5,
           "pathConstraints": "//",
           "revision": 0,
           "origin": {
@@ -339,7 +339,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": 240.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -533,7 +533,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": 190.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -684,7 +684,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": -22.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -878,7 +878,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": -90.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -1072,7 +1072,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": -154.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -1316,7 +1316,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": 134.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -1510,7 +1510,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": 96.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -1704,7 +1704,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": 58.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -1898,7 +1898,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": 20.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -2092,7 +2092,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": -22.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
