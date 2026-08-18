@@ -5,7 +5,7 @@ property string StorageKey = "maple-digger.account.v1"
 property string BackupStorageKey = "maple-digger.account.backup.v1"
 property string RecoveryArchiveStorageKey = "maple-digger.account.recovery-archive.v1"
 property string SessionLockStorageKey = "maple-digger.account.session-lock.v1"
-property integer SchemaVersion = 7
+property integer SchemaVersion = 8
 property integer AutoSaveSeconds = 300
 property integer SessionLockLeaseSeconds = 90
 property integer SessionLockRefreshSeconds = 30
@@ -15,6 +15,24 @@ property integer SaveGeneration = 0
 
 @Sync
 property integer Gold = 0
+
+@Sync
+property integer Crystal = 0
+
+-- F7-B §5.6.5: 광산 선택 화면의 `Lv.n / 10` 표시용 맵별 현재 레벨.
+@Sync
+property integer MineLevelBeginner = 0
+
+@Sync
+property integer MineLevelDeep = 0
+
+@Sync
+property integer MineLevelGem = 0
+
+-- F7-B §5.6.5: 현재 입장 광산의 강화 표기 계약 전체(현재/다음 보너스·절대값·비용).
+-- 클라이언트는 재계산하지 않고 이 서버 계산 결과를 그대로 그린다 (§5.6.3).
+@Sync
+property string MineUpgradeInfoJson = ""
 
 @Sync
 property integer MineTokens = 0
@@ -195,10 +213,23 @@ method table CreateDefaultProfile()
     return {
         schemaVersion = self.SchemaVersion,
         gold = 0,
+        crystal = 0,
         mineTokens = 0,
         stone = 0,
         iron = 0,
         goldOre = 0,
+        -- v8 (F7-B §5.1): 맵별 영구 강화 레벨 0~10. 미해금 맵도 0으로 기록한다.
+        mineLevels = { beginner_mine = 0, deep_mine = 0, gem_mine = 0 },
+        -- v8 (F7-E §10.2): 튜토리얼 진행 상태. step 0 = 미시작, 9 = 완료.
+        tutorial = {
+            step = 0,
+            completed = false,
+            skipped = false,
+            rewardsClaimed = false,
+            midRewards = { s4 = false, s6 = false },
+        },
+        -- v8 (F10 §4.2 · C214): 표현 설정 그룹. 원장이 아니므로 별도 최상위 그룹.
+        settings = { bgmVolume = 0.5, sfxVolume = 1.0 },
         deepMineUnlocked = false,
         gemMineUnlocked = false,
         stoneTokenProgress = 0,
@@ -273,6 +304,8 @@ method table CreateWorkerRecord(integer workerIndex)
         cart = { stone = 0, iron = 0, gold = 0, rare_stone = 0, rare_iron = 0, rare_gold = 0 },
         cartCount = 0,
         pendingOre = "",
+        -- v8 (F7-B §5.3): yield 추가 지급이 발동하면 손에 같은 광물 최대 2개.
+        pendingOreCount = 0,
         lastValidProgramId = "default-worker-" .. suffix,
     }
 end
@@ -496,6 +529,11 @@ method table NormalizeProfile(table profile)
     local normalized = self:CreateDefaultProfile()
     normalized.schemaVersion = self.SchemaVersion
     normalized.gold = profile.gold or profile.credits or normalized.gold
+    -- v7 → v8: 필드가 없으면 변환 실패가 아니라 기본값이다 (F7-A §2.1).
+    if type(profile.crystal) == "number" then normalized.crystal = math.max(0, math.floor(profile.crystal)) end
+    normalized.mineLevels = self:NormalizeMineLevels(profile.mineLevels)
+    normalized.tutorial = self:NormalizeTutorial(profile.tutorial)
+    normalized.settings = self:NormalizeSettings(profile.settings)
     normalized.mineTokens = profile.mineTokens or normalized.mineTokens
     normalized.stone = profile.stone or normalized.stone
     normalized.iron = profile.iron or normalized.iron
@@ -515,6 +553,51 @@ method table NormalizeProfile(table profile)
     normalized.workerAppearanceJson = profile.workerAppearanceJson or normalized.workerAppearanceJson
     normalized.statsJson = profile.statsJson or normalized.statsJson
     return normalized
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeMineLevels(any source)
+    -- 맵별 강화 레벨 0~10 정수. v7 프로필(필드 없음)은 세 맵 모두 0으로 변환한다.
+    local levels = { beginner_mine = 0, deep_mine = 0, gem_mine = 0 }
+    if type(source) ~= "table" then return levels end
+    for mineId, level in pairs(source) do
+        if levels[mineId] ~= nil and type(level) == "number" then
+            levels[mineId] = math.max(0, math.min(10, math.floor(level)))
+        end
+    end
+    return levels
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeTutorial(any source)
+    -- F7-E §10.2: v7 프로필은 step 0 + 모든 플래그 false 로 변환한다.
+    local tutorial = {
+        step = 0,
+        completed = false,
+        skipped = false,
+        rewardsClaimed = false,
+        midRewards = { s4 = false, s6 = false },
+    }
+    if type(source) ~= "table" then return tutorial end
+    if type(source.step) == "number" then tutorial.step = math.max(0, math.min(9, math.floor(source.step))) end
+    tutorial.completed = source.completed == true
+    tutorial.skipped = source.skipped == true
+    tutorial.rewardsClaimed = source.rewardsClaimed == true
+    if type(source.midRewards) == "table" then
+        tutorial.midRewards.s4 = source.midRewards.s4 == true
+        tutorial.midRewards.s6 = source.midRewards.s6 == true
+    end
+    return tutorial
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeSettings(any source)
+    -- F10 §4.2 (C214): 서버는 0.0~1.0 클램프만 하고 거절하지 않는다.
+    local settings = { bgmVolume = 0.5, sfxVolume = 1.0 }
+    if type(source) ~= "table" then return settings end
+    if type(source.bgmVolume) == "number" then settings.bgmVolume = math.max(0.0, math.min(1.0, source.bgmVolume)) end
+    if type(source.sfxVolume) == "number" then settings.sfxVolume = math.max(0.0, math.min(1.0, source.sfxVolume)) end
+    return settings
 end
 
 @ExecSpace("ServerOnly")
@@ -596,6 +679,14 @@ method table NormalizeWorkers(any workers, integer rareStoneLevel)
         if type(source.pendingOre) == "string" and self:IsKnownOre(source.pendingOre) then
             record.pendingOre = source.pendingOre
         end
+        -- v7 기록은 개수 필드가 없다: 손에 광물이 있으면 1, 없으면 0 (F7-A §2.1 ②).
+        if record.pendingOre == "" then
+            record.pendingOreCount = 0
+        elseif type(source.pendingOreCount) == "number" then
+            record.pendingOreCount = math.max(1, math.min(2, math.floor(source.pendingOreCount)))
+        else
+            record.pendingOreCount = 1
+        end
         if type(source.lastValidProgramId) == "string" and source.lastValidProgramId ~= "" then
             record.lastValidProgramId = source.lastValidProgramId
         end
@@ -660,6 +751,11 @@ end
 method void SyncRuntimeState()
     -- Mirrors only player-visible progression data; authoritative values stay in the profile.
     self.Gold = self._T.profile.gold
+    self.Crystal = self._T.profile.crystal or 0
+    self.MineLevelBeginner = self._T.profile.mineLevels.beginner_mine
+    self.MineLevelDeep = self._T.profile.mineLevels.deep_mine
+    self.MineLevelGem = self._T.profile.mineLevels.gem_mine
+    self.MineUpgradeInfoJson = self:BuildMineUpgradeInfoJson()
     self.MineTokens = self._T.profile.mineTokens
     self.Stone = self._T.profile.stone
     self.Iron = self._T.profile.iron
@@ -773,7 +869,11 @@ method void CaptureCurrentWorkerState()
             end
             record.cartCount = self:CountCart(record.cart)
             record.pendingOre = ""
-            if self:IsKnownOre(worker.PendingOre) then record.pendingOre = worker.PendingOre end
+            record.pendingOreCount = 0
+            if self:IsKnownOre(worker.PendingOre) then
+                record.pendingOre = worker.PendingOre
+                record.pendingOreCount = math.max(1, math.min(2, math.floor(worker.PendingOreCount or 1)))
+            end
         end
     end
     self:MarkProfileDirty()
@@ -782,6 +882,8 @@ end
 @ExecSpace("ServerOnly")
 method boolean RestoreCurrentWorkerState()
     if not self:CanWriteProfile() then return false end
+    -- 맵 진입 시점의 보너스 캐시 갱신 (F7-B §5.5). 로그인·광산 전환 모두 이 경로를 지난다.
+    self:PushMineBonusesToSimulator()
     local restoredCount = 0
     for workerIndex = 1, #self._T.profile.workers do
         if self:RestoreOwnedWorker(workerIndex) then restoredCount = restoredCount + 1 end
@@ -808,7 +910,7 @@ method boolean RestoreOwnedWorker(integer workerIndex)
         worker = spawned:GetComponent("script.WorkerController")
     end
     if worker == nil then return false end
-    worker:ConfigureFromProfile(workerIndex, self:GetWorkerCartCapacity(workerIndex), record.cart, record.pendingOre)
+    worker:ConfigureFromProfile(workerIndex, self:GetWorkerCartCapacity(workerIndex), record.cart, record.pendingOre, record.pendingOreCount or 0)
     return true
 end
 
@@ -1144,6 +1246,165 @@ method boolean SpendAndUnlock(string mineId, integer goldCost, integer tokenCost
     return false
 end
 
+@ExecSpace("ServerOnly")
+method string MineIdForMapName(string mapName)
+    -- 맵 파일명 ↔ 강화 원장 키. 초보 광산만 파일명(farm01)과 mineId 가 다르다.
+    if mapName == "farm01" then return "beginner_mine" end
+    if mapName == "deep_mine" or mapName == "gem_mine" then return mapName end
+    return ""
+end
+
+@ExecSpace("ServerOnly")
+method string GetMinePrimaryEffect(string mineId)
+    -- F7-B §5.2: 광산마다 주 효과만 다르다.
+    if mineId == "beginner_mine" then return "yield" end
+    if mineId == "deep_mine" then return "recovery" end
+    if mineId == "gem_mine" then return "rareChance" end
+    return ""
+end
+
+@ExecSpace("ServerOnly")
+method string GetMineRepresentativeOre(string mineId)
+    -- F7-B §3: 대표 광물 정의를 수레 강화·맵 강화·토큰 환산이 공유한다.
+    if mineId == "beginner_mine" then return "stone" end
+    if mineId == "deep_mine" then return "iron" end
+    if mineId == "gem_mine" then return "gold" end
+    return ""
+end
+
+@ExecSpace("ServerOnly")
+method number GetMineBonus(string mineId, string effectKey)
+    -- F7-B §5.5: 해당 맵·효과의 누적 보너스 비율 (주 효과 0.00~0.30, 부 효과 0.00~0.10).
+    local levels = self._T.profile.mineLevels
+    if levels == nil or levels[mineId] == nil then return 0.0 end
+    local level = levels[mineId]
+    if self:GetMinePrimaryEffect(mineId) == effectKey then
+        return level * 0.03
+    end
+    return level * 0.01
+end
+
+@ExecSpace("ServerOnly")
+method integer GetMineUpgradeGoldCost(integer currentLevel)
+    -- F7-B §5.4: n = L+1, 골드 round(30 × 1.35^(n-1)).
+    local n = currentLevel + 1
+    return math.floor(30 * (1.35 ^ (n - 1)) + 0.5)
+end
+
+@ExecSpace("ServerOnly")
+method integer GetMineUpgradeOreCost(integer currentLevel)
+    -- F7-B §5.4: 대표 광물 20 × n.
+    return 20 * (currentLevel + 1)
+end
+
+@ExecSpace("ServerOnly")
+method void PushMineBonusesToSimulator()
+    -- F7-B §5.5: 시뮬레이터는 매 틱 프로필을 조회하지 않는다. 맵 진입 시와
+    -- 강화 성공 시에만 이 메서드가 네 보너스를 캐시로 밀어 넣는다.
+    local map = self.Entity.CurrentMap
+    if map == nil then return end
+    ---@type VeinTickSimulator
+    local sim = map:GetComponent("script.VeinTickSimulator")
+    if sim == nil then return end
+    local mineId = sim.MineId
+    sim:ApplyMineBonuses(
+        self:GetMineBonus(mineId, "yield"),
+        self:GetMineBonus(mineId, "recovery"),
+        self:GetMineBonus(mineId, "rareChance"),
+        self:GetMineBonus(mineId, "specialSpawn"))
+end
+
+@ExecSpace("ServerOnly")
+method boolean PurchaseMineUpgrade(string mineId, integer goldCost, string oreType, integer oreCost)
+    -- F7-B §5.5: 저장 성공 뒤에만 비용 차감과 레벨 증가를 확정한다. 실패 시 롤백.
+    if not self:CanWriteProfile() or goldCost < 0 or oreCost < 0 then return false end
+    local profile = self._T.profile
+    if profile.mineLevels == nil or profile.mineLevels[mineId] == nil then return false end
+    local currentLevel = profile.mineLevels[mineId]
+    if currentLevel >= 10 then
+        -- UPGRADE_MAX_LEVEL (docs/23 §6.1): 차감이 없었음을 명시한다 (B10).
+        self:SetTransactionMessage("이미 최대 레벨입니다. 비용은 차감되지 않았습니다.")
+        return false
+    end
+    local oreBalance = 0
+    local stoneCost = 0
+    local ironCost = 0
+    local goldOreCost = 0
+    if oreType == "stone" then oreBalance = profile.stone stoneCost = oreCost
+    elseif oreType == "iron" then oreBalance = profile.iron ironCost = oreCost
+    elseif oreType == "gold" then oreBalance = profile.goldOre goldOreCost = oreCost
+    else return false end
+    if profile.gold < goldCost or oreBalance < oreCost then
+        -- UPGRADE_INSUFFICIENT_FUNDS (docs/23 §6.1): 부족분을 숫자로 (§4.1).
+        self:SetTransactionMessage("맵 강화 재화가 부족합니다. " .. self:DescribeShortfall(goldCost, 0, stoneCost, ironCost, goldOreCost))
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(profile)
+    profile.gold = profile.gold - goldCost
+    if oreType == "stone" then profile.stone = profile.stone - oreCost
+    elseif oreType == "iron" then profile.iron = profile.iron - oreCost
+    else profile.goldOre = profile.goldOre - oreCost end
+    profile.mineLevels[mineId] = currentLevel + 1
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        -- UPGRADE_SAVE_FAILED (docs/23 §6.1): 레벨과 비용 모두 롤백했음을 명시.
+        self:SetTransactionMessage("맵 강화 저장에 실패해 레벨과 비용을 되돌렸습니다. 다시 시도해 주세요.")
+        return false
+    end
+    -- 강화 성공 시 현재 맵 시뮬레이터에 갱신을 통지한다 (F7-B §5.5).
+    self:PushMineBonusesToSimulator()
+    self:SetTransactionMessage("맵 강화 완료: Lv." .. tostring(profile.mineLevels[mineId]) .. " / 10")
+    log("[AccountProfile] mine upgraded mineId=" .. mineId .. " level=" .. tostring(profile.mineLevels[mineId]) .. " gold=-" .. tostring(goldCost) .. " ore=" .. oreType .. "-" .. tostring(oreCost))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method string BuildMineUpgradeInfoJson()
+    -- F7-B §5.6.5: 현재 입장 광산의 표기 계약. 전부 서버 계산값이며 클라이언트는
+    -- 재계산하지 않는다 (버림·만분율·하한 때문 — §5.6.3).
+    local mineId = self:MineIdForMapName(self._T.profile.lastMineId)
+    if mineId == "" then return "" end
+    local level = self._T.profile.mineLevels[mineId]
+    local nextLevel = math.min(10, level + 1)
+    local isMax = level >= 10
+    local rareIronPct = self._T.profile.rareCollection.rare_iron * 3
+    local primary = self:GetMinePrimaryEffect(mineId)
+
+    local info = { mineId = mineId, level = level, maxLevel = isMax, primaryEffect = primary }
+    local effectKeys = { "yield", "recovery", "rareChance", "specialSpawn" }
+    for i = 1, #effectKeys do
+        local key = effectKeys[i]
+        local perLevel = 1
+        if primary == key then perLevel = 3 end
+        info[key .. "NowPct"] = perLevel * level
+        info[key .. "NextPct"] = perLevel * nextLevel
+    end
+    -- recovery: 희귀 철 패시브와 가산 합성한 최종 배율 (C198, §5.6.4).
+    info.recoveryMultiplierNow = 1.0 + (rareIronPct + info.recoveryNowPct) / 100
+    info.recoveryMultiplierNext = 1.0 + (rareIronPct + info.recoveryNextPct) / 100
+    -- rareChance: 적용 후 만분율 (§5.3). 기본 일반 100bp / 특별 500bp.
+    info.rareBpNow = math.floor(100 * (1 + info.rareChanceNowPct / 100))
+    info.rareBpNext = math.floor(100 * (1 + info.rareChanceNextPct / 100))
+    info.rareSpecialBpNow = math.floor(500 * (1 + info.rareChanceNowPct / 100))
+    info.rareSpecialBpNext = math.floor(500 * (1 + info.rareChanceNextPct / 100))
+    -- specialSpawn: effectiveSpawnTicks = max(60, floor(750 / (1 + 보너스))) (§5.3 · C200).
+    info.specialTicksNow = math.max(60, math.floor(750 / (1 + info.specialSpawnNowPct / 100)))
+    info.specialTicksNext = math.max(60, math.floor(750 / (1 + info.specialSpawnNextPct / 100)))
+    if isMax then
+        info.nextCostGold = 0
+        info.nextCostOreType = ""
+        info.nextCostOre = 0
+    else
+        info.nextCostGold = self:GetMineUpgradeGoldCost(level)
+        info.nextCostOreType = self:GetMineRepresentativeOre(mineId)
+        info.nextCostOre = self:GetMineUpgradeOreCost(level)
+    end
+    return _HttpService:JSONEncode(info)
+end
+
 @ExecSpace("Server")
 method boolean RequestSellAll()
     -- Routes the local player's sell request to the server-only economy authority.
@@ -1189,6 +1450,12 @@ end
 @ExecSpace("Server")
 method boolean RequestCartUpgrade(integer workerIndex)
     return _ProgressionService:RequestCartUpgrade(self.Entity, workerIndex)
+end
+
+@ExecSpace("Server")
+method boolean RequestMineUpgrade()
+    -- Routes the local player's mine-upgrade request to the progression authority.
+    return _ProgressionService:RequestMineUpgrade(self.Entity)
 end
 
 @ExecSpace("ServerOnly")
