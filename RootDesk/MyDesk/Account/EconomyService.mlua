@@ -129,7 +129,7 @@ method boolean SellOre(Entity player, string oreType, integer requestedAmount, b
     local data = profile:GetProfile()
     local balance = self:GetOreBalance(data, oreType)
     if requestedAmount > balance then
-        profile:SetTransactionMessage("보유 수량보다 많이 판매할 수 없습니다.")
+        profile:SetTransactionMessage("보유 수량보다 많이 판매할 수 없습니다. (요청 " .. tostring(requestedAmount) .. " / 보유 " .. tostring(balance) .. ")")
         return false
     end
     local protectedAmount = self:GetEffectiveProtection(data, oreType)
@@ -178,7 +178,7 @@ method boolean SellRareOre(Entity player, string oreType, integer requestedAmoun
         return false
     end
     if requestedAmount > stored then
-        profile:SetTransactionMessage("보관 중인 희귀 광물 수량보다 많이 판매할 수 없습니다.")
+        profile:SetTransactionMessage("보관 중인 희귀 광물 수량보다 많이 판매할 수 없습니다. (요청 " .. tostring(requestedAmount) .. " / 보관 " .. tostring(stored) .. ")")
         return false
     end
     local goldGain = requestedAmount * self:GetRareSellPrice(oreType)
