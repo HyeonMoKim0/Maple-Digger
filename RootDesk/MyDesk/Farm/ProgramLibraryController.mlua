@@ -197,6 +197,7 @@ end
 @ExecSpace("ClientOnly")
 method void OnOpenClicked()
     if self.libraryPanel == nil then return end
+    if _AppearanceController ~= nil then _AppearanceController:ClosePanel() end
     local profile = self:GetProfile()
     if profile ~= nil then self._T.msgAtOpen = profile.LastTransactionMessage end
     self._T.lastState = ""

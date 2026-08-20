@@ -131,11 +131,11 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | `ledger-row-resource-blank` | `f312099962db4862adee65f13644aa64` | 384×83 | **82** 30 17 17 | ✅ |
 | `settings-slider-track` | `bd6dae92677e4274b7e79910939173e4` | 384×49 | 24 24 16 16 | ✅ (T-12-B, 2026-08-18) |
 | `settings-slider-thumb` | `b05198669456485faa7dfe24594c206e` | 92×96 | Simple (`SliderComponent.HandleImageRUID`) | ✅ (T-12-B, 2026-08-18) |
-| `inventory-slot-blank` | | 126×128 | | ⬜ |
-| `inventory-slot-selected` | | 128×123 | | ⬜ |
-| `quantity-badge-blank` | | 192×105 | | ⬜ |
-| `cost-chip-blank` | | 192×64 | | ⬜ |
-| `hud-cart-capacity-bar` | | 384×51 | | ⬜ |
+| `inventory-slot-blank` | `2a87d00d437c4566905d400322c03d88` | 126×128 | Simple | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `inventory-slot-selected` | `8b5027c2ee0241c69fc9976ae926ff82` | 128×123 | Simple | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `quantity-badge-blank` | `2a1dbdf414e74fef9a3273f0e4eb3922` | 192×105 | 24 24 20 20 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `cost-chip-blank` | `d27c1c284be545b2a3ed0858832a58a9` | 192×64 | 32 32 20 20 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `hud-cart-capacity-bar` | `a6f99f6b962c4d718dd74948300dd15e` | 384×51 | Filled | 🟡 업로드·배선 완료, Maker 재검증 대기 |
 
 ### 5.4 상태 램프 (docs/20 §6 대로 **텍스트 + 색과 함께** 쓴다. 아이콘 단독 표기 금지)
 
@@ -173,17 +173,17 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 >
 > 상태 매핑: 입장 중 → `current` · 해금됐지만 입장 중 아님 → `next` · 미해금 → `locked`.
 
-### 5.9 희귀도 뱃지 (T-06 · docs/27 §3 — 2026-08-18 AI 직접 제작, 오너 채택 판단 대기)
+### 5.9 희귀도 뱃지 (T-06 · docs/27 §3 — ✅ 배지+텍스트 채택, C221)
 
 > msw-painter(chunky, 24×24 그리드 → 96×96)로 직접 그려 업로드했다. 나무 판 + 희귀도색 보석 + **핍 1~5개**(색맹 대비 보조). 시험 배치 스크린샷은 docs/16 §38 뒤 오너 판정 자료로 전달됨. **기각되면 슬롯 틴트+텍스트로 대체한다** (docs/15 §8.4 · §11 U6). filter_mode=Point 등록 완료.
 
 | 파츠 | RUID | 크기 | 핍 | 상태 |
 |---|---|---:|:-:|:--:|
-| `rarity-badge-common` | `08ebbf2be1de4081972380e119c9d3af` | 96×96 | 1 | 🟡 업로드 완료 · 채택 판단 대기 |
-| `rarity-badge-uncommon` | `af19b1b6961a424bbf0187d304553441` | 96×96 | 2 | 🟡 |
-| `rarity-badge-rare` | `3c34787ff2e44d7e99036d07ebcaaba8` | 96×96 | 3 | 🟡 |
-| `rarity-badge-epic` | `7745e36e8a9a47b08bffc194f071b91b` | 96×96 | 4 | 🟡 |
-| `rarity-badge-legendary` | `0cb30501bd6b4d24b4f54c5d6245c48e` | 96×96 | 5 | 🟡 |
+| `rarity-badge-common` | `08ebbf2be1de4081972380e119c9d3af` | 96×96 | 1 | ✅ 채택 · T-06 배선 |
+| `rarity-badge-uncommon` | `af19b1b6961a424bbf0187d304553441` | 96×96 | 2 | ✅ 채택 · T-06 배선 |
+| `rarity-badge-rare` | `3c34787ff2e44d7e99036d07ebcaaba8` | 96×96 | 3 | ✅ 채택 · T-06 배선 |
+| `rarity-badge-epic` | `7745e36e8a9a47b08bffc194f071b91b` | 96×96 | 4 | ✅ 채택 · T-06 배선 |
+| `rarity-badge-legendary` | `0cb30501bd6b4d24b4f54c5d6245c48e` | 96×96 | 5 | ✅ 채택 · T-06 배선 |
 
 ### 5.10 2차 제작 목록 신규 파츠 (docs/27 §2 · 2026-08-18)
 
@@ -191,35 +191,35 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 |---|---|---:|---:|:--:|
 | `input-field-blank` | `561a0737a9c8468889b6eb8075cc354e` | 384×85 | 21 21 21 21 | ✅ 업로드 · 기존 4개 입력창 적용 |
 | `tooltip-frame-blank` | `d3ffbf345575474aa06d0e4a2ad96447` | 384×115 | 19 19 19 19 | ✅ 업로드 · `TutorialUI/Root/Tooltip` 적용 |
-| `piece-card-frame` | `01bb848f974843089fc999bd01680b35` | 177×256 | Simple | ✅ 업로드 · T-06 화면 배선 대기 |
-| `equipped-badge` | `6f9095d2a23142ba99a76fa71a8e816d` | 96×86 | Simple | ✅ 업로드 · T-06 화면 배선 대기 |
+| `piece-card-frame` | `01bb848f974843089fc999bd01680b35` | 177×256 | Simple | ✅ 업로드 · T-06 화면 배선 완료 |
+| `equipped-badge` | `6f9095d2a23142ba99a76fa71a8e816d` | 96×86 | Simple | ✅ 업로드 · T-06 화면 배선 완료 |
 
 > 입력창·툴팁은 기존 `.ui` 트리와 컨트롤러 Entity ID를 보존한 채 UIBuilder로 스프라이트만 교체했다.
-> 카드·장착 배지는 리소스와 RUID만 준비했다. 현재 프로젝트에는 T-06 결과/외형 화면과 컨트롤러가 없으므로 임의의 신규 화면은 만들지 않았다.
-> `rarity-badge-*` 는 docs/27 §3의 오너 채택 판단 대기 항목이다. 이번 범위에서는 기존 파일·RUID를 변경하지 않고 그 상태를 유지했다.
+> 카드·장착 배지는 `AppearanceUI.ui`의 피스 슬롯과 장착 표시에 배선했다.
+> `rarity-badge-*` 5종은 C221로 채택됐다. 아이콘·색 단독 표기 금지 원칙에 따라 희귀도 텍스트를 항상 병기한다.
 
-### 5.10 2차 파츠 — docs/27 A급 (2026-08-18 업로드, 배선 대기)
+### 5.10 2차 파츠 — docs/27 A급 (2026-08-20 적용 상태 정합화)
 
-> 원본은 오너 생성(docs/27 §2), 가공·업로드 완료 — RUID·border 는 `tools/ui_parts_ruids.json` 과 동기. **아직 어느 `.ui` 에도 배선되지 않았다.** 예정 자리: 입력창 3곳(판매·보호 수량, 라이브러리 이름) · 튜토리얼 툴팁 · T-06 가챠 카드/장착 뱃지.
+> 입력 필드·튜토리얼 툴팁·`piece-card-frame`·`equipped-badge` 모두 적용 완료됐다.
 
 | 파츠 | RUID | 크기 | 9-slice border | 상태 |
 |---|---|---:|---:|:--:|
-| `input-field-blank` | `561a0737a9c8468889b6eb8075cc354e` | 384×85 | 21 21 21 21 | ✅ 업로드 · ⬜ 배선 |
-| `tooltip-frame-blank` | `d3ffbf345575474aa06d0e4a2ad96447` | 384×115 | 19 19 19 19 | ✅ 업로드 · ⬜ 배선 |
-| `piece-card-frame` | `01bb848f974843089fc999bd01680b35` | 177×256 | Simple | ✅ 업로드 · ⬜ 배선 (T-06) |
-| `equipped-badge` | `6f9095d2a23142ba99a76fa71a8e816d` | 96×86 | Simple | ✅ 업로드 · ⬜ 배선 (T-06) |
+| `input-field-blank` | `561a0737a9c8468889b6eb8075cc354e` | 384×85 | 21 21 21 21 | ✅ 업로드 · 배선 완료 |
+| `tooltip-frame-blank` | `d3ffbf345575474aa06d0e4a2ad96447` | 384×115 | 19 19 19 19 | ✅ 업로드 · 배선 완료 |
+| `piece-card-frame` | `01bb848f974843089fc999bd01680b35` | 177×256 | Simple | ✅ 업로드 · T-06 배선 완료 |
+| `equipped-badge` | `6f9095d2a23142ba99a76fa71a8e816d` | 96×86 | Simple | ✅ 업로드 · T-06 배선 완료 |
 
 ### 5.6 보조 아이콘 (docs/20 승인 목록에 없는 것들)
 
 | 파츠 | RUID | 크기 | 상태 |
 |---|---|---:|:--:|
-| `icon-special-vein` | | 85×96 | ⬜ |
-| `icon-warning-protected` | | 96×84 | ⬜ |
-| `icon-pickaxe` | | 96×93 | ⬜ |
-| `stepper-minus` | | 96×91 | ⬜ |
-| `stepper-plus` | | 96×95 | ⬜ |
-| `toggle-on` | | 192×91 | ⬜ |
-| `toggle-off` | | 192×93 | ⬜ |
+| `icon-special-vein` | `ca33fe8d0cad4db88bfd154f6c556114` | 85×96 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `icon-warning-protected` | `981be3962a094d57aeddc7d27265abea` | 96×84 | 🟡 업로드·조건부 배선 완료, Maker 재검증 대기 |
+| `icon-pickaxe` | `56b7a05206aa4fd9b91d3ff650bb1d45` | 96×93 | 🟡 업로드·워커 탭 5개 배선 완료, Maker 재검증 대기 |
+| `stepper-minus` | `85cb0a1c5f6a44e693e120da8bb3d455` | 96×91 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `stepper-plus` | `1b5f85042c6c41b1972cd224963474ab` | 96×95 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `toggle-on` | `ffdc2821ce834708aa17da3b50a0fc56` | 192×91 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `toggle-off` | `3229dd93dec04526a2402f463518092d` | 192×93 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
 
 ### 5.7 이번 범위 밖 — 업로드 보류
 

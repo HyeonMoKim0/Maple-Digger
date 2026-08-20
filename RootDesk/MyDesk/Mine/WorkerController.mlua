@@ -43,6 +43,19 @@ property integer CartCount = 0
 @Sync
 property integer CartCapacity = 20
 
+-- T-06: 서버가 카탈로그의 논리 피스를 실제 CostumeManager 슬롯 RUID로 해석한 값.
+@Sync
+property string AppearanceHairRuid = ""
+
+@Sync
+property string AppearanceFaceRuid = ""
+
+@Sync
+property string AppearanceCoatRuid = "be931cbee7dc4b4e85046e60a6eb5651"
+
+@Sync
+property string AppearancePantsRuid = "e6ff0ea602e043f48a7e231ed4f95daf"
+
 -- F5 §2.2 행동 이벤트 채널. 서버가 액션을 확정할 때마다 Sequence 를 올리고,
 -- 클라이언트는 아직 처리하지 않은 Sequence 만 한 번 처리한다. 같은 kind 가
 -- 연속으로 나와도 Sequence 가 다르므로 구분된다.
@@ -283,6 +296,15 @@ method boolean ApplyCartCapacity(integer cartCapacity)
     self.CartCapacity = nextCapacity
     log(self:WorkerTag() .. " cart capacity upgraded=" .. tostring(self.CartCapacity))
     return true
+end
+
+@ExecSpace("ServerOnly")
+method void ApplyAppearanceSlots(string hairRuid, string faceRuid, string coatRuid, string pantsRuid)
+    self.AppearanceHairRuid = hairRuid or ""
+    self.AppearanceFaceRuid = faceRuid or ""
+    self.AppearanceCoatRuid = coatRuid or "be931cbee7dc4b4e85046e60a6eb5651"
+    self.AppearancePantsRuid = pantsRuid or "e6ff0ea602e043f48a7e231ed4f95daf"
+    log(self:WorkerTag() .. " appearance slots updated")
 end
 
 @ExecSpace("ServerOnly")
