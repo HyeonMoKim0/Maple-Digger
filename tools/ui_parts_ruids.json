@@ -19,5 +19,10 @@
   "tab-worker-normal":        { "ruid": "db0c502147114dbfb47a5e87322937b4", "border": [22, 22, 15, 15] },
   "tab-worker-disabled":      { "ruid": "a864624d7b454085bcb76f86a0ed8d07", "border": [20, 20, 14, 14] },
 
-  "status-running-green":     { "ruid": "b3837d651fe7474b9632fec45153cfe2" }
+  "status-running-green":     { "ruid": "b3837d651fe7474b9632fec45153cfe2" },
+
+  "input-field-blank":        { "ruid": "561a0737a9c8468889b6eb8075cc354e", "border": [21, 21, 21, 21] },
+  "tooltip-frame-blank":      { "ruid": "d3ffbf345575474aa06d0e4a2ad96447", "border": [19, 19, 19, 19] },
+  "piece-card-frame":          { "ruid": "01bb848f974843089fc999bd01680b35" },
+  "equipped-badge":            { "ruid": "6f9095d2a23142ba99a76fa71a8e816d" }
 }

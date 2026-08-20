@@ -210,10 +210,12 @@ function resize(img, tw, th) {
 const LONG_EDGE = [
   [/panel-frame-large|modal-frame-blank/, 384],
   [/panel-frame-hud/, 384],
+  [/input-field|tooltip-frame/, 384],
   [/ledger-row|toast-bar|library-row|library-slot-locked|cart-capacity-bar|slider-track/, 384],
   [/button-(slate|green|orange)-blank|tab-worker-|command-tile|cost-chip|quantity-badge|toggle-(on|off)/, 192],
+  [/piece-card-frame/, 256],
   [/inventory-slot-|mine-node-|mine-route-connector/, 128],
-  [/button-close|stepper-|slider-thumb|status-|validation-badge-|icon-/, 96],
+  [/button-close|stepper-|slider-thumb|status-|validation-badge-|icon-|equipped-badge/, 96],
 ];
 
 function targetLongEdge(name) {
