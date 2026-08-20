@@ -128,6 +128,7 @@ method void OnOpenClicked()
     end
     if _MineSelectController ~= nil then _MineSelectController:CloseAllPanelsForTutorial() end
     if _MineInventoryController ~= nil then _MineInventoryController:OnCloseClicked() end
+    if _AppearanceController ~= nil then _AppearanceController:ClosePanel() end
     self:RefreshControls()
     self.settingsPanel.Enable = true
     log("[SettingsPanel] opened")

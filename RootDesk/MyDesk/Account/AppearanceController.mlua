@@ -1,0 +1,413 @@
+-- T-06 (F7-D) CLIENT APPEARANCE UI
+-- AccountProfileService.AppearanceInfoJson을 표시하고 서버 요청만 보낸다.
+@Logic
+script AppearanceController extends Logic
+
+property Entity appearancePanel = "ea31af8c-0e68-433b-b40b-c7d55eed3b62"
+property Entity pityPanel = "cb7c3c32-028d-4a13-b019-f75bc8856acc"
+property Entity resultPanel = "77ea37ca-5d89-4865-b095-9fd225e5596f"
+property ButtonComponent btnOpen = "7dd289a5-dd34-4836-b926-12163dedadff"
+property ButtonComponent btnClose = "b2af25c1-f0ae-4c10-9873-bbcec0455db5"
+property ButtonComponent btnEquip = "e9408ad2-207b-4bcf-b08b-443a188ce8f4"
+property ButtonComponent btnDefault = "1d9e7443-a399-4146-88d1-02a1e4f3ae8f"
+property ButtonComponent btnGacha = "bdc45d92-948c-403a-bed5-6a5127e25176"
+property ButtonComponent btnCraft = "f9b4c1d1-0403-4b97-9dec-91f7b629b9b5"
+property ButtonComponent btnExchange1 = "50609910-1c62-44bd-99ca-9d36b132c2f9"
+property ButtonComponent btnExchange10 = "ee6bbc84-c0ec-4045-a776-154f9bf6ebff"
+property ButtonComponent btnResultClose = "c67c76d5-4e7f-4a17-abf1-41ec3167c669"
+property TextGUIRendererComponent collectionText = "8ee2cfd7-ec76-404f-bde4-ce73c9862564"
+property TextGUIRendererComponent pityText = "f0dbec3c-c7b9-43f6-a246-cb23264128de"
+property TextGUIRendererComponent costText = "6b9cf9c5-60c9-4169-b1dc-0927dbf6505c"
+property TextGUIRendererComponent probabilityText = "ea41b7bb-5be3-4ebb-802e-4000aff66f19"
+property TextGUIRendererComponent selectedText = "509edfbc-614d-4956-8348-ca169fcdb192"
+property TextGUIRendererComponent resultText = "41a0ad64-88ee-49c1-84f0-74857b23a8e0"
+
+property ButtonComponent worker1 = "24b2ada8-41de-4b1e-b02d-ecfb011787dc"
+property ButtonComponent worker2 = "135e0b2c-a10d-487d-a037-50011e0af244"
+property ButtonComponent worker3 = "3c547c58-3cfb-49ca-be88-39b9640f9559"
+property ButtonComponent worker4 = "b27d8633-a5ad-4dbf-992a-e8578973b887"
+property ButtonComponent worker5 = "0fa13ab9-b97c-4c9f-ade8-61e40aeb2645"
+property ButtonComponent partHair = "c002137d-a1ff-429b-a2a5-3024c80b7778"
+property ButtonComponent partFace = "26f0c2f2-2e12-44a4-971f-eeceee1d839a"
+property ButtonComponent partOutfit = "b9b41335-6866-4de7-a920-9b81f7213393"
+property ButtonComponent pityHair = "6aa5fdfa-f7db-4755-9913-cd154563b7af"
+property ButtonComponent pityFace = "205e0744-1126-4b49-9cca-dca743682fbe"
+property ButtonComponent pityOutfit = "b9c39c9d-0eeb-460e-babb-16a4a99b13e7"
+
+property ButtonComponent slot1 = "4f7a7a47-b46a-4bfe-a40f-17face8ff263"
+property ButtonComponent slot2 = "9f62c98b-06e4-4ce6-8f0d-f6ab30fc7a5c"
+property ButtonComponent slot3 = "a718e721-b24c-4d3d-8174-7766079cfd72"
+property ButtonComponent slot4 = "a01e940c-c9af-49c5-bd57-66872df46f8f"
+property ButtonComponent slot5 = "54bdc8c7-737a-4ff9-a478-5de400b3e896"
+property ButtonComponent slot6 = "3a50dde7-4b04-4979-b618-17efeecea23b"
+property ButtonComponent slot7 = "38b88317-f28f-4d6a-9103-e6a24ba10b54"
+property ButtonComponent slot8 = "edc4679a-5938-4939-bce3-e4f2e184f912"
+property ButtonComponent slot9 = "37770fb3-d6ee-4926-8d70-8221529a1245"
+property ButtonComponent slot10 = "119ba344-c8d0-480d-8b28-63a8f832c4bf"
+property SpriteGUIRendererComponent slotImage1 = "47dbd54d-4261-4c64-8e66-a18bf5cb4e65"
+property SpriteGUIRendererComponent slotImage2 = "18193467-2424-4281-a2af-3b0db3eea815"
+property SpriteGUIRendererComponent slotImage3 = "ad0e64d2-d367-45db-8a97-e378d0893fe9"
+property SpriteGUIRendererComponent slotImage4 = "6ae06cdb-80e5-4adf-b9ab-864668a25aaf"
+property SpriteGUIRendererComponent slotImage5 = "a483f02a-82d6-4e1f-a0f0-81c9b39aadf8"
+property SpriteGUIRendererComponent slotImage6 = "ea4750c1-f1c3-43ca-8499-49b614c8cc50"
+property SpriteGUIRendererComponent slotImage7 = "0765aa5b-eb24-4005-b6fd-afebcc683328"
+property SpriteGUIRendererComponent slotImage8 = "5e34b61a-63ab-4c4c-aed6-dd99fcad3c7c"
+property SpriteGUIRendererComponent slotImage9 = "a73ba414-7212-4ed6-8a64-c386564aebc6"
+property SpriteGUIRendererComponent slotImage10 = "5c3aa75f-3736-4319-b30a-cd66d370592d"
+property SpriteGUIRendererComponent rarity1 = "8fb490c4-c0fd-47aa-9b1c-9be1f16c46ea"
+property SpriteGUIRendererComponent rarity2 = "09ac91c3-d322-423e-8b2c-94b2ed36b644"
+property SpriteGUIRendererComponent rarity3 = "b890afa9-3f71-422c-8dbd-dde33c811ffc"
+property SpriteGUIRendererComponent rarity4 = "caaf702f-268c-43ae-8305-b6444be76276"
+property SpriteGUIRendererComponent rarity5 = "487d3a60-f54d-4738-900c-c3b394dae2ba"
+property SpriteGUIRendererComponent rarity6 = "0445196d-eb4c-46ff-b1f3-856c8cddfd7c"
+property SpriteGUIRendererComponent rarity7 = "215fa08f-15ca-4ee8-a929-9d6367934048"
+property SpriteGUIRendererComponent rarity8 = "caa5576a-a911-4944-b9c5-caf8cfcf9379"
+property SpriteGUIRendererComponent rarity9 = "2267af0c-473c-4e9c-a747-ff1216cf7c6d"
+property SpriteGUIRendererComponent rarity10 = "2746e972-f0ea-44fd-9b62-c74faf830b4c"
+property TextGUIRendererComponent rarityText1 = "e3c89ae4-1b73-4417-9c01-f4ea95293877"
+property TextGUIRendererComponent rarityText2 = "0a52340d-587a-4889-b292-10abdb89afce"
+property TextGUIRendererComponent rarityText3 = "94de60cd-f7e1-4ee5-979f-2e4cbea54488"
+property TextGUIRendererComponent rarityText4 = "7ebd06de-c1b9-4894-ae48-a6288eda571a"
+property TextGUIRendererComponent rarityText5 = "373b1dc9-8741-4be1-b02a-83350ff2ea69"
+property TextGUIRendererComponent rarityText6 = "371a1bd5-9c1a-4d76-82be-e177897743b4"
+property TextGUIRendererComponent rarityText7 = "c3f1fbbb-90c9-421c-b888-96922bd193fa"
+property TextGUIRendererComponent rarityText8 = "aea88eab-89cf-4a6c-a56e-083f75df2f6d"
+property TextGUIRendererComponent rarityText9 = "99530637-2bde-4276-9dd5-570c99abf1ae"
+property TextGUIRendererComponent rarityText10 = "3fc7d17f-e561-461c-bd87-48b10b000cf7"
+property Entity equipped1 = "419adf05-3812-489b-a571-636428b23389"
+property Entity equipped2 = "7b5e7d82-cb7a-4fc9-923a-80f7c499c5c4"
+property Entity equipped3 = "7e0f4fe2-2f7c-4639-8990-65714af39f28"
+property Entity equipped4 = "a4765745-4245-4745-8b60-5ce3dfaf898a"
+property Entity equipped5 = "cb5caa1b-c38a-4cfb-8138-d17a0c051153"
+property Entity equipped6 = "68c30a43-6b84-476c-821b-95fca8163c1b"
+property Entity equipped7 = "56698af0-16c3-4711-a692-36e754e23bab"
+property Entity equipped8 = "2cba3f16-9d3b-4268-a68c-9213ebe61a11"
+property Entity equipped9 = "5b915a2a-d1e7-4e48-bfa9-2577b85383b9"
+property Entity equipped10 = "e34a125d-58c6-4984-9003-d34918647469"
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    self._T.handlers = {}
+    self._T.handlerButtons = {}
+    self._T.selectedWorker = 1
+    self._T.selectedPart = "hair"
+    self._T.selectedPieceId = ""
+    self._T.visiblePieces = {}
+    self._T.lastState = ""
+    self._T.lastResultSequence = 0
+    self._T.messageAtOpen = ""
+    if self.appearancePanel ~= nil then self.appearancePanel.Enable = false end
+    if self.pityPanel ~= nil then self.pityPanel.Enable = false end
+    if self.resultPanel ~= nil then self.resultPanel.Enable = false end
+
+    self:Connect("open", self.btnOpen, self.OnOpenClicked)
+    self:Connect("close", self.btnClose, self.OnCloseClicked)
+    self:Connect("equip", self.btnEquip, self.OnEquipClicked)
+    self:Connect("default", self.btnDefault, self.OnDefaultClicked)
+    self:Connect("gacha", self.btnGacha, self.OnGachaClicked)
+    self:Connect("craft", self.btnCraft, self.OnCraftClicked)
+    self:Connect("exchange1", self.btnExchange1, self.OnExchange1Clicked)
+    self:Connect("exchange10", self.btnExchange10, self.OnExchange10Clicked)
+    self:Connect("resultClose", self.btnResultClose, self.OnResultCloseClicked)
+    self:Connect("worker1", self.worker1, function() self:SelectWorker(1) end)
+    self:Connect("worker2", self.worker2, function() self:SelectWorker(2) end)
+    self:Connect("worker3", self.worker3, function() self:SelectWorker(3) end)
+    self:Connect("worker4", self.worker4, function() self:SelectWorker(4) end)
+    self:Connect("worker5", self.worker5, function() self:SelectWorker(5) end)
+    self:Connect("partHair", self.partHair, function() self:SelectPart("hair") end)
+    self:Connect("partFace", self.partFace, function() self:SelectPart("face") end)
+    self:Connect("partOutfit", self.partOutfit, function() self:SelectPart("outfit") end)
+    self:Connect("pityHair", self.pityHair, function() self:ClaimPity("hair") end)
+    self:Connect("pityFace", self.pityFace, function() self:ClaimPity("face") end)
+    self:Connect("pityOutfit", self.pityOutfit, function() self:ClaimPity("outfit") end)
+    for index = 1, 10 do
+        local capturedIndex = index
+        local slot = self:GetSlotButton(index)
+        self:Connect("slot" .. tostring(index), slot, function() self:SelectSlot(capturedIndex) end)
+    end
+    log("[AppearanceUI] ready")
+end
+
+@ExecSpace("ClientOnly")
+method void Connect(string key, ButtonComponent button, any callback)
+    if button == nil then return end
+    self._T.handlers[key] = button.Entity:ConnectEvent(ButtonClickEvent, callback)
+    self._T.handlerButtons[key] = button
+end
+
+@ExecSpace("ClientOnly")
+method AccountProfileService GetProfile()
+    local player = _UserService.LocalPlayer
+    if player == nil then return nil end
+    ---@type AccountProfileService
+    return player:GetComponent("script.AccountProfileService")
+end
+
+@ExecSpace("ClientOnly")
+method table GetInfo(AccountProfileService profile)
+    if profile == nil or profile.AppearanceInfoJson == "" then return {} end
+    local ok, data = pcall(function() return _HttpService:JSONDecode(profile.AppearanceInfoJson) end)
+    if not ok or type(data) ~= "table" then return {} end
+    return data
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    if self.appearancePanel == nil or not self.appearancePanel.Enable then return end
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local state = profile.AppearanceInfoJson .. ":" .. profile.LastTransactionMessage .. ":" .. tostring(self._T.selectedWorker) .. ":" .. self._T.selectedPart .. ":" .. self._T.selectedPieceId
+    if state == self._T.lastState then return end
+    self._T.lastState = state
+    self:Refresh(profile)
+end
+
+@ExecSpace("ClientOnly")
+method void OnOpenClicked()
+    if self.appearancePanel == nil then return end
+    if self.appearancePanel.Enable then self:ClosePanel() return end
+    if _MineSelectController ~= nil then _MineSelectController:CloseAllPanelsForTutorial() end
+    if _MineInventoryController ~= nil then _MineInventoryController:OnCloseClicked() end
+    if _SettingsPanelController ~= nil then _SettingsPanelController:ClosePanel() end
+    if _ProgramLibraryController ~= nil then _ProgramLibraryController:OnCloseClicked() end
+    local profile = self:GetProfile()
+    self._T.messageAtOpen = profile ~= nil and profile.LastTransactionMessage or ""
+    self._T.lastState = ""
+    self.appearancePanel.Enable = true
+    if profile ~= nil then self:Refresh(profile) end
+    log("[AppearanceUI] opened")
+end
+
+@ExecSpace("ClientOnly")
+method void OnCloseClicked()
+    self:ClosePanel()
+end
+
+@ExecSpace("ClientOnly")
+method void ClosePanel()
+    if self.appearancePanel ~= nil then self.appearancePanel.Enable = false end
+    if self.pityPanel ~= nil then self.pityPanel.Enable = false end
+    if self.resultPanel ~= nil then self.resultPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void SelectWorker(integer workerIndex)
+    local profile = self:GetProfile()
+    local info = self:GetInfo(profile)
+    if workerIndex < 1 or workerIndex > (info.ownedWorkerCount or 0) then return end
+    self._T.selectedWorker = workerIndex
+    self._T.selectedPieceId = ""
+    self._T.lastState = ""
+end
+
+@ExecSpace("ClientOnly")
+method void SelectPart(string part)
+    self._T.selectedPart = part
+    self._T.selectedPieceId = ""
+    self._T.lastState = ""
+end
+
+@ExecSpace("ClientOnly")
+method void SelectSlot(integer index)
+    local piece = self._T.visiblePieces[index]
+    if piece == nil then return end
+    self._T.selectedPieceId = piece.id
+    self._T.lastState = ""
+end
+
+@ExecSpace("ClientOnly")
+method void OnEquipClicked()
+    local profile = self:GetProfile()
+    if profile == nil or self._T.selectedPieceId == "" then return end
+    profile:RequestEquipPiece(self._T.selectedWorker, self._T.selectedPart, self._T.selectedPieceId)
+end
+
+@ExecSpace("ClientOnly")
+method void OnDefaultClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestEquipPiece(self._T.selectedWorker, self._T.selectedPart, "") end
+end
+
+@ExecSpace("ClientOnly")
+method void OnGachaClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestGachaPull(self._T.selectedPart) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnCraftClicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestCraft(self._T.selectedPart) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchange1Clicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestCrystalExchange(1) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchange10Clicked()
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestCrystalExchange(10) end
+end
+
+@ExecSpace("ClientOnly")
+method void ClaimPity(string part)
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestPityClaim(part) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnResultCloseClicked()
+    if self.resultPanel ~= nil then self.resultPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void Refresh(AccountProfileService profile)
+    local info = self:GetInfo(profile)
+    if type(info.pieces) ~= "table" then return end
+    if self._T.selectedWorker > (info.ownedWorkerCount or 1) then self._T.selectedWorker = 1 end
+    self:RefreshWorkerTabs(info.ownedWorkerCount or 1)
+    self:RefreshSlots(info)
+    self:RefreshSummary(info, profile)
+    if self.pityPanel ~= nil then self.pityPanel.Enable = info.pity ~= nil and info.pity.pending == true end
+    self:RefreshResult(info)
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshWorkerTabs(integer ownedCount)
+    for index = 1, 5 do
+        local button = self:GetWorkerButton(index)
+        if button ~= nil then button.Enable = index <= ownedCount end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshSlots(table info)
+    self._T.visiblePieces = {}
+    for _, piece in ipairs(info.pieces) do
+        if piece.part == self._T.selectedPart then table.insert(self._T.visiblePieces, piece) end
+    end
+    local equippedId = ""
+    local workerRecord = info.equipped ~= nil and info.equipped[tostring(self._T.selectedWorker)] or nil
+    if workerRecord ~= nil then equippedId = workerRecord[self._T.selectedPart] or "" end
+    for index = 1, 10 do
+        local piece = self._T.visiblePieces[index]
+        local button = self:GetSlotButton(index)
+        local image = self:GetSlotImage(index)
+        local rarity = self:GetRarityImage(index)
+        local rarityText = self:GetRarityText(index)
+        local equipped = self:GetEquipped(index)
+        if button ~= nil then button.Enable = piece ~= nil end
+        if image ~= nil then image.ImageRUID = piece ~= nil and piece.thumbnailRuid ~= "" and ("thumbnail://" .. piece.thumbnailRuid) or "" end
+        if rarity ~= nil then rarity.ImageRUID = piece ~= nil and self:RarityBadge(piece.rarity) or "" end
+        if rarityText ~= nil then rarityText.Text = piece ~= nil and piece.rarityLabel or "" end
+        if equipped ~= nil then equipped.Enable = piece ~= nil and piece.id == equippedId end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshSummary(table info, AccountProfileService profile)
+    local collection = info.collection or {}
+    local pity = info.pity or {}
+    local costs = info.costs or {}
+    local probabilities = info.probabilities or {}
+    if self.collectionText ~= nil then
+        self.collectionText.Text = "도감 " .. tostring(collection.score or 0) .. "/" .. tostring(collection.maxScore or 72)
+            .. "  다음 " .. tostring(collection.nextThreshold or 72) .. "  수레 +" .. tostring(collection.cartBonus or 0)
+    end
+    if self.pityText ~= nil then self.pityText.Text = "천장 " .. tostring(pity.counter or 0) .. "/" .. tostring(pity.max or 50) end
+    if self.costText ~= nil then
+        self.costText.Text = "뽑기 크리스탈 " .. tostring(costs.gachaCrystal or 0)
+            .. "  | 제작 돌 " .. tostring(costs.craftStone or 0) .. " / 철 " .. tostring(costs.craftIron or 0) .. " / 금 " .. tostring(costs.craftGoldOre or 0)
+            .. "  | 교환 1개=" .. tostring(costs.exchangeGoldPerCrystal or 0) .. "골드"
+    end
+    if self.probabilityText ~= nil then
+        self.probabilityText.Text = "일반 " .. tostring(probabilities.commonLabel or "") .. " · 고급 " .. tostring(probabilities.uncommonLabel or "")
+            .. " · 희귀 " .. tostring(probabilities.rareLabel or "") .. " · 영웅 " .. tostring(probabilities.epicLabel or "") .. " · 전설 " .. tostring(probabilities.legendaryLabel or "")
+    end
+    local selected = self:FindPiece(info, self._T.selectedPieceId)
+    if self.selectedText ~= nil then
+        local line = "피스를 선택하세요. 슬롯 선택만으로는 저장되지 않습니다."
+        if selected ~= nil then line = selected.name .. "  [" .. selected.rarityLabel .. "]  " .. (selected.owned and "보유" or "미보유") .. "  도감 +" .. tostring(selected.score) end
+        if profile.LastTransactionMessage ~= self._T.messageAtOpen and profile.LastTransactionMessage ~= "" then
+            line = line .. "  |  " .. profile.LastTransactionMessage
+        end
+        self.selectedText.Text = line
+    end
+    if self.btnEquip ~= nil then self.btnEquip.Enable = selected ~= nil and selected.owned == true end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshResult(table info)
+    local result = info.lastResult
+    if type(result) ~= "table" or (result.sequence or 0) <= self._T.lastResultSequence then return end
+    self._T.lastResultSequence = result.sequence
+    if result.pieceId == "" then return end
+    local piece = self:FindPiece(info, result.pieceId)
+    if piece == nil then return end
+    if self.resultText ~= nil then
+        local tail = result.isNew and "새 외형 획득!" or ("중복 전환 골드 +" .. tostring(result.duplicateGold or 0))
+        self.resultText.Text = piece.name .. "\n" .. piece.rarityLabel .. " · " .. tail
+    end
+    if self.resultPanel ~= nil then self.resultPanel.Enable = true end
+end
+
+@ExecSpace("ClientOnly")
+method any FindPiece(table info, string pieceId)
+    if pieceId == "" then return nil end
+    for _, piece in ipairs(info.pieces) do if piece.id == pieceId then return piece end end
+    return nil
+end
+
+@ExecSpace("ClientOnly")
+method string RarityBadge(string rarity)
+    if rarity == "common" then return "08ebbf2be1de4081972380e119c9d3af" end
+    if rarity == "uncommon" then return "af19b1b6961a424bbf0187d304553441" end
+    if rarity == "rare" then return "3c34787ff2e44d7e99036d07ebcaaba8" end
+    if rarity == "epic" then return "7745e36e8a9a47b08bffc194f071b91b" end
+    if rarity == "legendary" then return "0cb30501bd6b4d24b4f54c5d6245c48e" end
+    return ""
+end
+
+@ExecSpace("ClientOnly")
+method ButtonComponent GetWorkerButton(integer index)
+    if index == 1 then return self.worker1 elseif index == 2 then return self.worker2 elseif index == 3 then return self.worker3 elseif index == 4 then return self.worker4 else return self.worker5 end
+end
+
+@ExecSpace("ClientOnly")
+method ButtonComponent GetSlotButton(integer index)
+    if index == 1 then return self.slot1 elseif index == 2 then return self.slot2 elseif index == 3 then return self.slot3 elseif index == 4 then return self.slot4 elseif index == 5 then return self.slot5 elseif index == 6 then return self.slot6 elseif index == 7 then return self.slot7 elseif index == 8 then return self.slot8 elseif index == 9 then return self.slot9 else return self.slot10 end
+end
+
+@ExecSpace("ClientOnly")
+method SpriteGUIRendererComponent GetSlotImage(integer index)
+    if index == 1 then return self.slotImage1 elseif index == 2 then return self.slotImage2 elseif index == 3 then return self.slotImage3 elseif index == 4 then return self.slotImage4 elseif index == 5 then return self.slotImage5 elseif index == 6 then return self.slotImage6 elseif index == 7 then return self.slotImage7 elseif index == 8 then return self.slotImage8 elseif index == 9 then return self.slotImage9 else return self.slotImage10 end
+end
+
+@ExecSpace("ClientOnly")
+method SpriteGUIRendererComponent GetRarityImage(integer index)
+    if index == 1 then return self.rarity1 elseif index == 2 then return self.rarity2 elseif index == 3 then return self.rarity3 elseif index == 4 then return self.rarity4 elseif index == 5 then return self.rarity5 elseif index == 6 then return self.rarity6 elseif index == 7 then return self.rarity7 elseif index == 8 then return self.rarity8 elseif index == 9 then return self.rarity9 else return self.rarity10 end
+end
+
+@ExecSpace("ClientOnly")
+method TextGUIRendererComponent GetRarityText(integer index)
+    if index == 1 then return self.rarityText1 elseif index == 2 then return self.rarityText2 elseif index == 3 then return self.rarityText3 elseif index == 4 then return self.rarityText4 elseif index == 5 then return self.rarityText5 elseif index == 6 then return self.rarityText6 elseif index == 7 then return self.rarityText7 elseif index == 8 then return self.rarityText8 elseif index == 9 then return self.rarityText9 else return self.rarityText10 end
+end
+
+@ExecSpace("ClientOnly")
+method Entity GetEquipped(integer index)
+    if index == 1 then return self.equipped1 elseif index == 2 then return self.equipped2 elseif index == 3 then return self.equipped3 elseif index == 4 then return self.equipped4 elseif index == 5 then return self.equipped5 elseif index == 6 then return self.equipped6 elseif index == 7 then return self.equipped7 elseif index == 8 then return self.equipped8 elseif index == 9 then return self.equipped9 else return self.equipped10 end
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    if self._T.handlers == nil then return end
+    for key, handler in pairs(self._T.handlers) do
+        local button = self._T.handlerButtons[key]
+        if button ~= nil and handler ~= nil then button.Entity:DisconnectEvent(ButtonClickEvent, handler) end
+    end
+end
+
+end
