@@ -19,6 +19,17 @@ property integer Gold = 0
 @Sync
 property integer Crystal = 0
 
+-- T-06 (F7-D): 외형 카탈로그·보유·장착·경제 계약의 표시 전용 미러.
+-- 클라이언트는 이 JSON을 재계산하지 않고 그대로 그린다.
+@Sync
+property string AppearanceInfoJson = ""
+
+@Sync
+property integer AppearanceCollectionScore = 0
+
+@Sync
+property integer AppearancePityCounter = 0
+
 -- F7-B §5.6.5: 광산 선택 화면의 `Lv.n / 10` 표시용 맵별 현재 레벨.
 @Sync
 property integer MineLevelBeginner = 0
@@ -39,7 +50,7 @@ property string MineUpgradeInfoJson = ""
 property string ProgramLibraryJson = ""
 
 -- T-05: 슬롯 구매 기본 비용 (4번째 슬롯). 이후 직전 비용의 1.2배 (C174).
--- ⚠ 기본값 50골드는 첫 Play 테스트 제안값이다 — 오너 확정 대상.
+-- C222 확정: 프로그램 보관함 기본 슬롯 가격 50골드.
 property integer LibrarySlotBaseCost = 50
 
 -- T-07 (F7-E): 튜토리얼 진행 표시용 미러. 판정·보상·저장은 TutorialService 가
@@ -177,6 +188,8 @@ property string SessionMessage = ""
 @ExecSpace("ServerOnly")
 method void OnBeginPlay()
     self._T.profile = self:CreateDefaultProfile()
+    self._T.appearanceResultSequence = 0
+    self._T.appearanceLastResult = { sequence = 0, source = "", pieceId = "", isNew = false, duplicateGold = 0 }
     self._T.autoSaveTimer = 0
     self._T.restoreTimer = 0
     self._T.restoredMapName = ""
@@ -268,6 +281,20 @@ method table CreateDefaultProfile()
         -- 시절 0.5/1.0 을 프로필에 박아 뒀기 때문에, 이 구분 없이는 오너 청취로
         -- 확정한 균형(C220)이 기존 계정에서 영영 무시된다.
         settings = { bgmVolume = 0.8, sfxVolume = 0.7, tuned = false },
+        -- T-06: v8을 유지하는 무버전 확장. __format은 빈 테이블 JSONEncode 방지용이다.
+        appearance = {
+            owned = { __format = 1 },
+            equipped = {
+                ["1"] = { hair = "", face = "", outfit = "" },
+                ["2"] = { hair = "", face = "", outfit = "" },
+                ["3"] = { hair = "", face = "", outfit = "" },
+                ["4"] = { hair = "", face = "", outfit = "" },
+                ["5"] = { hair = "", face = "", outfit = "" },
+            },
+            collectionScore = 0,
+            pityCounter = 0,
+            pendingPity = false,
+        },
         deepMineUnlocked = false,
         gemMineUnlocked = false,
         stoneTokenProgress = 0,
@@ -575,6 +602,7 @@ method table NormalizeProfile(table profile)
     normalized.mineLevels = self:NormalizeMineLevels(profile.mineLevels)
     normalized.tutorial = self:NormalizeTutorial(profile.tutorial)
     normalized.settings = self:NormalizeSettings(profile.settings)
+    normalized.appearance = self:NormalizeAppearance(profile.appearance)
     normalized.mineTokens = profile.mineTokens or normalized.mineTokens
     normalized.stone = profile.stone or normalized.stone
     normalized.iron = profile.iron or normalized.iron
@@ -588,7 +616,7 @@ method table NormalizeProfile(table profile)
     normalized.rareStorage = self:NormalizeRareStorage(profile.rareStorage)
     normalized.rareSaleSettings = self:NormalizeRareSaleSettings(profile.rareSaleSettings)
     if self:IsKnownMineMap(profile.lastMineId) then normalized.lastMineId = profile.lastMineId end
-    normalized.workers = self:NormalizeWorkers(profile.workers, normalized.rareCollection.rare_stone)
+    normalized.workers = self:NormalizeWorkers(profile.workers, normalized.rareCollection.rare_stone, normalized.appearance.collectionScore)
     normalized.unlocksJson = profile.unlocksJson or normalized.unlocksJson
     normalized.programLibraryJson = profile.programLibraryJson or normalized.programLibraryJson
     normalized.workerAppearanceJson = profile.workerAppearanceJson or normalized.workerAppearanceJson
@@ -648,6 +676,46 @@ method table NormalizeSettings(any source)
 end
 
 @ExecSpace("ServerOnly")
+method table NormalizeAppearance(any source)
+    local appearance = self:CreateDefaultProfile().appearance
+    if type(source) ~= "table" then return appearance end
+
+    if type(source.owned) == "table" then
+        for pieceId, owned in pairs(source.owned) do
+            if pieceId ~= "__format" and owned == true and _AppearanceService:GetPiece(pieceId) ~= nil then
+                appearance.owned[pieceId] = true
+            end
+        end
+    end
+    appearance.owned.__format = 1
+
+    if type(source.equipped) == "table" then
+        for workerIndex = 1, 5 do
+            local key = tostring(workerIndex)
+            local sourceRecord = source.equipped[key]
+            if type(sourceRecord) == "table" then
+                for _, part in ipairs({ "hair", "face", "outfit" }) do
+                    local pieceId = sourceRecord[part]
+                    local piece = nil
+                    if type(pieceId) == "string" and pieceId ~= "" then piece = _AppearanceService:GetPiece(pieceId) end
+                    if piece ~= nil and piece.part == part and appearance.owned[pieceId] == true then
+                        appearance.equipped[key][part] = pieceId
+                    end
+                end
+            end
+        end
+    end
+
+    appearance.collectionScore = _AppearanceService:CalculateCollectionScore(appearance.owned)
+    if type(source.pityCounter) == "number" then
+        appearance.pityCounter = math.max(0, math.min(49, math.floor(source.pityCounter)))
+    end
+    appearance.pendingPity = source.pendingPity == true
+    if appearance.pendingPity then appearance.pityCounter = 49 end
+    return appearance
+end
+
+@ExecSpace("ServerOnly")
 method table NormalizeSaleSettings(any source)
     local settings = self:CreateDefaultProfile().saleSettings
     if type(source) ~= "table" then return settings end
@@ -699,7 +767,7 @@ method table NormalizeRareSaleSettings(any source)
 end
 
 @ExecSpace("ServerOnly")
-method table NormalizeWorkers(any workers, integer rareStoneLevel)
+method table NormalizeWorkers(any workers, integer rareStoneLevel, integer appearanceScore)
     -- Owned workers are contiguous 1..5. Runtime entities and interpreter frames
     -- remain session-only, but each worker's cart and selected program reference persist.
     if type(workers) ~= "table" or type(workers[1]) ~= "table" then
@@ -751,7 +819,8 @@ method table NormalizeWorkers(any workers, integer rareStoneLevel)
             end
         end
         record.cartCount = self:CountCart(record.cart)
-        local effectiveCapacity = record.cartCapacity + math.floor(record.cartCapacity * rareStoneLevel * 3 / 100)
+        local appearanceBonus = math.max(0, math.min(6, math.floor(appearanceScore / 12)))
+        local effectiveCapacity = record.cartCapacity + math.floor(record.cartCapacity * rareStoneLevel * 3 / 100) + appearanceBonus
         if record.cartCount > effectiveCapacity then
             record.cart = { stone = 0, iron = 0, gold = 0, rare_stone = 0, rare_iron = 0, rare_gold = 0 }
             record.cartCount = 0
@@ -805,6 +874,9 @@ method void SyncRuntimeState()
     -- Mirrors only player-visible progression data; authoritative values stay in the profile.
     self.Gold = self._T.profile.gold
     self.Crystal = self._T.profile.crystal or 0
+    self.AppearanceCollectionScore = self._T.profile.appearance.collectionScore or 0
+    self.AppearancePityCounter = self._T.profile.appearance.pendingPity and 50 or (self._T.profile.appearance.pityCounter or 0)
+    self.AppearanceInfoJson = _HttpService:JSONEncode(_AppearanceService:BuildInfo(self._T.profile, self._T.appearanceLastResult))
     self.MineLevelBeginner = self._T.profile.mineLevels.beginner_mine
     self.MineLevelDeep = self._T.profile.mineLevels.deep_mine
     self.MineLevelGem = self._T.profile.mineLevels.gem_mine
@@ -859,8 +931,9 @@ method integer GetWorkerCartCapacity(integer workerIndex)
     local record = self._T.profile.workers[workerIndex]
     if record == nil then return 20 end
     local baseCapacity = math.max(20, math.min(50, math.floor(record.cartCapacity or 20)))
-    local bonus = math.floor(baseCapacity * self._T.profile.rareCollection.rare_stone * 3 / 100)
-    return baseCapacity + bonus
+    local rareStoneBonus = math.floor(baseCapacity * self._T.profile.rareCollection.rare_stone * 3 / 100)
+    local appearanceBonus = math.max(0, math.min(6, math.floor((self._T.profile.appearance.collectionScore or 0) / 12)))
+    return baseCapacity + rareStoneBonus + appearanceBonus
 end
 
 @ExecSpace("ServerOnly")
@@ -973,6 +1046,7 @@ method boolean RestoreOwnedWorker(integer workerIndex)
     end
     if worker == nil then return false end
     worker:ConfigureFromProfile(workerIndex, self:GetWorkerCartCapacity(workerIndex), record.cart, record.pendingOre, record.pendingOreCount or 0)
+    self:ApplyWorkerAppearance(workerIndex)
     return true
 end
 
@@ -1210,12 +1284,45 @@ end
 @ExecSpace("ServerOnly")
 method void ApplyRareStoneCartBonus()
     -- Reapply derived runtime capacity after a collection level changes or rolls back.
+    self:RefreshAllWorkerCapacities()
+end
+
+@ExecSpace("ServerOnly")
+method void RefreshAllWorkerCapacities()
+    -- 희귀 돌 단계와 외형 도감 임계가 바뀔 때 같은 파생 공식을 즉시 재적용한다.
     for workerIndex = 1, #self._T.profile.workers do
         local worker = self:GetWorkerByIndex(workerIndex)
         if worker ~= nil then
             worker:ApplyCartCapacity(self:GetWorkerCartCapacity(workerIndex))
         end
     end
+end
+
+@ExecSpace("ServerOnly")
+method void ApplyWorkerAppearance(integer workerIndex)
+    local worker = self:GetWorkerByIndex(workerIndex)
+    if worker == nil then return end
+    local slots = _AppearanceService:ResolveEquipSlots(self._T.profile.appearance, workerIndex)
+    worker:ApplyAppearanceSlots(slots.hairRuid, slots.faceRuid, slots.coatRuid, slots.pantsRuid)
+end
+
+@ExecSpace("ServerOnly")
+method void ApplyAllWorkerAppearances()
+    for workerIndex = 1, #self._T.profile.workers do self:ApplyWorkerAppearance(workerIndex) end
+end
+
+@ExecSpace("ServerOnly")
+method void SetAppearanceResult(string source, string pieceId, boolean isNew, integer duplicateGold)
+    -- 저장 성공 뒤에만 호출된다. 결과는 세션 표시값이며 프로필 저장 원장에는 넣지 않는다.
+    self._T.appearanceResultSequence = (self._T.appearanceResultSequence or 0) + 1
+    self._T.appearanceLastResult = {
+        sequence = self._T.appearanceResultSequence,
+        source = source,
+        pieceId = pieceId,
+        isNew = isNew,
+        duplicateGold = duplicateGold,
+    }
+    self:SyncRuntimeState()
 end
 
 @ExecSpace("ServerOnly")
@@ -1593,7 +1700,7 @@ end
 
 @ExecSpace("ServerOnly")
 method integer GetNextSlotCost(integer currentSlots)
-    -- 4번째 슬롯부터 구매. 비용은 직전 비용의 1.2배 (C174). 기본 50골드는 제안값.
+    -- 4번째 슬롯부터 구매. 비용은 직전 비용의 1.2배 (C174), 기본 50골드(C222).
     local cost = self.LibrarySlotBaseCost
     for i = 4, currentSlots do cost = math.floor(cost * 1.2 + 0.5) end
     return cost
@@ -1990,6 +2097,31 @@ end
 method boolean RequestMineUpgrade()
     -- Routes the local player's mine-upgrade request to the progression authority.
     return _ProgressionService:RequestMineUpgrade(self.Entity)
+end
+
+@ExecSpace("Server")
+method boolean RequestGachaPull(string part)
+    return _AppearanceService:RequestGachaPull(self, part)
+end
+
+@ExecSpace("Server")
+method boolean RequestPityClaim(string part)
+    return _AppearanceService:RequestPityClaim(self, part)
+end
+
+@ExecSpace("Server")
+method boolean RequestCraft(string part)
+    return _AppearanceService:RequestCraft(self, part)
+end
+
+@ExecSpace("Server")
+method boolean RequestEquipPiece(integer workerIndex, string part, string pieceId)
+    return _AppearanceService:RequestEquipPiece(self, workerIndex, part, pieceId)
+end
+
+@ExecSpace("Server")
+method boolean RequestCrystalExchange(integer count)
+    return _AppearanceService:RequestCrystalExchange(self, count)
 end
 
 @ExecSpace("Server")

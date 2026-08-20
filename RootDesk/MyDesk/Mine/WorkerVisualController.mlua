@@ -65,11 +65,13 @@ method void OnBeginPlay()
     self._T.ring = nil
     self._T.shard = nil
     self._T.lastSelected = -1
+    self._T.lastAppearanceKey = ""
     if self._T.worker == nil then
         log_error("[WorkerFx] WorkerController missing on " .. self.Entity.Name)
         return
     end
     self:EnsureVisuals()
+    self:RefreshAppearance()
     log("[WorkerFx] ready " .. self.Entity.Name .. " index=" .. tostring(self._T.worker.WorkerIndex))
 end
 
@@ -90,6 +92,7 @@ method void OnUpdate(number delta)
 
     self:RefreshRing()
     self:AdvanceShard(delta)
+    self:RefreshAppearance()
 
     local sequence = worker.VisualEventSequence
     if sequence == self._T.lastSequence then return end
@@ -100,6 +103,26 @@ method void OnUpdate(number delta)
     end
     self._T.lastSequence = sequence
     self:PlayActionEvent(worker.VisualEventKind, worker.VisualEventCellX, worker.VisualEventCellY)
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshAppearance()
+    -- 서버가 확정해 @Sync한 슬롯만 CostumeManager에 반영한다. 안전모·곡괭이는 건드리지 않는다.
+    local worker = self._T.worker
+    if worker == nil then return end
+    local key = worker.AppearanceHairRuid .. "|" .. worker.AppearanceFaceRuid .. "|" .. worker.AppearanceCoatRuid .. "|" .. worker.AppearancePantsRuid
+    if key == self._T.lastAppearanceKey then return end
+    local costume = self.Entity.CostumeManagerComponent
+    if costume == nil then
+        log_error("[WorkerFx] CostumeManagerComponent missing on " .. self.Entity.Name)
+        return
+    end
+    costume.CustomHairEquip = worker.AppearanceHairRuid
+    costume.CustomFaceEquip = worker.AppearanceFaceRuid
+    costume.CustomCoatEquip = worker.AppearanceCoatRuid
+    costume.CustomPantsEquip = worker.AppearancePantsRuid
+    self._T.lastAppearanceKey = key
+    log("[WorkerFx] appearance applied " .. self.Entity.Name)
 end
 
 @ExecSpace("ClientOnly")

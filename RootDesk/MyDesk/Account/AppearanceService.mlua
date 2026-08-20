@@ -1,0 +1,453 @@
+-- T-06 (F7-D) APPEARANCE AUTHORITY
+-- 외형 카탈로그·가챠·제작·교환·장착·도감 점수의 서버 단일 소유자.
+-- 클라이언트는 AccountProfileService 의 @Sync JSON 을 표시하고 요청만 보낸다.
+@Logic
+script AppearanceService extends Logic
+
+property integer GachaCrystalCost = 25
+property integer ExchangeGoldPerCrystal = 10
+property integer CraftStoneCost = 60
+property integer CraftIronCost = 20
+property integer CraftGoldOreCost = 5
+property integer PityMax = 50
+
+-- 결정적 서버 테스트 훅. 0이면 실제 난수를 사용한다.
+property integer TestRollBasisPoint = 0
+property integer TestPieceIndex = 0
+
+@ExecSpace("ServerOnly")
+method void OnBeginPlay()
+    self._T.missingRuidWarnings = {}
+    self:EnsureCatalog()
+end
+
+@ExecSpace("ServerOnly")
+method void EnsureCatalog()
+    if self._T.catalog ~= nil then return end
+    self._T.catalog = {}
+    self._T.byId = {}
+    self:AddPartCatalog("hair", "헤어")
+    self:AddPartCatalog("face", "얼굴")
+    self:AddPartCatalog("outfit", "의상")
+    log("[Appearance] catalog ready pieces=" .. tostring(#self._T.catalog))
+end
+
+@ExecSpace("ServerOnly")
+method void AddPartCatalog(string part, string partLabel)
+    local rarityCodes = { "c", "c", "c", "u", "u", "u", "r", "r", "e", "l" }
+    local rarityNames = { c = "일반", u = "고급", r = "희귀", e = "영웅", l = "전설" }
+    local rarityKeys = { c = "common", u = "uncommon", r = "rare", e = "epic", l = "legendary" }
+    local rarityScores = { c = 1, u = 2, r = 3, e = 4, l = 5 }
+    local counters = { c = 0, u = 0, r = 0, e = 0, l = 0 }
+    for index = 1, #rarityCodes do
+        local code = rarityCodes[index]
+        counters[code] = counters[code] + 1
+        local pieceId = part .. "_" .. code .. tostring(counters[code])
+        local asset = self:GetAssetDefinition(part, index)
+        local piece = {
+            id = pieceId,
+            name = asset.name or (partLabel .. " " .. rarityNames[code] .. " " .. tostring(counters[code])),
+            part = part,
+            rarity = rarityKeys[code],
+            rarityLabel = rarityNames[code],
+            score = rarityScores[code],
+            thumbnailRuid = asset.thumbnailRuid or "",
+            hairRuid = asset.hairRuid or "",
+            faceRuid = asset.faceRuid or "",
+            coatRuid = asset.coatRuid or "",
+            pantsRuid = asset.pantsRuid or "",
+            equipSlots = {
+                hairRuid = asset.hairRuid or "",
+                faceRuid = asset.faceRuid or "",
+                coatRuid = asset.coatRuid or "",
+                pantsRuid = asset.pantsRuid or "",
+            },
+        }
+        table.insert(self._T.catalog, piece)
+        self._T.byId[pieceId] = piece
+    end
+end
+
+@ExecSpace("ServerOnly")
+method table GetAssetDefinition(string part, integer index)
+    -- 2026-08-20 공식 avataritem 검색 후보. Worker01 실착과 30종 일괄 승인은 docs/21 §8에서 추적한다.
+    local hair = {
+        { name = "거친 광부 머리", ruid = "56ee34976c1e4bea990df9821c376661" },
+        { name = "브이 컷 머리", ruid = "59aa5f8b64c7496ebb059ec91618694e" },
+        { name = "정전기 머리", ruid = "96917c5a13cf422db33bdbcfc0331b18" },
+        { name = "부드러운 실키 머리", ruid = "5079d11f0e22443dac284718fe3ed0d5" },
+        { name = "곱슬 철사 머리", ruid = "b8de224237424a3095b71566b705eb63" },
+        { name = "반짝이는 머리", ruid = "694c6c41959240ff8d2beea82a755ab6" },
+        { name = "벨리알 머리", ruid = "54fd9fd8b4e64d2589a1c269a1b47717" },
+        { name = "짧은 곱슬 머리", ruid = "7d55213a1527409aa295f444019b5238" },
+        { name = "하늘빛 머리", ruid = "2893c3d39ad241459ffcab222628294a" },
+        { name = "빅터 머리", ruid = "2fe38ec018a24c7180190c7d1513fa8a" },
+    }
+    local face = {
+        { name = "이브 얼굴", ruid = "d4796bfaeaad4a76aab247ec19495cad" },
+        { name = "라샤 얼굴", ruid = "a9e2439cf2f44d2bb3fdc613ce2b631a" },
+        { name = "파이 얼굴", ruid = "51ffa6a1da1342b589303f6375cf8750" },
+        { name = "말끔한 얼굴", ruid = "1a6eb2119535481b99edddc17836f9f8" },
+        { name = "겨울 홍조 얼굴", ruid = "7f51b7cba4044ef09ad059813cf40b8d" },
+        { name = "부드러운 언덕 얼굴", ruid = "ec148a4be5534e55984b0ce1ea15e735" },
+        { name = "몽블랑 얼굴", ruid = "3c9fce0fac454bedb4805547ff7b8d27" },
+        { name = "포근한 얼굴", ruid = "7c0d5a0fbb1649bf865d4fffbabcfa20" },
+        { name = "뾰로통 얼굴", ruid = "afc3719ab52e49399dd15b85037dd60b" },
+        { name = "눈부신 얼굴", ruid = "c5285193266a48d88ccff2504df9a95f" },
+    }
+    local outfit = {
+        { name = "초록 더블 코트", coat = "8578eeb3a01f4a38accf4a4da7ae2c7f" },
+        { name = "리파 코트", coat = "4518466f810b4b8aa2b4bc680d57cce1" },
+        { name = "빨간 더플 코트", coat = "d336809286b148959a4b1b28e72ed282" },
+        { name = "개구리 빗방울 코트", coat = "c9dd94e16f7c4cfdb28d5ff5965b0551" },
+        { name = "타니아 재킷", coat = "40139649b794471f9180199ab994bdd1" },
+        { name = "아스나 코트 세트", coat = "38e327ca42f048108518389fd96489f1", pants = "cc922b301f364ce89137f30297ece399" },
+        { name = "레드체크 광부 세트", coat = "22d1ba9a5a4847cdbfb47838382c0f31", pants = "d33fcfd208bd46f39b329e92919cca50" },
+        { name = "럭셔리 큐트 세트", coat = "882a6605a55a46548d526c3642176170", pants = "aeb43aedadd54cca9d40d7d53a11b83c" },
+        { name = "주황 빗방울 세트", coat = "99ad4b7a9a8446f9b2e97ee86fef4a60", pants = "7c31d2d0e82146439f8264140da3c69e" },
+        { name = "레오팟 탐험가 세트", coat = "75b20b3b410e42d888e528c93ca48a35", pants = "d7452ffa06f64dcdb31f129e3f53e6c2" },
+    }
+    local source = nil
+    if part == "hair" then source = hair[index]
+    elseif part == "face" then source = face[index]
+    elseif part == "outfit" then source = outfit[index] end
+    if source == nil then return {} end
+    if part == "hair" then return { name = source.name, thumbnailRuid = source.ruid, hairRuid = source.ruid } end
+    if part == "face" then return { name = source.name, thumbnailRuid = source.ruid, faceRuid = source.ruid } end
+    return { name = source.name, thumbnailRuid = source.coat, coatRuid = source.coat, pantsRuid = source.pants or "" }
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsKnownPart(string part)
+    return part == "hair" or part == "face" or part == "outfit"
+end
+
+@ExecSpace("ServerOnly")
+method table GetCatalog()
+    self:EnsureCatalog()
+    return self._T.catalog
+end
+
+@ExecSpace("ServerOnly")
+method any GetPiece(string pieceId)
+    self:EnsureCatalog()
+    return self._T.byId[pieceId]
+end
+
+@ExecSpace("ServerOnly")
+method string RarityForBasisPoint(integer roll)
+    local value = math.max(1, math.min(10000, math.floor(roll)))
+    if value <= 5000 then return "common" end
+    if value <= 8000 then return "uncommon" end
+    if value <= 9500 then return "rare" end
+    if value <= 9900 then return "epic" end
+    return "legendary"
+end
+
+@ExecSpace("ServerOnly")
+method integer DuplicateGoldForRarity(string rarity)
+    if rarity == "common" then return 5 end
+    if rarity == "uncommon" then return 15 end
+    if rarity == "rare" then return 40 end
+    if rarity == "epic" then return 100 end
+    if rarity == "legendary" then return 250 end
+    return 0
+end
+
+@ExecSpace("ServerOnly")
+method table GetCandidates(string part, string rarity)
+    self:EnsureCatalog()
+    local result = {}
+    for index = 1, #self._T.catalog do
+        local piece = self._T.catalog[index]
+        if piece.part == part and piece.rarity == rarity then table.insert(result, piece) end
+    end
+    return result
+end
+
+@ExecSpace("ServerOnly")
+method any RollPiece(string part)
+    if not self:IsKnownPart(part) then return nil end
+    local roll = self.TestRollBasisPoint
+    if roll <= 0 then roll = _UtilLogic:RandomIntegerRange(1, 10000) end
+    local candidates = self:GetCandidates(part, self:RarityForBasisPoint(roll))
+    if #candidates == 0 then return nil end
+    local selected = self.TestPieceIndex
+    if selected <= 0 then selected = _UtilLogic:RandomIntegerRange(1, #candidates) end
+    selected = math.max(1, math.min(#candidates, math.floor(selected)))
+    return candidates[selected]
+end
+
+@ExecSpace("ServerOnly")
+method any GetLegendaryPiece(string part)
+    local candidates = self:GetCandidates(part, "legendary")
+    if #candidates == 0 then return nil end
+    return candidates[1]
+end
+
+@ExecSpace("ServerOnly")
+method integer CalculateCollectionScore(table owned)
+    self:EnsureCatalog()
+    local total = 0
+    if type(owned) ~= "table" then return total end
+    for index = 1, #self._T.catalog do
+        local piece = self._T.catalog[index]
+        if owned[piece.id] == true then total = total + piece.score end
+    end
+    return total
+end
+
+@ExecSpace("ServerOnly")
+method table AcquirePiece(table data, table piece)
+    local appearance = data.appearance
+    local isNew = appearance.owned[piece.id] ~= true
+    local duplicateGold = 0
+    if isNew then
+        appearance.owned[piece.id] = true
+        appearance.collectionScore = self:CalculateCollectionScore(appearance.owned)
+    else
+        duplicateGold = self:DuplicateGoldForRarity(piece.rarity)
+        data.gold = (data.gold or 0) + duplicateGold
+    end
+    return { isNew = isNew, duplicateGold = duplicateGold }
+end
+
+@ExecSpace("ServerOnly")
+method boolean Commit(AccountProfileService profile, string snapshot, string failureMessage)
+    profile:SyncRuntimeState()
+    profile:MarkProfileDirty()
+    if profile:SaveProfileAndWait() then return true end
+    profile:RestoreProfileSnapshot(snapshot)
+    profile:SetTransactionMessage(failureMessage)
+    return false
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestGachaPull(AccountProfileService profile, string part)
+    if profile == nil or not profile.IsLoaded or not self:IsKnownPart(part) then return false end
+    local data = profile:GetProfile()
+    local appearance = data.appearance
+    if appearance.pendingPity == true then
+        profile:SetTransactionMessage("보장 외형의 부위를 먼저 선택해 주세요.")
+        return false
+    end
+    if (data.crystal or 0) < self.GachaCrystalCost then
+        profile:SetTransactionMessage("크리스탈이 " .. tostring(self.GachaCrystalCost - (data.crystal or 0)) .. "개 부족합니다. 테스트 상점에서 교환할 수 있습니다.")
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(data)
+    data.crystal = data.crystal - self.GachaCrystalCost
+    if (appearance.pityCounter or 0) >= self.PityMax - 1 then
+        appearance.pityCounter = self.PityMax - 1
+        appearance.pendingPity = true
+        if not self:Commit(profile, snapshot, "뽑기 저장에 실패해 크리스탈과 천장 상태를 모두 되돌렸습니다. 다시 시도해 주세요.") then return false end
+        profile:SetAppearanceResult("pity_pending", "", false, 0)
+        profile:SetTransactionMessage("50회 보장에 도달했습니다. 원하는 부위를 선택해 주세요.")
+        log("[Appearance] pity pending")
+        return true
+    end
+    local piece = self:RollPiece(part)
+    if piece == nil then return false end
+    local acquired = self:AcquirePiece(data, piece)
+    appearance.pityCounter = math.max(0, math.min(self.PityMax - 1, (appearance.pityCounter or 0) + 1))
+    if not self:Commit(profile, snapshot, "뽑기 저장에 실패해 결과·중복 보상·천장을 모두 되돌렸습니다. 다시 시도해 주세요.") then return false end
+    profile:RefreshAllWorkerCapacities()
+    profile:SetAppearanceResult("gacha", piece.id, acquired.isNew, acquired.duplicateGold)
+    profile:SetTransactionMessage(self:BuildAcquireMessage(piece, acquired))
+    log("[Appearance] gacha piece=" .. piece.id .. " new=" .. tostring(acquired.isNew))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestPityClaim(AccountProfileService profile, string part)
+    if profile == nil or not profile.IsLoaded or not self:IsKnownPart(part) then return false end
+    local data = profile:GetProfile()
+    local appearance = data.appearance
+    if appearance.pendingPity ~= true then return false end
+    local piece = self:GetLegendaryPiece(part)
+    if piece == nil then return false end
+    local snapshot = _HttpService:JSONEncode(data)
+    local acquired = self:AcquirePiece(data, piece)
+    appearance.pendingPity = false
+    appearance.pityCounter = 0
+    if not self:Commit(profile, snapshot, "보장 외형 저장에 실패해 지급·중복 보상·천장을 모두 되돌렸습니다. 다시 시도해 주세요.") then return false end
+    profile:RefreshAllWorkerCapacities()
+    profile:SetAppearanceResult("pity", piece.id, acquired.isNew, acquired.duplicateGold)
+    profile:SetTransactionMessage(self:BuildAcquireMessage(piece, acquired))
+    log("[Appearance] pity claimed part=" .. part .. " piece=" .. piece.id)
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestCraft(AccountProfileService profile, string part)
+    if profile == nil or not profile.IsLoaded or not self:IsKnownPart(part) then return false end
+    local data = profile:GetProfile()
+    local stoneMissing = math.max(0, self.CraftStoneCost - (data.stone or 0))
+    local ironMissing = math.max(0, self.CraftIronCost - (data.iron or 0))
+    local goldMissing = math.max(0, self.CraftGoldOreCost - (data.goldOre or 0))
+    if stoneMissing > 0 or ironMissing > 0 or goldMissing > 0 then
+        profile:SetTransactionMessage("제작 재료 부족: 돌 " .. tostring(stoneMissing) .. ", 철 " .. tostring(ironMissing) .. ", 금광석 " .. tostring(goldMissing))
+        return false
+    end
+    local piece = self:RollPiece(part)
+    if piece == nil then return false end
+    local snapshot = _HttpService:JSONEncode(data)
+    data.stone = data.stone - self.CraftStoneCost
+    data.iron = data.iron - self.CraftIronCost
+    data.goldOre = data.goldOre - self.CraftGoldOreCost
+    local acquired = self:AcquirePiece(data, piece)
+    if not self:Commit(profile, snapshot, "제작 저장에 실패해 광물·피스·중복 보상을 모두 되돌렸습니다. 다시 시도해 주세요.") then return false end
+    profile:RefreshAllWorkerCapacities()
+    profile:SetAppearanceResult("craft", piece.id, acquired.isNew, acquired.duplicateGold)
+    profile:SetTransactionMessage(self:BuildAcquireMessage(piece, acquired))
+    log("[Appearance] craft piece=" .. piece.id .. " new=" .. tostring(acquired.isNew))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestCrystalExchange(AccountProfileService profile, integer count)
+    if profile == nil or not profile.IsLoaded then return false end
+    local amount = math.floor(count)
+    if amount ~= 1 and amount ~= 10 then return false end
+    local data = profile:GetProfile()
+    local cost = amount * self.ExchangeGoldPerCrystal
+    if (data.gold or 0) < cost then
+        profile:SetTransactionMessage("골드가 " .. tostring(cost - (data.gold or 0)) .. " 부족합니다.")
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(data)
+    data.gold = data.gold - cost
+    data.crystal = (data.crystal or 0) + amount
+    if not self:Commit(profile, snapshot, "교환 저장에 실패해 골드와 크리스탈을 모두 되돌렸습니다. 다시 시도해 주세요.") then return false end
+    profile:SetTransactionMessage("테스트 상점 교환 완료: 골드 -" .. tostring(cost) .. ", 크리스탈 +" .. tostring(amount))
+    log("[Appearance] exchange crystals=" .. tostring(amount) .. " gold=" .. tostring(cost))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestEquipPiece(AccountProfileService profile, integer workerIndex, string part, string pieceId)
+    if profile == nil or not profile.IsLoaded or not self:IsKnownPart(part) then return false end
+    local data = profile:GetProfile()
+    if workerIndex < 1 or workerIndex > #data.workers then
+        profile:SetTransactionMessage("보유하지 않은 일꾼에는 외형을 장착할 수 없습니다.")
+        return false
+    end
+    if pieceId ~= "" then
+        local piece = self:GetPiece(pieceId)
+        if piece == nil or piece.part ~= part or data.appearance.owned[pieceId] ~= true then
+            profile:SetTransactionMessage("보유하지 않은 외형입니다.")
+            return false
+        end
+    end
+    local snapshot = _HttpService:JSONEncode(data)
+    data.appearance.equipped[tostring(workerIndex)][part] = pieceId
+    if not self:Commit(profile, snapshot, "장착 저장에 실패해 이전 외형으로 되돌렸습니다. 다시 시도해 주세요.") then return false end
+    profile:ApplyWorkerAppearance(workerIndex)
+    profile:SetTransactionMessage(pieceId == "" and "기본 외형으로 되돌렸습니다." or "외형을 장착했습니다.")
+    log("[Appearance] equipped worker=" .. tostring(workerIndex) .. " part=" .. part .. " piece=" .. pieceId)
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method string BuildAcquireMessage(table piece, table acquired)
+    if acquired.isNew then return "새 외형 획득: " .. piece.name .. " (" .. piece.rarityLabel .. ")" end
+    return "중복 외형: " .. piece.name .. " — 골드 +" .. tostring(acquired.duplicateGold) .. " 전환"
+end
+
+@ExecSpace("ServerOnly")
+method table ResolveEquipSlots(table appearance, integer workerIndex)
+    self:EnsureCatalog()
+    local slots = {
+        hairRuid = "",
+        faceRuid = "",
+        coatRuid = "be931cbee7dc4b4e85046e60a6eb5651",
+        pantsRuid = "e6ff0ea602e043f48a7e231ed4f95daf",
+    }
+    if type(appearance) ~= "table" or type(appearance.equipped) ~= "table" then return slots end
+    local equipped = appearance.equipped[tostring(workerIndex)]
+    if type(equipped) ~= "table" then return slots end
+    local hair = self:GetPiece(equipped.hair or "")
+    local face = self:GetPiece(equipped.face or "")
+    local outfit = self:GetPiece(equipped.outfit or "")
+    if hair ~= nil and hair.hairRuid ~= "" then slots.hairRuid = hair.hairRuid end
+    if face ~= nil and face.faceRuid ~= "" then slots.faceRuid = face.faceRuid end
+    if outfit ~= nil then
+        if outfit.coatRuid ~= "" then slots.coatRuid = outfit.coatRuid end
+        if outfit.pantsRuid ~= "" then slots.pantsRuid = outfit.pantsRuid end
+    end
+    self:WarnMissingRuidOnce(hair)
+    self:WarnMissingRuidOnce(face)
+    self:WarnMissingRuidOnce(outfit)
+    return slots
+end
+
+@ExecSpace("ServerOnly")
+method void WarnMissingRuidOnce(any piece)
+    if piece == nil then return end
+    local missing = false
+    if piece.part == "hair" then missing = piece.hairRuid == ""
+    elseif piece.part == "face" then missing = piece.faceRuid == ""
+    elseif piece.part == "outfit" then missing = piece.coatRuid == "" and piece.pantsRuid == "" end
+    if not missing or self._T.missingRuidWarnings[piece.id] == true then return end
+    self._T.missingRuidWarnings[piece.id] = true
+    log_warning("[Appearance] approved RUID missing; logical equip kept piece=" .. piece.id)
+end
+
+@ExecSpace("ServerOnly")
+method table BuildInfo(table data, table lastResult)
+    self:EnsureCatalog()
+    local appearance = data.appearance
+    local pieces = {}
+    for index = 1, #self._T.catalog do
+        local source = self._T.catalog[index]
+        table.insert(pieces, {
+            id = source.id,
+            name = source.name,
+            part = source.part,
+            rarity = source.rarity,
+            rarityLabel = source.rarityLabel,
+            score = source.score,
+            thumbnailRuid = source.thumbnailRuid,
+            equipSlots = {
+                hairRuid = source.hairRuid,
+                faceRuid = source.faceRuid,
+                coatRuid = source.coatRuid,
+                pantsRuid = source.pantsRuid,
+            },
+            owned = appearance.owned[source.id] == true,
+        })
+    end
+    local score = self:CalculateCollectionScore(appearance.owned)
+    local cartBonus = math.max(0, math.min(6, math.floor(score / 12)))
+    local nextThreshold = 72
+    if cartBonus < 6 then nextThreshold = (cartBonus + 1) * 12 end
+    return {
+        pieces = pieces,
+        equipped = appearance.equipped,
+        ownedWorkerCount = #data.workers,
+        collection = { score = score, maxScore = 72, nextThreshold = nextThreshold, cartBonus = cartBonus, maxCartBonus = 6 },
+        pity = { counter = appearance.pendingPity and 50 or appearance.pityCounter, max = 50, pending = appearance.pendingPity == true },
+        costs = {
+            gachaCrystal = self.GachaCrystalCost,
+            exchangeGoldPerCrystal = self.ExchangeGoldPerCrystal,
+            craftStone = self.CraftStoneCost,
+            craftIron = self.CraftIronCost,
+            craftGoldOre = self.CraftGoldOreCost,
+            duplicateCommon = 5,
+            duplicateUncommon = 15,
+            duplicateRare = 40,
+            duplicateEpic = 100,
+            duplicateLegendary = 250,
+        },
+        probabilities = {
+            common = 5000, commonLabel = "50.00%",
+            uncommon = 3000, uncommonLabel = "30.00%",
+            rare = 1500, rareLabel = "15.00%",
+            epic = 400, epicLabel = "4.00%",
+            legendary = 100, legendaryLabel = "1.00%",
+        },
+        lastResult = lastResult,
+    }
+end
+
+end
