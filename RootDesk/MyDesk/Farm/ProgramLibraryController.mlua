@@ -197,6 +197,12 @@ end
 @ExecSpace("ClientOnly")
 method void OnOpenClicked()
     if self.libraryPanel == nil then return end
+    -- 토글: 이미 열려 있으면 닫는다 (2026-08-20 오너 요청).
+    if self.libraryPanel.Enable then
+        self.libraryPanel.Enable = false
+        log("[ProgramLibrary] closed by toggle")
+        return
+    end
     if _AppearanceController ~= nil then _AppearanceController:ClosePanel() end
     local profile = self:GetProfile()
     if profile ~= nil then self._T.msgAtOpen = profile.LastTransactionMessage end

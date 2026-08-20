@@ -221,6 +221,21 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | `toggle-on` | `ffdc2821ce834708aa17da3b50a0fc56` | 192×91 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
 | `toggle-off` | `3229dd93dec04526a2402f463518092d` | 192×93 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
 
+> **2026-08-20 — §5.6 + `cost-chip-blank`·`hud-cart-capacity-bar` 배선 임시 해제.** 위 🟡 파츠들이 실플레이에서
+> 전부 **흰 사각형**으로 그려져(오너 보고), 검증 완료 파츠로 대체 배선했다. 재검증이 끝나면 되돌릴 수 있다.
+>
+> | 원래 파츠 | 대체 배선 |
+> |---|---|
+> | `toggle-on` / `toggle-off` | `button-green-blank` / `button-slate-blank` (`MineSelectController.ToggleOn/OffRUID`) |
+> | `stepper-minus` / `stepper-plus` | `button-slate-blank` + 기존 −/+ 라벨 (64×64로 축소) |
+> | `cost-chip-blank` (WorkerCostChip · UpgradeCostChip) | `input-field-blank` |
+> | `icon-special-vein` | docs/20 승인 크리스탈 `c2a20f58a7b1490b936b60b4ddc8471e` |
+> | `icon-warning-protected` | `status-stopped-red` (적색 램프) |
+> | `hud-cart-capacity-bar` (Track·Fill) | `settings-slider-track` (Fill 은 녹색 틴트 + Filled 유지) |
+> | `icon-pickaxe` (워커 탭) | **미교체** — 오너 지적 화면 밖. 재검증 시 함께 확인 |
+> | `inventory-slot-blank` / `inventory-slot-selected` (인벤토리 SlotFrame) | `command-tile-slate-blank` (Simple 렌더) |
+> | `quantity-badge-blank` (인벤토리 QuantityBadge) | `button-slate-blank` + 뱃지 글자색 다크 전환 |
+
 ### 5.7 이번 범위 밖 — 업로드 보류
 
 | 파츠 | 대기 티켓 |

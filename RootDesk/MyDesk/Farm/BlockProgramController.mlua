@@ -567,13 +567,9 @@ method void SetWorkerButtonState(TextComponent label, SpriteGUIRendererComponent
     -- 문구를 대체하지 않고 함께 바뀐다 (docs/20 §6).
     local state = self:GetWorkerChipState(workerIndex, owned)
     if label ~= nil then
-        if state == "disabled" then
-            label.Text = tostring(workerIndex) .. " X"
-        elseif state == "selected" then
-            label.Text = "[" .. tostring(workerIndex) .. "]"
-        else
-            label.Text = tostring(workerIndex)
-        end
+        -- 상태 구분은 배경 스프라이트(선택/일반/회색)가 전담한다 — "[N]"·"N X"
+        -- 텍스트 표식은 중복이라 제거했다 (2026-08-20 오너 결정).
+        label.Text = tostring(workerIndex)
     end
     if chip == nil then return end
     if state == "disabled" then

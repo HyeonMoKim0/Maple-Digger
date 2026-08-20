@@ -1,0 +1,124 @@
+-- UI 창 공통 관리자 (2026-08-20 오너 요청 4·5항)
+-- 1) 버튼으로 여는 창이 떠 있는 동안 그 버튼을 어둡게(dim), 닫히면 원복.
+-- 2) ESC 키로 열린 창을 위(자식 패널)부터 하나씩 닫는다. 서브패널을 닫으면
+--    각 닫기 버튼과 같은 의미로 부모 패널을 되살린다 (MineSelectController 의
+--    OnSaleClose/OnRareClose 흐름 미러). 팝업(PopupGroup)과 명령 블록 편집기
+--    본체는 확인 흐름·튜토리얼 강제 펼침과 충돌하므로 ESC 대상에서 제외한다.
+-- dim 은 rgb 만 곱하고 alpha 는 건드리지 않는다 — 튜토리얼 잠금 dim(알파 0.25,
+-- TutorialController)과 서로 간섭하지 않게 하기 위함이다.
+@Logic
+script UIWindowManager extends Logic
+
+-- 창 엔티티 (UUID 는 각 .ui 파일에서 채집)
+property Entity selectPanel = "20cb4dbc-1e9a-42f4-a237-549a3a3edf41"
+property Entity salePanel = "821b31af-cac8-4a66-aa90-24e024f48392"
+property Entity cartPanel = "2ddf0bf0-6b16-4e5a-8422-56f1685cbf55"
+property Entity rarePanel = "1e5dbbfb-0671-4eb3-84c5-d39b45ad9ecd"
+property Entity upgradePanel = "c9ada0c5-054f-4906-92c3-f3d18be98ab5"
+property Entity settingsPanel = "426b082b-296e-4dd0-89e6-23fd3cda9b8b"
+property Entity appearancePanel = "ea31af8c-0e68-433b-b40b-c7d55eed3b62"
+property Entity libraryPanel = "631cb6db-5789-43c2-88dc-17ad124e90e9"
+property Entity inventoryPanel = "3434f74e-d21b-4493-a1f7-9406a7796a4c"
+property Entity programPanel = "54c94cbd-758e-4d66-a3fc-2f885989564a"
+
+-- 여는 버튼 스프라이트 (dim 대상)
+property SpriteGUIRendererComponent btnOpenSprite = "94c58c02-b4ac-4901-b9b7-0f02e69568c9"
+property SpriteGUIRendererComponent btnSettingsSprite = "c738f043-fffc-45c9-a99d-4e6020e9a108"
+property SpriteGUIRendererComponent btnAppearanceSprite = "7dd289a5-dd34-4836-b926-12163dedadff"
+property SpriteGUIRendererComponent btnLibrarySprite = "c3e33700-722c-4760-b75f-47a25662ec6f"
+property SpriteGUIRendererComponent btnToggleSprite = "dc2d9c74-935f-411f-bc00-4337288cc7b1"
+property SpriteGUIRendererComponent btnInventorySprite = "7e830fdf-624e-4d91-83d9-d6e2d321c96f"
+
+property number DimFactor = 0.55
+property any keyHandler = nil
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- 원래 rgb 캐시 + ESC 구독.
+    self._T.orig = {}
+    self._T.dimmed = {}
+    self.keyHandler = _InputService:ConnectEvent(KeyDownEvent, self.OnKeyDown)
+    log("[UIWindowManager] ready")
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    if self.keyHandler ~= nil then _InputService:DisconnectEvent(KeyDownEvent, self.keyHandler) end
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsOpen(Entity window)
+    -- Enable 이 곧 열림 상태다 (모든 컨트롤러가 Enable 플립으로 여닫는다).
+    return window ~= nil and isvalid(window) and window.Enable
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyShade(string key, SpriteGUIRendererComponent sprite, boolean shouldDim)
+    -- rgb 만 DimFactor 배. alpha 는 현재 값을 유지한다.
+    if sprite == nil or not isvalid(sprite) then return end
+    if self._T.orig[key] == nil then
+        local c = sprite.Color
+        self._T.orig[key] = { r = c.r, g = c.g, b = c.b }
+    end
+    if self._T.dimmed[key] == shouldDim then return end
+    self._T.dimmed[key] = shouldDim
+    local orig = self._T.orig[key]
+    local factor = 1
+    if shouldDim then factor = self.DimFactor end
+    local alpha = sprite.Color.a
+    sprite.Color = Color(orig.r * factor, orig.g * factor, orig.b * factor, alpha)
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- 창 열림 상태를 폴링해 여는 버튼의 밝기를 맞춘다 (6쌍, 경량).
+    local mineSelectOpen = self:IsOpen(self.selectPanel) or self:IsOpen(self.salePanel)
+        or self:IsOpen(self.cartPanel) or self:IsOpen(self.rarePanel) or self:IsOpen(self.upgradePanel)
+    self:ApplyShade("open", self.btnOpenSprite, mineSelectOpen)
+    self:ApplyShade("settings", self.btnSettingsSprite, self:IsOpen(self.settingsPanel))
+    self:ApplyShade("appearance", self.btnAppearanceSprite, self:IsOpen(self.appearancePanel))
+    self:ApplyShade("library", self.btnLibrarySprite, self:IsOpen(self.libraryPanel))
+    self:ApplyShade("inventory", self.btnInventorySprite, self:IsOpen(self.inventoryPanel))
+    self:ApplyShade("toggle", self.btnToggleSprite, self:IsOpen(self.programPanel))
+end
+
+@ExecSpace("ClientOnly")
+method void OnKeyDown(KeyDownEvent event)
+    -- ESC: 위(자식 패널)부터 한 번에 하나씩 닫는다.
+    if event.key ~= KeyboardKey.Escape then return end
+    if self:IsOpen(self.rarePanel) then
+        -- 희귀 판매 닫기 = 판매 화면 복귀 (OnRareCloseClicked 미러)
+        self.rarePanel.Enable = false
+        self.salePanel.Enable = true
+        log("[UIWindowManager] esc close rare")
+    elseif self:IsOpen(self.salePanel) then
+        self.salePanel.Enable = false
+        self.selectPanel.Enable = true
+        log("[UIWindowManager] esc close sale")
+    elseif self:IsOpen(self.cartPanel) then
+        self.cartPanel.Enable = false
+        self.selectPanel.Enable = true
+        log("[UIWindowManager] esc close cart")
+    elseif self:IsOpen(self.upgradePanel) then
+        self.upgradePanel.Enable = false
+        self.selectPanel.Enable = true
+        log("[UIWindowManager] esc close upgrade")
+    elseif self:IsOpen(self.selectPanel) then
+        self.selectPanel.Enable = false
+        log("[UIWindowManager] esc close select")
+    elseif self:IsOpen(self.inventoryPanel) then
+        self.inventoryPanel.Enable = false
+        log("[UIWindowManager] esc close inventory")
+    elseif self:IsOpen(self.settingsPanel) then
+        self.settingsPanel.Enable = false
+        log("[UIWindowManager] esc close settings")
+    elseif self:IsOpen(self.appearancePanel) then
+        self.appearancePanel.Enable = false
+        log("[UIWindowManager] esc close appearance")
+    elseif self:IsOpen(self.libraryPanel) then
+        self.libraryPanel.Enable = false
+        log("[UIWindowManager] esc close library")
+    end
+end
+
+end

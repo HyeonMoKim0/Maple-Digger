@@ -155,7 +155,10 @@ method table GetStepConfig(integer step)
             allowed = { selectOpen = true, selectClose = true, sellOpen = true, saleClose = true, oreStone = true, quickOne = true, quickTen = true, quickAll = true, sellSelected = true },
             reset = nil,
             clearProgram = true,
-            tooltipX = -360, tooltipY = 150, arrowX = 485, arrowY = -6, arrowDir = "right",
+            -- 7단계: 중앙 패널(폭 780, X -390~390)을 가리지 않도록 왼쪽 바깥에
+            -- 배치하고 화살표는 패널 왼쪽 가장자리에서 [판매] 행을 가리킨다
+            -- (2026-08-20 오너 결정 — 가운데 UI 시야 확보).
+            tooltipX = -660, tooltipY = 208, arrowX = -400, arrowY = 208, arrowDir = "right",
         }
     end
     return {
@@ -164,7 +167,9 @@ method table GetStepConfig(integer step)
         allowed = { selectOpen = true, selectClose = true, buyWorker = true },
         reset = nil,
         clearProgram = false,
-        tooltipX = -360, tooltipY = 150, arrowX = 200, arrowY = 164, arrowDir = "right",
+        -- 8단계: 7단계와 같은 이유로 왼쪽 바깥 배치. 화살표는 패널 왼쪽
+        -- 가장자리에서 [일꾼 고용] 행 높이를 가리킨다.
+        tooltipX = -660, tooltipY = 208, arrowX = -400, arrowY = 208, arrowDir = "right",
     }
 end
 
