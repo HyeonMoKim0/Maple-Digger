@@ -131,11 +131,11 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | `ledger-row-resource-blank` | `f312099962db4862adee65f13644aa64` | 384×83 | **82** 30 17 17 | ✅ |
 | `settings-slider-track` | `bd6dae92677e4274b7e79910939173e4` | 384×49 | 24 24 16 16 | ✅ (T-12-B, 2026-08-18) |
 | `settings-slider-thumb` | `b05198669456485faa7dfe24594c206e` | 92×96 | Simple (`SliderComponent.HandleImageRUID`) | ✅ (T-12-B, 2026-08-18) |
-| `inventory-slot-blank` | | 126×128 | | ⬜ |
-| `inventory-slot-selected` | | 128×123 | | ⬜ |
-| `quantity-badge-blank` | | 192×105 | | ⬜ |
-| `cost-chip-blank` | | 192×64 | | ⬜ |
-| `hud-cart-capacity-bar` | | 384×51 | | ⬜ |
+| `inventory-slot-blank` | `2a87d00d437c4566905d400322c03d88` | 126×128 | Simple | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `inventory-slot-selected` | `8b5027c2ee0241c69fc9976ae926ff82` | 128×123 | Simple | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `quantity-badge-blank` | `2a1dbdf414e74fef9a3273f0e4eb3922` | 192×105 | 24 24 20 20 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `cost-chip-blank` | `d27c1c284be545b2a3ed0858832a58a9` | 192×64 | 32 32 20 20 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `hud-cart-capacity-bar` | `a6f99f6b962c4d718dd74948300dd15e` | 384×51 | Filled | 🟡 업로드·배선 완료, Maker 재검증 대기 |
 
 ### 5.4 상태 램프 (docs/20 §6 대로 **텍스트 + 색과 함께** 쓴다. 아이콘 단독 표기 금지)
 
@@ -213,13 +213,13 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 
 | 파츠 | RUID | 크기 | 상태 |
 |---|---|---:|:--:|
-| `icon-special-vein` | | 85×96 | ⬜ |
-| `icon-warning-protected` | | 96×84 | ⬜ |
-| `icon-pickaxe` | | 96×93 | ⬜ |
-| `stepper-minus` | | 96×91 | ⬜ |
-| `stepper-plus` | | 96×95 | ⬜ |
-| `toggle-on` | | 192×91 | ⬜ |
-| `toggle-off` | | 192×93 | ⬜ |
+| `icon-special-vein` | `ca33fe8d0cad4db88bfd154f6c556114` | 85×96 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `icon-warning-protected` | `981be3962a094d57aeddc7d27265abea` | 96×84 | 🟡 업로드·조건부 배선 완료, Maker 재검증 대기 |
+| `icon-pickaxe` | `56b7a05206aa4fd9b91d3ff650bb1d45` | 96×93 | 🟡 업로드·워커 탭 5개 배선 완료, Maker 재검증 대기 |
+| `stepper-minus` | `85cb0a1c5f6a44e693e120da8bb3d455` | 96×91 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `stepper-plus` | `1b5f85042c6c41b1972cd224963474ab` | 96×95 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `toggle-on` | `ffdc2821ce834708aa17da3b50a0fc56` | 192×91 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `toggle-off` | `3229dd93dec04526a2402f463518092d` | 192×93 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
 
 ### 5.7 이번 범위 밖 — 업로드 보류
 

@@ -34,7 +34,10 @@ property ButtonComponent btnOreGold = "6b1a5af9-d13d-4a66-95b9-a047ed0b838a"
 -- TextInputComponent 로 선언하면 GetComponent 가 nil 을 돌려주고, 수량이 절대
 -- 입력되지 않아 판매가 항상 "수량은 1 이상" 으로 실패했다 (docs/16 §14 D-11).
 property TextGUIRendererInputComponent saleAmountInput = "35a53a3e-b413-4f1c-acab-6f67795f97a1"
-property TextGUIRendererInputComponent protectedAmountInput = "11ee646a-5d19-469f-949b-65106eebe749"
+-- T-13 B4: 보호 수량은 모바일 친화 스테퍼로 조정한다. 자유 입력은 제거했다.
+property ButtonComponent btnProtectedMinus = "7938b512-6149-4c10-a7df-2d9a5ca5e491"
+property ButtonComponent btnProtectedPlus = "86b5da70-4909-4c0d-a5c7-0f2efb953ae2"
+property TextGUIRendererComponent protectedAmountValueText = "93c3e908-60b3-4298-b689-25450e7692b1"
 property ButtonComponent btnQuickOne = "17fb7222-327e-45c9-8f31-e3592659a17a"
 property ButtonComponent btnQuickTen = "f179fa04-2b7b-4493-811c-8df7f4fb77b3"
 property ButtonComponent btnQuickHundred = "4cb338a6-780e-4a9f-99da-8d62d96b6a3a"
@@ -43,6 +46,11 @@ property ButtonComponent btnSellSelected = "78f6afd5-aa5d-45c6-9ef3-268d1a37f83e
 property ButtonComponent btnToggleProtected = "e802e753-5484-40b5-b941-04c34ec1d023"
 property ButtonComponent btnSaveProtection = "3635c978-5a77-4118-8d49-519629327e6f"
 property ButtonComponent btnToggleAutoSell = "20ce51cb-b8b0-4ded-949d-74050165cb39"
+property SpriteGUIRendererComponent protectedToggleSprite = "e802e753-5484-40b5-b941-04c34ec1d023"
+property SpriteGUIRendererComponent autoSellToggleSprite = "20ce51cb-b8b0-4ded-949d-74050165cb39"
+property Entity protectedWarningIcon = "f4f4a193-3d6e-4657-9efa-a3968aba32ac"
+property string ToggleOnRUID = "ffdc2821ce834708aa17da3b50a0fc56"
+property string ToggleOffRUID = "3229dd93dec04526a2402f463518092d"
 property TextGUIRendererComponent saleSummaryText = "1764b8f3-caf1-407a-b19c-754d038bc501"
 property TextGUIRendererComponent saleFeedbackText = "64f32ca0-d2f9-4beb-a603-2c6c1b6b1aab"
 property ButtonComponent btnRareOpen = "3ab7dc8e-ddfc-43ce-a503-c174cc6fb8c4"
@@ -50,7 +58,7 @@ property Entity rarePanel = "1e5dbbfb-0671-4eb3-84c5-d39b45ad9ecd"
 property ButtonComponent btnRareClose = "f64125f4-938c-4639-8684-d5d5190311c2"
 property ButtonComponent btnBuyWorker = "3595093e-2707-4992-8d2c-43b2f5a64c6a"
 -- SelectPanel/WorkerStatus 는 레거시 TextComponent 를 쓴다 (docs/16 §14 D-11).
-property TextComponent workerStatusText = "8d793449-ab64-4ccf-b43c-76e1f9b73324"
+property TextGUIRendererComponent workerStatusText = "87e1251e-b484-4f94-aecf-3413f5eb5148"
 property ButtonComponent btnRareStone = "49556e19-68aa-4d27-bed5-a716026ab9ac"
 property ButtonComponent btnRareIron = "e13c8f6c-0241-441e-a836-e39de5567820"
 property ButtonComponent btnRareGold = "e8bb96b2-72b5-484e-bf9c-d0513240da82"
@@ -77,7 +85,7 @@ property ButtonComponent btnCartWorker3 = "26e77396-6738-45ea-b225-72cd37602140"
 property ButtonComponent btnCartWorker4 = "68b01220-83bb-47a6-8b64-524aec3e2323"
 property ButtonComponent btnCartWorker5 = "22a4e518-aaa1-4b95-8938-98a34550a4ba"
 property ButtonComponent btnCartUpgrade = "dff1aaae-2536-4fc1-b8eb-6734a9403f85"
-property TextComponent cartSummaryText = "6845ae6a-932f-4bac-8509-fb3a6b323fcb"
+property TextGUIRendererComponent cartSummaryText = "161951a3-b62a-4bac-8352-80cfc7669cfe"
 -- T-07 (F7-E §9.2 결정 9): 광산 선택 화면의 "튜토리얼 다시 보기" 진입점.
 property ButtonComponent btnTutorialReplay = "39393c63-382c-4667-8557-3942a8a6b471"
 
@@ -87,6 +95,7 @@ method void OnBeginPlay()
     self._T.lastState = ""
     self._T.selectedOre = "stone"
     self._T.includeProtected = false
+    self._T.protectedAmountDraft = nil
     self._T.localSaleHint = ""
     self._T.cartWorkerIndex = 1
     self._T.upgradeMsgAtOpen = ""
@@ -115,6 +124,8 @@ method void OnBeginPlay()
     self:ConnectButton("sellSelected", self.btnSellSelected, self.OnSellSelectedClicked)
     self:ConnectButton("toggleProtected", self.btnToggleProtected, self.OnToggleProtectedClicked)
     self:ConnectButton("saveProtection", self.btnSaveProtection, self.OnSaveProtectionClicked)
+    self:ConnectButton("protectedMinus", self.btnProtectedMinus, self.OnProtectedMinusClicked)
+    self:ConnectButton("protectedPlus", self.btnProtectedPlus, self.OnProtectedPlusClicked)
     self:ConnectButton("toggleAutoSell", self.btnToggleAutoSell, self.OnToggleAutoSellClicked)
     self:ConnectButton("rareOpen", self.btnRareOpen, self.OnRareOpenClicked)
     self:ConnectButton("rareClose", self.btnRareClose, self.OnRareCloseClicked)
@@ -413,6 +424,31 @@ method void RefreshSaleSummary(AccountProfileService profile)
         if sellable < 0 then sellable = 0 end
         self.saleSummaryText.Text = "선택: " .. self:OreLabel(self._T.selectedOre) .. "  |  보유 " .. tostring(balance) .. "  |  보호 " .. tostring(effective) .. " (설정 " .. tostring(self:GetSelectedProtection(profile)) .. ")\n지금 팔 수 있는 수량 " .. tostring(sellable) .. "  |  자동판매 " .. autoLabel .. "  |  보호분 판매 " .. protectionLabel
     end
+    if self._T.protectedAmountDraft == nil then
+        self._T.protectedAmountDraft = self:GetSelectedProtection(profile)
+    end
+    if self.protectedAmountValueText ~= nil then
+        self.protectedAmountValueText.Text = tostring(self._T.protectedAmountDraft)
+    end
+    if self.protectedToggleSprite ~= nil then
+        if self._T.includeProtected then self.protectedToggleSprite.ImageRUID = DataRef(self.ToggleOnRUID)
+        else self.protectedToggleSprite.ImageRUID = DataRef(self.ToggleOffRUID) end
+    end
+    if self.btnToggleProtected ~= nil and self.btnToggleProtected.Entity.TextGUIRendererComponent ~= nil then
+        if self._T.includeProtected then self.btnToggleProtected.Entity.TextGUIRendererComponent.Text = "보호분 판매 ON"
+        else self.btnToggleProtected.Entity.TextGUIRendererComponent.Text = "보호분 판매 OFF" end
+    end
+    if self.autoSellToggleSprite ~= nil then
+        if self:GetSelectedAutoSell(profile) then self.autoSellToggleSprite.ImageRUID = DataRef(self.ToggleOnRUID)
+        else self.autoSellToggleSprite.ImageRUID = DataRef(self.ToggleOffRUID) end
+    end
+    if self.btnToggleAutoSell ~= nil and self.btnToggleAutoSell.Entity.TextGUIRendererComponent ~= nil then
+        if self:GetSelectedAutoSell(profile) then self.btnToggleAutoSell.Entity.TextGUIRendererComponent.Text = "자동 판매 ON"
+        else self.btnToggleAutoSell.Entity.TextGUIRendererComponent.Text = "자동 판매 OFF" end
+    end
+    if self.protectedWarningIcon ~= nil then
+        self.protectedWarningIcon.Enable = self:GetSelectedBalance(profile) <= self:GetSelectedEffectiveProtection(profile) and not self._T.includeProtected
+    end
     self:RefreshSaleFeedback(profile)
 end
 
@@ -455,9 +491,7 @@ method void SelectOre(string oreType)
     -- 계속 남아 이후의 서버 거부 사유를 덮는다.
     self._T.localSaleHint = ""
     local profile = self:GetProfile()
-    if profile ~= nil and self.protectedAmountInput ~= nil then
-        self.protectedAmountInput.Text = tostring(self:GetSelectedProtection(profile))
-    end
+    if profile ~= nil then self._T.protectedAmountDraft = self:GetSelectedProtection(profile) end
     self:RefreshUI(true)
 end
 
@@ -590,7 +624,7 @@ end
 method void OnSaveProtectionClicked()
     local profile = self:GetProfile()
     if profile == nil then return end
-    local protectedAmount = self:ReadNonNegative(self.protectedAmountInput, self:GetSelectedProtection(profile))
+    local protectedAmount = math.max(0, self._T.protectedAmountDraft or self:GetSelectedProtection(profile))
     profile:RequestSaleSetting(self._T.selectedOre, self:GetSelectedAutoSell(profile), protectedAmount)
 end
 
@@ -598,8 +632,28 @@ end
 method void OnToggleAutoSellClicked()
     local profile = self:GetProfile()
     if profile == nil then return end
-    local protectedAmount = self:ReadNonNegative(self.protectedAmountInput, self:GetSelectedProtection(profile))
+    local protectedAmount = math.max(0, self._T.protectedAmountDraft or self:GetSelectedProtection(profile))
     profile:RequestSaleSetting(self._T.selectedOre, not self:GetSelectedAutoSell(profile), protectedAmount)
+end
+
+@ExecSpace("ClientOnly")
+method void AdjustProtectedAmount(integer delta)
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    if self._T.protectedAmountDraft == nil then self._T.protectedAmountDraft = self:GetSelectedProtection(profile) end
+    self._T.protectedAmountDraft = math.max(0, self._T.protectedAmountDraft + delta)
+    self._T.localSaleHint = "보호 수량 " .. tostring(self._T.protectedAmountDraft) .. " — 저장을 누르면 적용됩니다."
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnProtectedMinusClicked()
+    self:AdjustProtectedAmount(-1)
+end
+
+@ExecSpace("ClientOnly")
+method void OnProtectedPlusClicked()
+    self:AdjustProtectedAmount(1)
 end
 
 @ExecSpace("ClientOnly")
@@ -850,6 +904,8 @@ method void OnEndPlay()
     self:DisconnectButton("sellSelected", self.btnSellSelected)
     self:DisconnectButton("toggleProtected", self.btnToggleProtected)
     self:DisconnectButton("saveProtection", self.btnSaveProtection)
+    self:DisconnectButton("protectedMinus", self.btnProtectedMinus)
+    self:DisconnectButton("protectedPlus", self.btnProtectedPlus)
     self:DisconnectButton("toggleAutoSell", self.btnToggleAutoSell)
     self:DisconnectButton("rareOpen", self.btnRareOpen)
     self:DisconnectButton("rareClose", self.btnRareClose)

@@ -23,8 +23,15 @@ property TextGUIRendererComponent depotText = "9395e38a-0b37-4c6e-ba68-ebd554c90
 -- 있어야 한다 (F5-5). 아이콘 자산 적용 자체는 T-08 범위라 지금은 텍스트다.
 property TextGUIRendererComponent specialText = "93a12307-155f-4923-bf63-ce8398e6024c"
 property TextGUIRendererComponent cartText = "ada2db0e-12dc-4412-82d0-e94425ced00c"
+-- T-13 B1: 선택 일꾼 수레 적재율. Filled 스프라이트이므로 0~1 FillAmount만 갱신한다.
+property SpriteGUIRendererComponent cartCapacityFill = "35672750-3baa-45ff-b67a-7c68daf20266"
 property TextGUIRendererComponent handText = "936aa37c-c3da-4dcd-83a6-390a45b2ad4e"
-property TextGUIRendererComponent inventoryStoneText = "00b765d6-de3f-47e3-a1fd-e6a7dab02bcd"
+property TextGUIRendererComponent inventoryStoneText = "1ca7983f-7693-4805-bbfe-a5e5529cbcbb"
+property TextGUIRendererComponent inventoryIronText = "bf26fd3e-6fd1-45de-a17a-80ae4fc73f12"
+property TextGUIRendererComponent inventoryGoldText = "f4777656-c94c-4e30-b459-b98aac679dbd"
+property TextGUIRendererComponent inventoryStoneQuantityText = "a4f9ecc6-8eef-4c96-9cac-31bf3e342417"
+property TextGUIRendererComponent inventoryIronQuantityText = "282401a5-57df-4981-a94a-b8ea8007f29a"
+property TextGUIRendererComponent inventoryGoldQuantityText = "7ce6f7aa-58c1-4302-b701-b0aa7d2196c4"
 -- 인벤토리 팝업의 희귀 컬렉션 필드 (docs/08 §5.2 I2~I6).
 property TextGUIRendererComponent rareStoneText = "25ea3ae3-31f5-425c-abdb-695e0bf5c6aa"
 property TextGUIRendererComponent rareIronText = "e81b1e08-66b8-4fc4-a7f6-51f0a0b39d8f"
@@ -137,6 +144,11 @@ method void RefreshUI(boolean force)
     if self.cartText ~= nil then
         self.cartText.Text = "일꾼 " .. tostring(workerIndex) .. " 수레: " .. tostring(worker.CartCount) .. " / " .. tostring(worker.CartCapacity)
     end
+    if self.cartCapacityFill ~= nil then
+        local ratio = 0
+        if worker.CartCapacity > 0 then ratio = worker.CartCount / worker.CartCapacity end
+        self.cartCapacityFill.FillAmount = math.max(0, math.min(1, ratio))
+    end
     -- H10: per-worker program state for every owned worker.
     if self.workerStateText ~= nil then
         self.workerStateText.Text = "실행 상태  " .. workerStates
@@ -158,8 +170,17 @@ method void RefreshUI(boolean force)
     end
     -- I1: inventory popup shows the account ledger too.
     if self.inventoryStoneText ~= nil then
-        self.inventoryStoneText.Text = "창고  돌 " .. tostring(profile.Stone) .. "   철 " .. tostring(profile.Iron) .. "   금 " .. tostring(profile.GoldOre)
+        self.inventoryStoneText.Text = "돌"
     end
+    if self.inventoryIronText ~= nil then
+        self.inventoryIronText.Text = "철"
+    end
+    if self.inventoryGoldText ~= nil then
+        self.inventoryGoldText.Text = "금"
+    end
+    if self.inventoryStoneQuantityText ~= nil then self.inventoryStoneQuantityText.Text = tostring(profile.Stone) end
+    if self.inventoryIronQuantityText ~= nil then self.inventoryIronQuantityText.Text = tostring(profile.Iron) end
+    if self.inventoryGoldQuantityText ~= nil then self.inventoryGoldQuantityText.Text = tostring(profile.GoldOre) end
     -- I2~I5: 희귀 3종의 컬렉션 단계 / 보관 수량 / 판매 잠금 / 적용 패시브.
     if self.rareStoneText ~= nil then
         self.rareStoneText.Text = self:RareRowText("돌", profile.RareStoneCollectionLevel, profile.RareStoneStored, "수레")
