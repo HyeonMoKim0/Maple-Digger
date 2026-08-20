@@ -144,26 +144,26 @@
             {
               "@type": "MOD.Core.UITransformComponent",
               "ActivePlatform": 255,
-              "AlignmentOption": 5,
+              "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 1.0,
+                "x": 0.0,
                 "y": 1.0
               },
               "AnchorsMin": {
-                "x": 1.0,
+                "x": 0.0,
                 "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": -260.0,
-                "y": -602.0
+                "x": 1088.0,
+                "y": -16.0
               },
               "OffsetMin": {
-                "x": -450.0,
-                "y": -690.0
+                "x": 898.0,
+                "y": -104.0
               },
               "Pivot": {
-                "x": 1.0,
+                "x": 0.0,
                 "y": 1.0
               },
               "RectSize": {
@@ -178,8 +178,8 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": -260.0,
-                "y": -602.0
+                "x": 898.0,
+                "y": -16.0
               },
               "Rotation": {
                 "x": 0.0,
@@ -187,8 +187,8 @@
                 "z": 0.0
               },
               "Position": {
-                "x": 700.0,
-                "y": -62.0,
+                "x": -62.0,
+                "y": 524.0,
                 "z": 0.0
               },
               "QuaternionRotation": {
@@ -365,7 +365,7 @@
       {
         "id": "426b082b-296e-4dd0-89e6-23fd3cda9b8b",
         "path": "/ui/SettingsUI/Panel",
-        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent,MOD.Core.UITouchReceiveComponent,script.UIDraggable",
         "jsonString": {
           "name": "Panel",
           "path": "/ui/SettingsUI/Panel",
@@ -507,6 +507,14 @@
               "OutlineWidth": 3.0,
               "RaycastTarget": true,
               "Type": 1,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.UITouchReceiveComponent",
+              "Enable": true
+            },
+            {
+              "@type": "script.UIDraggable",
               "Enable": true
             }
           ],

@@ -49,8 +49,11 @@ property ButtonComponent btnToggleAutoSell = "20ce51cb-b8b0-4ded-949d-74050165cb
 property SpriteGUIRendererComponent protectedToggleSprite = "e802e753-5484-40b5-b941-04c34ec1d023"
 property SpriteGUIRendererComponent autoSellToggleSprite = "20ce51cb-b8b0-4ded-949d-74050165cb39"
 property Entity protectedWarningIcon = "f4f4a193-3d6e-4657-9efa-a3968aba32ac"
-property string ToggleOnRUID = "ffdc2821ce834708aa17da3b50a0fc56"
-property string ToggleOffRUID = "3229dd93dec04526a2402f463518092d"
+-- toggle-on/off 전용 파츠(docs/26 §5.6)가 Maker 재검증 대기 상태로 흰 사각형만
+-- 그려져, 검증 완료 파츠로 대체한다 (2026-08-20 오너 지시 — ON=녹색, OFF=슬레이트.
+-- 상태 문구 ON/OFF 병기는 그대로 유지되므로 색+문구로 구분된다).
+property string ToggleOnRUID = "4b726e80aa58409f8e1f03cc2a4e5da3"
+property string ToggleOffRUID = "93024bfd2d324753ae92878d299e1ef6"
 property TextGUIRendererComponent saleSummaryText = "1764b8f3-caf1-407a-b19c-754d038bc501"
 property TextGUIRendererComponent saleFeedbackText = "64f32ca0-d2f9-4beb-a603-2c6c1b6b1aab"
 property ButtonComponent btnRareOpen = "3ab7dc8e-ddfc-43ce-a503-c174cc6fb8c4"
@@ -497,6 +500,18 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnOpenClicked()
+    -- 토글: 광산 선택 계열 패널이 하나라도 열려 있으면 전부 닫는다 (2026-08-20
+    -- 오너 요청 — 라이브러리와 동일한 열기 버튼 재클릭 닫기).
+    local anyOpen = (self.selectPanel ~= nil and self.selectPanel.Enable)
+        or (self.salePanel ~= nil and self.salePanel.Enable)
+        or (self.rarePanel ~= nil and self.rarePanel.Enable)
+        or (self.cartPanel ~= nil and self.cartPanel.Enable)
+        or (self.upgradePanel ~= nil and self.upgradePanel.Enable)
+    if anyOpen then
+        self:CloseAllPanelsForTutorial()
+        log("[MineSelect] closed by toggle")
+        return
+    end
     -- T-12-B: 중앙 모달은 한 번에 하나 — 설정 모달이 열려 있으면 닫는다 (F5 §6.1).
     if _SettingsPanelController ~= nil then _SettingsPanelController:ClosePanel() end
     if _AppearanceController ~= nil then _AppearanceController:ClosePanel() end

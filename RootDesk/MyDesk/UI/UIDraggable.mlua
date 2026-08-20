@@ -1,0 +1,87 @@
+-- UI 창 드래그 이동 (2026-08-20 오너 요청)
+-- 창(패널) 엔티티에 직접 부착한다. 창 배경 스프라이트가 레이캐스트를 받고,
+-- 자식 버튼은 배경보다 위에 그려져 클릭 우선권을 가진다 (별도 DragHandle 자식은
+-- 버튼 위를 덮어 클릭을 막았던 이력이 있어 폐기 — 2026-08-20 오너 피드백).
+-- 클램프는 실제 화면 해상도를 UI 좌표로 환산해 창 "중앙"이 화면 끝까지 닿게
+-- 한다. 위치는 저장하지 않는다 — 세션 내에서만 유지.
+@Component
+script UIDraggable extends Component
+
+property any downHandler = nil
+property any dragHandler = nil
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- 창 엔티티 자신에게서 터치 이벤트를 받는다.
+    self.downHandler = self.Entity:ConnectEvent(UITouchDownEvent, self.OnTouchDown)
+    self.dragHandler = self.Entity:ConnectEvent(UITouchDragEvent, self.OnTouchDrag)
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 이벤트 해제 (재로드/재오픈 누수 방지).
+    if self.downHandler ~= nil then self.Entity:DisconnectEvent(UITouchDownEvent, self.downHandler) end
+    if self.dragHandler ~= nil then self.Entity:DisconnectEvent(UITouchDragEvent, self.dragHandler) end
+end
+
+@ExecSpace("ClientOnly")
+method void OnTouchDown(UITouchDownEvent event)
+    -- 잡는 순간 형제 중 맨 앞으로 올리고, 드래그 기준점(UI 좌표)을 잡는다.
+    local transform = self.Entity.UITransformComponent
+    if transform ~= nil then _UILogic:SetSiblingIndex(transform, 1000000) end
+    self._T.lastUI = _UILogic:ScreenToUIPosition(event.TouchPoint)
+end
+
+@ExecSpace("ClientOnly")
+method void OnTouchDrag(UITouchDragEvent event)
+    -- 커서 절대 위치(UI 좌표 환산)의 차분만큼 이동한다. TouchDelta 는 화면 픽셀
+    -- 단위라 창이 1920px 보다 작게 렌더되면 그 배율만큼 마우스보다 느리게
+    -- 따라오는 문제가 있었다 (2026-08-20 오너 보고) — 절대 좌표 차분은 해상도와
+    -- 무관하게 커서와 1:1 로 붙는다. 창 중앙은 화면 밖으로 나가지 않게 클램프.
+    local transform = self.Entity.UITransformComponent
+    if transform == nil then return end
+    local cursorUI = _UILogic:ScreenToUIPosition(event.TouchPoint)
+    if self._T.lastUI == nil then
+        self._T.lastUI = cursorUI
+        return
+    end
+    local deltaX = cursorUI.x - self._T.lastUI.x
+    local deltaY = cursorUI.y - self._T.lastUI.y
+    self._T.lastUI = cursorUI
+    local anchorsMin = transform.AnchorsMin
+    local anchorsMax = transform.AnchorsMax
+    local pos = transform.anchoredPosition
+    local newX = pos.x + deltaX
+    local newY = pos.y + deltaY
+
+    -- 스트레치 앵커 창은 중앙 산출이 불가능하므로 클램프 없이 이동만 한다.
+    if anchorsMin.x ~= anchorsMax.x or anchorsMin.y ~= anchorsMax.y then
+        transform.anchoredPosition = Vector2(newX, newY)
+        return
+    end
+
+    -- 화면 우상단 모서리를 UI 좌표로 환산 → 화면 절반 크기 (UI 원점은 화면 중앙).
+    local corner = _UILogic:ScreenToUIPosition(Vector2(_UILogic.ScreenWidth, _UILogic.ScreenHeight))
+    local halfW = math.abs(corner.x)
+    local halfH = math.abs(corner.y)
+
+    -- 부모 렉트 기준 앵커점 → 창 중앙 위치 산출 (부모는 풀스크린 루트 전제).
+    local parentSize = Vector2(halfW * 2, halfH * 2)
+    local parent = self.Entity.Parent
+    if parent ~= nil and isvalid(parent) and parent.UITransformComponent ~= nil then
+        parentSize = parent.UITransformComponent.RectSize
+    end
+    local size = transform.RectSize
+    local pivot = transform.Pivot
+    local anchorX = (anchorsMin.x - 0.5) * parentSize.x
+    local anchorY = (anchorsMin.y - 0.5) * parentSize.y
+    local centerX = anchorX + newX + (0.5 - pivot.x) * size.x
+    local centerY = anchorY + newY + (0.5 - pivot.y) * size.y
+
+    -- 창 중앙을 화면 범위로 클램프하고, 보정량을 좌표에 반영한다.
+    local clampedX = math.max(-halfW, math.min(halfW, centerX))
+    local clampedY = math.max(-halfH, math.min(halfH, centerY))
+    transform.anchoredPosition = Vector2(newX + (clampedX - centerX), newY + (clampedY - centerY))
+end
+
+end
