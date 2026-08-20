@@ -136,7 +136,8 @@ method void Connect(string key, ButtonComponent button, any callback)
 end
 
 @ExecSpace("ClientOnly")
-method AccountProfileService GetProfile()
+method any GetProfile()
+    -- Returns the local player's profile component without an unsupported concrete return cast.
     local player = _UserService.LocalPlayer
     if player == nil then return nil end
     ---@type AccountProfileService
@@ -403,10 +404,11 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnEndPlay()
+    -- Disconnects every UI button handler registered during begin-play.
     if self._T.handlers == nil then return end
-    for key, handler in pairs(self._T.handlers) do
+    for key, eventHandler in pairs(self._T.handlers) do
         local button = self._T.handlerButtons[key]
-        if button ~= nil and handler ~= nil then button.Entity:DisconnectEvent(ButtonClickEvent, handler) end
+        if button ~= nil and eventHandler ~= nil then button.Entity:DisconnectEvent(ButtonClickEvent, eventHandler) end
     end
 end
 
