@@ -1,0 +1,137 @@
+-- CAMERA CONTROL (마우스 휠 줌 + 휠 버튼 드래그 팬)
+-- 오너 요청 (2026-08-21): 월드 카메라만 확대/축소한다 — UI 는 영향 없음.
+-- 줌 범위: 현재(ZoomRatio 100)가 최대 확대, 최소는 3배 축소(100/3 ≈ 33.4).
+-- 팬은 CameraComponent.CameraOffset 만 움직인다 — 플레이어(비표시)는 건드리지
+-- 않으므로 기존 "플레이어 이동 = 카메라 팬" 수단과 공존한다.
+-- 전부 ClientOnly: 카메라는 로컬 표시 전용이고 서버 상태를 바꾸지 않는다.
+@Logic
+script CameraControlLogic extends Logic
+
+-- 줌 경계. MinZoom 은 엔진 제약(ZoomRatioMin > 30)을 지키는 값이다.
+property number MaxZoom = 100.0
+property number MinZoom = 33.4
+-- 휠 1노치당 줌 배율 (곱셈 스텝 — 어느 배율에서도 체감이 같다).
+property number ZoomStep = 1.1
+-- 팬 한계 (world unit, 카메라 오프셋 절대값 상한 — 맵 밖으로 무한히 나가는 것 방지).
+property number PanLimit = 30.0
+
+property any scrollHandler = nil
+property any keyDownHandler = nil
+property any keyUpHandler = nil
+property any moveHandler = nil
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- 입력 이벤트 연결. 카메라 설정은 플레이어 스폰 뒤 GetCamera 가 지연 적용한다.
+    self._T.zoom = self.MaxZoom
+    self._T.dragging = false
+    self._T.offsetX = 0.0
+    self._T.offsetY = 0.0
+    self._T.configured = false
+    self._T.lastMapName = ""
+    self.scrollHandler = _InputService:ConnectEvent(MouseScrollEvent, self.OnMouseScroll)
+    self.keyDownHandler = _InputService:ConnectEvent(KeyDownEvent, self.OnKeyDown)
+    self.keyUpHandler = _InputService:ConnectEvent(KeyUpEvent, self.OnKeyUp)
+    self.moveHandler = _InputService:ConnectEvent(MouseMoveEvent, self.OnMouseMove)
+    log("[CameraControl] ready zoom=" .. tostring(self._T.zoom))
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 이벤트 해제 (OnBeginPlay 연결분 전부).
+    if self.scrollHandler ~= nil then _InputService:DisconnectEvent(MouseScrollEvent, self.scrollHandler) end
+    if self.keyDownHandler ~= nil then _InputService:DisconnectEvent(KeyDownEvent, self.keyDownHandler) end
+    if self.keyUpHandler ~= nil then _InputService:DisconnectEvent(KeyUpEvent, self.keyUpHandler) end
+    if self.moveHandler ~= nil then _InputService:DisconnectEvent(MouseMoveEvent, self.moveHandler) end
+end
+
+@ExecSpace("ClientOnly")
+method CameraComponent GetCamera()
+    -- 로컬 플레이어의 카메라. 최초 접근 시 줌 경계를 엔진 제약에 맞춰 넓혀 둔다.
+    local player = _UserService.LocalPlayer
+    if player == nil then return nil end
+    local camera = player.CameraComponent
+    if camera == nil then return nil end
+    if not self._T.configured then
+        camera.ZoomRatioMax = self.MaxZoom
+        camera.ZoomRatioMin = 31.0
+        camera.IsAllowZoomInOut = true
+        self._T.configured = true
+        log("[CameraControl] camera configured min=" .. tostring(camera.ZoomRatioMin) .. " max=" .. tostring(camera.ZoomRatioMax))
+    end
+    return camera
+end
+
+@ExecSpace("ClientOnly")
+method void OnMouseScroll(MouseScrollEvent event)
+    -- 휠 위 = 확대, 아래 = 축소. UI 위에서는 무시한다 (리스트 스크롤과 충돌 방지).
+    if _InputService:IsPointerOverUI() then return end
+    local camera = self:GetCamera()
+    if camera == nil then return end
+    local zoom = self._T.zoom
+    if event.ScrollDelta > 0 then
+        zoom = zoom * self.ZoomStep
+    elseif event.ScrollDelta < 0 then
+        zoom = zoom / self.ZoomStep
+    end
+    zoom = math.max(self.MinZoom, math.min(self.MaxZoom, zoom))
+    if zoom ~= self._T.zoom then
+        self._T.zoom = zoom
+        camera.ZoomRatio = zoom
+        log("[CameraControl] zoom=" .. tostring(zoom))
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void OnKeyDown(KeyDownEvent event)
+    -- 휠 버튼(가운데 버튼)을 누르는 동안 팬 모드.
+    if event.key == KeyboardKey.Mouse2 then
+        self._T.dragging = true
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void OnKeyUp(KeyUpEvent event)
+    -- 휠 버튼을 놓으면 팬 종료.
+    if event.key == KeyboardKey.Mouse2 then
+        self._T.dragging = false
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void OnMouseMove(MouseMoveEvent event)
+    -- 팬: 마우스가 움직인 만큼 화면(세계)을 잡고 끄는 방향으로 오프셋을 옮긴다.
+    -- 픽셀→world 환산: 기준 해상도 1920px = 12.8 unit, 축소할수록(줌↓) 한 픽셀이
+    -- 더 넓은 세계를 덮으므로 100/zoom 을 곱한다.
+    if not self._T.dragging then return end
+    local camera = self:GetCamera()
+    if camera == nil then return end
+    local unitsPerPixel = (12.8 / 1920.0) * (100.0 / self._T.zoom)
+    local ox = self._T.offsetX - event.MouseDelta.x * unitsPerPixel
+    local oy = self._T.offsetY - event.MouseDelta.y * unitsPerPixel
+    ox = math.max(-self.PanLimit, math.min(self.PanLimit, ox))
+    oy = math.max(-self.PanLimit, math.min(self.PanLimit, oy))
+    self._T.offsetX = ox
+    self._T.offsetY = oy
+    camera.CameraOffset = Vector2(ox, oy)
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- 맵이 바뀌면 팬 오프셋만 원점으로 되돌린다 (줌 배율은 유지 — 사용자 취향값).
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return end
+    local mapName = player.CurrentMap.Name
+    if mapName ~= self._T.lastMapName then
+        self._T.lastMapName = mapName
+        if self._T.offsetX ~= 0.0 or self._T.offsetY ~= 0.0 then
+            self._T.offsetX = 0.0
+            self._T.offsetY = 0.0
+            local camera = self:GetCamera()
+            if camera ~= nil then camera.CameraOffset = Vector2(0, 0) end
+            log("[CameraControl] map changed - pan offset reset map=" .. mapName)
+        end
+    end
+end
+
+end

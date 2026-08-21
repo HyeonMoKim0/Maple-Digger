@@ -31,6 +31,7 @@
 | F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. **RUID 7종은 2026-08-16 오너 청취로 확정**(docs/21 §3 승인 완료 — 2종 유지·5종 교체). ⚠️ `depot_unload` 만 1.52s 로 쿨다운 0.4s 를 넘어 겹칠 수 있다. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 `3512470b…`(`sound-604`, 87.3s) 확정**, 기본 볼륨은 **C220 확정 BGM 0.8 · 효과음 0.7**. `PlayBGM` 루프 실측 완료. `SetBgm/SfxVolume` 이 F10 §2.2 경계값(0=Pause, 복귀=Resume — 재`PlayBGM` 금지) 전담 |
 | 설정 패널 (T-12-B) | 클라 `@Logic` + `.ui` + 서버 저장 | `RootDesk/MyDesk/Mine/SettingsPanelController.mlua`, `ui/SettingsUI.ui`, `AccountProfileService.RequestUpdateSoundSettings` | 슬라이더 2종(파츠 `docs/26` §5.3) + 진입 버튼(우측 스택 3번째, U4 확정). **GroupOrder 6 삽입 — Popup 7·Toast 8·Tutorial 9·Recovery 10 (밀집 0..10)**. 저장은 마지막 슬라이더 변경 후 0.6s 디바운스 1회(`RequestUpdateSoundSettings` — 클램프만, 거절 없음). **`settings.tuned` 무버전 확장 필드**: false 면 저장 볼륨 무시하고 C220 기본값(0.8/0.7) — T-02 가 박아 둔 초안값(0.5/1.0) 잔재 차단. 재접속 복원은 @Sync 미러 2종(`SettingsBgmVolume/SettingsSfxVolume`) 감시 + 로컬 편집 1.5s 유예. SFX 0 이면 `PlayCue` 가 재생·쿨다운 원장 모두 스킵. 검수 `docs/16` §38 |
+| 카메라 줌·팬 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/CameraControlLogic.mlua` | 휠 줌(100~33.4, 노치당 ×1.1, UI 위 무시) + 휠 버튼 드래그 팬(`CameraComponent.CameraOffset` 만 이동 — 비표시 플레이어·서버 무변경, 상한 ±30 unit). 맵 전환 시 팬만 리셋, 줌은 세션 유지. 검수 docs/16 §42 |
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
@@ -54,7 +55,9 @@
 
 **같은 날 후속 4 (docs/16 §41.7)**: ① **7단계 판매 불가 버그** — 잠금 목록에 `보호분 판매` 토글이 없어 보유량 ≤ 보호 수량이면 판매 가능 수량 0 으로 완료가 구조적으로 불가능했다 (1회차는 C2 완화가 가려 다시 보기에서 드러남). `allowed` 에 `toggleProtected` 추가 + 안내 문구 개정. **교훈: 잠금 목록은 "정상 경로"만이 아니라 "막혔을 때 푸는 버튼"까지 포함해야 한다** — 완화가 꺼지는 다시 보기 축으로 각 단계를 재점검할 것. ② 화살표를 오너 지정 스프라이트(`ba442ba7…`, 금색 ↑)로 교체 — 버튼 아래에서 ↑ / 하단 버튼은 위에서 ↓(세로 반전). 폴리곤 시절의 스크린샷 캡처 제약도 함께 해소.
 
-**남은 것**: 오너 미감 판정(새 화살표 포함) + 삭제된 배선처 2종 복원 여부 → 다음 AI 작업은 **F9 성능·부하**.
+**같은 날 후속 5 (docs/16 §42)**: **카메라 줌·팬 신설** — `Mine/CameraControlLogic.mlua` (ClientOnly `@Logic`). 휠 줌 100(현재=최대)~33.4(3배 축소, 엔진 하한 30 준수) + 휠 버튼 드래그 팬. 팬은 `CameraComponent.CameraOffset` 만 움직여 비표시 플레이어의 "이동=팬" 수단과 공존한다. **판정 방법**: 실휠 입력은 MCP 로 못 넣으므로 `_InputService:SendEvent(MouseScrollEvent(±1))` / `KeyDownEvent(Mouse2)` / `MouseMoveEvent` 주입으로 핸들러를 쳤다 — 서비스 이벤트 주입은 ConnectEvent 핸들러에 정상 배달된다(실측). 감도 상수(ZoomStep·팬 1:1)는 오너 실조작 체감 판정 대기.
+
+**남은 것**: 오너 미감 판정(새 화살표·카메라 감도 포함) + 삭제된 배선처 2종 복원 여부 → 다음 AI 작업은 **F9 성능·부하**.
 
 ### 2026-08-18 — T-14: 블록 편집기 개편 · 첫 빌드 로그가 렌더 헬퍼의 숨은 소비자를 잡았다
 
