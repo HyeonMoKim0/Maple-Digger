@@ -10,7 +10,7 @@
 - **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **이동·카메라는 살아 있다** — 보이지 않는 플레이어의 이동이 넓은 광산의 카메라 팬 수단이다. 되돌리려면 같은 컴포넌트들을 Enable=true (docs/16 §33)
 - 동적 일꾼 Body: `KinematicbodyComponent`
 - 시뮬레이션 틱: 0.4초, 틱당 액션 1개
-- 현재 기준: `main`(PR #17 병합 후)에서 **T-13 B 완결 (2026-08-21)** — 옛 RUID 12종이 서버에 없던 것이 흰 사각형의 원인이었고, hyNDP 그룹 재업로드 + 실물 판정 + 배선 복원 + Maker 검증까지 끝났다(docs/16 §41.3). 후속 우선순위 **F9 성능·부하**.
+- 현재 기준: **T-13 B 완결 + F9 성능·부하 기준 작성 완료 (2026-08-21)** — AI 몫의 티켓·기획 공백 0건. ⚠️ 8/21 작업(T-13 B·튜토리얼 후속·카메라·F9)은 `fix/t13b-parts-reupload` 브랜치에 있고 `main` 은 PR #17 에서 멈춰 있다(main 은 이 브랜치의 조상) — **main 반영은 오너 결정 대기**.
 
 ## 현재 상태
 
@@ -32,9 +32,22 @@
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 `3512470b…`(`sound-604`, 87.3s) 확정**, 기본 볼륨은 **C220 확정 BGM 0.8 · 효과음 0.7**. `PlayBGM` 루프 실측 완료. `SetBgm/SfxVolume` 이 F10 §2.2 경계값(0=Pause, 복귀=Resume — 재`PlayBGM` 금지) 전담 |
 | 설정 패널 (T-12-B) | 클라 `@Logic` + `.ui` + 서버 저장 | `RootDesk/MyDesk/Mine/SettingsPanelController.mlua`, `ui/SettingsUI.ui`, `AccountProfileService.RequestUpdateSoundSettings` | 슬라이더 2종(파츠 `docs/26` §5.3) + 진입 버튼(우측 스택 3번째, U4 확정). **GroupOrder 6 삽입 — Popup 7·Toast 8·Tutorial 9·Recovery 10 (밀집 0..10)**. 저장은 마지막 슬라이더 변경 후 0.6s 디바운스 1회(`RequestUpdateSoundSettings` — 클램프만, 거절 없음). **`settings.tuned` 무버전 확장 필드**: false 면 저장 볼륨 무시하고 C220 기본값(0.8/0.7) — T-02 가 박아 둔 초안값(0.5/1.0) 잔재 차단. 재접속 복원은 @Sync 미러 2종(`SettingsBgmVolume/SettingsSfxVolume`) 감시 + 로컬 편집 1.5s 유예. SFX 0 이면 `PlayCue` 가 재생·쿨다운 원장 모두 스킵. 검수 `docs/16` §38 |
 | 카메라 줌·팬 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/CameraControlLogic.mlua` | 휠 줌(100~33.4, 노치당 ×1.1, UI 위 무시, **포토샵식 커서 앵커**) + 휠 버튼 드래그 팬(**드래그 시작점 월드 앵커를 커서에 고정 — 정확 1:1**). 둘 다 `ScreenToWorldPosition` 기반 게인 0.6 서보 — 좌표계 상수 가정 없음. `CameraOffset` 만 이동(비표시 플레이어·서버 무변경, 상한 ±30 unit). 맵 전환 시 팬만 리셋, 줌은 세션 유지. ⚠ `ScreenToWorldPosition` 은 카메라 변경을 **다음 렌더에야 반영** — 같은 프레임 보정은 헛돈다 (docs/16 §42.1). 검수 §42·§42.1 |
+| 성능 계측기 (F9) | 클라이언트+서버 `@Logic` | `RootDesk/MyDesk/Mine/PerfProbeLogic.mlua` | **기본 비활성** — `Active=false` 면 OnUpdate 조기 return 한 줄뿐이라 상시 비용 무시 가능. 측정 세션에서 `maker_execute_script` 로 side 별로 켜서 10s 창 프레임 통계(`[Perf]` 로그)를 얻는다. 판정선·재측정 절차는 `docs/24` 단일 기준 |
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-21 — F9 성능·부하 기준: 병목은 프레임이 아니라 로그였다
+
+`fix/t13b-parts-reupload` 선단에서 작업. 산출물 `docs/24-성능-부하-기준.md` (C212 조건 ③) + `Mine/PerfProbeLogic.mlua` 신설. 검수 `docs/16` §43.
+
+- **측정을 한 Play 세션 안에서 끝냈다**: 프로필 스냅숏(`_T` 스태시) → 기준선 30s → 일꾼 5명 부여(`PurchaseNextWorker(0,0,0,0)`) → S1 기본왕복 60s → S2 조건 최악(30블록, 틱당 ~15평가) 60s → `RestoreProfileSnapshot` + `RestoreCurrentWorkerState` + 저장 원복. post 요약이 pre 와 정확 일치(gold=74·crystal=25·workers=2·w1cart=0/22).
+- **성능은 전혀 병목이 아니었다**: 최악 부하에서도 틱 2.494~2.502/s(±0.3%), 서버·클라 54~58fps(환경 vsync 상한 ~58), 100ms 초과 프레임 0, Error/Warning 0. 스파이크(최대 96.7ms)는 지속 부하가 아니라 **프로그램 5개 일괄 기동 순간**에만 났다.
+- **실질 발견은 로그량** — 부하 중 분당 ~1,300건(`[Worker N]`×5 + `[WorkerFx]` + `[MineSound]` + `[VeinTick]`). 릴리스 전 축소 권고를 docs/24 §5 에 남겼다(판정선 아님).
+- **3맵 시뮬레이터가 플레이어 부재와 무관하게 전부 2.5틱/s 로 병렬 구동**됨을 실측 — 서버 부하 모델은 항상 "3심 + 등록 일꾼"이다.
+- 스냅숏·원복을 같은 세션에 묶는 이유(`_T` 는 세션 수명), 원복 후 `RestoreCurrentWorkerState` 생략 시 저장 경로가 부하 값을 재캡처하는 함정을 docs/24 §6 에 박았다.
+
+**남은 것**: 오너 몫 — 출시 빌드 실플레이 체감 확인 1회(docs/24 §7) + `fix/t13b-parts-reupload` → `main` 반영 결정.
 
 ### 2026-08-21 — T-13 B 재검증: 흰 사각형의 원인은 배선이 아니라 죽은 RUID 였다
 
