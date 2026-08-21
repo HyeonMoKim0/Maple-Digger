@@ -3,11 +3,18 @@
 -- 줌 범위: 현재(ZoomRatio 100)가 최대 확대, 최소는 3배 축소(100/3 ≈ 33.4).
 -- 팬은 CameraComponent.CameraOffset 만 움직인다 — 플레이어(비표시)는 건드리지
 -- 않으므로 기존 "플레이어 이동 = 카메라 팬" 수단과 공존한다.
+--
+-- 좌표 방식 (2026-08-21 개정): 픽셀→world 상수 환산은 실창 크기에 따라 어긋나
+-- 마우스를 1:1 로 못 따라갔다. 대신 _UILogic:ScreenToWorldPosition 으로
+-- "커서 아래 월드 지점"을 앵커로 잡아 고정한다 — 팬은 드래그 시작점의 월드
+-- 좌표를 커서에 계속 붙이고, 줌은 포토샵처럼 커서 아래 지점이 제자리에 남는다.
+-- ⚠ ScreenToWorldPosition 은 카메라 변경을 다음 프레임에 반영한다(실측) —
+-- 그래서 줌 보정은 pendingZoomFix 로 한 프레임 뒤 OnUpdate 에서 적용한다.
 -- 전부 ClientOnly: 카메라는 로컬 표시 전용이고 서버 상태를 바꾸지 않는다.
 @Logic
 script CameraControlLogic extends Logic
 
--- 줌 경계. MinZoom 은 엔진 제약(ZoomRatioMin > 30)을 지키는 값이다.
+-- 줌 경계. 엔진 제약(ZoomRatioMin > 30)을 지키는 값이다.
 property number MaxZoom = 100.0
 property number MinZoom = 33.4
 -- 휠 1노치당 줌 배율 (곱셈 스텝 — 어느 배율에서도 체감이 같다).
@@ -18,21 +25,21 @@ property number PanLimit = 30.0
 property any scrollHandler = nil
 property any keyDownHandler = nil
 property any keyUpHandler = nil
-property any moveHandler = nil
 
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- 입력 이벤트 연결. 카메라 설정은 플레이어 스폰 뒤 GetCamera 가 지연 적용한다.
     self._T.zoom = self.MaxZoom
     self._T.dragging = false
+    self._T.dragAnchor = nil        -- 드래그 시작 시 커서 아래 월드 지점 (Vector2)
     self._T.offsetX = 0.0
     self._T.offsetY = 0.0
+    self._T.pendingZoomFix = nil    -- { worldX, worldY, screenX, screenY } — 줌 직후 1프레임 뒤 보정
     self._T.configured = false
     self._T.lastMapName = ""
     self.scrollHandler = _InputService:ConnectEvent(MouseScrollEvent, self.OnMouseScroll)
     self.keyDownHandler = _InputService:ConnectEvent(KeyDownEvent, self.OnKeyDown)
     self.keyUpHandler = _InputService:ConnectEvent(KeyUpEvent, self.OnKeyUp)
-    self.moveHandler = _InputService:ConnectEvent(MouseMoveEvent, self.OnMouseMove)
     log("[CameraControl] ready zoom=" .. tostring(self._T.zoom))
 end
 
@@ -42,7 +49,6 @@ method void OnEndPlay()
     if self.scrollHandler ~= nil then _InputService:DisconnectEvent(MouseScrollEvent, self.scrollHandler) end
     if self.keyDownHandler ~= nil then _InputService:DisconnectEvent(KeyDownEvent, self.keyDownHandler) end
     if self.keyUpHandler ~= nil then _InputService:DisconnectEvent(KeyUpEvent, self.keyUpHandler) end
-    if self.moveHandler ~= nil then _InputService:DisconnectEvent(MouseMoveEvent, self.moveHandler) end
 end
 
 @ExecSpace("ClientOnly")
@@ -63,8 +69,20 @@ method CameraComponent GetCamera()
 end
 
 @ExecSpace("ClientOnly")
+method void ApplyOffset(CameraComponent camera, number ox, number oy)
+    -- 팬 한계로 클램프해 카메라 오프셋을 쓴다.
+    ox = math.max(-self.PanLimit, math.min(self.PanLimit, ox))
+    oy = math.max(-self.PanLimit, math.min(self.PanLimit, oy))
+    self._T.offsetX = ox
+    self._T.offsetY = oy
+    camera.CameraOffset = Vector2(ox, oy)
+end
+
+@ExecSpace("ClientOnly")
 method void OnMouseScroll(MouseScrollEvent event)
     -- 휠 위 = 확대, 아래 = 축소. UI 위에서는 무시한다 (리스트 스크롤과 충돌 방지).
+    -- 포토샵식: 커서 아래 월드 지점을 기록해 두고, 줌 반영 다음 프레임에 그
+    -- 지점이 커서 밑에 남도록 오프셋을 보정한다 (OnUpdate 의 pendingZoomFix).
     if _InputService:IsPointerOverUI() then return end
     local camera = self:GetCamera()
     if camera == nil then return end
@@ -75,19 +93,28 @@ method void OnMouseScroll(MouseScrollEvent event)
         zoom = zoom / self.ZoomStep
     end
     zoom = math.max(self.MinZoom, math.min(self.MaxZoom, zoom))
-    if zoom ~= self._T.zoom then
-        self._T.zoom = zoom
-        camera.ZoomRatio = zoom
-        log("[CameraControl] zoom=" .. tostring(zoom))
+    if zoom == self._T.zoom then return end
+    -- 연속 휠 중에는 첫 앵커를 유지한다 (커서가 안 움직였으니 같은 지점을 고정).
+    if self._T.pendingZoomFix == nil then
+        local cursor = _InputService:GetCursorPosition()
+        local world = _UILogic:ScreenToWorldPosition(cursor)
+        self._T.pendingZoomFix = { worldX = world.x, worldY = world.y, screenX = cursor.x, screenY = cursor.y, timeout = 0.5 }
+    else
+        self._T.pendingZoomFix.timeout = 0.5
     end
+    self._T.zoom = zoom
+    camera.ZoomRatio = zoom
 end
 
 @ExecSpace("ClientOnly")
 method void OnKeyDown(KeyDownEvent event)
-    -- 휠 버튼(가운데 버튼)을 누르는 동안 팬 모드.
-    if event.key == KeyboardKey.Mouse2 then
-        self._T.dragging = true
-    end
+    -- 휠 버튼(가운데 버튼)을 누르는 동안 팬 모드. 시작점의 월드 지점을 앵커로 잡는다.
+    if event.key ~= KeyboardKey.Mouse2 then return end
+    if _InputService:IsPointerOverUI() then return end
+    local cursor = _InputService:GetCursorPosition()
+    local world = _UILogic:ScreenToWorldPosition(cursor)
+    self._T.dragAnchor = { x = world.x, y = world.y }
+    self._T.dragging = true
 end
 
 @ExecSpace("ClientOnly")
@@ -95,40 +122,74 @@ method void OnKeyUp(KeyUpEvent event)
     -- 휠 버튼을 놓으면 팬 종료.
     if event.key == KeyboardKey.Mouse2 then
         self._T.dragging = false
+        self._T.dragAnchor = nil
     end
 end
 
 @ExecSpace("ClientOnly")
-method void OnMouseMove(MouseMoveEvent event)
-    -- 팬: 마우스가 움직인 만큼 화면(세계)을 잡고 끄는 방향으로 오프셋을 옮긴다.
-    -- 픽셀→world 환산: 기준 해상도 1920px = 12.8 unit, 축소할수록(줌↓) 한 픽셀이
-    -- 더 넓은 세계를 덮으므로 100/zoom 을 곱한다.
-    if not self._T.dragging then return end
-    local camera = self:GetCamera()
-    if camera == nil then return end
-    local unitsPerPixel = (12.8 / 1920.0) * (100.0 / self._T.zoom)
-    local ox = self._T.offsetX - event.MouseDelta.x * unitsPerPixel
-    local oy = self._T.offsetY - event.MouseDelta.y * unitsPerPixel
-    ox = math.max(-self.PanLimit, math.min(self.PanLimit, ox))
-    oy = math.max(-self.PanLimit, math.min(self.PanLimit, oy))
-    self._T.offsetX = ox
-    self._T.offsetY = oy
-    camera.CameraOffset = Vector2(ox, oy)
-end
-
-@ExecSpace("ClientOnly")
 method void OnUpdate(number delta)
-    -- 맵이 바뀌면 팬 오프셋만 원점으로 되돌린다 (줌 배율은 유지 — 사용자 취향값).
+    -- 줌 앵커 보정 → 팬 추적 → 맵 전환 리셋을 한 곳에서 돈다.
+    local camera = nil
+
+    -- ① 줌 직후 보정: 커서 아래 있던 월드 지점이 새 줌에서도 같은 화면 위치에
+    --    남도록 오프셋을 이동한다. ScreenToWorldPosition 은 줌 변경을 곧바로
+    --    반영하지 않으므로(실측 — 다음 렌더 이후), 기록해 둔 지점의 변환값이
+    --    실제로 달라진 프레임에만 소비한다. 안 달라지면 timeout 까지 기다린다.
+    -- ScreenToWorldPosition 이 카메라 변경(줌·오프셋)을 다음 렌더에야 반영하므로,
+    -- 잔여 오차의 60%(FeedbackGain)만 매 프레임 소거하는 서보로 만든다 — 2프레임
+    -- 지연 피드백에서도 진동 없이 수렴한다. 오차가 사라지면 종료한다.
+    local fix = self._T.pendingZoomFix
+    if fix ~= nil then
+        camera = self:GetCamera()
+        if camera ~= nil then
+            local world = _UILogic:ScreenToWorldPosition(Vector2(fix.screenX, fix.screenY))
+            local dx = fix.worldX - world.x
+            local dy = fix.worldY - world.y
+            fix.timeout = fix.timeout - delta
+            if dx * dx + dy * dy > 0.0000001 then
+                self:ApplyOffset(camera, self._T.offsetX + dx * 0.6, self._T.offsetY + dy * 0.6)
+                fix.calm = 0
+            else
+                fix.calm = (fix.calm or 0) + 1
+            end
+            if fix.calm ~= nil and fix.calm >= 3 then
+                self._T.pendingZoomFix = nil
+                if self._T.dragging then self._T.dragAnchor = { x = fix.worldX, y = fix.worldY } end
+            elseif fix.timeout <= 0 then
+                self._T.pendingZoomFix = nil
+            end
+        end
+    end
+
+    -- ② 팬: 드래그 시작점의 월드 지점을 커서에 계속 붙인다 (잡고 끌기 1:1).
+    --    ScreenToWorldPosition 의 1프레임 지연은 매 프레임 잔여 오차를 다시
+    --    보정하는 구조라 수렴한다.
+    if self._T.dragging and self._T.dragAnchor ~= nil then
+        if camera == nil then camera = self:GetCamera() end
+        if camera ~= nil then
+            local cursor = _InputService:GetCursorPosition()
+            local world = _UILogic:ScreenToWorldPosition(cursor)
+            local dx = self._T.dragAnchor.x - world.x
+            local dy = self._T.dragAnchor.y - world.y
+            if dx ~= 0.0 or dy ~= 0.0 then
+                -- 잔여 오차의 60%씩 소거 — ScreenToWorldPosition 1프레임 지연에서도
+                -- 진동 없이 수 프레임(~50ms) 안에 커서를 1:1 로 따라잡는다.
+                self:ApplyOffset(camera, self._T.offsetX + dx * 0.6, self._T.offsetY + dy * 0.6)
+            end
+        end
+    end
+
+    -- ③ 맵이 바뀌면 팬 오프셋만 원점으로 되돌린다 (줌 배율은 유지 — 사용자 취향값).
     local player = _UserService.LocalPlayer
     if player == nil or player.CurrentMap == nil then return end
     local mapName = player.CurrentMap.Name
     if mapName ~= self._T.lastMapName then
         self._T.lastMapName = mapName
         if self._T.offsetX ~= 0.0 or self._T.offsetY ~= 0.0 then
-            self._T.offsetX = 0.0
-            self._T.offsetY = 0.0
-            local camera = self:GetCamera()
-            if camera ~= nil then camera.CameraOffset = Vector2(0, 0) end
+            if camera == nil then camera = self:GetCamera() end
+            if camera ~= nil then self:ApplyOffset(camera, 0.0, 0.0) end
+            self._T.dragging = false
+            self._T.dragAnchor = nil
             log("[CameraControl] map changed - pan offset reset map=" .. mapName)
         end
     end
