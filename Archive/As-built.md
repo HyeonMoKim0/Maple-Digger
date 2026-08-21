@@ -7,6 +7,7 @@
 - MVP 플레이어 수: 1인 세션
 - 우선 플랫폼: PC 1920×1080
 - 맵: `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map`, 모두 RectTile(`TileMapMode=1`). **`map01`(템플릿)은 2026-08-18 출시 준비로 삭제됨**
+- **초보 광산은 2026-08-21 확장** — 바닥 10×10 (x −4..5 / y −6..3), 광맥 6개(rt 5/8/8/8/6/15 · 상한 ≈121/분 상한 보존형), 특별 후보 4곳, 시작점 5개 전원 전담 광맥 서쪽 앞칸. **(0,0) 창고·(1,0) 광맥은 튜토리얼 앵커라 불변** (TutorialController 가 좌표를 하드코딩). 배치표 docs/18 T-11 · 검수 docs/16 §44 · 밸런스 docs/22 §9
 - **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **이동·카메라는 살아 있다** — 보이지 않는 플레이어의 이동이 넓은 광산의 카메라 팬 수단이다. 되돌리려면 같은 컴포넌트들을 Enable=true (docs/16 §33)
 - 동적 일꾼 Body: `KinematicbodyComponent`
 - 시뮬레이션 틱: 0.4초, 틱당 액션 1개
@@ -36,6 +37,18 @@
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-21 — 초보 광산 10×10 확장: 튜토리얼 좌표가 하드코딩이라 앵커를 못 옮긴다
+
+브랜치 `feat/farm01-expand`. 계획 `.omc/plans/farm01-expansion-plan.md` (오너 확정 3건: 10×10 · 상한 보존형 · AI 타일 배열 직접 확장 승인). 검수 `docs/16` §44, 밸런스 `docs/22` §9.
+
+- **설계 제약 2건이 배치를 결정했다**: ① `TutorialController` 가 리셋 좌표 `(0,0)`·`(1,0)` 을 하드코딩 — 창고와 1번 광맥(rt5)은 앵커로 동결 ② 공급 상한 = Σ150/rt 이 광맥 수에 직결 — 광맥을 6개로 늘리며 rt 를 5/8/8/8/6/15 로 차등해 상한을 121/분(+1%)에 묶었다(깊은 광산 돌 90/분 역전 방지).
+- **구현은 3계층**: MapBuilder(marker 6개 이동/신설 + 레이아웃 JSON 3종 patch) + 승인된 커버리지-갭 직접 편집(tileMap 균일 채움 36칸 — `build()` 인메모리 JSON 에 추가 후 builder `write()` 로 직렬화, 포맷 일탈 없음) + 코드 무변.
+- **실측**: 일꾼 5명 전원 자기 전담 광맥 채굴(W1~W5 각 셀 로그), 튜토리얼 앵커 스모크 통과, Error/Warning 0, 프로필 스냅숏 원복 일치.
+- **밸런스 부수 효과 2건이 공짜로 왔다** (docs/22 §9): 시작점마다 전담 광맥이 생겨 **P1 이 일꾼 수에 비례**하게 됐고(30→111 — §5.2 "일꾼 사도 30 고정" 구조 해소), 순회 비용 증가로 P2(95) < 전담 P1(111) — **튜토리얼이 가르치는 왕복이 상위 전략**이 되어 §8.2-3 격차 판단 건도 자연 해소.
+- ⚠ audit_resave 는 이 `.map` 을 또 `[정규화]` 로 찍을 것이다(함정 8 — 레이아웃 JSON 키·tileMap 을 값 신호로 안 본다). 방금 내가 바꾼 것을 아는 상태에서 판정할 것.
+
+**남은 것**: 오너 육안(확장 화면 미감) + 튜토리얼 다시 보기 실플레이 1회 + PR 병합.
 
 ### 2026-08-21 — F9 성능·부하 기준: 병목은 프레임이 아니라 로그였다
 
