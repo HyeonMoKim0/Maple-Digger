@@ -203,7 +203,7 @@ method boolean MoveShardToCell(integer cellX, integer cellY)
         offsetY = self.ShardOffsetSpecialY
     end
     shard.TransformComponent.Position = Vector3(world.x + offsetX, world.y + offsetY, 0)
-    log("[WorkerFx] shard placed cell=(" .. tostring(cellX) .. "," .. tostring(cellY) .. ") special=" .. tostring(special) .. " offset=(" .. tostring(offsetX) .. "," .. tostring(offsetY) .. ")")
+    if _MineLogPolicy:IsVerbose() then log("[WorkerFx] shard placed cell=(" .. tostring(cellX) .. "," .. tostring(cellY) .. ") special=" .. tostring(special) .. " offset=(" .. tostring(offsetX) .. "," .. tostring(offsetY) .. ")") end
     return true
 end
 
@@ -308,7 +308,7 @@ method void ShowShard(integer cellX, integer cellY)
     self._T.shardElapsed = 0
     -- 0.3초짜리라 스크린샷으로 잡히지 않는다. 생성·소멸을 짝으로 남겨
     -- 로그만으로 1회 재생을 판정할 수 있게 한다 (verify-checklist Step 2b).
-    log("[WorkerFx] shard on " .. self.Entity.Name)
+    if _MineLogPolicy:IsVerbose() then log("[WorkerFx] shard on " .. self.Entity.Name) end
 end
 
 @ExecSpace("ClientOnly")
@@ -320,7 +320,7 @@ method void AdvanceShard(number delta)
 
     self._T.shardElapsed = -1
     self:SetHitFxEnabled(false)
-    log("[WorkerFx] shard off " .. self.Entity.Name)
+    if _MineLogPolicy:IsVerbose() then log("[WorkerFx] shard off " .. self.Entity.Name) end
 end
 
 @ExecSpace("ClientOnly")
@@ -333,7 +333,7 @@ method void EmphasizeDepot()
         return
     end
     depot:PlayEmphasis()
-    log("[WorkerFx] depot emphasis by " .. self.Entity.Name)
+    if _MineLogPolicy:IsVerbose() then log("[WorkerFx] depot emphasis by " .. self.Entity.Name) end
 end
 
 @ExecSpace("ClientOnly")

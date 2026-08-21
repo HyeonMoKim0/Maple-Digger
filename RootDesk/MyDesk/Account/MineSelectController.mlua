@@ -411,6 +411,25 @@ method boolean GetSelectedAutoSell(AccountProfileService profile)
 end
 
 @ExecSpace("ClientOnly")
+method boolean IsSalePanelOpen()
+    -- 판매 패널이 실제로 화면에 떠 있는가. 튜토리얼 화살표가 이 패널 **안의**
+    -- 버튼(보호분 판매 토글)을 가리키기 전에 확인한다 — 닫힌 패널의 버튼은
+    -- `GetWorldCorners()` 가 화면 밖/낡은 좌표를 주어 화살표가 허공에 뜬다
+    -- (2026-08-21 오너 스크린샷, docs/16 §49).
+    return self.salePanel ~= nil and isvalid(self.salePanel) and self.salePanel.Enable
+end
+
+method boolean IsSaleBlockedByProtection(AccountProfileService profile)
+    -- 지금 [선택 수량 판매]를 누르면 반드시 거절되는 상태인가 —
+    -- 보호분 판매가 꺼져 있고 보유량이 전부 보호 수량에 걸린 경우.
+    -- 판정값은 서버가 판매를 거절할 때 쓰는 EffectiveProtection 과 같다.
+    -- 소유자(여기)가 답한다 — 다른 스크립트가 `_T.includeProtected` 를 직접
+    -- 들여다보지 않게 하기 위한 공개 창구다 (TutorialController 7단계 화살표).
+    if profile == nil then return false end
+    if self._T.includeProtected == true then return false end
+    return self:GetSelectedBalance(profile) <= self:GetSelectedEffectiveProtection(profile)
+end
+
 method integer GetSelectedEffectiveProtection(AccountProfileService profile)
     -- max(설정 보호, 다음 광산 해금 필요량). 서버가 판매를 판정할 때 쓰는 값이다.
     if self._T.selectedOre == "stone" then return profile.StoneEffectiveProtection end
@@ -485,7 +504,9 @@ method void RefreshSaleFeedback(AccountProfileService profile)
     local balance = self:GetSelectedBalance(profile)
     local effective = self:GetSelectedEffectiveProtection(profile)
     if balance <= effective and not self._T.includeProtected then
-        self.saleFeedbackText.Text = "보유 " .. tostring(balance) .. "개가 모두 보호 수량(" .. tostring(effective) .. ")입니다. 팔려면 `보호분 포함 전환`을 먼저 누르세요."
+        -- 버튼 실제 라벨은 `보호분 판매 OFF/ON` 이다 — 문구가 없는 이름을 가리키면
+        -- 사용자가 무엇을 눌러야 할지 못 찾는다 (2026-08-21 오너 보고, docs/16 §47).
+        self.saleFeedbackText.Text = "보유 " .. tostring(balance) .. "개가 모두 보호 수량(" .. tostring(effective) .. ")입니다. 팔려면 [보호분 판매 OFF]를 눌러 ON 으로 바꾸세요."
         return
     end
     self.saleFeedbackText.Text = "광물과 수량을 고른 뒤 `선택 수량 판매`를 누르세요."

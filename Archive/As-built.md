@@ -11,7 +11,7 @@
 - **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **이동·카메라는 살아 있다** — 보이지 않는 플레이어의 이동이 넓은 광산의 카메라 팬 수단이다. 되돌리려면 같은 컴포넌트들을 Enable=true (docs/16 §33)
 - 동적 일꾼 Body: `KinematicbodyComponent`
 - 시뮬레이션 틱: 0.4초, 틱당 액션 1개
-- 현재 기준: `main`(PR #18 병합 + F9 커밋 rebase-push, 2026-08-21)에서 **T-13 B 완결 + F9 성능·부하 기준 작성 완료** — AI 몫의 티켓·기획 공백 0건. 남은 것은 오너 직접 게이트(클릭·청취·미감·실기기 체감)뿐이다.
+- 현재 기준: `main`(PR #19 병합 `e98f948`, 2026-08-21)에서 **T-13 B 완결 + F9 성능·부하 기준 + 초보 광산 10×10 확장까지 반영** — AI 몫의 티켓·기획 공백 0건. 남은 것은 오너 직접 게이트(클릭·청취·미감·실기기 체감)뿐이며, **그 전량이 `docs/29-최종-검수표.md` 한 장에 플레이 동선 순서로 모여 있다**(A 신규 계정 튜토리얼 / B 화면·조작 일괄 / C 출시 빌드 체감 / D 결정 대기 2건). A·B·C 전량 통과 = C212 조건 ② 충족 = MVP 완료 판정.
 
 ## 현재 상태
 
@@ -34,9 +34,33 @@
 | 설정 패널 (T-12-B) | 클라 `@Logic` + `.ui` + 서버 저장 | `RootDesk/MyDesk/Mine/SettingsPanelController.mlua`, `ui/SettingsUI.ui`, `AccountProfileService.RequestUpdateSoundSettings` | 슬라이더 2종(파츠 `docs/26` §5.3) + 진입 버튼(우측 스택 3번째, U4 확정). **GroupOrder 6 삽입 — Popup 7·Toast 8·Tutorial 9·Recovery 10 (밀집 0..10)**. 저장은 마지막 슬라이더 변경 후 0.6s 디바운스 1회(`RequestUpdateSoundSettings` — 클램프만, 거절 없음). **`settings.tuned` 무버전 확장 필드**: false 면 저장 볼륨 무시하고 C220 기본값(0.8/0.7) — T-02 가 박아 둔 초안값(0.5/1.0) 잔재 차단. 재접속 복원은 @Sync 미러 2종(`SettingsBgmVolume/SettingsSfxVolume`) 감시 + 로컬 편집 1.5s 유예. SFX 0 이면 `PlayCue` 가 재생·쿨다운 원장 모두 스킵. 검수 `docs/16` §38 |
 | 카메라 줌·팬 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/CameraControlLogic.mlua` | 휠 줌(100~33.4, 노치당 ×1.1, UI 위 무시, **포토샵식 커서 앵커**) + 휠 버튼 드래그 팬(**드래그 시작점 월드 앵커를 커서에 고정 — 정확 1:1**). 둘 다 `ScreenToWorldPosition` 기반 게인 0.6 서보 — 좌표계 상수 가정 없음. `CameraOffset` 만 이동(비표시 플레이어·서버 무변경, 상한 ±30 unit). 맵 전환 시 팬만 리셋, 줌은 세션 유지. ⚠ `ScreenToWorldPosition` 은 카메라 변경을 **다음 렌더에야 반영** — 같은 프레임 보정은 헛돈다 (docs/16 §42.1). 검수 §42·§42.1 |
 | 성능 계측기 (F9) | 클라이언트+서버 `@Logic` | `RootDesk/MyDesk/Mine/PerfProbeLogic.mlua` | **기본 비활성** — `Active=false` 면 OnUpdate 조기 return 한 줄뿐이라 상시 비용 무시 가능. 측정 세션에서 `maker_execute_script` 로 side 별로 켜서 10s 창 프레임 통계(`[Perf]` 로그)를 얻는다. 판정선·재측정 절차는 `docs/24` 단일 기준 |
+| 진단 로그 스위치 | 클라이언트+서버 `@Logic` | `RootDesk/MyDesk/Mine/MineLogPolicy.mlua` | 매 액션 로그의 **단일 소유자**. `Verbose=false` 기본 — 릴리스는 조용하다. 소비자 4곳(`WorkerController` simTick 13행 · `VeinTickSimulator` 4행 · `WorkerVisualController` 4행 · `MineSoundController` 2행)이 **call-site 가드**(`if ... then log(...) end`)로 쓴다 — 문자열 concat 비용까지 건너뛰기 위해서다. 게이트 밖: log_error/warning · `[Perf]` · `layout loaded` · 특별 스폰 · notice · 수명주기 · 프로그램 수락/거절/완료. **PerfProbeLogic 과 같이 side 별로 켠다.** ⚠️ `docs/24` §5 판정선 5번(cue `play`→`suppressed` 짝)은 이게 켜져 있어야 판정된다 — §6 절차 3번이 그 전제 |
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-21 — 릴리스 로그 축소: 판정선이 로그에 얹혀 있으면 "끄기"가 판정 불능을 만든다
+
+`docs/24` §5 권고(분당 ~1,300건) 이행. 신설 `Mine/MineLogPolicy.mlua` (`@Logic`, `Verbose=false` 기본) + 소비자 4파일 23행 게이트.
+
+- **단일 소유자로 갔다.** 파일마다 `VerboseLog` 프로퍼티를 두면 맵 3개 × 엔티티 N개를 일일이 켜야 한다. `PerfProbeLogic.Active` 가 이미 "측정 세션에 side 별로 켠다"는 운용을 확립해 뒀으므로 같은 모양으로 붙였다 — 운용 지식이 하나면 된다.
+- **`Trace(msg)` 헬퍼가 아니라 call-site 가드(`if self:Verbose() then log(...) end`)를 썼다.** 헬퍼로 감싸면 인자 문자열의 concat 이 **호출 전에** 끝나 버려, 버릴 로그의 비용을 그대로 낸다. 성능이 병목은 아니지만(F9 실측) 버리는 문자열을 만드는 코드를 새로 심을 이유가 없다.
+- **함정 하나를 발견했다 — 판정선 5번이 게이트 대상 로그에 얹혀 있었다.** `docs/24` §5 의 "cue 는 `play`→`suppressed` 짝을 유지"는 `[MineSound]` 두 줄로 판정하는데, 그 두 줄이 정확히 축소 대상이다. 끄는 것 자체는 옳지만 **재측정 절차가 켜는 단계를 갖지 않으면 판정 불능이 된다** → §6 절차 3번에 `Verbose = true`, 7번에 원복을 박았다. **교훈: 로그를 줄일 때는 "그 로그를 판정 근거로 쓰는 문서"를 먼저 grep 한다** (T-14 `RenderList` 의 소비자 전수 확인과 같은 계열 — 이번엔 코드가 아니라 *문서*가 소비자였다).
+- **판정은 게이트 양방향 실측.** `DoUnload`(수레 비어 있어 상태 무변경)를 프로브로 삼아 OFF→로그 없음 / ON→`[Worker 1] simTick=0 step=0 - cart empty` 출현 / OFF→다시 없음. 프로필 무변경 확인(`cart=0 cell=(0,0)`). 빌드 오류 0(Info 27건은 기존 노이즈 동일) · 런타임 Error/Warning 0 · 20초 Play 에서 `[VeinTick] tick` 0건.
+
+**남은 것**: 없음. 다음 재측정 때 §6 3번의 Verbose 단계를 실제로 밟는지만 확인.
+
+### 2026-08-21 — 최종 검수표 신설: 오너 게이트가 11개 절에 흩어져 있어 "한 번에 끝낼 수" 없었다
+
+코드 무변경, 문서만. C212 조건 ②(오너 직접 검수)가 유일한 미충족인데, 그 항목들이 `docs/16` §9·§24.6·§34.3·§40.3·§41.4·§41.7·§42·§44·§45·§46 과 `docs/24` §7 에 **세션별 기록 순서로** 흩어져 있었다 — 오너가 판정하려면 문서를 11군데 열어야 했고, 그래서 매번 일부만 판정되고 나머지가 다음 세션으로 밀렸다.
+
+- **신설 `docs/29-최종-검수표.md`**: 기록 순서가 아니라 **플레이 동선 순서**로 재배열 — A(신규 계정 튜토리얼 1회차 7항목) / B(화면·조작 일괄 18항목: 편집기·광산화면·외형·설정청취·카메라·확장맵) / C(출시 빌드 체감 1항목) / D(플레이 없이 결정만 하는 2건: 삭제된 배선처 복원 여부 · 릴리스 로그 축소). 각 항목에 **원본 절 참조 + 실패 시 조정 지점**을 붙였다.
+- **A 세션을 따로 뗀 이유**: §41.7 의 7단계 정상 흐름은 **1회차 완화가 켜진 신규 계정**에서만 확인된다. 기존 계정으로 섞어 돌리면 그 항목이 영영 미판정으로 남는다.
+- **원본 절이 단일 기준**임을 표에 명시했다 — 색인이 두 번째 진실이 되면 다음 세션이 어느 쪽을 믿을지 모른다.
+- 곁들여 드리프트 정정: `docs/17` §0.0 과 이 파일이 farm01 확장을 `PR 대기`로 적고 있었으나 **PR #19 는 병합 완료(`e98f948`)** 였다. `docs/16` 머리말의 "지금 기다리는 것"(2026-08-18 기준, K7 만 언급)도 갱신.
+- **교훈: 검수 항목은 발견 순서로 쌓이지만 판정은 플레이 순서로 일어난다.** 세션 기록에 `[ ]` 를 남기는 것만으로는 판정이 끝나지 않는다 — 오너가 한 번의 플레이로 소진할 수 있는 형태로 모아 줘야 닫힌다.
+
+**남은 것**: 오너가 `docs/29` A·B·C 를 완주하면 C212 3조건 전량 충족 → MVP 완료 판정.
 
 ### 2026-08-21 — 튜토리얼 화살표 2건: 같은 버튼 연속 seq 는 "안 움직임"으로 읽힌다 · 창 드래그는 튜토리얼 중 잠근다
 
@@ -64,7 +88,7 @@
 - **밸런스 부수 효과 2건이 공짜로 왔다** (docs/22 §9): 시작점마다 전담 광맥이 생겨 **P1 이 일꾼 수에 비례**하게 됐고(30→111 — §5.2 "일꾼 사도 30 고정" 구조 해소), 순회 비용 증가로 P2(95) < 전담 P1(111) — **튜토리얼이 가르치는 왕복이 상위 전략**이 되어 §8.2-3 격차 판단 건도 자연 해소.
 - ⚠ audit_resave 는 이 `.map` 을 또 `[정규화]` 로 찍을 것이다(함정 8 — 레이아웃 JSON 키·tileMap 을 값 신호로 안 본다). 방금 내가 바꾼 것을 아는 상태에서 판정할 것.
 
-**남은 것**: 오너 육안(확장 화면 미감) + 튜토리얼 다시 보기 실플레이 1회 + PR 병합.
+**남은 것**: 오너 육안(확장 화면 미감) + 튜토리얼 다시 보기 실플레이 1회 (`docs/29` B17·B18). **PR #19 는 2026-08-21 병합 완료 (`e98f948`)** — `main` 워킹트리 클린.
 
 ### 2026-08-21 — F9 성능·부하 기준: 병목은 프레임이 아니라 로그였다
 

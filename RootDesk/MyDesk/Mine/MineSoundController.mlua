@@ -121,13 +121,15 @@ method void PlayCue(string cue, string key)
     if last ~= nil and now - last < spec.cooldown then
         -- 쿨다운 억제. F5-2("효과·사운드는 제한 내 재생") 검증의 양성 증거로
         -- 남긴다 — 억제 빈도는 쿨다운 자체가 상한이라 로그가 폭주하지 않는다.
-        log("[MineSound] suppressed cue=" .. cue .. " key=" .. key)
+        if _MineLogPolicy:IsVerbose() then log("[MineSound] suppressed cue=" .. cue .. " key=" .. key) end
         return
     end
     self._T.lastPlay[ledgerKey] = now
 
     _SoundService:PlaySound(spec.ruid, volume)
-    log("[MineSound] play cue=" .. cue .. " key=" .. key .. " vol=" .. tostring(volume))
+    -- ⚠ docs/24 §5 판정선 5번(cue 의 play→suppressed 짝)은 이 두 줄로 판정한다.
+    -- 재측정 세션에서는 반드시 _MineLogPolicy.Verbose = true 로 켠 뒤 측정할 것.
+    if _MineLogPolicy:IsVerbose() then log("[MineSound] play cue=" .. cue .. " key=" .. key .. " vol=" .. tostring(volume)) end
 end
 
 end

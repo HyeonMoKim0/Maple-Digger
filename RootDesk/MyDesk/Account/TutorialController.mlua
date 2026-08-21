@@ -22,6 +22,11 @@ property number SettleSeconds = 0.6
 -- 않는다 (검증 중 실제 경합 관측).
 property number WarmupSeconds = 3.0
 
+-- 8단계 목표 일꾼 수. **`TutorialService.VerifyStep(8)` 의 `#workers >= 2` 와
+-- 반드시 같은 값이어야 한다** — 클라 신호와 서버 재검증의 축이 어긋나면 그 틈이
+-- 그대로 진행 불능이 된다 (docs/16 §48).
+property integer TutorialWorkerGoal = 2
+
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- 초기 상태: 비활성. 활성화는 OnUpdate 의 @Sync 감시가 결정한다.
@@ -99,6 +104,13 @@ method table GetStepConfig(integer step)
     -- 단계별 안내·활성 버튼·시작 상태·툴팁/화살표 배치의 단일 정의.
     -- 5·6단계 팔레트에 이미 배운 행동 블록(L/W/U)을 포함한다 — U3(C213)의
     -- "R×5 로 돌 5개"는 왕복 1회당 돌 1개 적립을 전제하기 때문이다 (docs/16 기록).
+    --
+    -- 툴팁 배치 (2026-08-21 오너 보고 — 캐릭터가 안 보인다, docs/16 §50):
+    -- 1~6단계는 `(240, -400)` = 화면 하단 빈 띠. 예전 `(350, -150)` 은 편집기(x -680..-40)와
+    -- 광산 현황(x 480..940) 사이의 **캐릭터가 다니는 빈 띠 한복판**(x 70..630, y -265..-35)을
+    -- 덮고 있었다. 새 위치는 x -40..520 / y -515..-285 로, 광산 현황과 세로가 겹치지 않고
+    -- (HUD 하단 -160) 편집기 오른쪽 끝(-40)에 닿기만 한다.
+    -- 7·8단계는 `(-660, 208)` 유지 — 그때는 중앙 판매/선택 모달이 주인공이라 왼쪽으로 비켜야 한다.
     if step == 1 then
         return {
             guide = "일꾼을 오른쪽으로 한 칸 보내 봐요.\n[동 E]를 누르고 [실행]을 누르세요.",
@@ -106,7 +118,7 @@ method table GetStepConfig(integer step)
             allowed = { moveE = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
-            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 314, arrowDir = "left",
+            tooltipX = 240, tooltipY = -400, arrowX = -15, arrowY = 314, arrowDir = "left",
             seq = { "moveE", "run" },
         }
     elseif step == 2 then
@@ -116,7 +128,7 @@ method table GetStepConfig(integer step)
             allowed = { mine = true, run = true, clear = true },
             reset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
-            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+            tooltipX = 240, tooltipY = -400, arrowX = -15, arrowY = 210, arrowDir = "left",
             seq = { "mine", "run" },
         }
     elseif step == 3 then
@@ -126,7 +138,7 @@ method table GetStepConfig(integer step)
             allowed = { load = true, run = true, clear = true },
             reset = { cellX = 1, cellY = 0, hand = "stone", handCount = 1, cart = 0 },
             clearProgram = true,
-            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+            tooltipX = 240, tooltipY = -400, arrowX = -15, arrowY = 210, arrowDir = "left",
             seq = { "load", "run" },
         }
     elseif step == 4 then
@@ -139,7 +151,7 @@ method table GetStepConfig(integer step)
             reset = nil,
             failReset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 1 },
             clearProgram = true,
-            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+            tooltipX = 240, tooltipY = -400, arrowX = -15, arrowY = 210, arrowDir = "left",
             seq = { "moveW", "unload", "run" },
         }
     elseif step == 5 then
@@ -149,7 +161,7 @@ method table GetStepConfig(integer step)
             allowed = { repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
-            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
+            tooltipX = 240, tooltipY = -400, arrowX = -15, arrowY = 106, arrowDir = "left",
             seq = { "repeatAdd", "moveE", "mine", "load", "moveW", "unload", "endBlock", "run" },
         }
     elseif step == 6 then
@@ -159,7 +171,7 @@ method table GetStepConfig(integer step)
             allowed = { ifAdd = true, condition = true, repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
-            tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
+            tooltipX = 240, tooltipY = -400, arrowX = -15, arrowY = 106, arrowDir = "left",
             -- endBlock 은 1회만 안내한다 (2026-08-21 오너 보고): IF 를 닫는 1번이면
             -- 충분하고 남은 반복은 [실행]의 CloseAllOpenBlocks 가 자동으로 닫는다.
             -- 2회 연속으로 두면 같은 버튼을 가리킨 채 "화살표가 안 움직이는" 것처럼 보인다.
@@ -287,6 +299,8 @@ method void StartArrowSequence(table config)
     watch["clear"] = true
     watch["selectClose"] = true
     watch["saleClose"] = true
+    -- seq 에는 없지만 감시는 해야 하는 버튼: 7단계의 막힘 해제 토글 (되감기용).
+    watch["toggleProtected"] = true
     local registry = self:GetButtonRegistry()
     for key, _ in pairs(watch) do
         local button = registry[key]
@@ -306,10 +320,53 @@ method void OnSeqButtonClicked(string key)
         self._T.seqIndex = 1
         return
     end
+    if key == "toggleProtected" and self._T.stepShown == 7 then
+        -- 막힘을 푸는 버튼이다 (seq 밖 — ResolveArrowKey 참고). 이걸 켠 뒤에는
+        -- [선택 수량 판매]를 다시 눌러야 하므로 소진된 seq 를 그 자리로 되감는다.
+        -- 되감지 않으면 토글을 켠 순간 화살표가 다시 사라진다.
+        self._T.seqIndex = #self._T.seq
+        return
+    end
     local current = self._T.seq[self._T.seqIndex]
     if current ~= nil and key == current then
         self._T.seqIndex = self._T.seqIndex + 1
     end
+end
+
+@ExecSpace("ClientOnly")
+method string ResolveArrowKey(table seq)
+    -- 화살표가 가리킬 버튼 키 (없으면 ""). 보통은 seq 의 현재 항목이지만,
+    -- **"지금 누르면 반드시 실패하는" 상태**에서는 그 막힘을 푸는 버튼을 먼저 가리킨다.
+    --
+    -- 7단계(판매)가 그 경우다. 보유량 ≤ 보호 수량이면 판매 가능 수량이 0이라
+    -- [선택 수량 판매]는 무조건 거절된다. [보호분 판매]를 켜야 풀리는데, 이 토글은
+    -- **계정마다 필요 여부가 갈려 seq 에 넣을 수 없다** — 보호 수량이 없는 계정에는
+    -- 잘못된 안내가 되기 때문이다. 그래서 조건이 성립할 때만 조건부로 가리킨다.
+    --
+    -- 이게 없으면: [선택 수량 판매]가 seq 의 마지막이라 누르는 순간 seqIndex 가
+    -- 소진돼 화살표가 사라지는데, 판매는 거절돼 단계도 안 넘어간다 → 열린 판매창
+    -- 앞에서 안내가 통째로 끊긴다 (2026-08-21 오너 다시 보기 실플레이, docs/16 §47).
+    if self:IsSaleBlockedByProtection() then return "toggleProtected" end
+    if self._T.seqIndex > #seq then return "" end
+    return seq[self._T.seqIndex]
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsSaleBlockedByProtection()
+    -- 7단계에서 [보호분 판매]가 꺼진 채 판매 가능 수량이 0인가.
+    -- 판정값은 서버가 판매를 거절할 때 쓰는 것과 같은 EffectiveProtection 이다
+    -- (max(설정 보호, 다음 해금 필요량)) — 클라가 따로 계산하지 않는다.
+    if self._T.stepShown ~= 7 then return false end
+    -- **판매 패널이 열려 있을 때만** 참이다. 토글은 그 패널 안에 있으므로,
+    -- 닫힌 상태에서 화살표를 그쪽으로 돌리면 좌표가 허공에 뜬다 (docs/16 §49).
+    -- 패널이 닫혀 있으면 seq(`selectOpen → sellOpen → …`)가 거기까지 데려간다 —
+    -- 재조준은 "도착한 뒤 막혔을 때"만 개입하는 것이 맞다.
+    if not _MineSelectController:IsSalePanelOpen() then return false end
+    local profile = self:GetProfile()
+    if profile == nil then return false end
+    -- 판정은 판매 화면의 소유자에게 묻는다 — 여기서 보호/보유를 다시 계산하면
+    -- 서버 거절 규칙과 갈라진다 (D-11 계열).
+    return _MineSelectController:IsSaleBlockedByProtection(profile)
 end
 
 @ExecSpace("ClientOnly")
@@ -320,12 +377,12 @@ method void UpdateArrowTarget()
     if self.arrow == nil or not self._T.active then return end
     local seq = self._T.seq
     if seq == nil or #seq == 0 then return end
-    if self._T.seqIndex > #seq then
+    local key = self:ResolveArrowKey(seq)
+    if key == "" then
         -- 마지막 대상까지 눌렀다 — 판정 대기 동안 화살표를 감춘다.
         if self.arrow.Enable then self.arrow.Enable = false end
         return
     end
-    local key = seq[self._T.seqIndex]
     local button = self:GetButtonRegistry()[key]
     if button == nil or not isvalid(button) then return end
     if self._T.uiGroupRef == nil then
@@ -494,9 +551,22 @@ method boolean IsStepSignalMet(integer step)
     elseif step == 6 then
         return self._T.lastRunHadIf and self._T.runSeen and worker.ProgramState == "Idle"
     elseif step == 7 then
+        -- 판매는 반복 가능한 행동이라 "증가분"으로 둔다 — 다시 보기에서도 실제로
+        -- 한 번 팔아 보게 하는 것이 맞다.
         return profile ~= nil and profile.Gold > snapshot.gold
     end
-    return profile ~= nil and profile.OwnedWorkerCount > snapshot.owned
+    -- 8단계(일꾼 고용)는 **절대값**으로 판정한다 — 서버 `VerifyStep(8)` 의
+    -- `#workers >= 2` 와 같은 축이다.
+    --
+    -- 예전의 "스냅숏 대비 증가"는 1회차(1→2)에서만 우연히 맞았다. 다시 보기에서는
+    -- 진입 시점 스냅숏이 이미 2라 3명째를 요구하는데, **일꾼 3은 깊은 광산 해금이
+    -- 선행**이라 잠긴 계정에서는 어떤 조작으로도 증가시킬 수 없다 → 서버는 이미
+    -- 통과인데 클라가 영영 요청하지 않아 8단계가 영구 정지했다
+    -- (2026-08-21 오너 다시 보기 실플레이, docs/16 §48).
+    --
+    -- 교훈: 클라 신호와 서버 재검증은 **같은 축**이어야 한다. 한쪽이 증가분,
+    -- 다른 쪽이 절대값이면 그 틈이 곧 진행 불능이다.
+    return profile ~= nil and profile.OwnedWorkerCount >= self.TutorialWorkerGoal
 end
 
 @ExecSpace("ClientOnly")
