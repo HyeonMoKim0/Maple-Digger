@@ -10,7 +10,7 @@
 - **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **이동·카메라는 살아 있다** — 보이지 않는 플레이어의 이동이 넓은 광산의 카메라 팬 수단이다. 되돌리려면 같은 컴포넌트들을 Enable=true (docs/16 §33)
 - 동적 일꾼 Body: `KinematicbodyComponent`
 - 시뮬레이션 틱: 0.4초, 틱당 액션 1개
-- 현재 기준: `260820JT`의 `93dcefa` 작업트리에서 T-06·T-08 Maker 자동 검증 완료. T-13 B는 12종 RUID 등록·배선·정적 감사 완료, Maker 재연결 후 런타임 검증 대기. 후속 우선순위 T-13 B 검증 → F9.
+- 현재 기준: `main`(PR #17 병합 후)에서 **T-13 B 완결 (2026-08-21)** — 옛 RUID 12종이 서버에 없던 것이 흰 사각형의 원인이었고, hyNDP 그룹 재업로드 + 실물 판정 + 배선 복원 + Maker 검증까지 끝났다(docs/16 §41.3). 후속 우선순위 **F9 성능·부하**.
 
 ## 현재 상태
 
@@ -22,8 +22,8 @@
 | 프로그램 라이브러리 (T-05) | 서버 원장 + 클라 `@Logic` + `.ui` | `AccountProfileService.mlua`(원장) · `RootDesk/MyDesk/Farm/ProgramLibraryController.mlua` · `ui/ProgramLibraryUI.ui` | 계정 공용 3→20슬롯. **기본가 50골드 확정(C222)**, 이후 ×1.2. 저장/개명/복제/삭제/슬롯구매, 최종 검증은 `WorkerController.ValidateProgram` 단일 소유. 재접속 자동 실행 구현 완료 |
 | 블록 편집기 (T-14 개편) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. **자연어 입력은 2026-08-18 T-14 로 MVP 에서 제거됐다** (docs/03 §6·§8 폐지). 프로그램 표시는 `ProgramGrid` 56×56 셀 9×4=36칸 스트립 — 평탄 토큰(열린 제어는 `]` 칸 없음), 문자+계열 틴트, 초과 `+N` 접기, **칸 클릭 = 그 블록 삭제**(제어는 몸통 통째 + 열림 스택 동기 정리). ⚠️ `RenderList` 는 편집기에서 안 쓰지만 **라이브러리 상세 미리보기가 소비한다 — 지우면 안 된다** (docs/16 §39). 워커 칩 3종 스왑(T-13 A1)은 그대로, 상태 결정은 `GetWorkerChipState` 단일 소유 |
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭. **칩 배경은 파일에 `tab-worker-normal` 이 박혀 있고 런타임이 덮어쓴다** — 파일값만 보고 판단하면 안 된다 |
-| 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. T-08 승인 아이콘 7종, T-13 B Filled 수레 게이지·특별 광맥 아이콘·3광물 슬롯/수량 뱃지를 배선했다. B 런타임 재검증은 `docs/16` §41.2 대기 |
-| 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀·**맵 강화(T-03)** 5패널. 광산 노드 3상태 스왑(T-13 C)에 더해 비용 칩, 보호 수량 ±1 스테퍼, 보호분/자동판매 토글 SpriteSwap, 보호 경고 아이콘(T-13 B)을 배선했다. B 런타임 재검증은 `docs/16` §41.2 대기 |
+| 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. T-08 승인 아이콘 7종, T-13 B Filled 수레 게이지·특별 광맥 아이콘·3광물 슬롯 배선 — **2026-08-21 재업로드 RUID 로 검증 완료** (`docs/16` §41.3). 수량 뱃지 엔티티는 오너 삭제(텍스트만) |
+| 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀·**맵 강화(T-03)** 5패널. 광산 노드 3상태 스왑(T-13 C)에 더해 비용 칩, 보호 수량 ±1 스테퍼, 보호분/자동판매 토글 SpriteSwap, 보호 경고 아이콘(T-13 B) — **2026-08-21 재업로드 RUID 로 검증 완료** (`docs/16` §41.3, 토글 ON 스왑·스테퍼 ±1 실측) |
 | 계정·경제·광산 해금·맵 강화 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | **프로필 스키마 v8 적용 완료.** `tutorial`·`settings` 소비자와 T-06 `appearance` 무버전 확장까지 구현·병합됐다. 맵 강화·경제·복구·동시 접속 잠금 구현 완료 |
 | 외형·도감·무료 뽑기 (T-06) | 서버 원장 + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/AppearanceService.mlua`, `AppearanceController.mlua`, `ui/AppearanceUI.ui` | 30종 카탈로그, 도감 점수·수레 보너스, 제작·교환·천장·장착, 저장 실패 정확 롤백 구현 완료. Maker 자동 검증과 30종 실착 완료(`docs/16` §40). 오너 실클릭·최종 미감 판정만 남음 |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile. Worker01 직접 배치, Worker02~05 런타임 생성. 시작점 분산·marker·맵 전환·F5 시각·사운드/BGM 구현 완료. 남은 관련 항목은 F9 성능·부하 문서다 |
@@ -31,9 +31,33 @@
 | F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. **RUID 7종은 2026-08-16 오너 청취로 확정**(docs/21 §3 승인 완료 — 2종 유지·5종 교체). ⚠️ `depot_unload` 만 1.52s 로 쿨다운 0.4s 를 넘어 겹칠 수 있다. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 `3512470b…`(`sound-604`, 87.3s) 확정**, 기본 볼륨은 **C220 확정 BGM 0.8 · 효과음 0.7**. `PlayBGM` 루프 실측 완료. `SetBgm/SfxVolume` 이 F10 §2.2 경계값(0=Pause, 복귀=Resume — 재`PlayBGM` 금지) 전담 |
 | 설정 패널 (T-12-B) | 클라 `@Logic` + `.ui` + 서버 저장 | `RootDesk/MyDesk/Mine/SettingsPanelController.mlua`, `ui/SettingsUI.ui`, `AccountProfileService.RequestUpdateSoundSettings` | 슬라이더 2종(파츠 `docs/26` §5.3) + 진입 버튼(우측 스택 3번째, U4 확정). **GroupOrder 6 삽입 — Popup 7·Toast 8·Tutorial 9·Recovery 10 (밀집 0..10)**. 저장은 마지막 슬라이더 변경 후 0.6s 디바운스 1회(`RequestUpdateSoundSettings` — 클램프만, 거절 없음). **`settings.tuned` 무버전 확장 필드**: false 면 저장 볼륨 무시하고 C220 기본값(0.8/0.7) — T-02 가 박아 둔 초안값(0.5/1.0) 잔재 차단. 재접속 복원은 @Sync 미러 2종(`SettingsBgmVolume/SettingsSfxVolume`) 감시 + 로컬 편집 1.5s 유예. SFX 0 이면 `PlayCue` 가 재생·쿨다운 원장 모두 스킵. 검수 `docs/16` §38 |
+| 카메라 줌·팬 | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/CameraControlLogic.mlua` | 휠 줌(100~33.4, 노치당 ×1.1, UI 위 무시, **포토샵식 커서 앵커**) + 휠 버튼 드래그 팬(**드래그 시작점 월드 앵커를 커서에 고정 — 정확 1:1**). 둘 다 `ScreenToWorldPosition` 기반 게인 0.6 서보 — 좌표계 상수 가정 없음. `CameraOffset` 만 이동(비표시 플레이어·서버 무변경, 상한 ±30 unit). 맵 전환 시 팬만 리셋, 줌은 세션 유지. ⚠ `ScreenToWorldPosition` 은 카메라 변경을 **다음 렌더에야 반영** — 같은 프레임 보정은 헛돈다 (docs/16 §42.1). 검수 §42·§42.1 |
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-21 — T-13 B 재검증: 흰 사각형의 원인은 배선이 아니라 죽은 RUID 였다
+
+`main` 직접 작업. 검수 `docs/16` §41.3, RUID 대장 `docs/26` §5.3·§5.6 갱신.
+
+- **원인 판정이 한 방에 끝났다.** 12종을 fxsprite 로 월드에 띄우자 전부 `ResourceService: RUID(...) is unavailable now.` — 그룹(hyNDP)·계정 스토리지 목록에도 0건. 2026-08-20 세션의 "계정 자산 업로드"가 실제로는 잔존하지 않았다. **교훈: "업로드·배선 완료" 기록은 업로드 API 성공 응답이 아니라 월드 렌더로 판정해야 한다** (msw-asset-verify 를 배선 전에 불렀으면 그 세션에서 잡혔다). UI 파츠는 **그룹(hyNDP) 스토리지**에 올린다.
+- **메타데이터 API 는 판별력이 없었다.** `asset_get_*_resource_metadata_bulk` 는 정상 파츠도 resultCode 2 를 돌려줬다 — 존재 판정은 목록(`asset_list_group_resources`)이나 월드 렌더로 한다.
+- 12종 재업로드(새 RUID — `tools/ui_parts_ruids.json` 대장 갱신) → 실물 판정 12/12 → 대체 배선 원복: `.ui` 3개(ImageRUID 스왑) + `MineSelectController.ToggleOn/OffRUID`. 스테퍼는 아트에 −/+ 글리프가 내장돼 있어 **자식 Label 을 Enable=false** 로 껐다.
+- **기능 실측**: 토글 ON/OFF 스왑(녹색 캡슐↔슬레이트 캡슐), 스테퍼 ±1("보호 수량 2" 표시 후 원복), HUD 수레 게이지·특별 광맥 아이콘·인벤토리 슬롯·비용 칩 전부 신규 아트 렌더. 빌드 오류 0 · 런타임 Error/Warning 0 · 바인딩 266/0.
+- **배선처가 사라진 2종은 업로드만 해 뒀다** — 워커 탭 곡괭이(PickaxeIcon 5개는 8/20 깨진 채 삭제됨) · 인벤토리 수량 뱃지(오너가 엔티티 삭제). 되살릴지는 오너 결정.
+- `audit_resave` 가 이번 `.ui` 3건을 또 `[정규화]` 로 찍었다 — 함정 8 그대로 (ImageRUID 값 신호를 못 본다). 방금 내가 바꾼 것을 아는 상태에서 무시했다.
+
+**같은 날 후속 (오너 스크린샷 지적 3건, docs/16 §41.4)**: ① 판매 토글 2종 — 늘어짐 해소(버튼 배경 투명 + 원비율 Knob 자식 + 라벨 우측 병기, 토글 스프라이트 바인딩을 Knob 으로 재주입) ② 수레 강화 — 늘어진 비용 칩 제거, 수레 아이콘+헤더 텍스트 좌측 배치, "다음 강화" 줄을 강화 버튼 바로 위로 분리(`GetCartUpgradeLine` 신설) ③ HUD 수레 블록 위아래 divider 2개. **함정: `sprite()` 에 `image_ruid` 만 주면 기본 어두운 반투명 색이 아트를 덮는다 — `color` 흰색 명시 필수.**
+
+**같은 날 후속 2 (docs/16 §41.5)**: 튜토리얼 전화면 Dimmer 가 GroupOrder(10) 아래의 **모든 UI**(스킵 팝업 8·판매 화면 4)까지 어둡게 하던 문제 — F7-E §6.1 의 "월드만 dim" 은 그룹 간 구멍 뚫기가 없는 MSW 에서 최상위 오버레이로는 구현 불가라, `Root/Dimmer` 를 `Enable=false` 로 끄고 강조는 per-button 잠금 dim + 화살표 + 툴팁에 맡겼다 (docs/19 §6.1 개정). **교훈: "월드만 어둡게" 는 dim 을 다른 UI 그룹들보다 아래(최하위 GroupOrder 전용 그룹)에 둬야 성립한다 — 최상위 그룹의 전화면 스프라이트는 반드시 모든 UI 를 덮는다.**
+
+**같은 날 후속 3 (docs/16 §41.6)**: 튜토리얼 **화살표 순차 안내** — 단계당 화살표 고정 1곳을 클릭 순서(`seq`) 기반으로 개정: 지금 눌러야 할 버튼 옆에 붙고 누르면 다음으로 이동(1~8단계 전부, 초기화·패널 닫기는 처음으로). 위치는 `GetWorldCorners()` 실창 픽셀을 **전화면 그룹 코너로 자기보정**해 캔버스 좌표로 환산(매 프레임 — 창 드래그 추적, btnRun 폭 186.0 정확 일치 실측). 툴팁 560×230 확대 + 가이드 글자색 진갈색(dim 제거 후 흰 글자가 안 읽혔다). **함정 2건**: ① Maker 재저장이 §41.5 의 Dimmer `Enable=false` 를 되돌렸다 — 컨트롤러 OnBeginPlay 에서 런타임 강제 끄기로 2중화 ② PolygonGUIRenderer 는 `maker_screenshot` 에 안 잡힌다(drawable=true·실화면 표시 정상) — 화살표류 판정은 좌표 로그로 한다.
+
+**같은 날 후속 4 (docs/16 §41.7)**: ① **7단계 판매 불가 버그** — 잠금 목록에 `보호분 판매` 토글이 없어 보유량 ≤ 보호 수량이면 판매 가능 수량 0 으로 완료가 구조적으로 불가능했다 (1회차는 C2 완화가 가려 다시 보기에서 드러남). `allowed` 에 `toggleProtected` 추가 + 안내 문구 개정. **교훈: 잠금 목록은 "정상 경로"만이 아니라 "막혔을 때 푸는 버튼"까지 포함해야 한다** — 완화가 꺼지는 다시 보기 축으로 각 단계를 재점검할 것. ② 화살표를 오너 지정 스프라이트(`ba442ba7…`, 금색 ↑)로 교체 — 버튼 아래에서 ↑ / 하단 버튼은 위에서 ↓(세로 반전). 폴리곤 시절의 스크린샷 캡처 제약도 함께 해소.
+
+**같은 날 후속 5 (docs/16 §42)**: **카메라 줌·팬 신설** — `Mine/CameraControlLogic.mlua` (ClientOnly `@Logic`). 휠 줌 100(현재=최대)~33.4(3배 축소, 엔진 하한 30 준수) + 휠 버튼 드래그 팬. 팬은 `CameraComponent.CameraOffset` 만 움직여 비표시 플레이어의 "이동=팬" 수단과 공존한다. **판정 방법**: 실휠 입력은 MCP 로 못 넣으므로 `_InputService:SendEvent(MouseScrollEvent(±1))` / `KeyDownEvent(Mouse2)` / `MouseMoveEvent` 주입으로 핸들러를 쳤다 — 서비스 이벤트 주입은 ConnectEvent 핸들러에 정상 배달된다(실측). 감도 상수(ZoomStep·팬 1:1)는 오너 실조작 체감 판정 대기.
+
+**남은 것**: 오너 미감 판정(새 화살표·카메라 감도 포함) + 삭제된 배선처 2종 복원 여부 → 다음 AI 작업은 **F9 성능·부하**.
 
 ### 2026-08-18 — T-14: 블록 편집기 개편 · 첫 빌드 로그가 렌더 헬퍼의 숨은 소비자를 잡았다
 

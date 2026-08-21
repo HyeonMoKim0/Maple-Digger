@@ -41,7 +41,14 @@ method void OnBeginPlay()
     self._T.buttons = nil
     self._T.dimCache = {}
     self._T.completionToastShown = false
+    self._T.seq = nil
+    self._T.seqIndex = 0
+    self._T.seqHandlers = {}
+    self._T.uiGroupRef = nil
     if self.tutorialRoot ~= nil then self.tutorialRoot.Enable = false end
+    -- 전화면 Dimmer 는 docs/19 §6.1 개정(2026-08-21)으로 비활성이다. Maker 재저장이
+    -- 파일 초기값을 true 로 되살릴 수 있어 런타임에서도 강제로 끈다.
+    if self.dimmer ~= nil then self.dimmer.Enable = false end
     if self.btnSkip ~= nil then
         self.skipHandler = self.btnSkip.Entity:ConnectEvent(ButtonClickEvent, self.OnSkipClicked)
     end
@@ -54,6 +61,7 @@ method void OnEndPlay()
     if self.btnSkip ~= nil and self.skipHandler ~= nil then
         self.btnSkip.Entity:DisconnectEvent(ButtonClickEvent, self.skipHandler)
     end
+    self:ClearSeqHandlers()
     if self._T.active then self:ReleaseAllLocks() end
 end
 
@@ -99,6 +107,7 @@ method table GetStepConfig(integer step)
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 314, arrowDir = "left",
+            seq = { "moveE", "run" },
         }
     elseif step == 2 then
         return {
@@ -108,6 +117,7 @@ method table GetStepConfig(integer step)
             reset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+            seq = { "mine", "run" },
         }
     elseif step == 3 then
         return {
@@ -117,6 +127,7 @@ method table GetStepConfig(integer step)
             reset = { cellX = 1, cellY = 0, hand = "stone", handCount = 1, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+            seq = { "load", "run" },
         }
     elseif step == 4 then
         -- §4 예외: 4단계는 진입 시 시작 셀 복귀를 하지 않는다 (1~3단계의 결과
@@ -129,6 +140,7 @@ method table GetStepConfig(integer step)
             failReset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 1 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 210, arrowDir = "left",
+            seq = { "moveW", "unload", "run" },
         }
     elseif step == 5 then
         return {
@@ -138,6 +150,7 @@ method table GetStepConfig(integer step)
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
+            seq = { "repeatAdd", "moveE", "mine", "load", "moveW", "unload", "endBlock", "run" },
         }
     elseif step == 6 then
         return {
@@ -147,18 +160,23 @@ method table GetStepConfig(integer step)
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
+            seq = { "repeatAdd", "ifAdd", "mine", "load", "endBlock", "endBlock", "run" },
         }
     elseif step == 7 then
         return {
-            guide = "창고의 돌을 팔아 골드를 벌어요.\n[광산 선택] → [판매]에서 돌을 파세요. 돌이 10개보다 적으면 [전량]을 누르면 됩니다.",
+            guide = "창고의 돌을 팔아 골드를 벌어요.\n[광산 선택] → [판매]에서 돌을 파세요. 팔 수 있는 수량이 0이면 [보호분 판매]를 먼저 켜세요.",
             fail = "",
-            allowed = { selectOpen = true, selectClose = true, sellOpen = true, saleClose = true, oreStone = true, quickOne = true, quickTen = true, quickAll = true, sellSelected = true },
+            -- toggleProtected 는 2026-08-21 버그 수정으로 허용 — 보유량이 보호 수량
+            -- 이하면(다시 보기·후반 계정에서 흔함) 판매 가능 수량이 0이라 토글 없이는
+            -- 7단계 완료가 불가능했다 (docs/16 §41.7).
+            allowed = { selectOpen = true, selectClose = true, sellOpen = true, saleClose = true, oreStone = true, quickOne = true, quickTen = true, quickAll = true, sellSelected = true, toggleProtected = true },
             reset = nil,
             clearProgram = true,
             -- 7단계: 중앙 패널(폭 780, X -390~390)을 가리지 않도록 왼쪽 바깥에
             -- 배치하고 화살표는 패널 왼쪽 가장자리에서 [판매] 행을 가리킨다
             -- (2026-08-20 오너 결정 — 가운데 UI 시야 확보).
             tooltipX = -660, tooltipY = 208, arrowX = -400, arrowY = 208, arrowDir = "right",
+            seq = { "selectOpen", "sellOpen", "quickAll", "sellSelected" },
         }
     end
     return {
@@ -170,6 +188,7 @@ method table GetStepConfig(integer step)
         -- 8단계: 7단계와 같은 이유로 왼쪽 바깥 배치. 화살표는 패널 왼쪽
         -- 가장자리에서 [일꾼 고용] 행 높이를 가리킨다.
         tooltipX = -660, tooltipY = 208, arrowX = -400, arrowY = 208, arrowDir = "right",
+        seq = { "selectOpen", "buyWorker" },
     }
 end
 
@@ -235,6 +254,108 @@ method void ReleaseAllLocks()
 end
 
 @ExecSpace("ClientOnly")
+method void ClearSeqHandlers()
+    -- 순차 안내용 클릭 감시를 전부 해제한다 (단계 전환·비활성 공통).
+    if self._T.seqHandlers ~= nil then
+        for i = 1, #self._T.seqHandlers do
+            local rec = self._T.seqHandlers[i]
+            if rec.entity ~= nil and isvalid(rec.entity) and rec.h ~= nil then
+                rec.entity:DisconnectEvent(ButtonClickEvent, rec.h)
+            end
+        end
+    end
+    self._T.seqHandlers = {}
+    self._T.seq = nil
+    self._T.seqIndex = 0
+end
+
+@ExecSpace("ClientOnly")
+method void StartArrowSequence(table config)
+    -- 단계 내 화살표 순차 안내 (2026-08-21 오너 요청): seq 의 버튼을 순서대로
+    -- 가리키고, 그 버튼이 눌리면 다음 버튼으로 화살표를 옮긴다. 위치는 매 프레임
+    -- UpdateArrowTarget 이 실제 버튼 위치에서 계산한다 (창 드래그 추적).
+    self:ClearSeqHandlers()
+    if type(config.seq) ~= "table" or #config.seq == 0 then return end
+    self._T.seq = config.seq
+    self._T.seqIndex = 1
+    -- seq 대상 + 되돌림 트리거(초기화·패널 닫기)에 클릭 감시를 건다. 중복 키는 1회만.
+    local watch = {}
+    for i = 1, #config.seq do watch[config.seq[i]] = true end
+    watch["clear"] = true
+    watch["selectClose"] = true
+    watch["saleClose"] = true
+    local registry = self:GetButtonRegistry()
+    for key, _ in pairs(watch) do
+        local button = registry[key]
+        if button ~= nil and isvalid(button) then
+            local capturedKey = key
+            local h = button.Entity:ConnectEvent(ButtonClickEvent, function() self:OnSeqButtonClicked(capturedKey) end)
+            table.insert(self._T.seqHandlers, { entity = button.Entity, h = h })
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void OnSeqButtonClicked(string key)
+    -- 현재 가리키는 버튼이 눌리면 다음으로. 초기화·패널 닫기는 처음으로 되돌린다.
+    if not self._T.active or self._T.seq == nil then return end
+    if key == "clear" or key == "selectClose" or key == "saleClose" then
+        self._T.seqIndex = 1
+        return
+    end
+    local current = self._T.seq[self._T.seqIndex]
+    if current ~= nil and key == current then
+        self._T.seqIndex = self._T.seqIndex + 1
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void UpdateArrowTarget()
+    -- 화살표를 현재 seq 대상 버튼 옆에 붙인다. GetWorldCorners 는 실창 픽셀을
+    -- 돌려주므로 전화면 UI 그룹(/ui/TutorialUI)의 코너로 자기보정해 1920×1080
+    -- 캔버스 좌표로 환산한다 (2026-08-21 Play 실측 — btnRun 폭 186.0 정확 일치).
+    if self.arrow == nil or not self._T.active then return end
+    local seq = self._T.seq
+    if seq == nil or #seq == 0 then return end
+    if self._T.seqIndex > #seq then
+        -- 마지막 대상까지 눌렀다 — 판정 대기 동안 화살표를 감춘다.
+        if self.arrow.Enable then self.arrow.Enable = false end
+        return
+    end
+    local key = seq[self._T.seqIndex]
+    local button = self:GetButtonRegistry()[key]
+    if button == nil or not isvalid(button) then return end
+    if self._T.uiGroupRef == nil then
+        self._T.uiGroupRef = _EntityService:GetEntityByPath("/ui/TutorialUI")
+    end
+    local group = self._T.uiGroupRef
+    if group == nil then return end
+    local okC, corners = pcall(function() return button.Entity.UITransformComponent:GetWorldCorners() end)
+    local okR, rc = pcall(function() return group.UITransformComponent:GetWorldCorners() end)
+    if not okC or not okR or corners == nil or rc == nil then return end
+    local sw = rc[3].x - rc[1].x
+    local sh = rc[2].y - rc[1].y
+    if sw <= 0 or sh <= 0 then return end
+    local left = (corners[1].x - rc[1].x) / sw * 1920 - 960
+    local right = (corners[3].x - rc[1].x) / sw * 1920 - 960
+    local bottom = (corners[1].y - rc[1].y) / sh * 1080 - 540
+    local top = (corners[2].y - rc[1].y) / sh * 1080 - 540
+    -- 화살표 자산(ba442ba7…)은 위쪽을 가리키는 스프라이트다. 기본은 버튼 아래에서
+    -- 위를 가리키고, 버튼이 화면 하단이라 자리가 없으면 위에서 세로 반전(↓)한다.
+    local x = (left + right) * 0.5
+    local y = bottom - 50
+    local flipY = 1
+    if y - 35 < -530 then
+        y = top + 50
+        flipY = -1
+    end
+    if not self.arrow.Enable then self.arrow.Enable = true end
+    local arrowTransform = self.arrow.UITransformComponent
+    arrowTransform.anchoredPosition = Vector2(x, y)
+    arrowTransform.UIScale = Vector3(1, flipY, 1)
+end
+
+@ExecSpace("ClientOnly")
 method void TakeSnapshot()
     -- 판정 신호 비교 기준. 정착 시간(SettleSeconds) 뒤에 찍는다.
     local profile = self:GetProfile()
@@ -285,6 +406,7 @@ method void EnterStep(integer step)
     end
     self:ApplyStepLocks(config.allowed)
     self:ShowTooltip(step, "")
+    self:StartArrowSequence(config)
     log("[Tutorial] step enter step=" .. tostring(step) .. " replay=" .. tostring(self._T.replayActive))
 end
 
@@ -303,10 +425,11 @@ method void ShowTooltip(integer step, string reason)
         self.tooltip.UITransformComponent.anchoredPosition = Vector2(config.tooltipX, config.tooltipY)
     end
     if self.arrow ~= nil then
+        -- 초기 위치는 config 폴백. 실제 위치·방향은 UpdateArrowTarget 이 매 프레임
+        -- 대상 버튼 기준으로 덮어쓴다 (위쪽 화살표 자산 — 세로 반전만 쓴다).
+        self.arrow.Enable = true
         self.arrow.UITransformComponent.anchoredPosition = Vector2(config.arrowX, config.arrowY)
-        local flip = 1
-        if config.arrowDir == "right" then flip = -1 end
-        self.arrow.UITransformComponent.UIScale = Vector3(flip, 1, 1)
+        self.arrow.UITransformComponent.UIScale = Vector3(1, 1, 1)
     end
 end
 
@@ -407,6 +530,7 @@ method void Deactivate(boolean showCompletionHint)
     self._T.replayActive = false
     self._T.replayRequested = false
     self._T.stepShown = 0
+    self:ClearSeqHandlers()
     self:ReleaseAllLocks()
     if self.tutorialRoot ~= nil then self.tutorialRoot.Enable = false end
     -- T-14 (docs/28): §9.3 완료 후 자연어 힌트는 자연어 입력 제거와 함께 폐지됐다.
@@ -501,6 +625,9 @@ method void OnUpdate(number delta)
         self:EnterStep(step)
         return
     end
+
+    -- 화살표 순차 안내: 현재 대상 버튼 위치를 매 프레임 추적한다 (창 드래그 대응).
+    self:UpdateArrowTarget()
 
     -- 정착 시간: 리셋 RPC 왕복 전의 낡은 값을 스냅숏하지 않는다.
     if self._T.settle > 0 then
