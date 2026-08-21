@@ -10,7 +10,7 @@
 - **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **이동·카메라는 살아 있다** — 보이지 않는 플레이어의 이동이 넓은 광산의 카메라 팬 수단이다. 되돌리려면 같은 컴포넌트들을 Enable=true (docs/16 §33)
 - 동적 일꾼 Body: `KinematicbodyComponent`
 - 시뮬레이션 틱: 0.4초, 틱당 액션 1개
-- 현재 기준: `260820JT`의 `93dcefa` 작업트리에서 T-06·T-08 Maker 자동 검증 완료. T-13 B는 12종 RUID 등록·배선·정적 감사 완료, Maker 재연결 후 런타임 검증 대기. 후속 우선순위 T-13 B 검증 → F9.
+- 현재 기준: `main`(PR #17 병합 후)에서 **T-13 B 완결 (2026-08-21)** — 옛 RUID 12종이 서버에 없던 것이 흰 사각형의 원인이었고, hyNDP 그룹 재업로드 + 실물 판정 + 배선 복원 + Maker 검증까지 끝났다(docs/16 §41.3). 후속 우선순위 **F9 성능·부하**.
 
 ## 현재 상태
 
@@ -22,8 +22,8 @@
 | 프로그램 라이브러리 (T-05) | 서버 원장 + 클라 `@Logic` + `.ui` | `AccountProfileService.mlua`(원장) · `RootDesk/MyDesk/Farm/ProgramLibraryController.mlua` · `ui/ProgramLibraryUI.ui` | 계정 공용 3→20슬롯. **기본가 50골드 확정(C222)**, 이후 ×1.2. 저장/개명/복제/삭제/슬롯구매, 최종 검증은 `WorkerController.ValidateProgram` 단일 소유. 재접속 자동 실행 구현 완료 |
 | 블록 편집기 (T-14 개편) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. **자연어 입력은 2026-08-18 T-14 로 MVP 에서 제거됐다** (docs/03 §6·§8 폐지). 프로그램 표시는 `ProgramGrid` 56×56 셀 9×4=36칸 스트립 — 평탄 토큰(열린 제어는 `]` 칸 없음), 문자+계열 틴트, 초과 `+N` 접기, **칸 클릭 = 그 블록 삭제**(제어는 몸통 통째 + 열림 스택 동기 정리). ⚠️ `RenderList` 는 편집기에서 안 쓰지만 **라이브러리 상세 미리보기가 소비한다 — 지우면 안 된다** (docs/16 §39). 워커 칩 3종 스왑(T-13 A1)은 그대로, 상태 결정은 `GetWorkerChipState` 단일 소유 |
 | 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭. **칩 배경은 파일에 `tab-worker-normal` 이 박혀 있고 런타임이 덮어쓴다** — 파일값만 보고 판단하면 안 된다 |
-| 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. T-08 승인 아이콘 7종, T-13 B Filled 수레 게이지·특별 광맥 아이콘·3광물 슬롯/수량 뱃지를 배선했다. B 런타임 재검증은 `docs/16` §41.2 대기 |
-| 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀·**맵 강화(T-03)** 5패널. 광산 노드 3상태 스왑(T-13 C)에 더해 비용 칩, 보호 수량 ±1 스테퍼, 보호분/자동판매 토글 SpriteSwap, 보호 경고 아이콘(T-13 B)을 배선했다. B 런타임 재검증은 `docs/16` §41.2 대기 |
+| 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. T-08 승인 아이콘 7종, T-13 B Filled 수레 게이지·특별 광맥 아이콘·3광물 슬롯 배선 — **2026-08-21 재업로드 RUID 로 검증 완료** (`docs/16` §41.3). 수량 뱃지 엔티티는 오너 삭제(텍스트만) |
+| 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀·**맵 강화(T-03)** 5패널. 광산 노드 3상태 스왑(T-13 C)에 더해 비용 칩, 보호 수량 ±1 스테퍼, 보호분/자동판매 토글 SpriteSwap, 보호 경고 아이콘(T-13 B) — **2026-08-21 재업로드 RUID 로 검증 완료** (`docs/16` §41.3, 토글 ON 스왑·스테퍼 ±1 실측) |
 | 계정·경제·광산 해금·맵 강화 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | **프로필 스키마 v8 적용 완료.** `tutorial`·`settings` 소비자와 T-06 `appearance` 무버전 확장까지 구현·병합됐다. 맵 강화·경제·복구·동시 접속 잠금 구현 완료 |
 | 외형·도감·무료 뽑기 (T-06) | 서버 원장 + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/AppearanceService.mlua`, `AppearanceController.mlua`, `ui/AppearanceUI.ui` | 30종 카탈로그, 도감 점수·수레 보너스, 제작·교환·천장·장착, 저장 실패 정확 롤백 구현 완료. Maker 자동 검증과 30종 실착 완료(`docs/16` §40). 오너 실클릭·최종 미감 판정만 남음 |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile. Worker01 직접 배치, Worker02~05 런타임 생성. 시작점 분산·marker·맵 전환·F5 시각·사운드/BGM 구현 완료. 남은 관련 항목은 F9 성능·부하 문서다 |
@@ -34,6 +34,19 @@
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-21 — T-13 B 재검증: 흰 사각형의 원인은 배선이 아니라 죽은 RUID 였다
+
+`main` 직접 작업. 검수 `docs/16` §41.3, RUID 대장 `docs/26` §5.3·§5.6 갱신.
+
+- **원인 판정이 한 방에 끝났다.** 12종을 fxsprite 로 월드에 띄우자 전부 `ResourceService: RUID(...) is unavailable now.` — 그룹(hyNDP)·계정 스토리지 목록에도 0건. 2026-08-20 세션의 "계정 자산 업로드"가 실제로는 잔존하지 않았다. **교훈: "업로드·배선 완료" 기록은 업로드 API 성공 응답이 아니라 월드 렌더로 판정해야 한다** (msw-asset-verify 를 배선 전에 불렀으면 그 세션에서 잡혔다). UI 파츠는 **그룹(hyNDP) 스토리지**에 올린다.
+- **메타데이터 API 는 판별력이 없었다.** `asset_get_*_resource_metadata_bulk` 는 정상 파츠도 resultCode 2 를 돌려줬다 — 존재 판정은 목록(`asset_list_group_resources`)이나 월드 렌더로 한다.
+- 12종 재업로드(새 RUID — `tools/ui_parts_ruids.json` 대장 갱신) → 실물 판정 12/12 → 대체 배선 원복: `.ui` 3개(ImageRUID 스왑) + `MineSelectController.ToggleOn/OffRUID`. 스테퍼는 아트에 −/+ 글리프가 내장돼 있어 **자식 Label 을 Enable=false** 로 껐다.
+- **기능 실측**: 토글 ON/OFF 스왑(녹색 캡슐↔슬레이트 캡슐), 스테퍼 ±1("보호 수량 2" 표시 후 원복), HUD 수레 게이지·특별 광맥 아이콘·인벤토리 슬롯·비용 칩 전부 신규 아트 렌더. 빌드 오류 0 · 런타임 Error/Warning 0 · 바인딩 266/0.
+- **배선처가 사라진 2종은 업로드만 해 뒀다** — 워커 탭 곡괭이(PickaxeIcon 5개는 8/20 깨진 채 삭제됨) · 인벤토리 수량 뱃지(오너가 엔티티 삭제). 되살릴지는 오너 결정.
+- `audit_resave` 가 이번 `.ui` 3건을 또 `[정규화]` 로 찍었다 — 함정 8 그대로 (ImageRUID 값 신호를 못 본다). 방금 내가 바꾼 것을 아는 상태에서 무시했다.
+
+**남은 것**: 오너 미감 판정 + 삭제된 배선처 2종 복원 여부 → 다음 AI 작업은 **F9 성능·부하**.
 
 ### 2026-08-18 — T-14: 블록 편집기 개편 · 첫 빌드 로그가 렌더 헬퍼의 숨은 소비자를 잡았다
 

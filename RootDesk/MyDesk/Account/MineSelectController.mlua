@@ -49,11 +49,10 @@ property ButtonComponent btnToggleAutoSell = "20ce51cb-b8b0-4ded-949d-74050165cb
 property SpriteGUIRendererComponent protectedToggleSprite = "e802e753-5484-40b5-b941-04c34ec1d023"
 property SpriteGUIRendererComponent autoSellToggleSprite = "20ce51cb-b8b0-4ded-949d-74050165cb39"
 property Entity protectedWarningIcon = "f4f4a193-3d6e-4657-9efa-a3968aba32ac"
--- toggle-on/off 전용 파츠(docs/26 §5.6)가 Maker 재검증 대기 상태로 흰 사각형만
--- 그려져, 검증 완료 파츠로 대체한다 (2026-08-20 오너 지시 — ON=녹색, OFF=슬레이트.
--- 상태 문구 ON/OFF 병기는 그대로 유지되므로 색+문구로 구분된다).
-property string ToggleOnRUID = "4b726e80aa58409f8e1f03cc2a4e5da3"
-property string ToggleOffRUID = "93024bfd2d324753ae92878d299e1ef6"
+-- toggle-on/off 전용 파츠 (docs/26 §5.6). 옛 RUID 12종이 서버에 존재하지 않아
+-- 2026-08-21 hyNDP 그룹에 재업로드 후 실물 검증을 거쳐 재배선했다.
+property string ToggleOnRUID = "8ec20cc6e62f4511a01943453b39a40d"
+property string ToggleOffRUID = "4b841fbed7164f41bd75bad8dfe8caac"
 property TextGUIRendererComponent saleSummaryText = "1764b8f3-caf1-407a-b19c-754d038bc501"
 property TextGUIRendererComponent saleFeedbackText = "64f32ca0-d2f9-4beb-a603-2c6c1b6b1aab"
 property ButtonComponent btnRareOpen = "3ab7dc8e-ddfc-43ce-a503-c174cc6fb8c4"

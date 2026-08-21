@@ -131,11 +131,11 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | `ledger-row-resource-blank` | `f312099962db4862adee65f13644aa64` | 384×83 | **82** 30 17 17 | ✅ |
 | `settings-slider-track` | `bd6dae92677e4274b7e79910939173e4` | 384×49 | 24 24 16 16 | ✅ (T-12-B, 2026-08-18) |
 | `settings-slider-thumb` | `b05198669456485faa7dfe24594c206e` | 92×96 | Simple (`SliderComponent.HandleImageRUID`) | ✅ (T-12-B, 2026-08-18) |
-| `inventory-slot-blank` | `2a87d00d437c4566905d400322c03d88` | 126×128 | Simple | 🟡 업로드·배선 완료, Maker 재검증 대기 |
-| `inventory-slot-selected` | `8b5027c2ee0241c69fc9976ae926ff82` | 128×123 | Simple | 🟡 업로드·배선 완료, Maker 재검증 대기 |
-| `quantity-badge-blank` | `2a1dbdf414e74fef9a3273f0e4eb3922` | 192×105 | 24 24 20 20 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
-| `cost-chip-blank` | `d27c1c284be545b2a3ed0858832a58a9` | 192×64 | 32 32 20 20 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
-| `hud-cart-capacity-bar` | `a6f99f6b962c4d718dd74948300dd15e` | 384×51 | Filled | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `inventory-slot-blank` | `e1c50c7553614819b54ba237d75fdf8f` | 126×128 | Simple | ✅ 재업로드·재배선·Maker 검증 (2026-08-21) |
+| `inventory-slot-selected` | `dc5c3e88865a42c48a627cfe42aa5de8` | 128×123 | Simple | ✅ 재업로드 완료 — 배선처 없음(선택 상태 스왑 미구현, 예비) |
+| `quantity-badge-blank` | `191bcec4821c4813925111e98f69e96b` | 192×105 | 24 24 20 20 | ✅ 재업로드 완료 — **배선처 없음** (수량 뱃지 엔티티는 2026-08-20 오너가 삭제, 텍스트만 유지) |
+| `cost-chip-blank` | `8dd56984ca1f443bbf1af365d1b10ba0` | 192×64 | 32 32 20 20 | ✅ 재업로드·재배선·Maker 검증 (2026-08-21) |
+| `hud-cart-capacity-bar` | `fccb472dfc8744a290f2938d04e58785` | 384×51 | Filled | ✅ 재업로드·재배선·Maker 검증 (2026-08-21) |
 
 ### 5.4 상태 램프 (docs/20 §6 대로 **텍스트 + 색과 함께** 쓴다. 아이콘 단독 표기 금지)
 
@@ -213,28 +213,25 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 
 | 파츠 | RUID | 크기 | 상태 |
 |---|---|---:|:--:|
-| `icon-special-vein` | `ca33fe8d0cad4db88bfd154f6c556114` | 85×96 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
-| `icon-warning-protected` | `981be3962a094d57aeddc7d27265abea` | 96×84 | 🟡 업로드·조건부 배선 완료, Maker 재검증 대기 |
-| `icon-pickaxe` | `56b7a05206aa4fd9b91d3ff650bb1d45` | 96×93 | 🟡 업로드·워커 탭 5개 배선 완료, Maker 재검증 대기 |
-| `stepper-minus` | `85cb0a1c5f6a44e693e120da8bb3d455` | 96×91 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
-| `stepper-plus` | `1b5f85042c6c41b1972cd224963474ab` | 96×95 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
-| `toggle-on` | `ffdc2821ce834708aa17da3b50a0fc56` | 192×91 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
-| `toggle-off` | `3229dd93dec04526a2402f463518092d` | 192×93 | 🟡 업로드·배선 완료, Maker 재검증 대기 |
+| `icon-special-vein` | `77754b64421641c09100e34e0c6ce151` | 85×96 | ✅ 재업로드·재배선·Maker 검증 (2026-08-21) |
+| `icon-warning-protected` | `014da21e989b45f485a160fb6af31e2b` | 96×84 | ✅ 재업로드·재배선·Maker 검증 (2026-08-21) |
+| `icon-pickaxe` | `3d72ef33abb04f14813e7b7fd77fb008` | 96×93 | ✅ 재업로드 완료 — **배선처 없음** (워커 탭 PickaxeIcon 5개는 2026-08-20 깨진 상태로 삭제됨. 되살릴지는 오너 결정) |
+| `stepper-minus` | `6dac8201b52843d2a7d85e79d6516898` | 96×91 | ✅ 재업로드·재배선·Maker 검증 (2026-08-21) |
+| `stepper-plus` | `55026f20283640d4b02274d3ef563424` | 96×95 | ✅ 재업로드·재배선·Maker 검증 (2026-08-21) |
+| `toggle-on` | `8ec20cc6e62f4511a01943453b39a40d` | 192×91 | ✅ 재업로드·재배선·Maker 검증 (2026-08-21, ON 스왑 실측) |
+| `toggle-off` | `4b841fbed7164f41bd75bad8dfe8caac` | 192×93 | ✅ 재업로드·재배선·Maker 검증 (2026-08-21) |
 
-> **2026-08-20 — §5.6 + `cost-chip-blank`·`hud-cart-capacity-bar` 배선 임시 해제.** 위 🟡 파츠들이 실플레이에서
-> 전부 **흰 사각형**으로 그려져(오너 보고), 검증 완료 파츠로 대체 배선했다. 재검증이 끝나면 되돌릴 수 있다.
+> **2026-08-21 — 흰 사각형의 원인 판정 + 재업로드·배선 복원 완료.** 2026-08-20에 흰 사각형으로 떴던 12종의
+> 옛 RUID는 **서버 어디에도 존재하지 않았다** — Play 중 `ResourceService: RUID(...) is unavailable now.` 12건,
+> 그룹(hyNDP)·계정 스토리지 목록 모두 0건. 2026-08-20 세션이 "계정 자산" 경로로 올린 업로드가 실제로는
+> 잔존하지 않은 것이다 (docs/16 §41.2 는 계정 업로드로 기록). **UI 파츠 업로드는 반드시 그룹(hyNDP) 스토리지로**
+> 하고, 배선 전에 msw-asset-verify 로 월드에 띄워 확인한다.
 >
-> | 원래 파츠 | 대체 배선 |
-> |---|---|
-> | `toggle-on` / `toggle-off` | `button-green-blank` / `button-slate-blank` (`MineSelectController.ToggleOn/OffRUID`) |
-> | `stepper-minus` / `stepper-plus` | `button-slate-blank` + 기존 −/+ 라벨 (64×64로 축소) |
-> | `cost-chip-blank` (WorkerCostChip · UpgradeCostChip) | `input-field-blank` |
-> | `icon-special-vein` | docs/20 승인 크리스탈 `c2a20f58a7b1490b936b60b4ddc8471e` |
-> | `icon-warning-protected` | `status-stopped-red` (적색 램프) |
-> | `hud-cart-capacity-bar` (Track·Fill) | `settings-slider-track` (Fill 은 녹색 틴트 + Filled 유지) |
-> | `icon-pickaxe` (워커 탭) | **미교체** — 오너 지적 화면 밖. 재검증 시 함께 확인 |
-> | `inventory-slot-blank` / `inventory-slot-selected` (인벤토리 SlotFrame) | `command-tile-slate-blank` (Simple 렌더) |
-> | `quantity-badge-blank` (인벤토리 QuantityBadge) | `button-slate-blank` + 뱃지 글자색 다크 전환 |
+> 12종 전부 `build/ui-parts/` 재생성 → 그룹 업로드 → 월드 실물 판정(12/12 렌더) → 위 표의 새 RUID 로
+> 대체 배선을 원복했다. 9-slice border 는 `quantity-badge` 24/24/20/20 · `cost-chip` 32/32/20/20 리소스
+> 속성으로 재설정. 배선처가 삭제되고 없는 2종(`icon-pickaxe` 워커 탭 · `quantity-badge-blank`)은 업로드만
+> 완료 상태로 두었다 — 복원 여부는 오너 결정. 대체 배선(2026-08-20)의 매핑 이력은 git 에 있다.
+> 검증 기록: docs/16 §41.3.
 
 ### 5.7 이번 범위 밖 — 업로드 보류
 

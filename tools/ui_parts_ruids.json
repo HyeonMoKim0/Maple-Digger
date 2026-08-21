@@ -21,6 +21,19 @@
 
   "status-running-green":     { "ruid": "b3837d651fe7474b9632fec45153cfe2" },
 
+  "icon-special-vein":        { "ruid": "77754b64421641c09100e34e0c6ce151" },
+  "icon-warning-protected":   { "ruid": "014da21e989b45f485a160fb6af31e2b" },
+  "icon-pickaxe":             { "ruid": "3d72ef33abb04f14813e7b7fd77fb008" },
+  "stepper-minus":            { "ruid": "6dac8201b52843d2a7d85e79d6516898" },
+  "stepper-plus":             { "ruid": "55026f20283640d4b02274d3ef563424" },
+  "toggle-on":                { "ruid": "8ec20cc6e62f4511a01943453b39a40d" },
+  "toggle-off":               { "ruid": "4b841fbed7164f41bd75bad8dfe8caac" },
+  "inventory-slot-blank":     { "ruid": "e1c50c7553614819b54ba237d75fdf8f" },
+  "inventory-slot-selected":  { "ruid": "dc5c3e88865a42c48a627cfe42aa5de8" },
+  "quantity-badge-blank":     { "ruid": "191bcec4821c4813925111e98f69e96b", "border": [24, 24, 20, 20] },
+  "cost-chip-blank":          { "ruid": "8dd56984ca1f443bbf1af365d1b10ba0", "border": [32, 32, 20, 20] },
+  "hud-cart-capacity-bar":    { "ruid": "fccb472dfc8744a290f2938d04e58785" },
+
   "input-field-blank":        { "ruid": "561a0737a9c8468889b6eb8075cc354e", "border": [21, 21, 21, 21] },
   "tooltip-frame-blank":      { "ruid": "d3ffbf345575474aa06d0e4a2ad96447", "border": [19, 19, 19, 19] },
   "piece-card-frame":          { "ruid": "01bb848f974843089fc999bd01680b35" },
