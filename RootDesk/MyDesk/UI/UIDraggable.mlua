@@ -15,6 +15,22 @@ method void OnBeginPlay()
     -- 창 엔티티 자신에게서 터치 이벤트를 받는다.
     self.downHandler = self.Entity:ConnectEvent(UITouchDownEvent, self.OnTouchDown)
     self.dragHandler = self.Entity:ConnectEvent(UITouchDragEvent, self.OnTouchDrag)
+    -- 튜토리얼 위치 고정·보정 (2026-08-21): 설계 기본 위치를 기억해 두고 관리자에
+    -- 스스로 등록한다 — 창 목록을 TutorialController 에 중복 선언하지 않는다.
+    local transform = self.Entity.UITransformComponent
+    if transform ~= nil then
+        self._T.homeX = transform.anchoredPosition.x
+        self._T.homeY = transform.anchoredPosition.y
+    end
+    _TutorialController:RegisterDraggable(self)
+end
+
+@ExecSpace("ClientOnly")
+method void ResetToHome()
+    -- 튜토리얼 진입 시 설계 기본 위치로 되돌린다 (세션 중 드래그 무효화).
+    local transform = self.Entity.UITransformComponent
+    if transform == nil or self._T.homeX == nil then return end
+    transform.anchoredPosition = Vector2(self._T.homeX, self._T.homeY)
 end
 
 @ExecSpace("ClientOnly")
@@ -27,6 +43,8 @@ end
 @ExecSpace("ClientOnly")
 method void OnTouchDown(UITouchDownEvent event)
     -- 잡는 순간 형제 중 맨 앞으로 올리고, 드래그 기준점(UI 좌표)을 잡는다.
+    -- 튜토리얼 활성 중에는 창 위치 고정 — 화살표 좌표 안내 보호 (2026-08-21).
+    if _TutorialController:IsUiDragLocked() then return end
     local transform = self.Entity.UITransformComponent
     if transform ~= nil then _UILogic:SetSiblingIndex(transform, 1000000) end
     self._T.lastUI = _UILogic:ScreenToUIPosition(event.TouchPoint)
@@ -38,6 +56,7 @@ method void OnTouchDrag(UITouchDragEvent event)
     -- 단위라 창이 1920px 보다 작게 렌더되면 그 배율만큼 마우스보다 느리게
     -- 따라오는 문제가 있었다 (2026-08-20 오너 보고) — 절대 좌표 차분은 해상도와
     -- 무관하게 커서와 1:1 로 붙는다. 창 중앙은 화면 밖으로 나가지 않게 클램프.
+    if _TutorialController:IsUiDragLocked() then return end
     local transform = self.Entity.UITransformComponent
     if transform == nil then return end
     local cursorUI = _UILogic:ScreenToUIPosition(event.TouchPoint)

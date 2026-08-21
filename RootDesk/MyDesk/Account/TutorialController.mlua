@@ -160,7 +160,10 @@ method table GetStepConfig(integer step)
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
             tooltipX = 350, tooltipY = -150, arrowX = -15, arrowY = 106, arrowDir = "left",
-            seq = { "repeatAdd", "ifAdd", "mine", "load", "endBlock", "endBlock", "run" },
+            -- endBlock 은 1회만 안내한다 (2026-08-21 오너 보고): IF 를 닫는 1번이면
+            -- 충분하고 남은 반복은 [실행]의 CloseAllOpenBlocks 가 자동으로 닫는다.
+            -- 2회 연속으로 두면 같은 버튼을 가리킨 채 "화살표가 안 움직이는" 것처럼 보인다.
+            seq = { "repeatAdd", "ifAdd", "mine", "load", "endBlock", "run" },
         }
     elseif step == 7 then
         return {
@@ -519,8 +522,41 @@ method void Activate(integer step, boolean replay)
     -- 튜토리얼 UI·잠금 가동.
     self._T.active = true
     self._T.replayActive = replay
+    -- 2026-08-21 오너 요청: 튜토리얼 중에는 창 위치가 설계 기본값이어야 화살표
+    -- 좌표 안내가 어긋나지 않는다 — 드래그된 창을 원위치로 보정한다. 활성 중
+    -- 드래그 자체는 IsUiDragLocked 가 UIDraggable 에서 차단한다.
+    self:ResetDraggablePanels()
     self:EnterStep(step)
     log("[Tutorial] activated step=" .. tostring(step) .. " replay=" .. tostring(replay))
+end
+
+@ExecSpace("ClientOnly")
+method void RegisterDraggable(any draggable)
+    -- UIDraggable 이 스스로 등록한다 (창 목록을 여기 중복 선언하지 않는다 —
+    -- GetButtonRegistry 와 같은 원칙). OnBeginPlay 순서와 무관하게 lazy-init.
+    if self._T.draggables == nil then self._T.draggables = {} end
+    table.insert(self._T.draggables, draggable)
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsUiDragLocked()
+    -- 튜토리얼 활성 중에는 창 드래그를 막는다 (다시 보기 포함 — 화살표 안내 보호).
+    return self._T.active == true
+end
+
+@ExecSpace("ClientOnly")
+method void ResetDraggablePanels()
+    -- 등록된 모든 드래그 창을 설계 기본 위치로 되돌린다.
+    if self._T.draggables == nil then return end
+    local resetCount = 0
+    for i = 1, #self._T.draggables do
+        local draggable = self._T.draggables[i]
+        if draggable ~= nil and isvalid(draggable) then
+            draggable:ResetToHome()
+            resetCount = resetCount + 1
+        end
+    end
+    log("[Tutorial] draggable panels reset count=" .. tostring(resetCount))
 end
 
 @ExecSpace("ClientOnly")
