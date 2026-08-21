@@ -1130,7 +1130,7 @@
       {
         "id": "2483e6d5-7360-466b-b060-59acd95d9f44",
         "path": "/ui/TutorialUI/Root/Arrow",
-        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.PolygonGUIRendererComponent",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
         "jsonString": {
           "name": "Arrow",
           "path": "/ui/TutorialUI/Root/Arrow",
@@ -1164,20 +1164,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 15,
-                "y": 344
+                "x": 13,
+                "y": 349
               },
               "OffsetMin": {
-                "x": -45,
-                "y": 284
+                "x": -43,
+                "y": 279
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 60,
-                "y": 60
+                "x": 56,
+                "y": 70
               },
               "UIMode": 1,
               "UIScale": {
@@ -1190,14 +1190,9 @@
                 "x": -15,
                 "y": 314
               },
-              "Rotation": {
+              "Position": {
                 "x": 0,
                 "y": 0,
-                "z": 0
-              },
-              "Position": {
-                "x": -15,
-                "y": 314,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -1211,35 +1206,22 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
-              "@type": "MOD.Core.PolygonGUIRendererComponent",
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "Enable": true,
+              "ImageRUID": {
+                "DataId": "ba442ba7f1cb464da34571c7288e4f07"
+              },
               "Color": {
                 "r": 1,
-                "g": 0.831372559,
-                "b": 0,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
-              "MaterialId": "",
-              "Points": [
-                {
-                  "x": 30,
-                  "y": 20
-                },
-                {
-                  "x": 30,
-                  "y": -20
-                },
-                {
-                  "x": -30,
-                  "y": 0
-                }
-              ],
-              "UVs": [],
-              "UseCustomUVs": false,
-              "Enable": true
+              "Type": 0,
+              "RaycastTarget": false
             }
           ],
           "@version": 1

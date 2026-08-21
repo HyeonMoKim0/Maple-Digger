@@ -164,9 +164,12 @@ method table GetStepConfig(integer step)
         }
     elseif step == 7 then
         return {
-            guide = "창고의 돌을 팔아 골드를 벌어요.\n[광산 선택] → [판매]에서 돌을 파세요. 돌이 10개보다 적으면 [전량]을 누르면 됩니다.",
+            guide = "창고의 돌을 팔아 골드를 벌어요.\n[광산 선택] → [판매]에서 돌을 파세요. 팔 수 있는 수량이 0이면 [보호분 판매]를 먼저 켜세요.",
             fail = "",
-            allowed = { selectOpen = true, selectClose = true, sellOpen = true, saleClose = true, oreStone = true, quickOne = true, quickTen = true, quickAll = true, sellSelected = true },
+            -- toggleProtected 는 2026-08-21 버그 수정으로 허용 — 보유량이 보호 수량
+            -- 이하면(다시 보기·후반 계정에서 흔함) 판매 가능 수량이 0이라 토글 없이는
+            -- 7단계 완료가 불가능했다 (docs/16 §41.7).
+            allowed = { selectOpen = true, selectClose = true, sellOpen = true, saleClose = true, oreStone = true, quickOne = true, quickTen = true, quickAll = true, sellSelected = true, toggleProtected = true },
             reset = nil,
             clearProgram = true,
             -- 7단계: 중앙 패널(폭 780, X -390~390)을 가리지 않도록 왼쪽 바깥에
@@ -335,20 +338,21 @@ method void UpdateArrowTarget()
     if sw <= 0 or sh <= 0 then return end
     local left = (corners[1].x - rc[1].x) / sw * 1920 - 960
     local right = (corners[3].x - rc[1].x) / sw * 1920 - 960
-    local centerY = ((corners[1].y + corners[2].y) * 0.5 - rc[1].y) / sh * 1080 - 540
-    local x = 0
-    local flip = 1
-    if (left + right) * 0.5 <= 0 then
-        x = right + 45   -- 대상이 왼쪽 절반: 오른쪽에 서서 왼쪽을 가리킨다
-        flip = 1
-    else
-        x = left - 45    -- 대상이 오른쪽 절반: 왼쪽에 서서 오른쪽을 가리킨다
-        flip = -1
+    local bottom = (corners[1].y - rc[1].y) / sh * 1080 - 540
+    local top = (corners[2].y - rc[1].y) / sh * 1080 - 540
+    -- 화살표 자산(ba442ba7…)은 위쪽을 가리키는 스프라이트다. 기본은 버튼 아래에서
+    -- 위를 가리키고, 버튼이 화면 하단이라 자리가 없으면 위에서 세로 반전(↓)한다.
+    local x = (left + right) * 0.5
+    local y = bottom - 50
+    local flipY = 1
+    if y - 35 < -530 then
+        y = top + 50
+        flipY = -1
     end
     if not self.arrow.Enable then self.arrow.Enable = true end
     local arrowTransform = self.arrow.UITransformComponent
-    arrowTransform.anchoredPosition = Vector2(x, centerY)
-    arrowTransform.UIScale = Vector3(flip, 1, 1)
+    arrowTransform.anchoredPosition = Vector2(x, y)
+    arrowTransform.UIScale = Vector3(1, flipY, 1)
 end
 
 @ExecSpace("ClientOnly")
@@ -421,11 +425,11 @@ method void ShowTooltip(integer step, string reason)
         self.tooltip.UITransformComponent.anchoredPosition = Vector2(config.tooltipX, config.tooltipY)
     end
     if self.arrow ~= nil then
+        -- 초기 위치는 config 폴백. 실제 위치·방향은 UpdateArrowTarget 이 매 프레임
+        -- 대상 버튼 기준으로 덮어쓴다 (위쪽 화살표 자산 — 세로 반전만 쓴다).
         self.arrow.Enable = true
         self.arrow.UITransformComponent.anchoredPosition = Vector2(config.arrowX, config.arrowY)
-        local flip = 1
-        if config.arrowDir == "right" then flip = -1 end
-        self.arrow.UITransformComponent.UIScale = Vector3(flip, 1, 1)
+        self.arrow.UITransformComponent.UIScale = Vector3(1, 1, 1)
     end
 end
 
