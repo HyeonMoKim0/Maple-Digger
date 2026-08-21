@@ -24,7 +24,7 @@
           "enable": true,
           "visible": true,
           "localize": true,
-          "displayOrder": 9,
+          "displayOrder": 10,
           "pathConstraints": "//",
           "revision": 0,
           "origin": {
@@ -397,20 +397,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 600,
-                "y": -55
+                "x": 630,
+                "y": -35
               },
               "OffsetMin": {
-                "x": 100,
-                "y": -245
+                "x": 70,
+                "y": -265
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 500,
-                "y": 190
+                "x": 560,
+                "y": 230
               },
               "UIMode": 1,
               "UIScale": {
@@ -423,14 +423,9 @@
                 "x": 350,
                 "y": -150
               },
-              "Rotation": {
+              "Position": {
                 "x": 0,
                 "y": 0,
-                "z": 0
-              },
-              "Position": {
-                "x": 350,
-                "y": -150,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -444,7 +439,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -556,20 +550,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 230,
-                "y": 83
+                "x": 260,
+                "y": 107
               },
               "OffsetMin": {
-                "x": -230,
-                "y": -27
+                "x": -260,
+                "y": -39
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 460,
-                "y": 110
+                "x": 520,
+                "y": 146
               },
               "UIMode": 1,
               "UIScale": {
@@ -580,16 +574,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": 28
-              },
-              "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "y": 34
               },
               "Position": {
                 "x": 0,
-                "y": 28,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -603,7 +592,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -613,9 +601,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.29,
+                "g": 0.18,
+                "b": 0.08,
                 "a": 1
               },
               "FontSize": 24,
@@ -750,12 +738,12 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": -125,
-                "y": -42
+                "x": -155,
+                "y": -62
               },
               "OffsetMin": {
-                "x": -235,
-                "y": -82
+                "x": -265,
+                "y": -102
               },
               "Pivot": {
                 "x": 0.5,
@@ -773,17 +761,12 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": -180,
-                "y": -62
-              },
-              "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": -210,
+                "y": -82
               },
               "Position": {
-                "x": -180,
-                "y": -62,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -797,7 +780,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -807,9 +789,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.6039216,
-                "g": 0.819607854,
-                "b": 1,
+                "r": 0.42,
+                "g": 0.28,
+                "b": 0.14,
                 "a": 1
               },
               "FontSize": 22,
@@ -944,12 +926,12 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 230,
-                "y": -30
+                "x": 260,
+                "y": -50
               },
               "OffsetMin": {
-                "x": 80,
-                "y": -86
+                "x": 110,
+                "y": -106
               },
               "Pivot": {
                 "x": 0.5,
@@ -967,17 +949,12 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 155,
-                "y": -58
-              },
-              "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 185,
+                "y": -78
               },
               "Position": {
-                "x": 155,
-                "y": -58,
+                "x": 0,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -991,7 +968,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
