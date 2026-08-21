@@ -155,9 +155,9 @@ method void RefreshDisplay()
     local total = #self._T.strip
     if self.programLabelText ~= nil then
         if total == 0 then
-            self.programLabelText.Text = "프로그램 (비어 있음 - 블록을 눌러 추가)"
+            self.programLabelText.Text = "공용 프로그램 (비어 있음 - 블록을 눌러 추가)"
         else
-            self.programLabelText.Text = "프로그램 (칸을 누르면 그 블록 삭제)"
+            self.programLabelText.Text = "공용 프로그램 (칸 클릭=삭제 · 제어는 껍데기만)"
         end
     end
     local cellCount = #self._T.cells
@@ -241,8 +241,9 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnStripCellClicked(integer cellIndex)
-    -- T-14 (docs/28 §2.3): 칸 클릭 = 그 블록 삭제. 제어 블록은 시작 칸이든 ] 칸이든
-    -- 몸통까지 통째로 지운다 — 괄호 짝이 깨진 상태를 만들지 않는다.
+    -- T-14 (docs/28 §2.3, 2026-08-21 개정): 칸 클릭 = 그 블록 삭제. 제어 블록은
+    -- 시작 칸이든 ] 칸이든 **껍데기만** 지우고 몸통은 제자리에 펼쳐 보존한다 —
+    -- 괄호 짝도 안 깨지고, 클릭 한 번에 프로그램 전체가 증발하지 않는다.
     local token = self._T.strip[cellIndex]
     if token == nil then return end
     if token.kind == "overflow" then
@@ -250,22 +251,37 @@ method void OnStripCellClicked(integer cellIndex)
         return
     end
     local removedLabel = token.label
-    local removed = false
+    local removedIndex = 0
     for i = 1, #token.list do
         if token.list[i] == token.node then
             table.remove(token.list, i)
-            removed = true
+            removedIndex = i
             break
         end
     end
-    if not removed then
+    if removedIndex == 0 then
         -- 스트립과 트리가 어긋났다 — 다시 그리는 것으로 복구한다 (무증상 방지 로그).
         log("[BlockProgram] strip token missing from tree - repaint")
         self:RefreshDisplay()
         return
     end
     if token.node.type == "repeat" or token.node.type == "if" then
+        local preserved = 0
+        if type(token.node.body) == "table" then
+            for b = 1, #token.node.body do
+                table.insert(token.list, removedIndex + b - 1, token.node.body[b])
+                preserved = preserved + 1
+            end
+        end
         self:RemoveNodeFromOpenStacks(token.node)
+        self:RefreshDisplay()
+        if preserved > 0 then
+            self:SetFeedback("'" .. removedLabel .. "' 제어 블록만 삭제했습니다. 안의 블록 " .. tostring(preserved) .. "개는 남아 있습니다.")
+        else
+            self:SetFeedback("'" .. removedLabel .. "' 블록을 삭제했습니다.")
+        end
+        log("[BlockProgram] strip shell-delete '" .. removedLabel .. "' preserved=" .. tostring(preserved) .. " at cell " .. tostring(cellIndex))
+        return
     end
     self:RefreshDisplay()
     self:SetFeedback("'" .. removedLabel .. "' 블록을 삭제했습니다.")
@@ -274,33 +290,18 @@ end
 
 @ExecSpace("ClientOnly")
 method void RemoveNodeFromOpenStacks(table node)
-    -- 삭제한 제어 블록(과 그 몸통 안의 제어 블록)이 열림 스택에 남지 않게 한다.
+    -- 삭제한 제어 블록이 열림 스택에 남지 않게 한다. 2026-08-21 개정: 껍데기만
+    -- 삭제(몸통 보존)로 바뀌어 **그 노드 하나만** 스택에서 뺀다 — 몸통 안의
+    -- 제어 블록들은 트리에 살아 있으므로 열림 상태도 그대로 유지해야 한다.
     -- openControls[k].body == openBodies[k+1] 쌍을 유지하며 함께 제거한다.
-    local doomed = {}
-    self:CollectControls(node, doomed)
     for i = #self._T.openControls, 1, -1 do
-        for d = 1, #doomed do
-            if self._T.openControls[i] == doomed[d] then
-                table.remove(self._T.openControls, i)
-                table.remove(self._T.openBodies, i + 1)
-                break
-            end
+        if self._T.openControls[i] == node then
+            table.remove(self._T.openControls, i)
+            table.remove(self._T.openBodies, i + 1)
+            break
         end
     end
     self:RefreshRepeatControlFromOpenStack()
-end
-
-@ExecSpace("ClientOnly")
-method void CollectControls(table node, table out)
-    -- node 자신 + 몸통 안의 모든 제어 블록을 모은다 (RemoveNodeFromOpenStacks 용).
-    table.insert(out, node)
-    if type(node.body) ~= "table" then return end
-    for i = 1, #node.body do
-        local child = node.body[i]
-        if type(child) == "table" and (child.type == "repeat" or child.type == "if") then
-            self:CollectControls(child, out)
-        end
-    end
 end
 
 @ExecSpace("ClientOnly")
