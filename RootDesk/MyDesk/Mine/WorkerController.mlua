@@ -383,6 +383,13 @@ method string WorkerTag()
     return "[Worker " .. tostring(self.WorkerIndex) .. "]"
 end
 
+method boolean Verbose()
+    -- 매 액션(simTick=...) 로그를 낼지 판정한다. 단일 소유자는 _MineLogPolicy
+    -- (docs/24 §5). 오류·경고·수명주기·프로그램 수락/거절/완료 로그는
+    -- 이 게이트를 쓰지 않는다 — 항상 남는다.
+    return _MineLogPolicy:IsVerbose()
+end
+
 @ExecSpace("ServerOnly")
 method void ResetExecution()
     -- Clears every stack frame, queued command, and action counter.
@@ -539,7 +546,7 @@ method void DoMove(string dir)
     local targetX = self._T.cellX + dx
     local targetY = self._T.cellY + dy
     if not self:IsCellWalkable(targetX, targetY) then
-        log(self:WorkerTag() .. " blocked " .. dir .. " at boundary target=(" .. targetX .. "," .. targetY .. ")")
+        if self:Verbose() then log(self:WorkerTag() .. " blocked " .. dir .. " at boundary target=(" .. targetX .. "," .. targetY .. ")") end
         return
     end
 
@@ -549,7 +556,7 @@ method void DoMove(string dir)
     self.CellY = targetY
     self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
     self:EmitVisualEvent("move", self._T.cellX, self._T.cellY)
-    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+    if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - move " .. dir .. " -> cell (" .. self._T.cellX .. "," .. self._T.cellY .. ")") end
 end
 
 @ExecSpace("ServerOnly")
@@ -559,24 +566,24 @@ method void DoMine()
     -- (2026-08-18 오너 결정). 종류 불일치는 TryMine 이 소모 없이 거른다.
     if self.PendingOre ~= "" and self.PendingOreCount >= self.HandCapacity then
         self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand full ore=" .. self.PendingOre .. " x" .. tostring(self.PendingOreCount))
+        if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand full ore=" .. self.PendingOre .. " x" .. tostring(self.PendingOreCount)) end
         return
     end
     if not self._T.mineState:IsVein(self._T.cellX, self._T.cellY) then
         self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no vein at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no vein at (" .. self._T.cellX .. "," .. self._T.cellY .. ")") end
         return
     end
     if not self._T.mineState:HasOre(self._T.cellX, self._T.cellY) then
         self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")")
+        if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - vein empty at (" .. self._T.cellX .. "," .. self._T.cellY .. ")") end
         return
     end
 
     local oreType = self._T.mineState:TryMine(self._T.cellX, self._T.cellY, self.PendingOre)
     if oreType == "" then
         self:EmitVisualEvent("mine_fail", self._T.cellX, self._T.cellY)
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no minable ore at (" .. self._T.cellX .. "," .. self._T.cellY .. ") hand=" .. self.PendingOre)
+        if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - no minable ore at (" .. self._T.cellX .. "," .. self._T.cellY .. ") hand=" .. self.PendingOre) end
         return
     end
     -- F7-B §5.3 yield: 희귀 승격이 아닐 때만 확률로 같은 광물 1개 추가.
@@ -590,7 +597,7 @@ method void DoMine()
     end
     self:EmitVisualEvent("mine_success", self._T.cellX, self._T.cellY)
     local stage = self._T.mineState:GetReserveStage(self._T.cellX, self._T.cellY)
-    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " x" .. tostring(self.PendingOreCount) .. " -> hand at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage)
+    if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - mine " .. oreType .. " x" .. tostring(self.PendingOreCount) .. " -> hand at (" .. self._T.cellX .. "," .. self._T.cellY .. ") stage=" .. stage) end
     if self._T.mineState.AutoLoadOnMine then self:DoLoad() end
 end
 
@@ -599,12 +606,12 @@ method void DoLoad()
     -- Moves the hand stack into this worker's cart without losing it on failure.
     -- F7-B §5.3: 손의 전량을 옮기되, 수레 여유가 1칸뿐이면 1개만 싣고 나머지는 손에 남긴다.
     if self.PendingOre == "" or self.PendingOreCount <= 0 then
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand empty")
+        if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - hand empty") end
         return
     end
     local space = self.CartCapacity - self.CartCount
     if space <= 0 then
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - cart full count=" .. self.CartCount)
+        if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - cart full count=" .. self.CartCount) end
         return
     end
     local moved = math.min(space, self.PendingOreCount)
@@ -619,18 +626,18 @@ method void DoLoad()
         self.PendingOreCount = 0
     end
     self:EmitVisualEvent("load_success", self._T.cellX, self._T.cellY)
-    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - load " .. oreType .. " x" .. tostring(moved) .. " cart=" .. self.CartCount .. "/" .. self.CartCapacity .. " handLeft=" .. tostring(self.PendingOreCount))
+    if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - load " .. oreType .. " x" .. tostring(moved) .. " cart=" .. self.CartCount .. "/" .. self.CartCapacity .. " handLeft=" .. tostring(self.PendingOreCount)) end
 end
 
 @ExecSpace("ServerOnly")
 method void DoUnload()
     -- Deposits every cart stack only at the configured depot cell.
     if not self._T.mineState:IsDepot(self._T.cellX, self._T.cellY) then
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - not at depot")
+        if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - not at depot") end
         return
     end
     if self.CartCount <= 0 then
-        log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - cart empty")
+        if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - cart empty") end
         return
     end
     local unloaded = self.CartCount
@@ -651,7 +658,7 @@ method void DoUnload()
     if rareUnloaded > 0 then
         self._T.mineState:EmitMineNotice("rare_ore_unload", self._T.cellX, self._T.cellY, rareUnloaded)
     end
-    log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload count=" .. unloaded .. " rare=" .. rareUnloaded .. " depotStone=" .. self._T.mineState.DepotStone)
+    if self:Verbose() then log(self:WorkerTag() .. " simTick=" .. self._T.lastSimulationTick .. " step=" .. self._T.actionStep .. " - unload count=" .. unloaded .. " rare=" .. rareUnloaded .. " depotStone=" .. self._T.mineState.DepotStone) end
 end
 
 @ExecSpace("ServerOnly")

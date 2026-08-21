@@ -1,0 +1,30 @@
+@Logic
+script MineLogPolicy extends Logic
+
+-- 액션 단위 진단 로그의 단일 스위치 (docs/24 §5 릴리스 권고 이행).
+--
+-- 부하 중 콘솔 로그가 분당 ~1,300건(2026-08-21 F9 실측)이라 실플레이 진단에서
+-- 진짜 신호가 묻혔다. 매 틱·매 액션마다 나던 로그를 이 플래그 뒤로 넣어
+-- 릴리스 빌드는 조용하게 두고, 진단·측정 세션에서만 켠다.
+--
+-- 켜는 법 — PerfProbeLogic.Active 와 같은 운용 방식이다. Logic 은 서버/클라
+-- 각자 인스턴스를 들고 있으므로 **필요한 side 에서 각각** 켠다:
+--   maker_execute_script(server_main): _MineLogPolicy.Verbose = true
+--   maker_execute_script(client_main): _MineLogPolicy.Verbose = true
+--
+-- ⚠ docs/24 §6 재측정 절차와 §5 판정선 5번(cue 의 play→suppressed 짝)은
+--   이 플래그가 **켜져 있는 것을 전제로** 한다. 끈 채로 재측정하면
+--   `[MineSound] play/suppressed` 가 안 나와 cue 규율을 판정할 수 없다.
+--
+-- 이 경로를 쓰면 안 되는 것: log_error / log_warning / 수명주기(ready·spawned·
+-- configured) / 프로그램 수락·거절·완료 / layout loaded / 특별 광맥 스폰 /
+-- notice / 맵 전환. 전부 **항상 남아야 하는** 저빈도 신호다.
+property boolean Verbose = false
+
+method boolean IsVerbose()
+    -- 액션 단위 로그를 낼지 판정한다. 호출부는 문자열을 만들기 전에 이걸 먼저 본다
+    -- (버리는 로그의 concat 비용까지 건너뛰기 위해 call-site 가드로 쓴다).
+    return self.Verbose
+end
+
+end

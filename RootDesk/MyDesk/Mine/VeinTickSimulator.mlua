@@ -144,12 +144,14 @@ method void AdvanceTick()
             if vein.stage < self.MaxReserveStage then
                 vein.stage = vein.stage + 1
                 recoveredCount = recoveredCount + 1
-                log("[VeinTick] recovered cell " .. key .. " ore=" .. vein.ore .. " stage=" .. vein.stage)
+                if _MineLogPolicy:IsVerbose() then log("[VeinTick] recovered cell " .. key .. " ore=" .. vein.ore .. " stage=" .. vein.stage) end
             end
         end
     end
 
-    if recoveredCount > 0 then
+    -- 매 틱 × 3맵 = 분당 ~450건이던 자리다. 액션 단위 로그는 _MineLogPolicy
+    -- 뒤로 넣는다 (docs/24 §5). layout loaded·특별 스폰·notice 는 게이트 밖이다.
+    if recoveredCount > 0 and _MineLogPolicy:IsVerbose() then
         log("[VeinTick] tick " .. self.CurrentTick .. " - recovered cells=" .. recoveredCount)
     end
 
@@ -731,7 +733,7 @@ method string TryMine(integer cellX, integer cellY, string currentHandOre)
     if currentHandOre ~= nil and currentHandOre ~= "" and deliveredOre ~= currentHandOre then
         deliveredOre = vein.ore
     end
-    log("[VeinTick] mined cell " .. key .. " ore=" .. deliveredOre .. " stage=" .. vein.stage)
+    if _MineLogPolicy:IsVerbose() then log("[VeinTick] mined cell " .. key .. " ore=" .. deliveredOre .. " stage=" .. vein.stage) end
     return deliveredOre
 end
 
@@ -751,7 +753,7 @@ method integer AddToDepot(string oreType, integer count)
     if oreType == "iron" then self.DepotIron = self.Depot[oreType] end
     if oreType == "gold" then self.DepotGold = self.Depot[oreType] end
     _EconomyService:CreditOreFromMine(self.Entity, oreType, count)
-    log("[VeinTick] depot add ore=" .. oreType .. " count=" .. count .. " total=" .. self.Depot[oreType])
+    if _MineLogPolicy:IsVerbose() then log("[VeinTick] depot add ore=" .. oreType .. " count=" .. count .. " total=" .. self.Depot[oreType]) end
     return self.Depot[oreType]
 end
 
