@@ -455,8 +455,11 @@ method void CheckUpgradeResultPopup(number delta)
     if pending ~= nil then
         if _UIPopup.isOpen ~= true and _UIPopup.isTweenPlaying ~= true then
             self._T.pendingResultPopup = nil
+            -- 가독성 개행 (2026-08-22 오너): 첫 문장("…니다.") 뒤를 빈 줄로 띄운다.
+            -- "맵 강화 재화가 부족합니다. 돌 20 부족 …" → 제목 / (빈 줄) / 상세.
+            local formatted = string.gsub(pending, "니다%. ", "니다.\n\n", 1)
             log("[MineSelectUI] upgrade result popup: " .. pending)
-            _UIPopup:Open(pending, nil, nil)
+            _UIPopup:OpenNotice(formatted, nil)
         end
         return
     end

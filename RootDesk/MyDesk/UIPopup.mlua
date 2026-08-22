@@ -31,10 +31,19 @@ script UIPopup extends Logic
 
 	property any cancelHandler = nil
 
+	-- T-15 알림 모드 상태 (확인 단독 팝업). okHomePos 는 최초 1회 저장한 확인 버튼 원위치.
+	property boolean noticeMode = false
+
+	property boolean okHomeSaved = false
+
+	property Vector2 okHomePos = Vector2(0, 0)
+
 	method void Open(string message, any onOk, any onCancel)
 		if self.isOpen == true then
 			return
 		end
+		-- 직전 팝업이 확인 단독(알림 모드)이었으면 두 버튼 배치로 원복한다.
+		self:ApplyNoticeMode(false)
 		self.isOpen = true
 		self.popupGroup.Enable = true
 		self.message.Text = message
@@ -67,6 +76,33 @@ script UIPopup extends Logic
 			self.onCancel = nil
 		end
 		self:Close()
+	end
+
+	method void OpenNotice(string message, any onOk)
+		-- 확인 버튼 단독 알림 팝업 (T-15, 2026-08-22 오너 요청 — 강화 결과 안내).
+		-- 취소가 의미 없는 "결과 통보"에 쓴다. 배치 원복은 다음 Open 이 한다.
+		if self.isOpen == true then
+			return
+		end
+		self:Open(message, onOk, nil)
+		self:ApplyNoticeMode(true)
+	end
+
+	method void ApplyNoticeMode(boolean enable)
+		-- 알림 모드: 취소 숨김 + 확인을 중앙으로. 끌 때는 저장해 둔 원위치로 되돌린다.
+		local okTransform = self.btnOk.Entity.UITransformComponent
+		if self.okHomeSaved ~= true then
+			self.okHomePos = okTransform.anchoredPosition
+			self.okHomeSaved = true
+		end
+		self.noticeMode = enable
+		if enable == true then
+			self.btnCancel.Entity.Enable = false
+			okTransform.anchoredPosition = Vector2(0, self.okHomePos.y)
+		else
+			self.btnCancel.Entity.Enable = true
+			okTransform.anchoredPosition = Vector2(self.okHomePos.x, self.okHomePos.y)
+		end
 	end
 
 	method void Close()
