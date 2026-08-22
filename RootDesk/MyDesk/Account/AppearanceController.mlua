@@ -12,13 +12,21 @@ property ButtonComponent btnEquip = "e9408ad2-207b-4bcf-b08b-443a188ce8f4"
 property ButtonComponent btnDefault = "1d9e7443-a399-4146-88d1-02a1e4f3ae8f"
 property ButtonComponent btnGacha = "bdc45d92-948c-403a-bed5-6a5127e25176"
 property ButtonComponent btnCraft = "f9b4c1d1-0403-4b97-9dec-91f7b629b9b5"
-property ButtonComponent btnExchange1 = "50609910-1c62-44bd-99ca-9d36b132c2f9"
-property ButtonComponent btnExchange10 = "ee6bbc84-c0ec-4045-a776-154f9bf6ebff"
+-- T-15d: ×1/×10 즉석 교환은 beta 크리스탈 환전소 팝업(슬라이더 1~100)으로 대체됐다.
+property ButtonComponent btnExchangeShop = "9466b682-8a3f-4a15-b421-a8891a1c9437"
+property ButtonComponent btnProbability = "72cb8368-8d0e-4535-99f4-357b3187ebf5"
+property Entity exchangePopup = "088582b6-36d9-4c5a-86e2-689b5eafc010"
+property SliderComponent exchangeSlider = "9700c4d0-e907-4f0c-87f5-4af5a83c46c7"
+property TextGUIRendererComponent exchangeAmountText = "1d635251-c8aa-47d9-b06c-be152d406365"
+property ButtonComponent btnExchangeConfirm = "1823bc7b-fa8c-470b-a804-63c85f3c4b15"
+property ButtonComponent btnExchangeCancel = "2dff27a9-81bb-4b33-98c5-299081e1185f"
+property ButtonComponent btnExchangeMinus = "cf0e7364-bbce-42b2-91dd-b3036849061d"
+property ButtonComponent btnExchangePlus = "8c94e7c6-f25e-4c2c-a562-4766a1095da7"
 property ButtonComponent btnResultClose = "c67c76d5-4e7f-4a17-abf1-41ec3167c669"
 property TextGUIRendererComponent collectionText = "8ee2cfd7-ec76-404f-bde4-ce73c9862564"
 property TextGUIRendererComponent pityText = "f0dbec3c-c7b9-43f6-a246-cb23264128de"
 property TextGUIRendererComponent costText = "6b9cf9c5-60c9-4169-b1dc-0927dbf6505c"
-property TextGUIRendererComponent probabilityText = "ea41b7bb-5be3-4ebb-802e-4000aff66f19"
+-- (T-15d: probabilityText 는 [뽑기 확률] 버튼 팝업으로 대체돼 엔티티와 함께 제거됐다)
 property TextGUIRendererComponent selectedText = "509edfbc-614d-4956-8348-ca169fcdb192"
 property TextGUIRendererComponent resultText = "41a0ad64-88ee-49c1-84f0-74857b23a8e0"
 
@@ -106,8 +114,16 @@ method void OnBeginPlay()
     self:Connect("default", self.btnDefault, self.OnDefaultClicked)
     self:Connect("gacha", self.btnGacha, self.OnGachaClicked)
     self:Connect("craft", self.btnCraft, self.OnCraftClicked)
-    self:Connect("exchange1", self.btnExchange1, self.OnExchange1Clicked)
-    self:Connect("exchange10", self.btnExchange10, self.OnExchange10Clicked)
+    self:Connect("exchangeShop", self.btnExchangeShop, self.OnExchangeShopClicked)
+    self:Connect("probability", self.btnProbability, self.OnProbabilityClicked)
+    self:Connect("exchangeConfirm", self.btnExchangeConfirm, self.OnExchangeConfirmClicked)
+    self:Connect("exchangeCancel", self.btnExchangeCancel, self.OnExchangeCancelClicked)
+    self:Connect("exchangeMinus", self.btnExchangeMinus, self.OnExchangeMinusClicked)
+    self:Connect("exchangePlus", self.btnExchangePlus, self.OnExchangePlusClicked)
+    if self.exchangeSlider ~= nil then
+        self._T.sliderHandler = self.exchangeSlider.Entity:ConnectEvent(SliderValueChangedEvent, self.OnExchangeSliderChanged)
+    end
+    if self.exchangePopup ~= nil then self.exchangePopup.Enable = false end
     self:Connect("resultClose", self.btnResultClose, self.OnResultCloseClicked)
     self:Connect("worker1", self.worker1, function() self:SelectWorker(1) end)
     self:Connect("worker2", self.worker2, function() self:SelectWorker(2) end)
@@ -189,6 +205,7 @@ method void ClosePanel()
     if self.appearancePanel ~= nil then self.appearancePanel.Enable = false end
     if self.pityPanel ~= nil then self.pityPanel.Enable = false end
     if self.resultPanel ~= nil then self.resultPanel.Enable = false end
+    if self.exchangePopup ~= nil then self.exchangePopup.Enable = false end
 end
 
 @ExecSpace("ClientOnly")
@@ -242,15 +259,69 @@ method void OnCraftClicked()
 end
 
 @ExecSpace("ClientOnly")
-method void OnExchange1Clicked()
-    local profile = self:GetProfile()
-    if profile ~= nil then profile:RequestCrystalExchange(1) end
+method void OnProbabilityClicked()
+    -- T-15d: 확률 고지는 상시 텍스트 대신 확인 단독 팝업으로.
+    _UIPopup:OpenNotice("뽑기 확률\n\n" .. (self._T.probabilityLine or "정보를 불러오는 중입니다."), nil)
 end
 
 @ExecSpace("ClientOnly")
-method void OnExchange10Clicked()
+method void OnExchangeShopClicked()
+    -- T-15d: beta 크리스탈 환전소 — 슬라이더 1~100, 골드 1 = 크리스탈 1.
+    if self.exchangePopup == nil then return end
+    self._T.exchangeAmount = 1
+    if self.exchangeSlider ~= nil then self.exchangeSlider.Value = 1 end
+    self:RefreshExchangeAmount()
+    self.exchangePopup.Enable = true
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchangeSliderChanged(SliderValueChangedEvent event)
+    -- 정수 슬라이더지만 방어적으로 내림 처리한다.
+    local sliderValue = 1
+    if self.exchangeSlider ~= nil then sliderValue = self.exchangeSlider.Value end
+    self._T.exchangeAmount = math.max(1, math.floor(sliderValue))
+    self:RefreshExchangeAmount()
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshExchangeAmount()
+    local amount = self._T.exchangeAmount or 1
+    if self.exchangeAmountText ~= nil then
+        self.exchangeAmountText.Text = "골드 " .. tostring(amount) .. "  →  크리스탈 " .. tostring(amount)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void AdjustExchangeAmount(integer delta)
+    -- ± 스테퍼: 1~100 클램프. 슬라이더 Value 대입이 SliderValueChangedEvent 를
+    -- 되쏘지만 핸들러가 Value 에서 다시 읽으므로 순환 문제는 없다.
+    local amount = math.max(1, math.min(100, (self._T.exchangeAmount or 1) + delta))
+    self._T.exchangeAmount = amount
+    if self.exchangeSlider ~= nil then self.exchangeSlider.Value = amount end
+    self:RefreshExchangeAmount()
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchangeMinusClicked()
+    self:AdjustExchangeAmount(-1)
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchangePlusClicked()
+    self:AdjustExchangeAmount(1)
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchangeConfirmClicked()
+    -- 결과(완료/골드 부족)는 전역 TransactionNoticeLogic·인라인 표기가 안내한다.
     local profile = self:GetProfile()
-    if profile ~= nil then profile:RequestCrystalExchange(10) end
+    if profile ~= nil then profile:RequestCrystalExchange(self._T.exchangeAmount or 1) end
+    if self.exchangePopup ~= nil then self.exchangePopup.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchangeCancelClicked()
+    if self.exchangePopup ~= nil then self.exchangePopup.Enable = false end
 end
 
 @ExecSpace("ClientOnly")
@@ -278,9 +349,23 @@ end
 
 @ExecSpace("ClientOnly")
 method void RefreshWorkerTabs(integer ownedCount)
+    -- T-15c (2026-08-22 오너): 수레 강화 패널과 같은 타일 룩. 선택된 일꾼 탭은
+    -- 어둡게, 미보유는 반투명으로 구분한다.
     for index = 1, 5 do
         local button = self:GetWorkerButton(index)
-        if button ~= nil then button.Enable = index <= ownedCount end
+        if button ~= nil then
+            button.Enable = index <= ownedCount
+            local sprite = button.Entity.SpriteGUIRendererComponent
+            if sprite ~= nil then
+                if index > ownedCount then
+                    sprite.Color = Color(1, 1, 1, 0.4)
+                elseif index == self._T.selectedWorker then
+                    sprite.Color = Color(0.55, 0.55, 0.55, 1)
+                else
+                    sprite.Color = Color(1, 1, 1, 1)
+                end
+            end
+        end
     end
 end
 
@@ -301,7 +386,16 @@ method void RefreshSlots(table info)
         local rarityText = self:GetRarityText(index)
         local equipped = self:GetEquipped(index)
         if button ~= nil then button.Enable = piece ~= nil end
-        if image ~= nil then image.ImageRUID = piece ~= nil and piece.thumbnailRuid ~= "" and ("thumbnail://" .. piece.thumbnailRuid) or "" end
+        if image ~= nil then
+            image.ImageRUID = piece ~= nil and piece.thumbnailRuid ~= "" and ("thumbnail://" .. piece.thumbnailRuid) or ""
+            -- T-15c (2026-08-22 오너): 미획득은 검정 실루엣 대신 원본색 50% 투명,
+            -- 획득하면 100% 원본색. 틴트가 아니라 알파로만 구분한다.
+            if piece ~= nil and piece.owned == true then
+                image.Color = Color(1, 1, 1, 1)
+            else
+                image.Color = Color(1, 1, 1, 0.5)
+            end
+        end
         if rarity ~= nil then rarity.ImageRUID = piece ~= nil and self:RarityBadge(piece.rarity) or "" end
         if rarityText ~= nil then rarityText.Text = piece ~= nil and piece.rarityLabel or "" end
         if equipped ~= nil then equipped.Enable = piece ~= nil and piece.id == equippedId end
@@ -324,15 +418,17 @@ method void RefreshSummary(table info, AccountProfileService profile)
             .. "  | 제작 돌 " .. tostring(costs.craftStone or 0) .. " / 철 " .. tostring(costs.craftIron or 0) .. " / 금 " .. tostring(costs.craftGoldOre or 0)
             .. "  | 교환 1개=" .. tostring(costs.exchangeGoldPerCrystal or 0) .. "골드"
     end
-    if self.probabilityText ~= nil then
-        self.probabilityText.Text = "일반 " .. tostring(probabilities.commonLabel or "") .. " · 고급 " .. tostring(probabilities.uncommonLabel or "")
-            .. " · 희귀 " .. tostring(probabilities.rareLabel or "") .. " · 영웅 " .. tostring(probabilities.epicLabel or "") .. " · 전설 " .. tostring(probabilities.legendaryLabel or "")
-    end
+    -- T-15d: 확률은 상시 텍스트 대신 [뽑기 확률] 버튼 → 팝업으로 보여 준다.
+    self._T.probabilityLine = "일반 " .. tostring(probabilities.commonLabel or "") .. " · 고급 " .. tostring(probabilities.uncommonLabel or "")
+        .. "\n희귀 " .. tostring(probabilities.rareLabel or "") .. " · 영웅 " .. tostring(probabilities.epicLabel or "") .. " · 전설 " .. tostring(probabilities.legendaryLabel or "")
     local selected = self:FindPiece(info, self._T.selectedPieceId)
     if self.selectedText ~= nil then
         local line = "피스를 선택하세요. 슬롯 선택만으로는 저장되지 않습니다."
         if selected ~= nil then line = selected.name .. "  [" .. selected.rarityLabel .. "]  " .. (selected.owned and "보유" or "미보유") .. "  도감 +" .. tostring(selected.score) end
-        if profile.LastTransactionMessage ~= self._T.messageAtOpen and profile.LastTransactionMessage ~= "" then
+        -- 실패·거절류는 전역 TransactionNoticeLogic 이 팝업으로 안내한다 (T-15) —
+        -- 같은 문구를 인라인에 중복 표기하지 않는다.
+        if profile.LastTransactionMessage ~= self._T.messageAtOpen and profile.LastTransactionMessage ~= ""
+            and not _TransactionNoticeLogic:IsSuppressed(profile.LastTransactionMessage) then
             line = line .. "  |  " .. profile.LastTransactionMessage
         end
         self.selectedText.Text = line
@@ -405,6 +501,9 @@ end
 @ExecSpace("ClientOnly")
 method void OnEndPlay()
     -- Disconnects every UI button handler registered during begin-play.
+    if self._T.sliderHandler ~= nil and self.exchangeSlider ~= nil then
+        self.exchangeSlider.Entity:DisconnectEvent(SliderValueChangedEvent, self._T.sliderHandler)
+    end
     if self._T.handlers == nil then return end
     for key, eventHandler in pairs(self._T.handlers) do
         local button = self._T.handlerButtons[key]

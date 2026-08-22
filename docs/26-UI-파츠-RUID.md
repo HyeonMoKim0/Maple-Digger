@@ -192,7 +192,7 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | `input-field-blank` | `561a0737a9c8468889b6eb8075cc354e` | 384×85 | 21 21 21 21 | ✅ 업로드 · 기존 4개 입력창 적용 |
 | `tooltip-frame-blank` | `d3ffbf345575474aa06d0e4a2ad96447` | 384×115 | 19 19 19 19 | ✅ 업로드 · `TutorialUI/Root/Tooltip` 적용 |
 | `piece-card-frame` | `01bb848f974843089fc999bd01680b35` | 177×256 | Simple | ✅ 업로드 · T-06 화면 배선 완료 |
-| `equipped-badge` | `6f9095d2a23142ba99a76fa71a8e816d` | 96×86 | Simple | ✅ 업로드 · T-06 화면 배선 완료 |
+| `equipped-badge` | `03a6624ca682421b950a957e9b877507` | — | Simple | ✅ **2026-08-22 오너 지정 RUID 로 교체** (구 `6f9095d2…` 는 비가시적 판정) |
 
 > 입력창·툴팁은 기존 `.ui` 트리와 컨트롤러 Entity ID를 보존한 채 UIBuilder로 스프라이트만 교체했다.
 > 카드·장착 배지는 `AppearanceUI.ui`의 피스 슬롯과 장착 표시에 배선했다.
@@ -207,7 +207,7 @@ border 는 `L R T B` 순. 좌측에 아이콘 슬롯이 있는 파츠는 **비�
 | `input-field-blank` | `561a0737a9c8468889b6eb8075cc354e` | 384×85 | 21 21 21 21 | ✅ 업로드 · 배선 완료 |
 | `tooltip-frame-blank` | `d3ffbf345575474aa06d0e4a2ad96447` | 384×115 | 19 19 19 19 | ✅ 업로드 · 배선 완료 |
 | `piece-card-frame` | `01bb848f974843089fc999bd01680b35` | 177×256 | Simple | ✅ 업로드 · T-06 배선 완료 |
-| `equipped-badge` | `6f9095d2a23142ba99a76fa71a8e816d` | 96×86 | Simple | ✅ 업로드 · T-06 배선 완료 |
+| `equipped-badge` | `03a6624ca682421b950a957e9b877507` | — | Simple | ✅ 2026-08-22 오너 지정 RUID 로 교체 |
 
 ### 5.6 보조 아이콘 (docs/20 승인 목록에 없는 것들)
 
