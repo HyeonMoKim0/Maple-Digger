@@ -7,24 +7,36 @@ script MineSelectController extends Logic
 property Entity selectPanel = "20cb4dbc-1e9a-42f4-a237-549a3a3edf41"
 property ButtonComponent btnOpen = "94c58c02-b4ac-4901-b9b7-0f02e69568c9"
 property ButtonComponent btnClose = "825b75ee-fb22-4fad-8408-1de384b07a4c"
-property ButtonComponent btnSell = "21647cc6-ca6e-460f-aa6f-0ffcbf9bb385"
-property ButtonComponent btnBeginner = "54711815-5537-4bd1-8264-33fc12fdbec8"
-property ButtonComponent btnDeep = "ca11aa60-d838-48f3-bb72-215d57ce08a1"
-property ButtonComponent btnGem = "a8f1b7c8-d870-4044-bfe9-766610322ba8"
+property ButtonComponent btnSell = "bab28105-8228-42f6-9436-717874fa9af1"
+property ButtonComponent btnBeginner = "163fa51b-f799-4fb3-afe2-2e8d7d61f7c4"
+property ButtonComponent btnDeep = "03465e12-16c3-4cdd-8dc5-7b781d3b7a80"
+property ButtonComponent btnGem = "378bba90-56bd-434f-a500-27e287be494f"
 -- 광산 노드 뱃지 (T-13 Phase C). 각 광산 버튼의 자식이며 입장/해금/잠금을
 -- 그림으로 보조한다. 버튼 라벨과 Beginner/Deep/GemText 는 그대로 남는다
 -- (docs/20 §6 — 아이콘 단독 표기 금지).
-property SpriteGUIRendererComponent beginnerNode = "4bb1a54e-49e8-4308-89c0-a616f4a9bc34"
-property SpriteGUIRendererComponent deepNode = "908a366c-0a40-4ec6-afa1-281e97f61628"
-property SpriteGUIRendererComponent gemNode = "76df7eea-7479-4451-af02-600547f5abaf"
+property SpriteGUIRendererComponent beginnerNode = "7ea24ae2-b141-494e-878e-15bec0a36d80"
+property SpriteGUIRendererComponent deepNode = "151187d2-b887-42d0-b702-9d32faee7e13"
+property SpriteGUIRendererComponent gemNode = "1b2f8295-2e9f-4a2a-aed3-b2b9573ac78d"
 -- docs/26 §5.5 확정 RUID. 값을 바꿀 일이 생기면 그 문서가 단일 기준이다.
 property string MineNodeCurrent = "d39f51305bb541329e861e5ea151e63e"
 property string MineNodeNext = "56181d0bc5a84a608e8086f00c4191dc"
 property string MineNodeLocked = "1afd5d06d91744b3869a7283badf62db"
 property TextGUIRendererComponent resourceText = "92a7aa15-4a6d-44ce-95ee-23c2786b6452"
-property TextGUIRendererComponent deepText = "082a4413-d92e-4c74-818c-fbf0149ef560"
-property TextGUIRendererComponent gemText = "364fda59-3a44-454f-89d4-a476eccc0c53"
+property TextGUIRendererComponent beginnerText = "fc24d4e9-609e-4f60-a132-819ea831b3ea"
+property TextGUIRendererComponent deepText = "1117b212-de2b-4454-b1c0-38a4a54b7b25"
+property TextGUIRendererComponent gemText = "09c0cab1-2448-4452-9f7a-278c59474da6"
 property TextGUIRendererComponent feedbackText = "615d1852-39b4-4c8b-bf71-2dcd86ea3144"
+-- T-15 개편: 상단 탭 2개([광산]/[강화·고용])와 탭 컨테이너. 탭 전환은 컨테이너
+-- Enable 토글이 전부이고, 열림/닫힘 상태는 여전히 selectPanel 이 소유한다.
+property ButtonComponent btnTabMines = "190af841-5ab0-40a4-951a-fe82e63f6e92"
+property ButtonComponent btnTabUpgrade = "184499a3-774b-4dc6-b237-25322aafa8ff"
+property Entity minesTab = "e3e233f0-86c5-49be-85ce-f3a5b0751289"
+property Entity upgradeTab = "a9d240e1-e63b-4694-b082-0e08ff52f999"
+-- T-15 개편: 광산별 강화 버튼. 서버 RequestMineUpgrade 는 "입장 중인 광산"만
+-- 강화하므로, 입장 중인 광산의 버튼만 활성화한다 (RefreshMineNodes 가 판정).
+property ButtonComponent btnUpgradeBeginner = "69f80408-9631-4011-a9e7-6b36990ce7fd"
+property ButtonComponent btnUpgradeDeep = "7fc9c61b-f496-4432-a390-357568d2e7f9"
+property ButtonComponent btnUpgradeGem = "d08ff6bf-3989-464f-8cee-17b2ffd3939f"
 property Entity salePanel = "821b31af-cac8-4a66-aa90-24e024f48392"
 property ButtonComponent btnSaleClose = "9c5394e7-deac-4f6b-a8f5-cb099cdce3ee"
 property ButtonComponent btnOreStone = "d876c4ed-bd2b-4461-b25a-e93a5cc534c3"
@@ -58,9 +70,9 @@ property TextGUIRendererComponent saleFeedbackText = "64f32ca0-d2f9-4beb-a603-2c
 property ButtonComponent btnRareOpen = "3ab7dc8e-ddfc-43ce-a503-c174cc6fb8c4"
 property Entity rarePanel = "1e5dbbfb-0671-4eb3-84c5-d39b45ad9ecd"
 property ButtonComponent btnRareClose = "f64125f4-938c-4639-8684-d5d5190311c2"
-property ButtonComponent btnBuyWorker = "3595093e-2707-4992-8d2c-43b2f5a64c6a"
+property ButtonComponent btnBuyWorker = "4514a030-d9b4-4281-a798-4ad53c836d18"
 -- SelectPanel/WorkerStatus 는 레거시 TextComponent 를 쓴다 (docs/16 §14 D-11).
-property TextGUIRendererComponent workerStatusText = "87e1251e-b484-4f94-aecf-3413f5eb5148"
+property TextGUIRendererComponent workerStatusText = "814fe8b1-89a2-40ad-bb0c-30cc23ef044d"
 property ButtonComponent btnRareStone = "49556e19-68aa-4d27-bed5-a716026ab9ac"
 property ButtonComponent btnRareIron = "e13c8f6c-0241-441e-a836-e39de5567820"
 property ButtonComponent btnRareGold = "e8bb96b2-72b5-484e-bf9c-d0513240da82"
@@ -70,7 +82,7 @@ property ButtonComponent btnRareGoldAuto = "a4a3f45e-1293-451c-aa1e-3c27078c7ec5
 property TextGUIRendererComponent rareSummaryText = "974f63d6-180f-4fb6-b496-ea4c485e3681"
 -- T-03 맵 강화 패널 (C202 ① — CartPanel 과 같은 계층 모달). 표시값은 전부
 -- 서버 계산 결과(MineUpgradeInfoJson)이며 클라이언트는 재계산하지 않는다 (F7-B §5.6.3).
-property ButtonComponent btnUpgradeOpen = "38e67b66-fe32-4a5d-8b19-677e8e0aa8e3"
+-- T-15: 진입 버튼이 하단 단일([광산 강화])에서 광산별 3개로 바뀌었다 (btnUpgrade*).
 property Entity upgradePanel = "c9ada0c5-054f-4906-92c3-f3d18be98ab5"
 property TextGUIRendererComponent upgradeLevelText = "5ac76093-d618-4fff-80a7-4b7ea3c5f001"
 property TextGUIRendererComponent upgradeEffectsText = "bcbdff3f-4284-4d47-bf66-cabcc09a78a4"
@@ -78,7 +90,7 @@ property TextGUIRendererComponent upgradeCostText = "d443a231-d989-43e8-899c-04d
 property TextGUIRendererComponent upgradeFeedbackText = "a6b622b8-8cdb-424b-af7a-537c162eb1c6"
 property ButtonComponent btnUpgradeConfirm = "2a60b2d6-93d8-47a7-8f6b-44b90267e732"
 property ButtonComponent btnUpgradeClose = "2378aa23-8236-4829-ab5b-60e27c47de5e"
-property ButtonComponent btnCartOpen = "467843b6-73f5-425b-9b94-2f0cd0f0a89d"
+property ButtonComponent btnCartOpen = "19e45405-fc93-4caa-a99f-8fec5650b877"
 property Entity cartPanel = "2ddf0bf0-6b16-4e5a-8422-56f1685cbf55"
 property ButtonComponent btnCartClose = "fad448d9-9044-4c6c-925f-353d66eaea43"
 property ButtonComponent btnCartWorker1 = "c9d87a4e-ad97-46d6-b5be-5dd7e4f98ea6"
@@ -90,7 +102,7 @@ property ButtonComponent btnCartUpgrade = "dff1aaae-2536-4fc1-b8eb-6734a9403f85"
 property TextGUIRendererComponent cartSummaryText = "161951a3-b62a-4bac-8352-80cfc7669cfe"
 property TextGUIRendererComponent cartNextUpgradeText = "5d47e861-b5e7-49ce-adfb-6ae2edd5aae7"
 -- T-07 (F7-E §9.2 결정 9): 광산 선택 화면의 "튜토리얼 다시 보기" 진입점.
-property ButtonComponent btnTutorialReplay = "39393c63-382c-4667-8557-3942a8a6b471"
+property ButtonComponent btnTutorialReplay = "a32d8d87-4584-4d14-88c2-bd69b18231d9"
 
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
@@ -107,7 +119,11 @@ method void OnBeginPlay()
     if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     if self.cartPanel ~= nil then self.cartPanel.Enable = false end
     if self.upgradePanel ~= nil then self.upgradePanel.Enable = false end
-    self:ConnectButton("upgradeOpen", self.btnUpgradeOpen, self.OnUpgradeOpenClicked)
+    self:ConnectButton("upgradeBeginner", self.btnUpgradeBeginner, self.OnUpgradeBeginnerClicked)
+    self:ConnectButton("upgradeDeep", self.btnUpgradeDeep, self.OnUpgradeDeepClicked)
+    self:ConnectButton("upgradeGem", self.btnUpgradeGem, self.OnUpgradeGemClicked)
+    self:ConnectButton("tabMines", self.btnTabMines, self.OnTabMinesClicked)
+    self:ConnectButton("tabUpgrade", self.btnTabUpgrade, self.OnTabUpgradeClicked)
     self:ConnectButton("upgradeConfirm", self.btnUpgradeConfirm, self.OnUpgradeConfirmClicked)
     self:ConnectButton("upgradeClose", self.btnUpgradeClose, self.OnUpgradeCloseClicked)
     self:ConnectButton("open", self.btnOpen, self.OnOpenClicked)
@@ -191,13 +207,17 @@ method void RefreshUI(boolean force)
     if self.resourceText ~= nil then
         self.resourceText.Text = "골드 " .. tostring(profile.Gold) .. "  |  토큰 " .. tostring(profile.MineTokens) .. "\n돌 " .. tostring(profile.Stone) .. "  철 " .. tostring(profile.Iron) .. "  금광석 " .. tostring(profile.GoldOre)
     end
+    -- T-15: 3열 카드 상단의 이름·상태 텍스트 (두 줄 — 이름 / 비용·상태).
+    if self.beginnerText ~= nil then
+        self.beginnerText.Text = "초급 광산\n언제든 진입"
+    end
     if self.deepText ~= nil then
-        if profile.DeepMineUnlocked then self.deepText.Text = "깊은 광산  ·  해금됨"
-        else self.deepText.Text = "깊은 광산  ·  180 골드 / 토큰 6 / 돌 120" end
+        if profile.DeepMineUnlocked then self.deepText.Text = "깊은 광산\n해금됨"
+        else self.deepText.Text = "깊은 광산\n180 골드 / 토큰 6 / 돌 120" end
     end
     if self.gemText ~= nil then
-        if profile.GemMineUnlocked then self.gemText.Text = "보석 광산  ·  해금됨"
-        else self.gemText.Text = "보석 광산  ·  700 골드 / 토큰 10 / 돌 200 / 철 60" end
+        if profile.GemMineUnlocked then self.gemText.Text = "보석 광산\n해금됨"
+        else self.gemText.Text = "보석 광산\n700 골드 / 토큰 10 / 돌 200 / 철 60" end
     end
     self:RefreshMineNodes(profile)
     if self.feedbackText ~= nil then
@@ -326,8 +346,77 @@ method void RefreshMineNodes(AccountProfileService profile)
     self:ApplyMineNode(self.beginnerNode, beginner)
     self:ApplyMineNode(self.deepNode, deep)
     self:ApplyMineNode(self.gemNode, gem)
+    self:ApplyUpgradeButton(self.btnUpgradeBeginner, beginner)
+    self:ApplyUpgradeButton(self.btnUpgradeDeep, deep)
+    self:ApplyUpgradeButton(self.btnUpgradeGem, gem)
     log("[MineSelect] nodes current=" .. tostring(current)
         .. " beginner=" .. beginner .. " deep=" .. deep .. " gem=" .. gem)
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyUpgradeButton(ButtonComponent button, string state)
+    -- T-15: 광산별 강화 버튼. 서버 RequestMineUpgrade 가 입장 중인 광산만
+    -- 강화하므로 current 만 활성이다. 튜토리얼 잠금 중에는 Enable 을 건드리지
+    -- 않는다 — ApplyStepLocks 의 잠금을 되살리면 안 된다.
+    if button == nil then return end
+    local label = button.Entity.TextGUIRendererComponent
+    if state == "current" then
+        if label ~= nil then label.Text = "광산 강화" end
+        if _TutorialController == nil or not _TutorialController:IsUiDragLocked() then
+            button.Enable = true
+        end
+    else
+        if label ~= nil then label.Text = "입장 후 강화" end
+        button.Enable = false
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void ShowTab(boolean mines)
+    -- T-15: 탭 전환 = 컨테이너 Enable 토글.
+    if self.minesTab ~= nil then self.minesTab.Enable = mines end
+    if self.upgradeTab ~= nil then self.upgradeTab.Enable = not mines end
+end
+
+@ExecSpace("ClientOnly")
+method void OnTabMinesClicked()
+    self:ShowTab(true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnTabUpgradeClicked()
+    self:ShowTab(false)
+end
+
+@ExecSpace("ClientOnly")
+method void TryOpenUpgrade(string mineId, boolean unlocked)
+    -- T-15: 광산별 강화 진입. 입장 중인 광산만 강화 패널을 연다 (서버 계약).
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    if self:GetMineNodeState(mineId, profile.LastMineId, unlocked) == "current" then
+        self:OnUpgradeOpenClicked()
+        return
+    end
+    if self.feedbackText ~= nil then
+        self.feedbackText.Text = "광산 강화는 그 광산에 입장한 뒤 할 수 있습니다."
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpgradeBeginnerClicked()
+    self:TryOpenUpgrade("farm01", true)
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpgradeDeepClicked()
+    local profile = self:GetProfile()
+    self:TryOpenUpgrade("deep_mine", profile ~= nil and profile.DeepMineUnlocked)
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpgradeGemClicked()
+    local profile = self:GetProfile()
+    self:TryOpenUpgrade("gem_mine", profile ~= nil and profile.GemMineUnlocked)
 end
 
 @ExecSpace("ClientOnly")
@@ -553,6 +642,8 @@ method void OnOpenClicked()
     if self.salePanel ~= nil then self.salePanel.Enable = false end
     if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     if self.upgradePanel ~= nil then self.upgradePanel.Enable = false end
+    -- T-15: 열 때는 항상 [광산] 탭부터 보인다.
+    self:ShowTab(true)
     self:RefreshUI(true)
 end
 
@@ -872,6 +963,8 @@ end
 @ExecSpace("ClientOnly")
 method void OnTutorialReplayClicked()
     -- T-07: 다시 보기 진입은 튜토리얼 컨트롤러가 처음부터/이어서 선택을 소유한다.
+    -- T-15: 버튼이 설정 패널 안으로 옮겨졌다 — 진입 시 설정 패널을 닫는다.
+    if _SettingsPanelController ~= nil then _SettingsPanelController:ClosePanel() end
     _TutorialController:OnReplayEntry()
 end
 
@@ -887,7 +980,11 @@ method table GetTutorialButtons()
         mineGem = self.btnGem,
         buyWorker = self.btnBuyWorker,
         cartOpen = self.btnCartOpen,
-        upgradeOpen = self.btnUpgradeOpen,
+        upgradeBeginner = self.btnUpgradeBeginner,
+        upgradeDeep = self.btnUpgradeDeep,
+        upgradeGem = self.btnUpgradeGem,
+        tabMines = self.btnTabMines,
+        tabUpgrade = self.btnTabUpgrade,
         rareOpen = self.btnRareOpen,
         saleClose = self.btnSaleClose,
         oreStone = self.btnOreStone,
@@ -933,7 +1030,11 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnEndPlay()
-    self:DisconnectButton("upgradeOpen", self.btnUpgradeOpen)
+    self:DisconnectButton("upgradeBeginner", self.btnUpgradeBeginner)
+    self:DisconnectButton("upgradeDeep", self.btnUpgradeDeep)
+    self:DisconnectButton("upgradeGem", self.btnUpgradeGem)
+    self:DisconnectButton("tabMines", self.btnTabMines)
+    self:DisconnectButton("tabUpgrade", self.btnTabUpgrade)
     self:DisconnectButton("upgradeConfirm", self.btnUpgradeConfirm)
     self:DisconnectButton("upgradeClose", self.btnUpgradeClose)
     self:DisconnectButton("open", self.btnOpen)

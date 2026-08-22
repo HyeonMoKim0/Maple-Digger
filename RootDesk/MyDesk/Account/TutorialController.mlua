@@ -179,31 +179,32 @@ method table GetStepConfig(integer step)
         }
     elseif step == 7 then
         return {
-            guide = "창고의 돌을 팔아 골드를 벌어요.\n[광산 선택] → [판매]에서 돌을 파세요. 팔 수 있는 수량이 0이면 [보호분 판매]를 먼저 켜세요.",
+            guide = "창고의 돌을 팔아 골드를 벌어요.\n오른쪽 광산 현황의 [판매]에서 돌을 파세요. 팔 수 있는 수량이 0이면 [보호분 판매]를 먼저 켜세요.",
             fail = "",
             -- toggleProtected 는 2026-08-21 버그 수정으로 허용 — 보유량이 보호 수량
             -- 이하면(다시 보기·후반 계정에서 흔함) 판매 가능 수량이 0이라 토글 없이는
             -- 7단계 완료가 불가능했다 (docs/16 §41.7).
-            allowed = { selectOpen = true, selectClose = true, sellOpen = true, saleClose = true, oreStone = true, quickOne = true, quickTen = true, quickAll = true, sellSelected = true, toggleProtected = true },
+            -- T-15: [판매]가 광산 현황(HUD) 하단으로 옮겨져 [광산 선택]을 거치지 않는다.
+            allowed = { sellOpen = true, saleClose = true, oreStone = true, quickOne = true, quickTen = true, quickAll = true, sellSelected = true, toggleProtected = true },
             reset = nil,
             clearProgram = true,
-            -- 7단계: 중앙 패널(폭 780, X -390~390)을 가리지 않도록 왼쪽 바깥에
-            -- 배치하고 화살표는 패널 왼쪽 가장자리에서 [판매] 행을 가리킨다
-            -- (2026-08-20 오너 결정 — 가운데 UI 시야 확보).
+            -- 7단계: 판매 모달(폭 760, X -380~380)을 가리지 않도록 왼쪽 바깥에
+            -- 배치하고 화살표는 대상 버튼을 매 프레임 추적한다 (2026-08-20 오너 결정).
             tooltipX = -660, tooltipY = 208, arrowX = -400, arrowY = 208, arrowDir = "right",
-            seq = { "selectOpen", "sellOpen", "quickAll", "sellSelected" },
+            seq = { "sellOpen", "quickAll", "sellSelected" },
         }
     end
     return {
-        guide = "골드로 두 번째 일꾼을 고용해요.\n[광산 선택]에서 [일꾼 구매]를 누르세요.",
+        guide = "골드로 두 번째 일꾼을 고용해요.\n[광산 선택] → [강화·고용] 탭에서 [일꾼 고용]을 누르세요.",
         fail = "",
-        allowed = { selectOpen = true, selectClose = true, buyWorker = true },
+        -- T-15: 일꾼 고용이 [강화·고용] 탭 안으로 들어갔다 — 탭 버튼을 시퀀스에 넣는다.
+        allowed = { selectOpen = true, selectClose = true, tabMines = true, tabUpgrade = true, buyWorker = true },
         reset = nil,
         clearProgram = false,
-        -- 8단계: 7단계와 같은 이유로 왼쪽 바깥 배치. 화살표는 패널 왼쪽
-        -- 가장자리에서 [일꾼 고용] 행 높이를 가리킨다.
-        tooltipX = -660, tooltipY = 208, arrowX = -400, arrowY = 208, arrowDir = "right",
-        seq = { "selectOpen", "buyWorker" },
+        -- 8단계: 개편 후 선택 패널이 넓어져(1140) 왼쪽 바깥 자리가 없다 — 하단
+        -- 빈 띠(1~6단계와 같은 자리)로 내린다. 패널 하단(-280)과 겹치지 않는다.
+        tooltipX = 240, tooltipY = -400, arrowX = -400, arrowY = 208, arrowDir = "right",
+        seq = { "selectOpen", "tabUpgrade", "buyWorker" },
     }
 end
 
