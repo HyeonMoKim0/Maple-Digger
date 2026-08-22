@@ -32,6 +32,9 @@ property ButtonComponent btnTabMines = "190af841-5ab0-40a4-951a-fe82e63f6e92"
 property ButtonComponent btnTabUpgrade = "184499a3-774b-4dc6-b237-25322aafa8ff"
 property Entity minesTab = "e3e233f0-86c5-49be-85ce-f3a5b0751289"
 property Entity upgradeTab = "a9d240e1-e63b-4694-b082-0e08ff52f999"
+-- 탭 파츠 (docs/26 §5 확정 RUID — tab-worker-selected / tab-worker-normal).
+property string TabSelectedRUID = "acfb0998854a4fb4b1a9927afd2a9993"
+property string TabNormalRUID = "db0c502147114dbfb47a5e87322937b4"
 -- T-15 개편: 광산별 강화 버튼. 서버 RequestMineUpgrade 는 "입장 중인 광산"만
 -- 강화하므로, 입장 중인 광산의 버튼만 활성화한다 (RefreshMineNodes 가 판정).
 property ButtonComponent btnUpgradeBeginner = "69f80408-9631-4011-a9e7-6b36990ce7fd"
@@ -373,9 +376,24 @@ end
 
 @ExecSpace("ClientOnly")
 method void ShowTab(boolean mines)
-    -- T-15: 탭 전환 = 컨테이너 Enable 토글.
+    -- T-15: 탭 전환 = 컨테이너 Enable 토글 + 탭 버튼 파츠 스왑 (selected/normal).
     if self.minesTab ~= nil then self.minesTab.Enable = mines end
     if self.upgradeTab ~= nil then self.upgradeTab.Enable = not mines end
+    self:ApplyTabSkin(self.btnTabMines, mines)
+    self:ApplyTabSkin(self.btnTabUpgrade, not mines)
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyTabSkin(ButtonComponent tabButton, boolean selected)
+    -- 활성 탭 = tab-worker-selected, 비활성 = tab-worker-normal (docs/26 §5).
+    if tabButton == nil then return end
+    local sprite = tabButton.Entity.SpriteGUIRendererComponent
+    if sprite == nil then return end
+    if selected then
+        sprite.ImageRUID = DataRef(self.TabSelectedRUID)
+    else
+        sprite.ImageRUID = DataRef(self.TabNormalRUID)
+    end
 end
 
 @ExecSpace("ClientOnly")

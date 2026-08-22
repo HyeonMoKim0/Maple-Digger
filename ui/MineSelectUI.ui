@@ -1591,7 +1591,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "db0c502147114dbfb47a5e87322937b4"
               },
               "LocalPosition": {
                 "x": 0,
@@ -1609,10 +1609,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -1702,9 +1702,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 24,
@@ -1835,7 +1835,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "db0c502147114dbfb47a5e87322937b4"
               },
               "LocalPosition": {
                 "x": 0,
@@ -1853,10 +1853,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -1946,9 +1946,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 24,
@@ -2164,7 +2164,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "7691424f38e647cdb4ac8d213d782bf7"
               },
               "LocalPosition": {
                 "x": 0,
@@ -2182,10 +2182,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -2309,7 +2309,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "3f659be019834b19aea6c14e0ac1da31"
               },
               "LocalPosition": {
                 "x": 0,
@@ -2327,10 +2327,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -2455,9 +2455,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.784313738,
-                "g": 0.784313738,
-                "b": 0.784313738,
+                "r": 0.55,
+                "g": 0.47,
+                "b": 0.38,
                 "a": 1
               },
               "FontSize": 20,
@@ -2643,9 +2643,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.478431374,
+                "g": 0.235294119,
+                "b": 0.0509803928,
                 "a": 1
               },
               "FontSize": 22,
@@ -2830,7 +2830,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "4b726e80aa58409f8e1f03cc2a4e5da3"
               },
               "LocalPosition": {
                 "x": 0,
@@ -2848,10 +2848,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -2941,9 +2941,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 22,
@@ -3219,7 +3219,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "93024bfd2d324753ae92878d299e1ef6"
               },
               "LocalPosition": {
                 "x": 0,
@@ -3237,10 +3237,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -3330,9 +3330,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 22,
@@ -3457,7 +3457,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "7691424f38e647cdb4ac8d213d782bf7"
               },
               "LocalPosition": {
                 "x": 0,
@@ -3475,10 +3475,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -3602,7 +3602,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "3f659be019834b19aea6c14e0ac1da31"
               },
               "LocalPosition": {
                 "x": 0,
@@ -3620,10 +3620,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -3748,9 +3748,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.784313738,
-                "g": 0.784313738,
-                "b": 0.784313738,
+                "r": 0.55,
+                "g": 0.47,
+                "b": 0.38,
                 "a": 1
               },
               "FontSize": 20,
@@ -3936,9 +3936,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.478431374,
+                "g": 0.235294119,
+                "b": 0.0509803928,
                 "a": 1
               },
               "FontSize": 22,
@@ -4123,7 +4123,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "4b726e80aa58409f8e1f03cc2a4e5da3"
               },
               "LocalPosition": {
                 "x": 0,
@@ -4141,10 +4141,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -4234,9 +4234,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 22,
@@ -4512,7 +4512,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "93024bfd2d324753ae92878d299e1ef6"
               },
               "LocalPosition": {
                 "x": 0,
@@ -4530,10 +4530,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -4623,9 +4623,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 22,
@@ -4756,7 +4756,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "7691424f38e647cdb4ac8d213d782bf7"
               },
               "LocalPosition": {
                 "x": 0,
@@ -4774,10 +4774,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -4901,7 +4901,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "3f659be019834b19aea6c14e0ac1da31"
               },
               "LocalPosition": {
                 "x": 0,
@@ -4919,10 +4919,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -5047,9 +5047,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 0.784313738,
-                "g": 0.784313738,
-                "b": 0.784313738,
+                "r": 0.55,
+                "g": 0.47,
+                "b": 0.38,
                 "a": 1
               },
               "FontSize": 20,
@@ -5235,9 +5235,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.478431374,
+                "g": 0.235294119,
+                "b": 0.0509803928,
                 "a": 1
               },
               "FontSize": 22,
@@ -5428,7 +5428,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "4b726e80aa58409f8e1f03cc2a4e5da3"
               },
               "LocalPosition": {
                 "x": 0,
@@ -5446,10 +5446,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -5539,9 +5539,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 22,
@@ -5823,7 +5823,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "93024bfd2d324753ae92878d299e1ef6"
               },
               "LocalPosition": {
                 "x": 0,
@@ -5841,10 +5841,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -5934,9 +5934,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 22,
@@ -6352,7 +6352,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "4b726e80aa58409f8e1f03cc2a4e5da3"
               },
               "LocalPosition": {
                 "x": 0,
@@ -6370,10 +6370,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -6463,9 +6463,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 24,
@@ -6596,7 +6596,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "2860136c06ab075439721c027de365af"
+                "DataId": "4b726e80aa58409f8e1f03cc2a4e5da3"
               },
               "LocalPosition": {
                 "x": 0,
@@ -6614,10 +6614,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -6707,9 +6707,9 @@
               "ConstraintY": 100,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
+                "r": 0.168627456,
+                "g": 0.168627456,
+                "b": 0.168627456,
                 "a": 1
               },
               "FontSize": 24,
