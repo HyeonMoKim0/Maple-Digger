@@ -278,9 +278,23 @@ end
 
 @ExecSpace("ClientOnly")
 method void RefreshWorkerTabs(integer ownedCount)
+    -- T-15c (2026-08-22 오너): 수레 강화 패널과 같은 타일 룩. 선택된 일꾼 탭은
+    -- 어둡게, 미보유는 반투명으로 구분한다.
     for index = 1, 5 do
         local button = self:GetWorkerButton(index)
-        if button ~= nil then button.Enable = index <= ownedCount end
+        if button ~= nil then
+            button.Enable = index <= ownedCount
+            local sprite = button.Entity.SpriteGUIRendererComponent
+            if sprite ~= nil then
+                if index > ownedCount then
+                    sprite.Color = Color(1, 1, 1, 0.4)
+                elseif index == self._T.selectedWorker then
+                    sprite.Color = Color(0.55, 0.55, 0.55, 1)
+                else
+                    sprite.Color = Color(1, 1, 1, 1)
+                end
+            end
+        end
     end
 end
 
