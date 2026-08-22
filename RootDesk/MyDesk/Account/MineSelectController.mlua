@@ -170,6 +170,7 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnUpdate(number delta)
+    self:CheckUpgradeResultPopup(delta)
     self:RefreshUI(false)
 end
 
@@ -201,6 +202,9 @@ method void RefreshUI(boolean force)
     -- T-03 맵 강화 표기 계약. 키에서 빠지면 강화해도 패널·레벨 표시가 갱신되지
     -- 않는다 (docs/23 §5-3 무증상 실패).
     state = state .. ":" .. profile.MineUpgradeInfoJson .. ":" .. tostring(profile.MineLevelBeginner) .. ":" .. tostring(profile.MineLevelDeep) .. ":" .. tostring(profile.MineLevelGem)
+    -- T-15: 같은 문구가 재전송돼도(시퀀스만 증가) 피드백 줄이 다시 그려지게 한다
+    -- (팝업 억제 목록 반영이 한 프레임 안에 화면에 닿아야 한다).
+    state = state .. ":" .. tostring(profile.LastTransactionSeq)
     if not force and state == self._T.lastState then return end
     self._T.lastState = state
 
@@ -215,7 +219,9 @@ method void RefreshUI(boolean force)
     if self.gemText ~= nil then self.gemText.Text = "보석 광산" end
     self:RefreshMineNodes(profile)
     if self.feedbackText ~= nil then
-        if profile.LastTransactionMessage ~= "" then self.feedbackText.Text = profile.LastTransactionMessage
+        -- 강화 결과는 팝업이 안내한다 — 같은 문구를 헤더에 중복 표기하지 않는다.
+        if profile.LastTransactionMessage ~= "" and profile.LastTransactionMessage ~= self._T.suppressedFeedbackMsg then
+            self.feedbackText.Text = profile.LastTransactionMessage
         elseif profile.RecoveryStatus ~= "" then self.feedbackText.Text = profile.RecoveryStatus
         else self.feedbackText.Text = "광물은 다음 광산 해금에 필요한 수량만 자동 보호됩니다."
         end
@@ -412,9 +418,61 @@ method void TryOpenUpgrade(string mineId, boolean unlocked)
         local requestProfile = self:GetProfile()
         if requestProfile ~= nil then
             log("[MineSelectUI] upgrade request sent (popup confirm)")
+            -- 서버 응답(성공/부족/실패)을 팝업으로 안내하기 위해 감시를 건다
+            -- (2026-08-22 오너 — 헤더 한 줄 표기 대신 팝업). 기준은 문구가 아니라
+            -- 시퀀스다 — 같은 거절 문구가 연속으로 오면 문구 비교로는 못 잡는다.
+            self._T.upgradeSeqBase = requestProfile.LastTransactionSeq
+            self._T.upgradeWatch = 5.0
             requestProfile:RequestMineUpgrade()
         end
     end, nil)
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsUpgradeResultMessage(string message)
+    -- 맵 강화 요청이 만들 수 있는 서버 응답 문구인가 (AccountProfileService
+    -- §1569·1584·1589 + ProgressionService 가드 2종). 감시 창 안이라도 다른
+    -- 행동(판매 등)의 문구를 잘못 팝업하지 않기 위한 접두 판별이다.
+    if message == nil or message == "" then return false end
+    -- string.sub 은 바이트 단위다 — 한글 접두는 반드시 #prefix 로 자른다
+    -- (4글자로 잘랐다가 "맵"+깨진 바이트가 나와 판별이 전부 실패했다, 2026-08-22 실측).
+    local prefixes = { "맵 강화", "광산에 입장", "미해금 광산" }
+    for i = 1, #prefixes do
+        local prefix = prefixes[i]
+        if string.sub(message, 1, #prefix) == prefix then return true end
+    end
+    return false
+end
+
+@ExecSpace("ClientOnly")
+method void CheckUpgradeResultPopup(number delta)
+    -- 강화 요청 직후 LastTransactionMessage 변화를 감시해 팝업으로 띄운다.
+    -- 재화 부족·저장 실패·완료 전부 같은 창구다 (2026-08-22 오너 요청).
+    -- ① 대기 중인 결과 팝업: 확인 팝업이 닫히는 동안 도착한 결과는 UIPopup 의
+    --    isOpen 가드에 삼켜진다 (같은 프레임 응답 실측) — 팝업이 빌 때까지 들고
+    --    있다가 연다.
+    local pending = self._T.pendingResultPopup
+    if pending ~= nil then
+        if _UIPopup.isOpen ~= true and _UIPopup.isTweenPlaying ~= true then
+            self._T.pendingResultPopup = nil
+            log("[MineSelectUI] upgrade result popup: " .. pending)
+            _UIPopup:Open(pending, nil, nil)
+        end
+        return
+    end
+    -- ② 감시: 강화 요청 후 시퀀스 증가를 기다린다.
+    local watch = self._T.upgradeWatch
+    if watch == nil or watch <= 0 then return end
+    self._T.upgradeWatch = watch - delta
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    if profile.LastTransactionSeq == self._T.upgradeSeqBase then return end
+    local message = profile.LastTransactionMessage
+    self._T.upgradeWatch = 0
+    if not self:IsUpgradeResultMessage(message) then return end
+    -- 헤더 FeedbackText 에 같은 문구가 중복 표시되지 않게 억제 목록에 올린다.
+    self._T.suppressedFeedbackMsg = message
+    self._T.pendingResultPopup = message
 end
 
 @ExecSpace("ClientOnly")

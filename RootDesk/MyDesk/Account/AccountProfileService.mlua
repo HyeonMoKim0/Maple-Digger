@@ -149,6 +149,11 @@ property boolean GemMineUnlocked = false
 @Sync
 property string LastTransactionMessage = ""
 
+-- T-15: LastTransactionMessage 의 갱신 시퀀스. 동일 문구 재전송을 클라이언트가
+-- 새 응답으로 구분할 수 있게 한다 (프로필 저장과 무관한 런타임 값).
+@Sync
+property integer LastTransactionSeq = 0
+
 @Sync
 property string LastMineId = "farm01"
 
@@ -1188,7 +1193,10 @@ end
 @ExecSpace("ServerOnly")
 method void SetTransactionMessage(string message)
     -- Provides one synchronized result line for the client progression panel.
+    -- T-15: 같은 문구가 연속으로 와도 클라이언트가 "새 응답"임을 알 수 있도록
+    -- 시퀀스를 함께 올린다 (강화 결과 팝업 감시가 이 값으로 판별한다).
     self.LastTransactionMessage = message
+    self.LastTransactionSeq = self.LastTransactionSeq + 1
 end
 
 @ExecSpace("ServerOnly")
