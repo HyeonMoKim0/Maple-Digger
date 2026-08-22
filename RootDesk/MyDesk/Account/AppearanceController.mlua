@@ -20,6 +20,8 @@ property SliderComponent exchangeSlider = "9700c4d0-e907-4f0c-87f5-4af5a83c46c7"
 property TextGUIRendererComponent exchangeAmountText = "1d635251-c8aa-47d9-b06c-be152d406365"
 property ButtonComponent btnExchangeConfirm = "1823bc7b-fa8c-470b-a804-63c85f3c4b15"
 property ButtonComponent btnExchangeCancel = "2dff27a9-81bb-4b33-98c5-299081e1185f"
+property ButtonComponent btnExchangeMinus = "cf0e7364-bbce-42b2-91dd-b3036849061d"
+property ButtonComponent btnExchangePlus = "8c94e7c6-f25e-4c2c-a562-4766a1095da7"
 property ButtonComponent btnResultClose = "c67c76d5-4e7f-4a17-abf1-41ec3167c669"
 property TextGUIRendererComponent collectionText = "8ee2cfd7-ec76-404f-bde4-ce73c9862564"
 property TextGUIRendererComponent pityText = "f0dbec3c-c7b9-43f6-a246-cb23264128de"
@@ -116,6 +118,8 @@ method void OnBeginPlay()
     self:Connect("probability", self.btnProbability, self.OnProbabilityClicked)
     self:Connect("exchangeConfirm", self.btnExchangeConfirm, self.OnExchangeConfirmClicked)
     self:Connect("exchangeCancel", self.btnExchangeCancel, self.OnExchangeCancelClicked)
+    self:Connect("exchangeMinus", self.btnExchangeMinus, self.OnExchangeMinusClicked)
+    self:Connect("exchangePlus", self.btnExchangePlus, self.OnExchangePlusClicked)
     if self.exchangeSlider ~= nil then
         self._T.sliderHandler = self.exchangeSlider.Entity:ConnectEvent(SliderValueChangedEvent, self.OnExchangeSliderChanged)
     end
@@ -285,6 +289,26 @@ method void RefreshExchangeAmount()
     if self.exchangeAmountText ~= nil then
         self.exchangeAmountText.Text = "골드 " .. tostring(amount) .. "  →  크리스탈 " .. tostring(amount)
     end
+end
+
+@ExecSpace("ClientOnly")
+method void AdjustExchangeAmount(integer delta)
+    -- ± 스테퍼: 1~100 클램프. 슬라이더 Value 대입이 SliderValueChangedEvent 를
+    -- 되쏘지만 핸들러가 Value 에서 다시 읽으므로 순환 문제는 없다.
+    local amount = math.max(1, math.min(100, (self._T.exchangeAmount or 1) + delta))
+    self._T.exchangeAmount = amount
+    if self.exchangeSlider ~= nil then self.exchangeSlider.Value = amount end
+    self:RefreshExchangeAmount()
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchangeMinusClicked()
+    self:AdjustExchangeAmount(-1)
+end
+
+@ExecSpace("ClientOnly")
+method void OnExchangePlusClicked()
+    self:AdjustExchangeAmount(1)
 end
 
 @ExecSpace("ClientOnly")

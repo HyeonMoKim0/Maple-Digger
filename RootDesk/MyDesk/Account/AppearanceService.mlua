@@ -308,8 +308,11 @@ end
 @ExecSpace("ServerOnly")
 method boolean RequestCrystalExchange(AccountProfileService profile, integer count)
     if profile == nil or not profile.IsLoaded then return false end
+    -- T-15d: ×1/×10 고정 검증 → 환전소 슬라이더 계약(1~100)으로 개정.
+    -- 옛 검증이 남아 있으면 슬라이더 수량이 메시지도 없이 조용히 거부된다 (2026-08-22 오너 실측).
     local amount = math.floor(count)
-    if amount ~= 1 and amount ~= 10 then return false end
+    if amount < 1 then return false end
+    if amount > 100 then amount = 100 end
     local data = profile:GetProfile()
     local cost = amount * self.ExchangeGoldPerCrystal
     if (data.gold or 0) < cost then
