@@ -207,18 +207,12 @@ method void RefreshUI(boolean force)
     if self.resourceText ~= nil then
         self.resourceText.Text = "골드 " .. tostring(profile.Gold) .. "  |  토큰 " .. tostring(profile.MineTokens) .. "\n돌 " .. tostring(profile.Stone) .. "  철 " .. tostring(profile.Iron) .. "  금광석 " .. tostring(profile.GoldOre)
     end
-    -- T-15: 3열 카드 상단의 이름·상태 텍스트 (두 줄 — 이름 / 비용·상태).
-    if self.beginnerText ~= nil then
-        self.beginnerText.Text = "초급 광산\n언제든 진입"
-    end
-    if self.deepText ~= nil then
-        if profile.DeepMineUnlocked then self.deepText.Text = "깊은 광산\n해금됨"
-        else self.deepText.Text = "깊은 광산\n180 골드 / 토큰 6 / 돌 120" end
-    end
-    if self.gemText ~= nil then
-        if profile.GemMineUnlocked then self.gemText.Text = "보석 광산\n해금됨"
-        else self.gemText.Text = "보석 광산\n700 골드 / 토큰 10 / 돌 200 / 철 60" end
-    end
+    -- T-15 개정 (2026-08-22 오너): 카드에는 광산 이름만, 일러스트 위에 표시한다.
+    -- 해금·강화 비용은 카드에 상시 표기하지 않는다 — 강화 비용은 [광산 강화]
+    -- 확인 팝업이, 해금 부족분은 서버 거절 문구(DescribeShortfall)가 알려 준다.
+    if self.beginnerText ~= nil then self.beginnerText.Text = "초급 광산" end
+    if self.deepText ~= nil then self.deepText.Text = "깊은 광산" end
+    if self.gemText ~= nil then self.gemText.Text = "보석 광산" end
     self:RefreshMineNodes(profile)
     if self.feedbackText ~= nil then
         if profile.LastTransactionMessage ~= "" then self.feedbackText.Text = profile.LastTransactionMessage
@@ -390,16 +384,37 @@ end
 
 @ExecSpace("ClientOnly")
 method void TryOpenUpgrade(string mineId, boolean unlocked)
-    -- T-15: 광산별 강화 진입. 입장 중인 광산만 강화 패널을 연다 (서버 계약).
+    -- T-15 개정 (2026-08-22 오너): [광산 강화]는 큰 모달 대신 "강화하시겠습니까?"
+    -- 확인 팝업으로 직행한다 — 팝업 본문 아래 줄이 다음 강화 비용이다.
+    -- 입장 중인 광산만 열 수 있다 (서버 RequestMineUpgrade 계약).
     local profile = self:GetProfile()
     if profile == nil then return end
-    if self:GetMineNodeState(mineId, profile.LastMineId, unlocked) == "current" then
-        self:OnUpgradeOpenClicked()
+    if self:GetMineNodeState(mineId, profile.LastMineId, unlocked) ~= "current" then
+        if self.feedbackText ~= nil then
+            self.feedbackText.Text = "광산 강화는 그 광산에 입장한 뒤 할 수 있습니다."
+        end
         return
     end
-    if self.feedbackText ~= nil then
-        self.feedbackText.Text = "광산 강화는 그 광산에 입장한 뒤 할 수 있습니다."
+    -- 비용은 서버가 내려보낸 MineUpgradeInfoJson 그대로 — 재계산 금지 (F7-B §5.6.3).
+    local raw = profile.MineUpgradeInfoJson
+    if raw == nil or raw == "" then return end
+    local info = _HttpService:JSONDecode(raw)
+    if info == nil then return end
+    if info.maxLevel == true then
+        if self.feedbackText ~= nil then self.feedbackText.Text = "이 광산은 최대 레벨입니다." end
+        return
     end
+    local costLine = "다음 강화 비용: 골드 " .. tostring(math.floor(info.nextCostGold))
+        .. " · " .. self:OreLabel(tostring(info.nextCostOreType)) .. " " .. tostring(math.floor(info.nextCostOre))
+    local message = "광산을 강화하시겠습니까?\nLv." .. tostring(math.floor(info.level)) .. " → Lv." .. tostring(math.floor(info.level) + 1) .. "\n" .. costLine
+    log("[MineSelectUI] upgrade confirm popup mine=" .. mineId .. " " .. costLine)
+    _UIPopup:Open(message, function()
+        local requestProfile = self:GetProfile()
+        if requestProfile ~= nil then
+            log("[MineSelectUI] upgrade request sent (popup confirm)")
+            requestProfile:RequestMineUpgrade()
+        end
+    end, nil)
 end
 
 @ExecSpace("ClientOnly")
@@ -887,6 +902,9 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnUpgradeOpenClicked()
+    -- ⚠ T-15 개정 후 UI 진입점이 없다 — [광산 강화]는 TryOpenUpgrade 의 확인
+    -- 팝업으로 직행한다. UpgradePanel 모달(레벨·4효과 상세)을 되살리려면 이
+    -- 메서드를 다시 배선하면 된다.
     -- One centre modal at a time (docs/08 §6.1, docs/16 §13 D-8).
     if self.selectPanel ~= nil then self.selectPanel.Enable = false end
     if self.salePanel ~= nil then self.salePanel.Enable = false end
