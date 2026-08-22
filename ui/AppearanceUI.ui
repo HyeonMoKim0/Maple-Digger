@@ -3417,9 +3417,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -3744,7 +3744,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -3762,9 +3762,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -4308,9 +4308,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -4635,7 +4635,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -4653,9 +4653,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -5199,9 +5199,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -5526,7 +5526,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -5544,9 +5544,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -6090,9 +6090,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -6417,7 +6417,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -6435,9 +6435,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -6981,9 +6981,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -7308,7 +7308,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -7326,9 +7326,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -7872,9 +7872,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -8199,7 +8199,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -8217,9 +8217,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -8763,9 +8763,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -9090,7 +9090,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -9108,9 +9108,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -9654,9 +9654,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -9981,7 +9981,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -9999,9 +9999,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -10545,9 +10545,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -10872,7 +10872,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -10890,9 +10890,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -11436,9 +11436,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
@@ -11763,7 +11763,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "6f9095d2a23142ba99a76fa71a8e816d"
+                "DataId": "03a6624ca682421b950a957e9b877507"
               },
               "LocalPosition": {
                 "x": 0,
@@ -11781,9 +11781,9 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
+                "r": 1,
+                "g": 1,
+                "b": 1,
                 "a": 1
               },
               "DropShadow": false,
