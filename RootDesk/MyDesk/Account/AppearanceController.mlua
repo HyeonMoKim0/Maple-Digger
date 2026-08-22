@@ -301,7 +301,16 @@ method void RefreshSlots(table info)
         local rarityText = self:GetRarityText(index)
         local equipped = self:GetEquipped(index)
         if button ~= nil then button.Enable = piece ~= nil end
-        if image ~= nil then image.ImageRUID = piece ~= nil and piece.thumbnailRuid ~= "" and ("thumbnail://" .. piece.thumbnailRuid) or "" end
+        if image ~= nil then
+            image.ImageRUID = piece ~= nil and piece.thumbnailRuid ~= "" and ("thumbnail://" .. piece.thumbnailRuid) or ""
+            -- T-15c (2026-08-22 오너): 미획득은 검정 실루엣 대신 원본색 50% 투명,
+            -- 획득하면 100% 원본색. 틴트가 아니라 알파로만 구분한다.
+            if piece ~= nil and piece.owned == true then
+                image.Color = Color(1, 1, 1, 1)
+            else
+                image.Color = Color(1, 1, 1, 0.5)
+            end
+        end
         if rarity ~= nil then rarity.ImageRUID = piece ~= nil and self:RarityBadge(piece.rarity) or "" end
         if rarityText ~= nil then rarityText.Text = piece ~= nil and piece.rarityLabel or "" end
         if equipped ~= nil then equipped.Enable = piece ~= nil and piece.id == equippedId end
