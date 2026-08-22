@@ -5,7 +5,8 @@
 script AppearanceService extends Logic
 
 property integer GachaCrystalCost = 25
-property integer ExchangeGoldPerCrystal = 10
+-- T-15d (2026-08-22 오너): beta 크리스탈 환전소 — 비율 골드 1 = 크리스탈 1.
+property integer ExchangeGoldPerCrystal = 1
 property integer CraftStoneCost = 60
 property integer CraftIronCost = 20
 property integer CraftGoldOreCost = 5
@@ -319,7 +320,7 @@ method boolean RequestCrystalExchange(AccountProfileService profile, integer cou
     data.gold = data.gold - cost
     data.crystal = (data.crystal or 0) + amount
     if not self:Commit(profile, snapshot, "교환 저장에 실패해 골드와 크리스탈을 모두 되돌렸습니다. 다시 시도해 주세요.") then return false end
-    profile:SetTransactionMessage("테스트 상점 교환 완료: 골드 -" .. tostring(cost) .. ", 크리스탈 +" .. tostring(amount))
+    profile:SetTransactionMessage("크리스탈 환전 완료: 골드 -" .. tostring(cost) .. ", 크리스탈 +" .. tostring(amount))
     log("[Appearance] exchange crystals=" .. tostring(amount) .. " gold=" .. tostring(cost))
     return true
 end
