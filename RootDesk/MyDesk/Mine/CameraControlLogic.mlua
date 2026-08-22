@@ -9,7 +9,9 @@
 -- "커서 아래 월드 지점"을 앵커로 잡아 고정한다 — 팬은 드래그 시작점의 월드
 -- 좌표를 커서에 계속 붙이고, 줌은 포토샵처럼 커서 아래 지점이 제자리에 남는다.
 -- ⚠ ScreenToWorldPosition 은 카메라 변경을 다음 프레임에 반영한다(실측) —
--- 그래서 줌 보정은 pendingZoomFix 로 한 프레임 뒤 OnUpdate 에서 적용한다.
+-- 그래서 줌 보정은 지연 측정값에 서보를 돌리지 않고(진동 원인), 노치가 들어온
+-- 프레임에 "화면 반경 ∝ 1/ZoomRatio" 관계로 오프셋을 한 번에 해석 계산한다.
+-- 연속 휠 동안은 첫 노치의 실측(zoomAnchor)을 기준으로 누적 배율만 다시 푼다.
 -- 전부 ClientOnly: 카메라는 로컬 표시 전용이고 서버 상태를 바꾸지 않는다.
 @Logic
 script CameraControlLogic extends Logic
@@ -34,7 +36,7 @@ method void OnBeginPlay()
     self._T.dragAnchor = nil        -- 드래그 시작 시 커서 아래 월드 지점 (Vector2)
     self._T.offsetX = 0.0
     self._T.offsetY = 0.0
-    self._T.pendingZoomFix = nil    -- { worldX, worldY, screenX, screenY } — 줌 직후 1프레임 뒤 보정
+    self._T.zoomAnchor = nil        -- 연속 휠 세션의 기준 실측 { worldX, worldY, relX, relY, zoom0, offsetX0, offsetY0, timeout }
     self._T.configured = false
     self._T.lastMapName = ""
     self.scrollHandler = _InputService:ConnectEvent(MouseScrollEvent, self.OnMouseScroll)
@@ -62,6 +64,12 @@ method CameraComponent GetCamera()
         camera.ZoomRatioMax = self.MaxZoom
         camera.ZoomRatioMin = 31.0
         camera.IsAllowZoomInOut = true
+        -- 추적 감쇠 제거: 기본 Damping(2.5, 5.0)은 y 축이 특히 느려서, 줌·팬이
+        -- CameraOffset 을 한 프레임에 써도 렌더 카메라가 세로로 미끄러지며
+        -- 따라온다(줌 시 상하 슬라이드의 원인). DeadZone 도 미세 보정을 삼킨다.
+        -- 이 카메라는 커서 1:1 조작이 목적이므로 둘 다 0 이 맞다.
+        camera.Damping = Vector2(0.0, 0.0)
+        camera.DeadZone = Vector2(0.0, 0.0)
         self._T.configured = true
         log("[CameraControl] camera configured min=" .. tostring(camera.ZoomRatioMin) .. " max=" .. tostring(camera.ZoomRatioMax))
     end
@@ -81,8 +89,9 @@ end
 @ExecSpace("ClientOnly")
 method void OnMouseScroll(MouseScrollEvent event)
     -- 휠 위 = 확대, 아래 = 축소. UI 위에서는 무시한다 (리스트 스크롤과 충돌 방지).
-    -- 포토샵식: 커서 아래 월드 지점을 기록해 두고, 줌 반영 다음 프레임에 그
-    -- 지점이 커서 밑에 남도록 오프셋을 보정한다 (OnUpdate 의 pendingZoomFix).
+    -- 포토샵식 커서 고정: 화면 반경이 1/ZoomRatio 에 비례하므로, 커서 아래 지점이
+    -- 제자리에 남으려면 카메라 중심이 (커서월드-중심월드)×(1 - z0/z1) 만큼 이동해야
+    -- 한다. 이 값을 노치 프레임에 한 번에 적용한다 — 지연 측정 서보(진동 원인) 없음.
     if _InputService:IsPointerOverUI() then return end
     local camera = self:GetCamera()
     if camera == nil then return end
@@ -94,26 +103,58 @@ method void OnMouseScroll(MouseScrollEvent event)
     end
     zoom = math.max(self.MinZoom, math.min(self.MaxZoom, zoom))
     if zoom == self._T.zoom then return end
-    -- 연속 휠 중에는 첫 앵커를 유지한다 (커서가 안 움직였으니 같은 지점을 고정).
-    if self._T.pendingZoomFix == nil then
-        local cursor = _InputService:GetCursorPosition()
-        local world = _UILogic:ScreenToWorldPosition(cursor)
-        self._T.pendingZoomFix = { worldX = world.x, worldY = world.y, screenX = cursor.x, screenY = cursor.y, timeout = 0.5 }
-    else
-        self._T.pendingZoomFix.timeout = 0.5
+    -- 팬 드래그 중에는 배율만 바꾼다 — 오프셋은 OnUpdate ② 의 팬 피드포워드가
+    -- 새 줌(zoomScale)까지 반영해 전담 계산하므로, 여기서 또 만지면 이중 보정이다.
+    if self._T.dragging then
+        self._T.zoom = zoom
+        camera.ZoomRatio = zoom
+        return
     end
+    -- 연속 휠 세션: 첫 노치에서만 실측하고(그 프레임의 렌더 기준으로 커서·중심이
+    -- 서로 일관), 이후 노치는 캡처값에서 새 배율로 다시 푼다. 실측을 매 노치
+    -- 반복하면 1프레임 지연 값이 섞여 어긋난다.
+    local anchor = self._T.zoomAnchor
+    if anchor == nil then
+        local cursor = _InputService:GetCursorPosition()
+        local center = Vector2(_UILogic.ScreenWidth * 0.5, _UILogic.ScreenHeight * 0.5)
+        local world = _UILogic:ScreenToWorldPosition(cursor)
+        local centerWorld = _UILogic:ScreenToWorldPosition(center)
+        anchor = {
+            worldX = world.x, worldY = world.y,
+            relX = world.x - centerWorld.x, relY = world.y - centerWorld.y,
+            zoom0 = self._T.zoom, offsetX0 = self._T.offsetX, offsetY0 = self._T.offsetY,
+            timeout = 0.3
+        }
+        self._T.zoomAnchor = anchor
+    else
+        anchor.timeout = 0.3
+    end
+    local scale = 1.0 - anchor.zoom0 / zoom
+    self:ApplyOffset(camera, anchor.offsetX0 + anchor.relX * scale, anchor.offsetY0 + anchor.relY * scale)
     self._T.zoom = zoom
     camera.ZoomRatio = zoom
 end
 
 @ExecSpace("ClientOnly")
 method void OnKeyDown(KeyDownEvent event)
-    -- 휠 버튼(가운데 버튼)을 누르는 동안 팬 모드. 시작점의 월드 지점을 앵커로 잡는다.
+    -- 휠 버튼(가운데 버튼)을 누르는 동안 팬 모드. 시작 프레임에 커서 아래 월드
+    -- 지점(앵커) + 픽셀→월드 배율 + 카메라 기준점(중심-오프셋)을 실측해 두면,
+    -- 이후 프레임은 측정 없이 "앵커가 커서 밑에 오는 오프셋"을 직접 계산할 수
+    -- 있다 (피드포워드 — 지연 측정 서보의 출렁임 없음).
     if event.key ~= KeyboardKey.Mouse2 then return end
     if _InputService:IsPointerOverUI() then return end
     local cursor = _InputService:GetCursorPosition()
+    local center = Vector2(_UILogic.ScreenWidth * 0.5, _UILogic.ScreenHeight * 0.5)
     local world = _UILogic:ScreenToWorldPosition(cursor)
-    self._T.dragAnchor = { x = world.x, y = world.y }
+    local centerWorld = _UILogic:ScreenToWorldPosition(center)
+    local probeX = _UILogic:ScreenToWorldPosition(Vector2(center.x + 100.0, center.y))
+    local probeY = _UILogic:ScreenToWorldPosition(Vector2(center.x, center.y + 100.0))
+    self._T.dragAnchor = {
+        x = world.x, y = world.y,
+        baseX = centerWorld.x - self._T.offsetX, baseY = centerWorld.y - self._T.offsetY,
+        kx = (probeX.x - centerWorld.x) * 0.01, ky = (probeY.y - centerWorld.y) * 0.01,
+        zoom0 = self._T.zoom
+    }
     self._T.dragging = true
 end
 
@@ -128,53 +169,34 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnUpdate(number delta)
-    -- 줌 앵커 보정 → 팬 추적 → 맵 전환 리셋을 한 곳에서 돈다.
+    -- 줌 앵커 세션 만료 → 팬 추적 → 맵 전환 리셋을 한 곳에서 돈다.
     local camera = nil
 
-    -- ① 줌 직후 보정: 커서 아래 있던 월드 지점이 새 줌에서도 같은 화면 위치에
-    --    남도록 오프셋을 이동한다. ScreenToWorldPosition 은 줌 변경을 곧바로
-    --    반영하지 않으므로(실측 — 다음 렌더 이후), 기록해 둔 지점의 변환값이
-    --    실제로 달라진 프레임에만 소비한다. 안 달라지면 timeout 까지 기다린다.
-    -- ScreenToWorldPosition 이 카메라 변경(줌·오프셋)을 다음 렌더에야 반영하므로,
-    -- 잔여 오차의 60%(FeedbackGain)만 매 프레임 소거하는 서보로 만든다 — 2프레임
-    -- 지연 피드백에서도 진동 없이 수렴한다. 오차가 사라지면 종료한다.
-    local fix = self._T.pendingZoomFix
-    if fix ~= nil then
-        camera = self:GetCamera()
-        if camera ~= nil then
-            local world = _UILogic:ScreenToWorldPosition(Vector2(fix.screenX, fix.screenY))
-            local dx = fix.worldX - world.x
-            local dy = fix.worldY - world.y
-            fix.timeout = fix.timeout - delta
-            if dx * dx + dy * dy > 0.0000001 then
-                self:ApplyOffset(camera, self._T.offsetX + dx * 0.6, self._T.offsetY + dy * 0.6)
-                fix.calm = 0
-            else
-                fix.calm = (fix.calm or 0) + 1
-            end
-            if fix.calm ~= nil and fix.calm >= 3 then
-                self._T.pendingZoomFix = nil
-                if self._T.dragging then self._T.dragAnchor = { x = fix.worldX, y = fix.worldY } end
-            elseif fix.timeout <= 0 then
-                self._T.pendingZoomFix = nil
-            end
-        end
+    -- ① 줌 앵커 세션 만료: 보정 자체는 OnMouseScroll 이 노치 프레임에 끝냈다.
+    --    여기서는 마지막 노치 후 0.3s 가 지나면 세션을 닫아, 다음 휠이 새 실측으로
+    --    시작하게만 한다 (커서가 옮겨졌을 수 있으므로).
+    local anchor = self._T.zoomAnchor
+    if anchor ~= nil then
+        anchor.timeout = anchor.timeout - delta
+        if anchor.timeout <= 0 then self._T.zoomAnchor = nil end
     end
 
     -- ② 팬: 드래그 시작점의 월드 지점을 커서에 계속 붙인다 (잡고 끌기 1:1).
-    --    ScreenToWorldPosition 의 1프레임 지연은 매 프레임 잔여 오차를 다시
-    --    보정하는 구조라 수렴한다.
+    --    시작 프레임에 실측해 둔 배율·기준점으로 목표 오프셋을 직접 계산한다.
+    --    ScreenToWorldPosition 을 매 프레임 다시 읽지 않으므로(1프레임 지연 값)
+    --    서보식 출렁임이 없다. 배율은 줌에 반비례하므로 zoom0/zoom 으로 환산한다.
     if self._T.dragging and self._T.dragAnchor ~= nil then
         if camera == nil then camera = self:GetCamera() end
         if camera ~= nil then
+            local pan = self._T.dragAnchor
             local cursor = _InputService:GetCursorPosition()
-            local world = _UILogic:ScreenToWorldPosition(cursor)
-            local dx = self._T.dragAnchor.x - world.x
-            local dy = self._T.dragAnchor.y - world.y
-            if dx ~= 0.0 or dy ~= 0.0 then
-                -- 잔여 오차의 60%씩 소거 — ScreenToWorldPosition 1프레임 지연에서도
-                -- 진동 없이 수 프레임(~50ms) 안에 커서를 1:1 로 따라잡는다.
-                self:ApplyOffset(camera, self._T.offsetX + dx * 0.6, self._T.offsetY + dy * 0.6)
+            local zoomScale = pan.zoom0 / self._T.zoom
+            local relX = (cursor.x - _UILogic.ScreenWidth * 0.5) * pan.kx * zoomScale
+            local relY = (cursor.y - _UILogic.ScreenHeight * 0.5) * pan.ky * zoomScale
+            local ox = pan.x - relX - pan.baseX
+            local oy = pan.y - relY - pan.baseY
+            if ox ~= self._T.offsetX or oy ~= self._T.offsetY then
+                self:ApplyOffset(camera, ox, oy)
             end
         end
     end
