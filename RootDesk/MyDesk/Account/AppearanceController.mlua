@@ -332,7 +332,10 @@ method void RefreshSummary(table info, AccountProfileService profile)
     if self.selectedText ~= nil then
         local line = "피스를 선택하세요. 슬롯 선택만으로는 저장되지 않습니다."
         if selected ~= nil then line = selected.name .. "  [" .. selected.rarityLabel .. "]  " .. (selected.owned and "보유" or "미보유") .. "  도감 +" .. tostring(selected.score) end
-        if profile.LastTransactionMessage ~= self._T.messageAtOpen and profile.LastTransactionMessage ~= "" then
+        -- 실패·거절류는 전역 TransactionNoticeLogic 이 팝업으로 안내한다 (T-15) —
+        -- 같은 문구를 인라인에 중복 표기하지 않는다.
+        if profile.LastTransactionMessage ~= self._T.messageAtOpen and profile.LastTransactionMessage ~= ""
+            and not _TransactionNoticeLogic:IsSuppressed(profile.LastTransactionMessage) then
             line = line .. "  |  " .. profile.LastTransactionMessage
         end
         self.selectedText.Text = line
