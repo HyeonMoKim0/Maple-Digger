@@ -156,7 +156,9 @@ method table GetStepConfig(integer step)
         }
     elseif step == 5 then
         return {
-            guide = "같은 일을 여러 번 시키려면 [반복 추가]로 묶어요.\n횟수 5로 두고 안에 [동E]·[채굴M]·[적재L]·[서W]·[하역U]를 넣고 [끝 ]]으로 닫은 뒤 실행하세요.",
+            -- T-15b: 순서 강제 잠금으로 [횟수] 버튼을 누를 수 없게 됐다 — 기본값
+            -- ×2 를 그대로 쓰도록 안내한다 (VerifyStep(5)는 반복 존재만 본다).
+            guide = "같은 일을 여러 번 시키려면 [반복 추가]로 묶어요.\n횟수는 ×2 그대로 두고 안에 [동E]·[채굴M]·[적재L]·[서W]·[하역U]를 넣고 [끝 ]]으로 닫은 뒤 실행하세요.",
             fail = "반복이 끝났지만 목표를 채우지 못했어요. 안내대로 반복 안에 블록을 넣고 다시 실행해 보세요.",
             allowed = { repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
@@ -379,6 +381,11 @@ method void UpdateArrowTarget()
     local seq = self._T.seq
     if seq == nil or #seq == 0 then return end
     local key = self:ResolveArrowKey(seq)
+    -- T-15b: seq 가 진행되거나 재조준이 일어나면 잠금도 그 대상만 열리게 갱신한다.
+    if key ~= self._T.lockedKey then
+        local config = self:GetStepConfig(self._T.stepShown)
+        self:ApplySeqLock(key, config)
+    end
     if key == "" then
         -- 마지막 대상까지 눌렀다 — 판정 대기 동안 화살표를 감춘다.
         if self.arrow.Enable then self.arrow.Enable = false end
@@ -465,10 +472,27 @@ method void EnterStep(integer step)
         local fundsProfile = self:GetProfile()
         if fundsProfile ~= nil then fundsProfile:RequestTutorialFundsCheck() end
     end
-    self:ApplyStepLocks(config.allowed)
-    self:ShowTooltip(step, "")
     self:StartArrowSequence(config)
+    -- T-15b (2026-08-22 오너): 화살표가 가리키는 버튼만 눌리게 순서를 강제한다.
+    -- 이후 seq 진행에 따른 재잠금은 UpdateArrowTarget 이 키 변화를 보고 한다.
+    self._T.lockedKey = nil
+    self:ApplySeqLock(self:ResolveArrowKey(config.seq or {}), config)
+    self:ShowTooltip(step, "")
     log("[Tutorial] step enter step=" .. tostring(step) .. " replay=" .. tostring(self._T.replayActive))
+end
+
+@ExecSpace("ClientOnly")
+method void ApplySeqLock(string key, table config)
+    -- T-15b: 활성 버튼 = 화살표 대상 1개 + [초기화](실수 복구, §46 허용).
+    -- seq 가 없는 특수 상황에서만 config.allowed 로 되돌아간다.
+    if config.seq == nil or #config.seq == 0 then
+        self:ApplyStepLocks(config.allowed)
+        return
+    end
+    local allowed = { clear = true }
+    if key ~= nil and key ~= "" then allowed[key] = true end
+    self._T.lockedKey = key
+    self:ApplyStepLocks(allowed)
 end
 
 @ExecSpace("ClientOnly")
@@ -584,6 +608,10 @@ method void HandleStepFailure(integer step)
     self._T.runSeen = false
     self._T.settle = self.SettleSeconds
     self._T.snapshot = nil
+    -- T-15b: 순서 강제 잠금에서는 실패 시 seq 를 처음으로 되감아야 한다 —
+    -- 소진된 seq 를 두면 화살표도 잠금도 열리지 않아 재시도가 불가능해진다.
+    self._T.seqIndex = 1
+    self:ApplySeqLock(self:ResolveArrowKey(config.seq or {}), config)
     self:ShowTooltip(step, config.fail)
     log("[Tutorial] step failed step=" .. tostring(step) .. " - reset and re-guide")
 end
@@ -725,7 +753,21 @@ method void OnUpdate(number delta)
         return
     end
     if step == 9 or (profile.TutorialCompleted and step > 8) then
+        -- T-15b (2026-08-22 오너): 8단계는 일꾼이 이미 2명이면 신호가 즉시 충족돼
+        -- 진입하자마자 통과된다(§48 설계 — 고용은 해금 상한 때문에 반복 불가).
+        -- 안내 없이 닫히면 버그로 보이므로, 끝났음을 팝업으로 알린다.
+        local autoPassed = self._T.stepShown == 8 and (self._T.seqIndex or 0) <= 1
+        local closingReplay = self._T.replayActive
         self:Deactivate(true)
+        if closingReplay or autoPassed then
+            local message = "튜토리얼을 마쳤습니다."
+            if closingReplay then message = "튜토리얼 다시 보기를 마쳤습니다." end
+            if autoPassed then
+                message = message .. "\n\n(일꾼이 이미 " .. tostring(self.TutorialWorkerGoal) .. "명이라 8단계 고용은 자동으로 통과됐어요)"
+            end
+            _UIPopup:OpenNotice(message, nil)
+            log("[Tutorial] completion notice replay=" .. tostring(closingReplay) .. " autoPassed=" .. tostring(autoPassed))
+        end
         return
     end
     if step >= 1 and step <= 8 and step ~= self._T.stepShown then
