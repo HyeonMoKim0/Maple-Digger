@@ -41,63 +41,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 15,
               "AnchorsMax": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "OffsetMin": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 1920,
-                "y": 1080
+                "x": 1920.0,
+                "y": 1080.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -110,7 +110,7 @@
             {
               "@type": "MOD.Core.CanvasGroupComponent",
               "BlocksRaycasts": true,
-              "GroupAlpha": 1,
+              "GroupAlpha": 1.0,
               "Interactable": true,
               "Enable": true
             }
@@ -146,63 +146,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 5,
               "AnchorsMax": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": -20,
-                "y": -140
+                "x": -20.0,
+                "y": -140.0
               },
               "OffsetMin": {
-                "x": -480,
-                "y": -700
+                "x": -480.0,
+                "y": -700.0
               },
               "Pivot": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 460,
-                "y": 560
+                "x": 460.0,
+                "y": 560.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": -20,
-                "y": -140
+                "x": -20.0,
+                "y": -140.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 940,
-                "y": 400,
-                "z": 0
+                "x": 940.0,
+                "y": 400.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -214,36 +214,36 @@
                 "DataId": "7691424f38e647cdb4ac8d213d782bf7"
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -255,12 +255,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": true,
               "Type": 1,
               "Enable": true
@@ -305,91 +305,91 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -42
+                "x": 414.0,
+                "y": -42.0
               },
               "OffsetMin": {
-                "x": 46,
-                "y": -74
+                "x": 46.0,
+                "y": -74.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 368,
-                "y": 32
+                "x": 368.0,
+                "y": 32.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 46,
-                "y": -42
+                "x": 46.0,
+                "y": -42.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -414,
-                "y": -42,
-                "z": 0
+                "x": -414.0,
+                "y": -42.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.478,
                 "g": 0.235,
                 "b": 0.051,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 26,
+              "FontSize": 26.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -416,17 +416,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -434,18 +434,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -457,12 +457,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -499,91 +499,91 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -353
+                "x": 414.0,
+                "y": -353.0
               },
               "OffsetMin": {
-                "x": 84,
-                "y": -381
+                "x": 84.0,
+                "y": -381.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 330,
-                "y": 28
+                "x": 330.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 84,
-                "y": -353
+                "x": 84.0,
+                "y": -353.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -376,
-                "y": -353,
-                "z": 0
+                "x": -376.0,
+                "y": -353.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.231,
                 "g": 0.165,
                 "b": 0.102,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 22,
+              "FontSize": 22.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -610,17 +610,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -628,18 +628,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -651,12 +651,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -693,12 +693,12 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
@@ -710,18 +710,18 @@
                 "y": -256.969421
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 330,
-                "y": 28
+                "x": 330.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
@@ -729,55 +729,55 @@
                 "y": -228.9694
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
                 "x": -376.537,
                 "y": -228.9694,
-                "z": 0
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.231,
                 "g": 0.165,
                 "b": 0.102,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 22,
+              "FontSize": 22.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -804,17 +804,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 15,
+              "PlayRate": 15.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -822,18 +822,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -845,12 +845,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -887,91 +887,91 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -180
+                "x": 414.0,
+                "y": -180.0
               },
               "OffsetMin": {
-                "x": 84,
-                "y": -208
+                "x": 84.0,
+                "y": -208.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 330,
-                "y": 28
+                "x": 330.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 84,
-                "y": -180
+                "x": 84.0,
+                "y": -180.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -376,
-                "y": -180,
-                "z": 0
+                "x": -376.0,
+                "y": -180.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.231,
                 "g": 0.165,
                 "b": 0.102,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 22,
+              "FontSize": 22.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -998,17 +998,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -1016,18 +1016,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -1039,12 +1039,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -1081,57 +1081,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 222,
-                "y": -429
+                "x": 222.0,
+                "y": -429.0
               },
               "OffsetMin": {
-                "x": 46,
-                "y": -517
+                "x": 46.0,
+                "y": -517.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 176,
-                "y": 88
+                "x": 176.0,
+                "y": 88.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 46,
-                "y": -429
+                "x": 46.0,
+                "y": -429.0
+              },
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1143,17 +1149,17 @@
                 "DataId": "2860136c06ab075439721c027de365af"
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -1161,18 +1167,18 @@
                 "r": 0.419607848,
                 "g": 0.309803933,
                 "b": 0.164705887,
-                "a": 1
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -1184,12 +1190,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": true,
               "Type": 1,
               "Enable": true
@@ -1198,28 +1204,28 @@
               "@type": "MOD.Core.ButtonComponent",
               "Colors": {
                 "NormalColor": {
-                  "r": 1,
-                  "g": 1,
-                  "b": 1,
-                  "a": 1
+                  "r": 1.0,
+                  "g": 1.0,
+                  "b": 1.0,
+                  "a": 1.0
                 },
                 "HighlightedColor": {
                   "r": 0.9607843,
                   "g": 0.9607843,
                   "b": 0.9607843,
-                  "a": 1
+                  "a": 1.0
                 },
                 "PressedColor": {
                   "r": 0.784313738,
                   "g": 0.784313738,
                   "b": 0.784313738,
-                  "a": 1
+                  "a": 1.0
                 },
                 "SelectedColor": {
                   "r": 0.9607843,
                   "g": 0.9607843,
                   "b": 0.9607843,
-                  "a": 1
+                  "a": 1.0
                 },
                 "DisabledColor": {
                   "r": 0.784313738,
@@ -1227,7 +1233,7 @@
                   "b": 0.784313738,
                   "a": 0.5019608
                 },
-                "ColorMultiplier": 1,
+                "ColorMultiplier": 1.0,
                 "FadeDuration": 0.1
               },
               "IgnoreMapLayerCheck": false,
@@ -1247,29 +1253,29 @@
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
-              "FontSize": 20,
+              "FontSize": 20.0,
               "FontStyle": 0,
               "HorizontalAlignment": 2,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -1319,91 +1325,91 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -80
+                "x": 414.0,
+                "y": -80.0
               },
               "OffsetMin": {
-                "x": 46,
-                "y": -108
+                "x": 46.0,
+                "y": -108.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 368,
-                "y": 28
+                "x": 368.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 46,
-                "y": -80
+                "x": 46.0,
+                "y": -80.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -414,
-                "y": -80,
-                "z": 0
+                "x": -414.0,
+                "y": -80.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.231,
                 "g": 0.165,
                 "b": 0.102,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 22,
+              "FontSize": 22.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -1430,17 +1436,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -1448,18 +1454,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -1471,12 +1477,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -1513,91 +1519,91 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -112
+                "x": 414.0,
+                "y": -112.0
               },
               "OffsetMin": {
-                "x": 84,
-                "y": -140
+                "x": 84.0,
+                "y": -140.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 330,
-                "y": 28
+                "x": 330.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 84,
-                "y": -112
+                "x": 84.0,
+                "y": -112.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -376,
-                "y": -112,
-                "z": 0
+                "x": -376.0,
+                "y": -112.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.231,
                 "g": 0.165,
                 "b": 0.102,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 22,
+              "FontSize": 22.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -1624,17 +1630,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -1642,18 +1648,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -1665,12 +1671,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -1707,91 +1713,91 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -146
+                "x": 414.0,
+                "y": -146.0
               },
               "OffsetMin": {
-                "x": 84,
-                "y": -174
+                "x": 84.0,
+                "y": -174.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 330,
-                "y": 28
+                "x": 330.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 84,
-                "y": -146
+                "x": 84.0,
+                "y": -146.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -376,
-                "y": -146,
-                "z": 0
+                "x": -376.0,
+                "y": -146.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.231,
                 "g": 0.165,
                 "b": 0.102,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 22,
+              "FontSize": 22.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -1818,17 +1824,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -1836,18 +1842,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -1859,12 +1865,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -1901,91 +1907,91 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 413,
-                "y": -318
+                "x": 413.0,
+                "y": -318.0
               },
               "OffsetMin": {
-                "x": 83,
-                "y": -346
+                "x": 83.0,
+                "y": -346.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 330,
-                "y": 28
+                "x": 330.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 83,
-                "y": -318
+                "x": 83.0,
+                "y": -318.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -377,
-                "y": -318,
-                "z": 0
+                "x": -377.0,
+                "y": -318.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.231,
                 "g": 0.165,
                 "b": 0.102,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 22,
+              "FontSize": 22.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -2012,17 +2018,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -2030,18 +2036,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -2053,12 +2059,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -2095,91 +2101,91 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -386
+                "x": 414.0,
+                "y": -386.0
               },
               "OffsetMin": {
-                "x": 84,
-                "y": -414
+                "x": 84.0,
+                "y": -414.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 330,
-                "y": 28
+                "x": 330.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 84,
-                "y": -386
+                "x": 84.0,
+                "y": -386.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -376,
-                "y": -386,
-                "z": 0
+                "x": -376.0,
+                "y": -386.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
                 "r": 0.231,
                 "g": 0.165,
                 "b": 0.102,
-                "a": 1
+                "a": 1.0
               },
-              "FontSize": 22,
+              "FontSize": 22.0,
               "FontStyle": 0,
               "HorizontalAlignment": 1,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
@@ -2206,17 +2212,17 @@
                 "DataId": ""
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -2224,18 +2230,18 @@
                 "r": 0.101960786,
                 "g": 0.101960786,
                 "b": 0.101960786,
-                "a": 0
+                "a": 0.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -2247,12 +2253,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -2289,63 +2295,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 74,
-                "y": -318
+                "x": 74.0,
+                "y": -318.0
               },
               "OffsetMin": {
-                "x": 42,
-                "y": -350
+                "x": 42.0,
+                "y": -350.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 32,
-                "y": 32
+                "x": 32.0,
+                "y": 32.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 42,
-                "y": -318
+                "x": 42.0,
+                "y": -318.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -418,
-                "y": -318,
-                "z": 0
+                "x": -418.0,
+                "y": -318.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -2357,36 +2363,36 @@
                 "DataId": "5e178be4569841139fa6252de9220130"
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -2398,12 +2404,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -2440,63 +2446,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 73,
-                "y": -114
+                "x": 73.0,
+                "y": -114.0
               },
               "OffsetMin": {
-                "x": 45,
-                "y": -142
+                "x": 45.0,
+                "y": -142.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 28,
-                "y": 28
+                "x": 28.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 45,
-                "y": -114
+                "x": 45.0,
+                "y": -114.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -415,
-                "y": -114,
-                "z": 0
+                "x": -415.0,
+                "y": -114.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -2508,36 +2514,36 @@
                 "DataId": "00881001d105461a92a74b9c8bf8dcc2"
               },
               "LocalPosition": {
-                "x": -16,
-                "y": -16
+                "x": -16.0,
+                "y": -16.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 1,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -2549,12 +2555,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -2591,63 +2597,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 73,
-                "y": -148
+                "x": 73.0,
+                "y": -148.0
               },
               "OffsetMin": {
-                "x": 45,
-                "y": -176
+                "x": 45.0,
+                "y": -176.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 28,
-                "y": 28
+                "x": 28.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 45,
-                "y": -148
+                "x": 45.0,
+                "y": -148.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -415,
-                "y": -148,
-                "z": 0
+                "x": -415.0,
+                "y": -148.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -2659,36 +2665,36 @@
                 "DataId": "02a489cccff24a139a6c3582a5871f58"
               },
               "LocalPosition": {
-                "x": -16,
-                "y": -16
+                "x": -16.0,
+                "y": -16.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 1,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -2700,12 +2706,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -2742,63 +2748,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 73,
-                "y": -182
+                "x": 73.0,
+                "y": -182.0
               },
               "OffsetMin": {
-                "x": 45,
-                "y": -210
+                "x": 45.0,
+                "y": -210.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 28,
-                "y": 28
+                "x": 28.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 45,
-                "y": -182
+                "x": 45.0,
+                "y": -182.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -415,
-                "y": -182,
-                "z": 0
+                "x": -415.0,
+                "y": -182.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -2810,36 +2816,36 @@
                 "DataId": "00dfd3e9e2d24d76b358d338800c1844"
               },
               "LocalPosition": {
-                "x": -16,
-                "y": -16
+                "x": -16.0,
+                "y": -16.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 1,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -2851,12 +2857,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -2893,12 +2899,12 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
@@ -2910,18 +2916,18 @@
                 "y": -253.9694
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 30,
-                "y": 22
+                "x": 30.0,
+                "y": 22.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
@@ -2929,27 +2935,27 @@
                 "y": -231.9694
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
                 "x": -416.3186,
                 "y": -231.9694,
-                "z": 0
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -2961,36 +2967,36 @@
                 "DataId": "2085fa77dd2345f596b9fd4fd550c7fd"
               },
               "LocalPosition": {
-                "x": -16,
-                "y": -12
+                "x": -16.0,
+                "y": -12.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 1,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -3002,12 +3008,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -3044,63 +3050,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 422,
-                "y": -255
+                "x": 422.0,
+                "y": -255.0
               },
               "OffsetMin": {
-                "x": 37,
-                "y": -295
+                "x": 37.0,
+                "y": -295.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 385,
-                "y": 40
+                "x": 385.0,
+                "y": 40.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 37,
-                "y": -255
+                "x": 37.0,
+                "y": -255.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -423,
-                "y": -255,
-                "z": 0
+                "x": -423.0,
+                "y": -255.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -3112,36 +3118,36 @@
                 "DataId": "fccb472dfc8744a290f2938d04e58785"
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -3153,12 +3159,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 1,
               "Enable": true
@@ -3195,63 +3201,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 422,
-                "y": -255
+                "x": 422.0,
+                "y": -255.0
               },
               "OffsetMin": {
-                "x": 37,
-                "y": -295
+                "x": 37.0,
+                "y": -295.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 385,
-                "y": 40
+                "x": 385.0,
+                "y": 40.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 37,
-                "y": -255
+                "x": 37.0,
+                "y": -255.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -423,
-                "y": -255,
-                "z": 0
+                "x": -423.0,
+                "y": -255.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -3263,17 +3269,17 @@
                 "DataId": "fccb472dfc8744a290f2938d04e58785"
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -3281,18 +3287,18 @@
                 "r": 0.55,
                 "g": 0.72,
                 "b": 0.35,
-                "a": 1
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 0,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 0.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -3304,12 +3310,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 3,
               "Enable": true
@@ -3346,12 +3352,12 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
@@ -3363,18 +3369,18 @@
                 "y": -414.4431
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 24,
-                "y": 28
+                "x": 24.0,
+                "y": 28.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
@@ -3382,27 +3388,27 @@
                 "y": -386.4431
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
                 "x": -414.4431,
                 "y": -386.4431,
-                "z": 0
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -3414,8 +3420,8 @@
                 "DataId": "77754b64421641c09100e34e0c6ce151"
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
                 "x": 1.25,
@@ -3424,26 +3430,26 @@
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 1,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -3455,12 +3461,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -3497,63 +3503,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -221
+                "x": 414.0,
+                "y": -221.0
               },
               "OffsetMin": {
-                "x": 46,
-                "y": -223
+                "x": 46.0,
+                "y": -223.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 368,
-                "y": 2
+                "x": 368.0,
+                "y": 2.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 46,
-                "y": -221
+                "x": 46.0,
+                "y": -221.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -414,
-                "y": -221,
-                "z": 0
+                "x": -414.0,
+                "y": -221.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -3565,17 +3571,17 @@
                 "DataId": "2860136c06ab075439721c027de365af"
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -3586,15 +3592,15 @@
                 "a": 0.55
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -3606,12 +3612,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -3648,63 +3654,63 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -306
+                "x": 414.0,
+                "y": -306.0
               },
               "OffsetMin": {
-                "x": 46,
-                "y": -308
+                "x": 46.0,
+                "y": -308.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 368,
-                "y": 2
+                "x": 368.0,
+                "y": 2.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 46,
-                "y": -306
+                "x": 46.0,
+                "y": -306.0
               },
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": -414,
-                "y": -306,
-                "z": 0
+                "x": -414.0,
+                "y": -306.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -3716,17 +3722,17 @@
                 "DataId": "2860136c06ab075439721c027de365af"
               },
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
@@ -3737,15 +3743,15 @@
                 "a": 0.55
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -3757,12 +3763,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": false,
               "Type": 0,
               "Enable": true
@@ -3799,98 +3805,104 @@
               "ActivePlatform": 255,
               "AlignmentOption": 4,
               "AnchorsMax": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "AnchorsMin": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 414,
-                "y": -429
+                "x": 414.0,
+                "y": -429.0
               },
               "OffsetMin": {
-                "x": 238,
-                "y": -517
+                "x": 238.0,
+                "y": -517.0
               },
               "Pivot": {
-                "x": 0,
-                "y": 1
+                "x": 0.0,
+                "y": 1.0
               },
               "RectSize": {
-                "x": 176,
-                "y": 88
+                "x": 176.0,
+                "y": 88.0
               },
               "UIMode": 1,
               "UIScale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 238,
-                "y": -429
+                "x": 238.0,
+                "y": -429.0
+              },
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": -222.0,
+                "y": -429.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.SpriteGUIRendererComponent",
               "AnimClipPlayType": 0,
               "EndFrameIndex": 2147483647,
+              "IgnoreMapLayerCheck": false,
               "ImageRUID": {
                 "DataId": "2860136c06ab075439721c027de365af"
               },
-              "IgnoreMapLayerCheck": false,
               "LocalPosition": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "LocalScale": {
-                "x": 1,
-                "y": 1
+                "x": 1.0,
+                "y": 1.0
               },
               "MaterialId": "",
               "OrderInLayer": 0,
               "OverrideSorting": false,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "PreserveSprite": 0,
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.10196078431372549,
-                "g": 0.10196078431372549,
-                "b": 0.10196078431372549,
-                "a": 0.23529411764705882
+                "r": 0.101960786,
+                "g": 0.101960786,
+                "b": 0.101960786,
+                "a": 0.235294119
               },
               "DropShadow": false,
-              "DropShadowAngle": 120,
+              "DropShadowAngle": 120.0,
               "DropShadowColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
                 "a": 0.72
               },
-              "DropShadowDistance": 3,
-              "FillAmount": 1,
+              "DropShadowDistance": 3.0,
+              "FillAmount": 1.0,
               "FillCenter": true,
               "FillClockWise": true,
               "FillMethod": 0,
@@ -3902,12 +3914,12 @@
               "FrameRow": 1,
               "Outline": false,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 3,
+              "OutlineWidth": 3.0,
               "RaycastTarget": true,
               "Type": 1,
               "Enable": true
@@ -3916,28 +3928,28 @@
               "@type": "MOD.Core.ButtonComponent",
               "Colors": {
                 "NormalColor": {
-                  "r": 1,
-                  "g": 1,
-                  "b": 1,
-                  "a": 1
+                  "r": 1.0,
+                  "g": 1.0,
+                  "b": 1.0,
+                  "a": 1.0
                 },
                 "HighlightedColor": {
                   "r": 0.9607843,
                   "g": 0.9607843,
                   "b": 0.9607843,
-                  "a": 1
+                  "a": 1.0
                 },
                 "PressedColor": {
                   "r": 0.784313738,
                   "g": 0.784313738,
                   "b": 0.784313738,
-                  "a": 1
+                  "a": 1.0
                 },
                 "SelectedColor": {
                   "r": 0.9607843,
                   "g": 0.9607843,
                   "b": 0.9607843,
-                  "a": 1
+                  "a": 1.0
                 },
                 "DisabledColor": {
                   "r": 0.784313738,
@@ -3945,7 +3957,7 @@
                   "b": 0.784313738,
                   "a": 0.5019608
                 },
-                "ColorMultiplier": 1,
+                "ColorMultiplier": 1.0,
                 "FadeDuration": 0.1
               },
               "IgnoreMapLayerCheck": false,
@@ -3965,29 +3977,29 @@
             {
               "@type": "MOD.Core.TextGUIRendererComponent",
               "BestFit": false,
-              "ConstraintX": 100,
-              "ConstraintY": 100,
+              "ConstraintX": 100.0,
+              "ConstraintY": 100.0,
               "Font": "Default",
               "FontColor": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
               },
-              "FontSize": 24,
+              "FontSize": 24.0,
               "FontStyle": 0,
               "HorizontalAlignment": 2,
               "IgnoreMapLayerCheck": false,
-              "MaxSize": 40,
-              "MinSize": 10,
+              "MaxSize": 40.0,
+              "MinSize": 10.0,
               "OrderInLayer": 0,
               "OutlineColor": {
-                "r": 0,
-                "g": 0,
-                "b": 0,
-                "a": 1
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
               },
-              "OutlineWidth": 0,
+              "OutlineWidth": 0.0,
               "Overflow": 0,
               "OverrideSorting": false,
               "Padding": {
