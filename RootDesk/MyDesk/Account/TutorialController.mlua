@@ -247,8 +247,15 @@ method void ApplyStepLocks(table allowed)
             end
         end
     end
-    -- 패널 접기 토글은 잠그되 패널은 펼친 상태로 고정한다 (§5.1).
-    _BlockProgramController:ForceExpandPanelForTutorial()
+    -- 패널 접기 토글은 잠근다. 편집기 단계(1~6)는 패널을 펼친 상태로 고정하고
+    -- (§5.1), 판매·고용 단계(7·8)는 접는다 — 편집기가 필요 없는 단계인데 T-15
+    -- 개편으로 넓어진 판매·선택 패널과 겹쳐 화면을 어지럽힌다 (2026-08-23 오너
+    -- 다시 보기 보고: "블록 UI 창이 안 닫혀 있다").
+    if (self._T.stepShown or 0) >= 7 then
+        _BlockProgramController:CollapsePanelForTutorial()
+    else
+        _BlockProgramController:ForceExpandPanelForTutorial()
+    end
 end
 
 @ExecSpace("ClientOnly")
@@ -455,11 +462,13 @@ method void EnterStep(integer step)
     self._T.settle = self.SettleSeconds
     self._T.advanceCooldown = 0
     if config.clearProgram then _BlockProgramController:ClearProgramForTutorial() end
-    if step <= 6 then
-        -- 편집기 단계에서는 광산 선택 계열 패널을 닫는다. 다시 보기 진입점이
-        -- SelectPanel 이라 열린 채로 남으면 편집기·안내를 덮는다.
-        _MineSelectController:CloseAllPanelsForTutorial()
-    end
+    -- 광산 선택 계열 패널은 **모든 단계** 진입 시 닫는다. 1~6단계는 편집기·안내를
+    -- 덮지 않기 위해서고, 7·8단계는 seq 의 첫 버튼(sellOpen/selectOpen)이 "닫힌
+    -- 상태에서 연다"를 전제하기 때문이다. 특히 8단계: 7단계가 판매 패널을 연 채
+    -- 끝나는데 [광산 선택]은 토글이라(열린 패널이 있으면 전부 닫기 — 2026-08-20)
+    -- 첫 클릭이 '닫기'로 소모되고 seq 는 이미 진행돼 닫힌 패널 속 [강화·고용]에
+    -- 잠금·화살표가 걸려 진행 불능이 됐다 (2026-08-23 오너 다시 보기 실플레이).
+    _MineSelectController:CloseAllPanelsForTutorial()
     if config.reset ~= nil then
         local profile = self:GetProfile()
         if profile ~= nil then
@@ -667,6 +676,8 @@ method void Deactivate(boolean showCompletionHint)
     self._T.stepShown = 0
     self:ClearSeqHandlers()
     self:ReleaseAllLocks()
+    -- 7·8단계가 접어 둔 편집기 패널을 기본 상태(펼침)로 되돌린다.
+    _BlockProgramController:ForceExpandPanelForTutorial()
     if self.tutorialRoot ~= nil then self.tutorialRoot.Enable = false end
     -- T-14 (docs/28): §9.3 완료 후 자연어 힌트는 자연어 입력 제거와 함께 폐지됐다.
     -- showCompletionHint 인자는 호출부 호환을 위해 남기되 아무것도 하지 않는다.
