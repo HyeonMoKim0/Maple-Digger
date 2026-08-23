@@ -587,6 +587,64 @@ method boolean AbandonCorruptProfile()
     return true
 end
 
+@ExecSpace("ServerOnly")
+method boolean ResetProfileToDefault()
+    -- 설정 창 "계정 데이터 초기화" (docs/25 §10). 직전 저장본을 아카이브 키에
+    -- 남기고 본본·백업을 기본 프로필로 덮는다. 저장 성공 뒤에만 메모리를 바꾼다
+    -- — 실패하면 아무것도 변하지 않는다 (다른 원장 트랜잭션과 같은 방침).
+    if not self:CanWriteProfile() then return false end
+    local previousEncoded = _HttpService:JSONEncode(self._T.profile)
+    local profile = self:CreateDefaultProfile()
+    local encoded = _HttpService:JSONEncode(profile)
+    local values = {
+        [self.StorageKey] = encoded,
+        [self.BackupStorageKey] = encoded,
+        [self.RecoveryArchiveStorageKey] = previousEncoded,
+    }
+    local errorCode = self._T.storage:TransactSetAndWait(values)
+    if errorCode ~= 0 then
+        log_error("[AccountProfile] reset save failed error=" .. tostring(errorCode))
+        self:SetTransactionMessage("초기화 저장에 실패했습니다. 계정 데이터는 그대로입니다. 다시 시도해 주세요.")
+        return false
+    end
+    self._T.profile = profile
+    self.IsDirty = false
+    self:DespawnExtraWorkers()
+    self:SyncRuntimeState()
+    self:SetTransactionMessage("계정 데이터를 초기화했습니다. 처음 상태에서 다시 시작합니다.")
+    -- 초보 광산 복귀 + 일꾼 1 재구성 + 시뮬레이터 보너스 캐시 갱신. 튜토리얼은
+    -- step=0 미러를 본 TutorialController 의 기존 자동 시작 감시(E1·E14)가 맡는다.
+    self:RestoreLastMineAndWorker()
+    log("[AccountProfile] profile reset to defaults")
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method void DespawnExtraWorkers()
+    -- 초기화로 소유 일꾼이 1명이 된 뒤, 세션이 스폰해 둔 일꾼 2~5 엔티티를 세
+    -- 광산 맵 전부에서 걷어낸다. 현재 맵만 청소하면 이전에 방문한 맵의 잉여
+    -- 일꾼이 남아, 재방문 시 소유하지 않은 일꾼이 화면에 보인다 (Worker01 은
+    -- 맵에 배치된 원본이라 남긴다).
+    local mineNames = { "farm01", "deep_mine", "gem_mine" }
+    for i = 1, #mineNames do
+        local map = _EntityService:GetEntityByPath("/maps/" .. mineNames[i])
+        if map ~= nil then
+            for workerIndex = 2, 5 do
+                local workerEntity = map:GetChildByName(self:WorkerEntityName(workerIndex), false)
+                if workerEntity ~= nil and isvalid(workerEntity) then
+                    workerEntity:Destroy()
+                end
+            end
+        end
+    end
+end
+
+@ExecSpace("Server")
+method boolean RequestProfileReset()
+    -- 설정 창 "계정 데이터 초기화" — 클라이언트 확인 팝업 이후에만 호출된다 (docs/25 §10).
+    return self:ResetProfileToDefault()
+end
+
 @ExecSpace("Server")
 method boolean RequestRecoveryRestore()
     return self:RestoreFromBackup()

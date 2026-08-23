@@ -620,6 +620,17 @@ method void ClearProgramForTutorial()
 end
 
 @ExecSpace("ClientOnly")
+method void CollapsePanelForTutorial()
+    -- T-15b: 판매·고용 단계(7·8)는 편집기가 필요 없다 — 접어서 넓어진 판매·선택
+    -- 패널과의 겹침을 없앤다. 펼침 원복은 편집기 단계 재진입·튜토리얼 종료가 한다.
+    if self.programPanel == nil then return end
+    if self.programPanel.Enable then
+        self.programPanel.Enable = false
+        self:RefreshToggleLabel()
+    end
+end
+
+@ExecSpace("ClientOnly")
 method void ForceExpandPanelForTutorial()
     -- T-07 (F7-E §5.1): 튜토리얼 중 패널을 펼친 상태로 고정한다. 접힌 상태에서
     -- 안내만 남으면 진행이 불가능하다.

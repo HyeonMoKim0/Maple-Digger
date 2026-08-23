@@ -18,6 +18,7 @@ script SettingsPanelController extends Logic
 property Entity settingsPanel = "426b082b-296e-4dd0-89e6-23fd3cda9b8b"
 property ButtonComponent btnSettingsOpen = "c738f043-fffc-45c9-a99d-4e6020e9a108"
 property ButtonComponent btnSettingsClose = "44abb9a7-99a6-4ef0-8e40-5afdcc8825af"
+property ButtonComponent btnDataReset = "3f68ecdb-0b23-49ab-9a60-bc525f0ff649"
 property SliderComponent bgmSlider = "94e1d03c-8491-492c-b5f8-9c7e34beefdd"
 property SliderComponent sfxSlider = "8dd1f991-1118-4873-87d2-c0798d69f993"
 property TextGUIRendererComponent bgmValueText = "e0620dbb-85e6-4848-9d91-cb9451e42fbc"
@@ -40,6 +41,7 @@ method void OnBeginPlay()
     if self.settingsPanel ~= nil then self.settingsPanel.Enable = false end
     self:ConnectButton("open", self.btnSettingsOpen, self.OnOpenClicked)
     self:ConnectButton("close", self.btnSettingsClose, self.OnCloseClicked)
+    self:ConnectButton("reset", self.btnDataReset, self.OnDataResetClicked)
     if self.bgmSlider ~= nil then
         self._T.handlers["bgm"] = self.bgmSlider.Entity:ConnectEvent(SliderValueChangedEvent, self.OnBgmSliderChanged)
     end
@@ -141,6 +143,20 @@ method void OnCloseClicked()
 end
 
 @ExecSpace("ClientOnly")
+method void OnDataResetClicked()
+    -- 계정 데이터 초기화 진입점 (docs/25 §10). 파괴적 동작이므로 공용 확인
+    -- 팝업(_UIPopup, GroupOrder 10 — 설정 모달 위)을 거친 뒤에만 서버에
+    -- 요청한다. 판정·저장·복귀는 전부 서버(AccountProfileService) 몫이다.
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    _UIPopup:Open("계정 데이터를 전부 초기화할까요?\n골드·광물·일꾼·프로그램·외형·튜토리얼 진행이\n처음 상태로 되돌아가며, 되돌릴 수 없습니다.", function()
+        local requestProfile = self:GetProfile()
+        if requestProfile ~= nil then requestProfile:RequestProfileReset() end
+        self:ClosePanel()
+    end, nil)
+end
+
+@ExecSpace("ClientOnly")
 method void ClosePanel()
     -- 다른 중앙 모달이 열릴 때 호출된다 (모달 배타 — F5 §6.1).
     if self.settingsPanel ~= nil then self.settingsPanel.Enable = false end
@@ -182,6 +198,9 @@ method void OnEndPlay()
     end
     if self.btnSettingsClose ~= nil and self._T.handlers["close"] ~= nil then
         self.btnSettingsClose.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers["close"])
+    end
+    if self.btnDataReset ~= nil and self._T.handlers["reset"] ~= nil then
+        self.btnDataReset.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers["reset"])
     end
     if self.bgmSlider ~= nil and self._T.handlers["bgm"] ~= nil then
         self.bgmSlider.Entity:DisconnectEvent(SliderValueChangedEvent, self._T.handlers["bgm"])
