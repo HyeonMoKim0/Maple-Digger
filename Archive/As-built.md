@@ -41,7 +41,7 @@
 
 ### 2026-08-23 — 설정 창 "계정 데이터 초기화" (브랜치 `feat/t15-mineselect-redesign`, 검수 `docs/16` §53 · 계약 `docs/25` §10)
 
-오너 요청: 개인 계정 데이터를 초기화하는 기능을 설정 창에. `ui/SettingsUI` Panel 480→580 + `BtnDataReset`(진홍 글자, 다시 보기 아래) / `SettingsPanelController.OnDataResetClicked` 가 `_UIPopup` 확인 팝업 경유로만 `RequestProfileReset()` / 서버 `AccountProfileService.ResetProfileToDefault` 는 **직전 저장본을 `RecoveryArchiveStorageKey` 로 아카이브 → 본본+백업을 기본 프로필로 TransactSet → 성공 뒤에만 메모리 교체** → 잉여 일꾼(Worker02~05) 3맵 전부 Destroy → farm01 복귀·일꾼 1 재구성(`RestoreLastMineAndWorker` 재사용). 튜토리얼 자동 시작(E1·E14)과 사운드 기본값 재적용은 기존 @Sync 감시가 그대로 이어받아 **신규 클라 코드 0줄**. 정적 검증 통과(바인딩 281/0, lint ERROR 0, 레거시 TextComponent 0). **Maker 미실행 세션이라 refresh/Play 런타임 검증은 §53 절차로 대기** — 실검증 시 개발 프로필은 오너 실진행분이므로 아카이브 키 원복이 필수다.
+오너 요청: 개인 계정 데이터를 초기화하는 기능을 설정 창에. `ui/SettingsUI` Panel 480→580 + `BtnDataReset`(진홍 글자, 다시 보기 아래) / `SettingsPanelController.OnDataResetClicked` 가 `_UIPopup` 확인 팝업 경유로만 `RequestProfileReset()` / 서버 `AccountProfileService.ResetProfileToDefault` 는 **직전 저장본을 `RecoveryArchiveStorageKey` 로 아카이브 → 본본+백업을 기본 프로필로 TransactSet → 성공 뒤에만 메모리 교체** → 잉여 일꾼(Worker02~05) 3맵 전부 Destroy → farm01 복귀·일꾼 1 재구성(`RestoreLastMineAndWorker` 재사용). 튜토리얼 자동 시작(E1·E14)과 사운드 기본값 재적용은 기존 @Sync 감시가 그대로 이어받아 **신규 클라 코드 0줄**. 정적 검증(바인딩 281/0, lint ERROR 0, 레거시 TextComponent 0)에 이어 **같은 날 Maker 런타임 검증까지 완료** — 오너 승인 하에 실계정 리셋 실측(빌드 오류 0 · 팝업/배치 스크린샷 · gold 86→0 · Worker02~05 소멸 · 저장소 실기록 · 튜토리얼 자동 시작 E1·E14) 후 아카이브 키에서 원복(유실 0, 재저장 잔여물 0). 상세 로그는 `docs/16` §53.
 
 ### 2026-08-22 — T-15 광산 선택·정산 UI 개편 + 카메라 줌·팬 출렁임 해소
 
