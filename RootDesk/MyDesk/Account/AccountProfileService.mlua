@@ -380,6 +380,12 @@ method table CreateWorkerRecord(integer workerIndex)
         -- T-05 (F7-C): 서버 검증을 통과한 마지막 프로그램 내용. 재접속 자동 실행의
         -- 원본이다. 실행 중 frame/인덱스는 저장하지 않는다 (§2).
         lastValidProgramJson = "",
+        -- 2026-08-25 (무버전 확장): 로그아웃 시점 셀 위치. cellMineId 가 빈 문자열이면
+        -- 미기록이고, 기록된 광산과 다른 맵에서는 무시된다(시작 셀 배치 유지).
+        -- 자동 실행되는 일꾼은 경로 보존을 위해 시작 셀에서 루프를 재개한다.
+        cellX = 0,
+        cellY = 0,
+        cellMineId = "",
     }
 end
 
@@ -874,6 +880,13 @@ method table NormalizeWorkers(any workers, integer rareStoneLevel, integer appea
         if type(source.lastValidProgramJson) == "string" then
             record.lastValidProgramJson = source.lastValidProgramJson
         end
+        -- 2026-08-25: 저장 셀 위치 (무버전 확장 — 없으면 미기록으로 남는다).
+        if type(source.cellMineId) == "string" and source.cellMineId ~= ""
+            and type(source.cellX) == "number" and type(source.cellY) == "number" then
+            record.cellMineId = source.cellMineId
+            record.cellX = math.floor(source.cellX)
+            record.cellY = math.floor(source.cellY)
+        end
         if type(source.cart) == "table" then
             for oreType, count in pairs(source.cart) do
                 if self:IsKnownOre(oreType) and type(count) == "number" and count > 0 then
@@ -1048,12 +1061,20 @@ end
 
 @ExecSpace("ServerOnly")
 method void CaptureCurrentWorkerState()
-    -- Persists each owned worker's hand/cart; position and interpreter frames remain session-only.
+    -- Persists each owned worker's hand/cart/cell; interpreter frames remain session-only.
     if not self:CanWriteProfile() then return end
     for workerIndex = 1, #self._T.profile.workers do
         local worker = self:GetWorkerByIndex(workerIndex)
         local record = self._T.profile.workers[workerIndex]
         if worker ~= nil and record ~= nil then
+            -- 2026-08-25: 셀 위치 저장. 로그아웃(OnEndPlay)·맵 전환(PrepareMineTransition)
+            -- 시점에만 캡처된다 — 자동 저장 배치는 캡처하지 않는다(매 저장 dirty 방지).
+            local workerMap = worker.Entity.CurrentMap
+            if workerMap ~= nil then
+                record.cellX = math.floor(worker.CellX or 0)
+                record.cellY = math.floor(worker.CellY or 0)
+                record.cellMineId = workerMap.Name
+            end
             -- Runtime capacity includes the rare-stone collection bonus.  Only the
             -- base upgrade capacity belongs in persistent worker progression.
             record.cartCapacity = math.max(20, math.min(50, math.floor(record.cartCapacity or 20)))
@@ -1109,6 +1130,14 @@ method boolean RestoreOwnedWorker(integer workerIndex)
     end
     if worker == nil then return false end
     worker:ConfigureFromProfile(workerIndex, self:GetWorkerCartCapacity(workerIndex), record.cart, record.pendingOre, record.pendingOreCount or 0)
+    -- 2026-08-25: 같은 광산에서 저장된 셀이면 위치 복원. 자동 실행 대상 일꾼은
+    -- AutoRunSavedPrograms 가 실행 직전 시작 셀로 되돌린다 (경로 보존).
+    if type(record.cellMineId) == "string" and record.cellMineId ~= "" then
+        local map = worker.Entity.CurrentMap
+        if map ~= nil and map.Name == record.cellMineId then
+            worker:ApplySavedCell(math.floor(record.cellX or 0), math.floor(record.cellY or 0))
+        end
+    end
     self:ApplyWorkerAppearance(workerIndex)
     return true
 end
@@ -2035,6 +2064,9 @@ method void AutoRunSavedPrograms()
             if worker ~= nil then
                 local program = self:DecodeJsonSafely(record.lastValidProgramJson)
                 if type(program) == "table" and #program > 0 and worker:ValidateProgram(program) then
+                    -- 2026-08-25: 프로그램은 상대 이동이라 저장 위치에서 재생하면 경로가
+                    -- 통째로 밀린다 — 자동 실행은 항상 시작 셀에서 루프를 재개한다.
+                    worker:ResetToStartCell()
                     worker:RunProgram(program)
                     ranCount = ranCount + 1
                 else
@@ -2048,6 +2080,19 @@ method void AutoRunSavedPrograms()
         self:SetTransactionMessage("저장된 프로그램 " .. tostring(invalidCount) .. "개가 유효하지 않아 자동 실행하지 않았습니다. 편집기에서 내용을 확인해 주세요.")
     end
     log("[AccountProfile] auto-run complete ran=" .. tostring(ranCount) .. " invalid=" .. tostring(invalidCount))
+end
+
+@ExecSpace("Server")
+method void RequestSavedProgram(integer workerIndex)
+    -- 2026-08-25: 재접속 시 편집기 버퍼 복원용 — 마지막 유효 프로그램을 요청한
+    -- 클라이언트에게 보낸다. 튜토리얼 1회차 중에는 보내지 않는다(미리 채워진
+    -- 버퍼가 5·6단계 조립 판정을 무의미하게 만든다 — 자동 실행 게이트와 동일 축).
+    if senderUserId ~= self.Entity.PlayerComponent.UserId then return end
+    if not self.IsLoaded or self._T.profile == nil then return end
+    if _TutorialService:IsRelaxationActive(self._T.profile) then return end
+    local record = self._T.profile.workers[workerIndex]
+    if record == nil or type(record.lastValidProgramJson) ~= "string" or record.lastValidProgramJson == "" then return end
+    _BlockProgramController:DeliverSavedProgram(workerIndex, record.lastValidProgramJson, senderUserId)
 end
 
 @ExecSpace("Server")

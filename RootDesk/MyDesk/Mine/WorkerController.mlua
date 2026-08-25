@@ -288,6 +288,38 @@ method void ConfigureFromProfile(integer workerIndex, integer cartCapacity, tabl
 end
 
 @ExecSpace("ServerOnly")
+method void ApplySavedCell(integer cellX, integer cellY)
+    -- 2026-08-25 재접속 위치 복원. 기록 당시와 같은 광산에서만 호출된다
+    -- (RestoreOwnedWorker 가 cellMineId 를 대조). 걸을 수 없는 셀이면(레이아웃
+    -- 개편 등) 시작 셀 배치를 그대로 둔다.
+    if self._T.mineState == nil then return end
+    if not self._T.mineState:IsWalkableCell(cellX, cellY) then
+        log(self:WorkerTag() .. " saved cell invalid (" .. tostring(cellX) .. "," .. tostring(cellY) .. ") - keeping start cell")
+        return
+    end
+    self._T.cellX = cellX
+    self._T.cellY = cellY
+    self.CellX = cellX
+    self.CellY = cellY
+    self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(cellX, cellY))
+    log(self:WorkerTag() .. " restored to saved cell (" .. tostring(cellX) .. "," .. tostring(cellY) .. ")")
+end
+
+@ExecSpace("ServerOnly")
+method void ResetToStartCell()
+    -- 2026-08-25 자동 실행 직전 시작 셀 복귀. 프로그램은 상대 이동이라 저장
+    -- 위치에서 재생하면 경로가 통째로 밀린다 — 루프는 항상 시작 셀에서 재개.
+    if self._T.mineState == nil then return end
+    local configuredStart = self._T.mineState:GetWorkerStart(self.WorkerIndex)
+    if configuredStart == nil then return end
+    self._T.cellX = configuredStart.cellX
+    self._T.cellY = configuredStart.cellY
+    self.CellX = self._T.cellX
+    self.CellY = self._T.cellY
+    self.Entity.KinematicbodyComponent:SetWorldPosition(self:CellToWorld(self._T.cellX, self._T.cellY))
+end
+
+@ExecSpace("ServerOnly")
 method boolean ApplyCartCapacity(integer cartCapacity)
     -- A purchased upgrade must preserve the currently running program, location,
     -- hand, and cart stacks; only the capacity limit changes.

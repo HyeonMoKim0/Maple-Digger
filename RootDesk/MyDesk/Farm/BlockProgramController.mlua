@@ -75,6 +75,14 @@ method void OnBeginPlay()
     self:ResetEditor()
     self._T.handlers = {}
     self._T.lastWorkerState = ""
+    -- 2026-08-25: 재접속 시 마지막 실행 프로그램을 편집기 버퍼로 복원. 프로필
+    -- 로드·복구(0.5s)·자동 실행(1.5s)이 비동기라 3s/8s 두 번 요청한다. 서버가
+    -- 조건 미충족(튜토리얼 1회차·기록 없음)이면 응답하지 않는다.
+    self._T.editorRestoreDone = false
+    self._T.editorRestoreTimers = {
+        _TimerService:SetTimerOnce(function() self:RequestEditorRestore() end, 3.0),
+        _TimerService:SetTimerOnce(function() self:RequestEditorRestore() end, 8.0),
+    }
     self._T.handlers.moveE = self.btnMoveE.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "E" }, "E") end)
     self._T.handlers.moveW = self.btnMoveW.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "W" }, "W") end)
     self._T.handlers.moveN = self.btnMoveN.Entity:ConnectEvent(ButtonClickEvent, function() self:AddCommand({ type = "move", dir = "N" }, "N") end)
@@ -480,6 +488,33 @@ method void LoadProgramFromLibrary(table program)
     self:RefreshDisplay()
     self:SetFeedback("라이브러리에서 프로그램을 불러왔습니다. 실행 전 내용을 확인하세요.")
     log("[BlockProgram] program loaded from library blocks=" .. tostring(self:CountBlocks(self._T.program)))
+end
+
+@ExecSpace("ClientOnly")
+method void RequestEditorRestore()
+    -- 2026-08-25: 재접속 편집기 복원 요청. 이미 복원했거나 사용자가 편집을
+    -- 시작했으면 건너뛴다 — 버퍼를 덮지 않는다.
+    if self._T.editorRestoreDone then return end
+    if self:CountBlocks(self._T.program) > 0 then return end
+    local player = _UserService.LocalPlayer
+    if player == nil then return end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil then return end
+    profile:RequestSavedProgram(self:GetSelectedWorkerIndex())
+end
+
+@ExecSpace("Client")
+method void DeliverSavedProgram(integer workerIndex, string programJson)
+    -- AccountProfileService.RequestSavedProgram 의 응답. 빈 버퍼일 때만 싣는다.
+    if self._T.editorRestoreDone then return end
+    if self:CountBlocks(self._T.program) > 0 then return end
+    local ok, parsed = pcall(function() return _HttpService:JSONDecode(programJson) end)
+    if not ok or type(parsed) ~= "table" or #parsed == 0 then return end
+    self:LoadProgramFromLibrary(parsed)
+    self:SetFeedback("마지막 실행 프로그램을 불러왔습니다. [실행]으로 이어서 시작하세요.")
+    self._T.editorRestoreDone = true
+    log("[BlockProgram] editor restored from last valid program worker=" .. tostring(workerIndex))
 end
 
 @ExecSpace("ClientOnly")
@@ -913,6 +948,12 @@ end
 @ExecSpace("ClientOnly")
 method void OnEndPlay()
     -- Disconnects every UI event handler registered during begin play.
+    if self._T.editorRestoreTimers ~= nil then
+        for _, timerId in ipairs(self._T.editorRestoreTimers) do
+            if timerId ~= nil and timerId ~= 0 then _TimerService:ClearTimer(timerId) end
+        end
+        self._T.editorRestoreTimers = nil
+    end
     if self._T.cells ~= nil and self._T.cellHandlers ~= nil then
         for i = 1, #self._T.cells do
             if self._T.cellHandlers[i] ~= nil then
