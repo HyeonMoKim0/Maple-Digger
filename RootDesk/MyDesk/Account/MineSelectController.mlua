@@ -120,6 +120,19 @@ property ButtonComponent btnCartWorker5 = "22a4e518-aaa1-4b95-8938-98a34550a4ba"
 property ButtonComponent btnCartUpgrade = "dff1aaae-2536-4fc1-b8eb-6734a9403f85"
 property TextGUIRendererComponent cartSummaryText = "161951a3-b62a-4bac-8352-80cfc7669cfe"
 property TextGUIRendererComponent cartNextUpgradeText = "5d47e861-b5e7-49ce-adfb-6ae2edd5aae7"
+-- 2026-08-25 (docs/16 §64): 수레 강화 Before/After 뷰 + 비용 아이콘 표기.
+-- 기존 cartNextUpgradeText 문자열 줄은 Enable=false 로 잔존, 아래가 대체한다.
+property TextGUIRendererComponent cartBeforeText = "4a0f2188-150b-41a1-92aa-8b2368fb8bda"
+property TextGUIRendererComponent cartAfterText = "5f5a5132-d69f-4ac5-9744-2490d13dec0b"
+property TextGUIRendererComponent cartCostLabel = "04be1f0d-bc84-4f90-98b1-4b752d6ed442"
+property TextGUIRendererComponent cartCostGoldNum = "0a1e3678-e96c-4f7b-946f-3924ebf06c6a"
+property TextGUIRendererComponent cartCostOreNum = "71672e6e-3791-4a51-9f0b-6120128ef660"
+property SpriteGUIRendererComponent cartCostGoldIcon = "1bd0bb25-6894-4a00-b017-f70684a1b52d"
+property SpriteGUIRendererComponent cartCostOreIcon = "e0d171f4-eb91-4fb0-b1bb-b24819788d35"
+-- 비용 광물 아이콘 (docs/20 확정 RUID) — 현재 광산 대표 광물로 런타임 스왑.
+property string OreIconStoneRUID = "184829e852ab4810898f5bb72b9db8a3"
+property string OreIconIronRUID = "79f438d0427142f09f979b58e982b1bd"
+property string OreIconGoldRUID = "658807fea5a24a0299a2b909c36b3025"
 -- T-07 (F7-E §9.2 결정 9): 광산 선택 화면의 "튜토리얼 다시 보기" 진입점.
 property ButtonComponent btnTutorialReplay = "a32d8d87-4584-4d14-88c2-bd69b18231d9"
 
@@ -257,7 +270,7 @@ method void RefreshUI(boolean force)
     if self.workerStatusText ~= nil then self.workerStatusText.Text = self:GetWorkerPurchaseStatus(profile) end
     if self.rareSummaryText ~= nil then self.rareSummaryText.Text = "희귀 컬렉션  돌 " .. tostring(profile.RareStoneCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareStoneStored) .. ") · 철 " .. tostring(profile.RareIronCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareIronStored) .. ") · 금 " .. tostring(profile.RareGoldCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareGoldStored) .. ")" end
     if self.cartSummaryText ~= nil then self.cartSummaryText.Text = self:GetCartSummary(profile) end
-    if self.cartNextUpgradeText ~= nil then self.cartNextUpgradeText.Text = self:GetCartUpgradeLine(profile) end
+    self:RefreshCartUpgradeView(profile)
     if self.rareSummaryText ~= nil then self.rareSummaryText.Text = self:GetRareSummary(profile) end
     self:RefreshSaleSummary(profile)
     self:RefreshUpgradePanel(profile)
@@ -515,22 +528,57 @@ method string GetCartSummary(AccountProfileService profile)
 end
 
 @ExecSpace("ClientOnly")
-method string GetCartUpgradeLine(AccountProfileService profile)
-    -- Next-upgrade cost line shown right above the upgrade button.
+method void RefreshCartUpgradeView(AccountProfileService profile)
+    -- 2026-08-25 (docs/16 §64): 수레 강화 Before/After 뷰 + 비용 아이콘 표기.
+    -- 옛 GetCartUpgradeLine 문자열 줄을 대체한다 (비용 공식은 서버
+    -- RequestCartUpgrade 와 동일 — 20 × 1.25^(level-1) 반올림 / 광물 5×level).
     local workerIndex = self._T.cartWorkerIndex
     local capacity = self:GetCartCapacity(profile, workerIndex)
     local level = math.max(0, math.floor((capacity - 20) / 2))
-    if workerIndex > profile.OwnedWorkerCount then
-        return "현재 적재량: " .. tostring(capacity) .. "칸"
+    local hired = workerIndex <= profile.OwnedWorkerCount
+    if self.cartBeforeText ~= nil then self.cartBeforeText.Text = tostring(capacity) .. "칸" end
+    local showCost = false
+    local afterLabel = "—"
+    local labelText = "아직 고용되지 않았습니다"
+    local goldCost = 0
+    local oreCost = 0
+    if hired then
+        if level >= 15 then
+            afterLabel = "최대"
+            labelText = "최대 강화 완료"
+        else
+            local nextLevel = level + 1
+            local rawGoldCost = 20
+            for index = 2, nextLevel do rawGoldCost = rawGoldCost * 1.25 end
+            goldCost = math.floor(rawGoldCost + 0.5)
+            oreCost = 5 * nextLevel
+            afterLabel = tostring(capacity + 2) .. "칸 (+2)"
+            labelText = "다음 강화 비용"
+            showCost = true
+        end
     end
-    if level >= 15 then
-        return "최대 강화 완료"
+    if self.cartAfterText ~= nil then self.cartAfterText.Text = afterLabel end
+    if self.cartCostLabel ~= nil then self.cartCostLabel.Text = labelText end
+    if self.cartCostGoldIcon ~= nil then self.cartCostGoldIcon.Entity.Enable = showCost end
+    if self.cartCostGoldNum ~= nil then
+        self.cartCostGoldNum.Entity.Enable = showCost
+        self.cartCostGoldNum.Text = tostring(goldCost)
     end
-    local nextLevel = level + 1
-    local rawGoldCost = 20
-    for index = 2, nextLevel do rawGoldCost = rawGoldCost * 1.25 end
-    local goldCost = math.floor(rawGoldCost + 0.5)
-    return "다음 강화: 골드 " .. tostring(goldCost) .. " / " .. self:GetCartOreLabel() .. " " .. tostring(5 * nextLevel) .. "  (+2칸)"
+    if self.cartCostOreNum ~= nil then
+        self.cartCostOreNum.Entity.Enable = showCost
+        self.cartCostOreNum.Text = tostring(oreCost)
+    end
+    if self.cartCostOreIcon ~= nil then
+        self.cartCostOreIcon.Entity.Enable = showCost
+        if showCost then
+            -- 현재 광산 대표 광물 아이콘으로 스왑 (돌/철/금광석).
+            local ruid = self.OreIconStoneRUID
+            local oreLabel = self:GetCartOreLabel()
+            if oreLabel == "철" then ruid = self.OreIconIronRUID
+            elseif oreLabel == "금광석" then ruid = self.OreIconGoldRUID end
+            self.cartCostOreIcon.ImageRUID = DataRef(ruid)
+        end
+    end
 end
 
 @ExecSpace("ClientOnly")
