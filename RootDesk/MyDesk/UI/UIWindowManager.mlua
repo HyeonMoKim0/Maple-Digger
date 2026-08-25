@@ -28,6 +28,9 @@ property SpriteGUIRendererComponent btnAppearanceSprite = "7dd289a5-dd34-4836-b9
 property SpriteGUIRendererComponent btnLibrarySprite = "c3e33700-722c-4760-b75f-47a25662ec6f"
 property SpriteGUIRendererComponent btnToggleSprite = "dc2d9c74-935f-411f-bc00-4337288cc7b1"
 property SpriteGUIRendererComponent btnInventorySprite = "7e830fdf-624e-4d91-83d9-d6e2d321c96f"
+-- 2026-08-25 (docs/16 §62): HUD [판매] 버튼. T-15 로 판매가 HUD 직행이 된 뒤에도
+-- 판매·희귀 패널 열림이 [광산 선택] 버튼을 어둡게 하고 [판매] 는 배선이 없었다.
+property SpriteGUIRendererComponent btnSellHudSprite = "bab28105-8228-42f6-9436-717874fa9af1"
 
 property number DimFactor = 0.55
 property any keyHandler = nil
@@ -72,9 +75,11 @@ end
 @ExecSpace("ClientOnly")
 method void OnUpdate(number delta)
     -- 창 열림 상태를 폴링해 여는 버튼의 밝기를 맞춘다 (6쌍, 경량).
-    local mineSelectOpen = self:IsOpen(self.selectPanel) or self:IsOpen(self.salePanel)
-        or self:IsOpen(self.cartPanel) or self:IsOpen(self.rarePanel) or self:IsOpen(self.upgradePanel)
+    -- 판매·희귀는 HUD [판매] 계열 (T-15 직행) — [광산 선택] 버튼 기준에서 제외.
+    local mineSelectOpen = self:IsOpen(self.selectPanel)
+        or self:IsOpen(self.cartPanel) or self:IsOpen(self.upgradePanel)
     self:ApplyShade("open", self.btnOpenSprite, mineSelectOpen)
+    self:ApplyShade("sellHud", self.btnSellHudSprite, self:IsOpen(self.salePanel) or self:IsOpen(self.rarePanel))
     self:ApplyShade("settings", self.btnSettingsSprite, self:IsOpen(self.settingsPanel))
     self:ApplyShade("appearance", self.btnAppearanceSprite, self:IsOpen(self.appearancePanel))
     self:ApplyShade("library", self.btnLibrarySprite, self:IsOpen(self.libraryPanel))
@@ -92,8 +97,8 @@ method void OnKeyDown(KeyDownEvent event)
         self.salePanel.Enable = true
         log("[UIWindowManager] esc close rare")
     elseif self:IsOpen(self.salePanel) then
+        -- T-15 직행: 판매 닫기는 광산 선택으로 돌아가지 않는다 (§61 미러).
         self.salePanel.Enable = false
-        self.selectPanel.Enable = true
         log("[UIWindowManager] esc close sale")
     elseif self:IsOpen(self.cartPanel) then
         self.cartPanel.Enable = false
