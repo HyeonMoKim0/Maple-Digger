@@ -436,6 +436,75 @@ method void ResetExecution()
 end
 
 @ExecSpace("ServerOnly")
+method string CaptureExecutionState()
+    -- 2026-08-25 실행 지점 저장 (docs/16 §57 개정 — 오너 요청 "진행 구간도 기억").
+    -- Running 중일 때만 프레임 스택을 경로형으로 직렬화한다. list 참조는 저장하지
+    -- 않는다 — 복원 시 프로그램 트리를 "부모 index-1 제어 블록의 body" 규칙으로
+    -- 따라가 재결합한다 (ResumeProgram). 빈 결과("")는 "실행 지점 없음"이다.
+    if not self._T.running or self._T.frames == nil or #self._T.frames == 0 then return "" end
+    local snapshot = {}
+    for i = 1, #self._T.frames do
+        local frame = self._T.frames[i]
+        table.insert(snapshot, { index = frame.index, remaining = frame.remaining, kind = frame.kind })
+    end
+    local ok, encoded = pcall(function() return _HttpService:JSONEncode(snapshot) end)
+    if not ok or type(encoded) ~= "string" then return "" end
+    return encoded
+end
+
+@ExecSpace("ServerOnly")
+method boolean ResumeProgram(table commands, string execStateJson)
+    -- 저장된 실행 지점에서 프로그램을 재개한다. 스냅숏이 프로그램 트리와 맞지
+    -- 않으면(프로그램 변경·손상 등) false 를 돌려주고 실행 상태를 비운다 —
+    -- 호출자(AutoRunSavedPrograms)가 시작 셀에서 처음부터 재실행한다.
+    self:ResetExecution()
+    if commands == nil or type(commands) ~= "table" or #commands == 0 then return false end
+    if not self:ValidateProgram(commands) then return false end
+    local ok, snapshot = pcall(function() return _HttpService:JSONDecode(execStateJson) end)
+    if not ok or type(snapshot) ~= "table" or #snapshot == 0 then return false end
+    local frames = {}
+    local currentList = commands
+    for i = 1, #snapshot do
+        local saved = snapshot[i]
+        if type(saved) ~= "table" then return false end
+        local savedIndex = saved.index
+        local savedRemaining = saved.remaining
+        local savedKind = saved.kind
+        -- index 는 "다음에 볼 위치"라 #list+1 (프레임 소진 직전)까지 유효하다.
+        if type(savedIndex) ~= "number" or savedIndex < 1 or savedIndex > #currentList + 1 then return false end
+        if savedRemaining ~= "inf" then
+            if type(savedRemaining) ~= "number" or savedRemaining < 1 then return false end
+            savedRemaining = math.floor(savedRemaining)
+        end
+        if i == 1 then
+            if savedKind ~= "root" then return false end
+        elseif savedKind ~= "repeat" and savedKind ~= "if" then
+            return false
+        end
+        table.insert(frames, { list = currentList, index = math.floor(savedIndex), remaining = savedRemaining, kind = savedKind })
+        if snapshot[i + 1] ~= nil then
+            -- 자식 프레임의 list = 이 프레임에서 index-1 번째 제어 블록의 body
+            -- (AdvanceSimulationTick 이 진입 전에 부모 index 를 전진시키는 불변식).
+            local enterIndex = math.floor(savedIndex) - 1
+            if enterIndex < 1 or enterIndex > #currentList then return false end
+            local parentCommand = currentList[enterIndex]
+            if type(parentCommand) ~= "table" or type(parentCommand.body) ~= "table" then return false end
+            local nextSaved = snapshot[i + 1]
+            if type(nextSaved) ~= "table" or parentCommand.type ~= nextSaved.kind then return false end
+            currentList = parentCommand.body
+        end
+    end
+    self.CommandQueue = commands
+    self._T.frames = frames
+    self._T.actionStep = 0
+    self._T.running = true
+    self.ProgramState = "Running"
+    self:RecordLastValidProgram(commands)
+    log(self:WorkerTag() .. " program resumed frames=" .. tostring(#frames) .. " topIndex=" .. tostring(frames[#frames].index) .. " - state=Running")
+    return true
+end
+
+@ExecSpace("ServerOnly")
 method void FinishProgram()
     -- Finalizes a naturally completed program and records positive log evidence.
     self:ResetExecution()

@@ -386,6 +386,11 @@ method table CreateWorkerRecord(integer workerIndex)
         cellX = 0,
         cellY = 0,
         cellMineId = "",
+        -- 2026-08-25 (무버전 확장 2): 실행 지점 스냅숏(경로형 프레임 스택 JSON)과
+        -- 로그아웃 당시 실행 여부. execStateJson 이 비어 있지 않으면 같은 광산에서
+        -- 그 지점부터 재개하고, programRunning=false 면 자동 실행하지 않는다.
+        execStateJson = "",
+        programRunning = true,
     }
 end
 
@@ -887,6 +892,14 @@ method table NormalizeWorkers(any workers, integer rareStoneLevel, integer appea
             record.cellX = math.floor(source.cellX)
             record.cellY = math.floor(source.cellY)
         end
+        -- 2026-08-25: 실행 지점 스냅숏. 유효성은 재개 시 ResumeProgram 이 판정한다
+        -- (여기서 버리지 않는다 — F7-C §4 원본 자동 수정 금지 계열).
+        if type(source.execStateJson) == "string" then
+            record.execStateJson = source.execStateJson
+        end
+        if type(source.programRunning) == "boolean" then
+            record.programRunning = source.programRunning
+        end
         if type(source.cart) == "table" then
             for oreType, count in pairs(source.cart) do
                 if self:IsKnownOre(oreType) and type(count) == "number" and count > 0 then
@@ -1075,6 +1088,10 @@ method void CaptureCurrentWorkerState()
                 record.cellY = math.floor(worker.CellY or 0)
                 record.cellMineId = workerMap.Name
             end
+            -- 2026-08-25: 실행 지점 스냅숏 + 실행 여부. Running 이 아니면 "" 로
+            -- 지워진다 — 정지 상태로 로그아웃한 일꾼은 재접속 시 재실행하지 않는다.
+            record.execStateJson = worker:CaptureExecutionState()
+            record.programRunning = (worker.ProgramState == "Running")
             -- Runtime capacity includes the rare-stone collection bonus.  Only the
             -- base upgrade capacity belongs in persistent worker progression.
             record.cartCapacity = math.max(20, math.min(50, math.floor(record.cartCapacity or 20)))
@@ -2055,6 +2072,7 @@ method void AutoRunSavedPrograms()
         return
     end
     local ranCount = 0
+    local resumedCount = 0
     local invalidCount = 0
     for workerIndex = 1, #self._T.profile.workers do
         local record = self._T.profile.workers[workerIndex]
@@ -2062,16 +2080,34 @@ method void AutoRunSavedPrograms()
             ---@type WorkerController
             local worker = self:GetWorkerByIndex(workerIndex)
             if worker ~= nil then
-                local program = self:DecodeJsonSafely(record.lastValidProgramJson)
-                if type(program) == "table" and #program > 0 and worker:ValidateProgram(program) then
-                    -- 2026-08-25: 프로그램은 상대 이동이라 저장 위치에서 재생하면 경로가
-                    -- 통째로 밀린다 — 자동 실행은 항상 시작 셀에서 루프를 재개한다.
-                    worker:ResetToStartCell()
-                    worker:RunProgram(program)
-                    ranCount = ranCount + 1
+                if record.programRunning == false then
+                    -- 2026-08-25: 로그아웃 당시 정지 상태 — 재실행하지 않고 복원된
+                    -- 위치에 그대로 둔다 (수동 [실행] 대기).
+                    log("[AccountProfile] auto-run skipped worker=" .. tostring(workerIndex) .. " reason=was-stopped")
                 else
-                    invalidCount = invalidCount + 1
-                    log_warning("[AccountProfile] saved program invalid worker=" .. tostring(workerIndex) .. " - staying Idle")
+                    local program = self:DecodeJsonSafely(record.lastValidProgramJson)
+                    if type(program) == "table" and #program > 0 and worker:ValidateProgram(program) then
+                        -- 2026-08-25 개정: 실행 지점 스냅숏이 있고 같은 광산이면 그
+                        -- 지점부터 재개한다(위치는 RestoreOwnedWorker 가 이미 복원).
+                        -- 재개가 불가하면(스냅숏 불일치·타 광산) 시작 셀에서 처음부터 —
+                        -- 프로그램은 상대 이동이라 저장 위치 재생은 경로를 통째로 민다.
+                        local resumed = false
+                        local workerMap = worker.Entity.CurrentMap
+                        if type(record.execStateJson) == "string" and record.execStateJson ~= ""
+                            and workerMap ~= nil and workerMap.Name == record.cellMineId then
+                            resumed = worker:ResumeProgram(program, record.execStateJson)
+                        end
+                        if resumed then
+                            resumedCount = resumedCount + 1
+                        else
+                            worker:ResetToStartCell()
+                            worker:RunProgram(program)
+                        end
+                        ranCount = ranCount + 1
+                    else
+                        invalidCount = invalidCount + 1
+                        log_warning("[AccountProfile] saved program invalid worker=" .. tostring(workerIndex) .. " - staying Idle")
+                    end
                 end
             end
         end
@@ -2079,7 +2115,7 @@ method void AutoRunSavedPrograms()
     if invalidCount > 0 then
         self:SetTransactionMessage("저장된 프로그램 " .. tostring(invalidCount) .. "개가 유효하지 않아 자동 실행하지 않았습니다. 편집기에서 내용을 확인해 주세요.")
     end
-    log("[AccountProfile] auto-run complete ran=" .. tostring(ranCount) .. " invalid=" .. tostring(invalidCount))
+    log("[AccountProfile] auto-run complete ran=" .. tostring(ranCount) .. " resumed=" .. tostring(resumedCount) .. " invalid=" .. tostring(invalidCount))
 end
 
 @ExecSpace("Server")
