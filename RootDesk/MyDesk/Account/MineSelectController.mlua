@@ -1087,21 +1087,9 @@ end
 
 @ExecSpace("ClientOnly")
 method string GetRareSummary(AccountProfileService profile)
-    local stoneStatus = "잠금"
-    local ironStatus = "잠금"
-    local goldStatus = "잠금"
-    if profile.RareStoneCollectionLevel >= 10 then stoneStatus = "판매 가능" end
-    if profile.RareIronCollectionLevel >= 10 then ironStatus = "판매 가능" end
-    if profile.RareGoldCollectionLevel >= 10 then goldStatus = "판매 가능" end
-
-    local stoneAuto = "꺼짐"
-    local ironAuto = "꺼짐"
-    local goldAuto = "꺼짐"
-    if profile.RareStoneAutoSell then stoneAuto = "켜짐" end
-    if profile.RareIronAutoSell then ironAuto = "켜짐" end
-    if profile.RareGoldAutoSell then goldAuto = "켜짐" end
-
-    return "희귀 컬렉션: 돌 " .. tostring(profile.RareStoneCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareStoneStored) .. ") · 철 " .. tostring(profile.RareIronCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareIronStored) .. ") · 금 " .. tostring(profile.RareGoldCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareGoldStored) .. ")\n10단계 전 판매·자동 판매 잠금 | 돌 " .. stoneStatus .. "/" .. stoneAuto .. " · 철 " .. ironStatus .. "/" .. ironAuto .. " · 금 " .. goldStatus .. "/" .. goldAuto
+    -- 2026-08-25 (docs/16 §67): "잠금/꺼짐" 상태 2행은 폐지 (오너 — 불필요).
+    -- 잠금 사유는 서버 거절 팝업(§52-7)이, 자동 판매 상태는 버튼이 알려 준다.
+    return "희귀 컬렉션: 돌 " .. tostring(profile.RareStoneCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareStoneStored) .. ") · 철 " .. tostring(profile.RareIronCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareIronStored) .. ") · 금 " .. tostring(profile.RareGoldCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareGoldStored) .. ")"
 end
 
 @ExecSpace("ClientOnly")

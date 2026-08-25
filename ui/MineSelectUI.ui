@@ -1140,20 +1140,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 513,
-                "y": -19.99991
+                "x": 540,
+                "y": -16
               },
               "OffsetMin": {
-                "x": 457,
-                "y": -75.99991
+                "x": 480,
+                "y": -76
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0
               },
               "RectSize": {
-                "x": 56,
-                "y": 56
+                "x": 60,
+                "y": 60
               },
               "UIMode": 1,
               "UIScale": {
@@ -1163,12 +1163,17 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 485,
-                "y": -75.99991
+                "x": 510,
+                "y": -76
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 510,
+                "y": 244,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -1182,6 +1187,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -9237,7 +9243,7 @@
           "name": "SalePanel",
           "path": "/ui/MineSelectUI/SalePanel",
           "nameEditable": true,
-          "enable": true,
+          "enable": false,
           "visible": true,
           "localize": true,
           "displayOrder": 2,
@@ -9770,20 +9776,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": -16,
+                "x": -24,
                 "y": -16
               },
               "OffsetMin": {
-                "x": -72,
-                "y": -72
+                "x": -84,
+                "y": -76
               },
               "Pivot": {
                 "x": 1,
                 "y": 1
               },
               "RectSize": {
-                "x": 56,
-                "y": 56
+                "x": 60,
+                "y": 60
               },
               "UIMode": 1,
               "UIScale": {
@@ -9793,12 +9799,17 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": -16,
+                "x": -24,
                 "y": -16
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 356,
+                "y": 344,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -9812,6 +9823,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -15912,9 +15924,14 @@
                 "x": 8,
                 "y": 68
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 8,
+                "y": 68,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -15928,6 +15945,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -16005,6 +16023,11 @@
                 "x": 0,
                 "y": 0
               },
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 0,
                 "y": 0,
@@ -16021,6 +16044,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -16124,20 +16148,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 326.056,
-                "y": 251
+                "x": 354,
+                "y": 253
               },
               "OffsetMin": {
-                "x": 270.056,
-                "y": 195
+                "x": 294,
+                "y": 193
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 56,
-                "y": 56
+                "x": 60,
+                "y": 60
               },
               "UIMode": 1,
               "UIScale": {
@@ -16147,12 +16171,17 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 298.056,
+                "x": 324,
                 "y": 223
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 324,
+                "y": 223,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -16166,6 +16195,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -16357,9 +16387,14 @@
                 "x": -256,
                 "y": 103
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -256,
+                "y": 103,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -16373,6 +16408,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -16609,9 +16645,14 @@
                 "x": -128,
                 "y": 103
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -128,
+                "y": 103,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -16625,6 +16666,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -16861,9 +16903,14 @@
                 "x": 0,
                 "y": 103
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": 103,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -16877,6 +16924,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -17113,9 +17161,14 @@
                 "x": 128,
                 "y": 103
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 128,
+                "y": 103,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -17129,6 +17182,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -17365,9 +17419,14 @@
                 "x": 256,
                 "y": 103
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 256,
+                "y": 103,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -17381,6 +17440,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -17617,9 +17677,14 @@
                 "x": 0,
                 "y": -183
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": -183,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -17633,6 +17698,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -17869,9 +17935,14 @@
                 "x": 0,
                 "y": -280
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": -280,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -17885,6 +17956,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -18071,9 +18143,14 @@
                 "x": 0,
                 "y": 210
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": 210,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -18087,6 +18164,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -18273,9 +18351,14 @@
                 "x": 10,
                 "y": 125
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 10,
+                "y": 125,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -18289,6 +18372,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -18461,9 +18545,14 @@
                 "x": -300,
                 "y": 125
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -300,
+                "y": 125,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -18477,6 +18566,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -18606,9 +18696,14 @@
                 "x": 0,
                 "y": -112
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": -112,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -18622,6 +18717,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -18794,9 +18890,14 @@
                 "x": -150,
                 "y": -20
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -150,
+                "y": -20,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -18810,6 +18911,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -18939,9 +19041,14 @@
                 "x": -70,
                 "y": -20
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -70,
+                "y": -20,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -18955,6 +19062,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -19127,9 +19235,14 @@
                 "x": 0,
                 "y": -20
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": -20,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -19143,6 +19256,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -19315,9 +19429,14 @@
                 "x": 100,
                 "y": -20
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 100,
+                "y": -20,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -19331,6 +19450,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -19503,9 +19623,14 @@
                 "x": -110,
                 "y": -98
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -110,
+                "y": -98,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -19519,6 +19644,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -19691,9 +19817,14 @@
                 "x": -50,
                 "y": -98
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -50,
+                "y": -98,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -19707,6 +19838,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -19836,9 +19968,14 @@
                 "x": 10,
                 "y": -98
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 10,
+                "y": -98,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -19852,6 +19989,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -20024,9 +20162,14 @@
                 "x": 75,
                 "y": -98
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 75,
+                "y": -98,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -20040,6 +20183,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -20169,9 +20313,14 @@
                 "x": 137,
                 "y": -98
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 137,
+                "y": -98,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -20185,6 +20334,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -20357,9 +20507,14 @@
                 "x": -256,
                 "y": 45
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -256,
+                "y": 45,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -20373,6 +20528,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -20545,9 +20701,14 @@
                 "x": -128,
                 "y": 45
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": -128,
+                "y": 45,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -20561,6 +20722,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -20733,9 +20895,14 @@
                 "x": 0,
                 "y": 45
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 0,
+                "y": 45,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -20749,6 +20916,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -20921,9 +21089,14 @@
                 "x": 128,
                 "y": 45
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 128,
+                "y": 45,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -20937,6 +21110,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -21109,9 +21283,14 @@
                 "x": 256,
                 "y": 45
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 256,
+                "y": 45,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -21125,6 +21304,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -21624,20 +21804,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 343,
-                "y": 298
+                "x": 354.0001,
+                "y": 303.8284
               },
               "OffsetMin": {
-                "x": 287,
-                "y": 242
+                "x": 294.0001,
+                "y": 243.8284
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 56,
-                "y": 56
+                "x": 60,
+                "y": 60
               },
               "UIMode": 1,
               "UIScale": {
@@ -21647,12 +21827,17 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 315,
-                "y": 270
+                "x": 324.0001,
+                "y": 273.8284
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 324.0001,
+                "y": 273.8284,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -21666,6 +21851,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -21863,11 +22049,11 @@
               "MobileOnly": false,
               "OffsetMax": {
                 "x": 340,
-                "y": 203
+                "y": 195
               },
               "OffsetMin": {
                 "x": -340,
-                "y": 127
+                "y": 155
               },
               "Pivot": {
                 "x": 0.5,
@@ -21875,7 +22061,7 @@
               },
               "RectSize": {
                 "x": 680,
-                "y": 76
+                "y": 40
               },
               "UIMode": 1,
               "UIScale": {
@@ -21886,16 +22072,11 @@
               "UIVersion": 2,
               "anchoredPosition": {
                 "x": 0,
-                "y": 165
-              },
-              "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "y": 175
               },
               "Position": {
                 "x": 0,
-                "y": 165,
+                "y": 0,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -21909,7 +22090,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -25113,9 +25293,14 @@
                 "x": 315,
                 "y": 250
               },
-              "Position": {
+              "Rotation": {
                 "x": 0,
                 "y": 0,
+                "z": 0
+              },
+              "Position": {
+                "x": 315,
+                "y": 250,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -25129,6 +25314,7 @@
                 "y": 1,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -25282,6 +25468,441 @@
               "UseConstraintX": false,
               "UseConstraintY": false,
               "VerticalAlignment": 512,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "944ac228-e5d5-4466-8b9f-52d205e63e31",
+        "path": "/ui/MineSelectUI/RarePanel/RareStoneIcon",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
+        "jsonString": {
+          "name": "RareStoneIcon",
+          "path": "/ui/MineSelectUI/RarePanel/RareStoneIcon",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 10,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UISprite",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uisprite",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": -213,
+                "y": 144
+              },
+              "OffsetMin": {
+                "x": -257,
+                "y": 100
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 44,
+                "y": 44
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": -235,
+                "y": 122
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "4e6f1338177546aebd17eff3ed426af5"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "e004081a-1d97-45b0-9ebc-1bf0ebbf59c0",
+        "path": "/ui/MineSelectUI/RarePanel/RareIronIcon",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
+        "jsonString": {
+          "name": "RareIronIcon",
+          "path": "/ui/MineSelectUI/RarePanel/RareIronIcon",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 11,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UISprite",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uisprite",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 20,
+                "y": 142
+              },
+              "OffsetMin": {
+                "x": -20,
+                "y": 102
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 40,
+                "y": 40
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 0,
+                "y": 122
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "66d49f96ac28417f960df7bc1adc9cbc"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "14b7dce8-d6b9-45d9-b3ff-c21d169138a5",
+        "path": "/ui/MineSelectUI/RarePanel/RareGoldIcon",
+        "componentNames": "MOD.Core.UITransformComponent,MOD.Core.SpriteGUIRendererComponent",
+        "jsonString": {
+          "name": "RareGoldIcon",
+          "path": "/ui/MineSelectUI/RarePanel/RareGoldIcon",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": true,
+          "displayOrder": 12,
+          "pathConstraints": "////",
+          "revision": 0,
+          "origin": {
+            "type": "Model",
+            "entry_id": "UISprite",
+            "sub_entity_id": null,
+            "root_entity_id": null,
+            "replaced_model_id": null
+          },
+          "modelId": "uisprite",
+          "@components": [
+            {
+              "@type": "MOD.Core.UITransformComponent",
+              "ActivePlatform": 255,
+              "AlignmentOption": 0,
+              "AnchorsMax": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "AnchorsMin": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "MobileOnly": false,
+              "OffsetMax": {
+                "x": 257,
+                "y": 141
+              },
+              "OffsetMin": {
+                "x": 213,
+                "y": 103
+              },
+              "Pivot": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "RectSize": {
+                "x": 44,
+                "y": 38
+              },
+              "UIMode": 1,
+              "UIScale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "UIVersion": 2,
+              "anchoredPosition": {
+                "x": 235,
+                "y": 122
+              },
+              "Position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteGUIRendererComponent",
+              "AnimClipPlayType": 0,
+              "EndFrameIndex": 2147483647,
+              "ImageRUID": {
+                "DataId": "27c01143d68345a38ca70200be893ee8"
+              },
+              "IgnoreMapLayerCheck": false,
+              "LocalPosition": {
+                "x": 0,
+                "y": 0
+              },
+              "LocalScale": {
+                "x": 1,
+                "y": 1
+              },
+              "MaterialId": "",
+              "OrderInLayer": 0,
+              "OverrideSorting": false,
+              "PlayRate": 1,
+              "PreserveSprite": 0,
+              "SortingLayer": "UI",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "DropShadow": false,
+              "DropShadowAngle": 120,
+              "DropShadowColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0.72
+              },
+              "DropShadowDistance": 3,
+              "FillAmount": 1,
+              "FillCenter": true,
+              "FillClockWise": true,
+              "FillMethod": 0,
+              "FillOrigin": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "FrameColumn": 1,
+              "FrameRate": 0,
+              "FrameRow": 1,
+              "Outline": false,
+              "OutlineColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "OutlineWidth": 3,
+              "RaycastTarget": false,
+              "Type": 0,
               "Enable": true
             }
           ],
