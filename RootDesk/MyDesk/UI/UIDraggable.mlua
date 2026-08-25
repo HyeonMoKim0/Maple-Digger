@@ -55,21 +55,42 @@ method void OnTouchDown(UITouchDownEvent event)
     local transform = self.Entity.UITransformComponent
     if transform ~= nil then _UILogic:SetSiblingIndex(transform, 1000000) end
     -- T-17 상단 핸들 판정: 잡은 지점이 창 상단 HandleHeight 안일 때만 드래그를
-    -- 무장한다. GetWorldCorners 는 실화면 픽셀(하좌·상좌·상우·하우 순)이라
-    -- TouchPoint 와 같은 좌표계다 — 핸들 높이는 실창 배율로 환산한다.
+    -- 무장한다. ⚠ TouchPoint(ScreenToUIPosition 계열)와 GetWorldCorners(루트 코너
+    -- 정규화 계열)는 **좌표계가 다르다** (docs/16 §68 후속3) — 둘 다 캔버스로
+    -- 환산한 뒤 비교한다. 섞어 비교하면 실마우스에서 핸들 폭이 어긋난다.
     self._T.dragArmed = false
     if transform == nil then return end
     if self.HandleHeight > 0 then
         local corners = transform:GetWorldCorners()
         if corners == nil or corners[2] == nil then return end
-        local topY = corners[2].y
-        local rectScreenH = topY - corners[1].y
-        if rectScreenH <= 0 or transform.RectSize.y <= 0 then return end
-        local handleScreenH = rectScreenH * (self.HandleHeight / transform.RectSize.y)
-        if event.TouchPoint.y < topY - handleScreenH then return end
+        local topCanvas = self:CornerToCanvas(corners[2])
+        if topCanvas == nil then return end
+        local touchCanvas = _UILogic:ScreenToUIPosition(event.TouchPoint)
+        if touchCanvas.y < topCanvas.y - self.HandleHeight then return end
     end
     self._T.dragArmed = true
     self._T.lastUI = _UILogic:ScreenToUIPosition(event.TouchPoint)
+end
+
+@ExecSpace("ClientOnly")
+method any CornerToCanvas(Vector2 cornerPoint)
+    -- GetWorldCorners 픽셀 → 캔버스 좌표. 자기 UI 그룹의 최상위(전화면) 루트
+    -- 코너로 정규화한다 (§41.6 화살표 자기보정과 같은 방식).
+    local root = self.Entity
+    while root.Parent ~= nil and root.Parent.UITransformComponent ~= nil do
+        root = root.Parent
+    end
+    local rootTransform = root.UITransformComponent
+    if rootTransform == nil then return nil end
+    local rc = rootTransform:GetWorldCorners()
+    if rc == nil or rc[1] == nil or rc[3] == nil then return nil end
+    local width = rc[3].x - rc[1].x
+    local height = rc[2].y - rc[1].y
+    if width <= 0 or height <= 0 then return nil end
+    local size = rootTransform.RectSize
+    local nx = (cornerPoint.x - rc[1].x) / width
+    local ny = (cornerPoint.y - rc[1].y) / height
+    return Vector2(nx * size.x - size.x / 2, ny * size.y - size.y / 2)
 end
 
 @ExecSpace("ClientOnly")

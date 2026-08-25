@@ -240,9 +240,10 @@ end
 
 @ExecSpace("ClientOnly")
 method Vector2 WindowToCanvas(Vector2 windowPoint)
-    -- 실창 픽셀(터치 이벤트·GetWorldCorners 공통 좌표계) → 캔버스 좌표.
-    -- ScreenToUIPosition 은 이 좌표계와 어긋난다(§41.6 실측 — 화살표 자기보정과
-    -- 같은 함정). 전화면 루트 그룹의 코너로 정규화해 환산한다.
+    -- **GetWorldCorners 픽셀** → 캔버스 좌표. ⚠ 좌표계 2개 주의(2026-08-25 실측):
+    -- 터치 이벤트 TouchPoint 는 ScreenToUIPosition 으로(커서 앵커 줌 §42 가 증명),
+    -- GetWorldCorners 는 이 루트 코너 정규화로(안내선 §68 후속2 가 증명) 환산해야
+    -- 한다. 둘을 섞어 비교하면 실마우스에서 어긋난다 — 비교는 항상 캔버스에서.
     local root = self.dragGhost.Parent
     if root == nil or root.UITransformComponent == nil then return Vector2(0, 0) end
     local rootTransform = root.UITransformComponent
@@ -258,12 +259,13 @@ method Vector2 WindowToCanvas(Vector2 windowPoint)
 end
 
 @ExecSpace("ClientOnly")
-method void MoveDragGhost(Vector2 screenPoint)
-    -- 고스트는 전화면 루트 직속 — 실창 픽셀을 루트 코너 정규화로 환산해 붙인다.
+method void MoveDragGhost(Vector2 touchPoint)
+    -- 고스트는 전화면 루트 직속 — 터치 좌표는 ScreenToUIPosition 으로 환산해야
+    -- 실마우스 커서와 1:1 로 붙는다 (WindowToCanvas 를 쓰면 어긋난다 — 위 주석).
     if self.dragGhost == nil or not self.dragGhost.Enable then return end
     local transform = self.dragGhost.UITransformComponent
     if transform == nil then return end
-    transform.anchoredPosition = self:WindowToCanvas(screenPoint)
+    transform.anchoredPosition = _UILogic:ScreenToUIPosition(touchPoint)
 end
 
 @ExecSpace("ClientOnly")
@@ -311,19 +313,24 @@ method void OnCellTouchUp(integer cellIndex, UITouchUpEvent touchEvent)
 end
 
 @ExecSpace("ClientOnly")
-method integer CellIndexAtPoint(Vector2 screenPoint)
-    -- 화면 픽셀 좌표가 어느 활성 셀 위인지 판정한다. GetWorldCorners 는
-    -- 실화면 픽셀(하좌·상좌·상우·하우)이라 TouchPoint 와 같은 좌표계다.
+method integer CellIndexAtPoint(Vector2 touchPoint)
+    -- 터치 좌표가 어느 활성 셀 위인지 판정한다. ⚠ TouchPoint 와 GetWorldCorners
+    -- 는 좌표계가 다르므로(§68 후속3) **양쪽 다 캔버스로 환산해** 비교한다 —
+    -- 섞어 비교하면 실마우스에서 한 칸씩 어긋난다.
+    local canvasPoint = _UILogic:ScreenToUIPosition(touchPoint)
     for i = 1, #self._T.cells do
         local cell = self._T.cells[i]
         if cell ~= nil and cell.Enable then
             local transform = cell.UITransformComponent
             if transform ~= nil then
                 local corners = transform:GetWorldCorners()
-                if corners ~= nil and corners[1] ~= nil and corners[3] ~= nil
-                    and screenPoint.x >= corners[1].x and screenPoint.x <= corners[3].x
-                    and screenPoint.y >= corners[1].y and screenPoint.y <= corners[3].y then
-                    return i
+                if corners ~= nil and corners[1] ~= nil and corners[3] ~= nil then
+                    local low = self:WindowToCanvas(corners[1])
+                    local high = self:WindowToCanvas(corners[3])
+                    if canvasPoint.x >= low.x and canvasPoint.x <= high.x
+                        and canvasPoint.y >= low.y and canvasPoint.y <= high.y then
+                        return i
+                    end
                 end
             end
         end
