@@ -41,6 +41,9 @@ property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-288977
 property Entity dragGhost = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
 property TextGUIRendererComponent dragGhostText = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
 property SpriteGUIRendererComponent dragGhostSprite = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
+-- T-17c: 드롭 위치 안내선 — 커서가 올라간 칸의 왼쪽 경계(= 그 칸 앞 삽입)에
+-- 세로로 긴 주황 선을 세운다. 드롭 규칙("대상 칸 앞 삽입")의 시각 표현.
+property Entity dropLine = "a798fd1a-e9d5-4caf-97cf-44e8af0d31f2"
 property ButtonComponent btnWorker1 = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
 -- 워커 칩 5개는 레거시 TextComponent 를 쓴다. TextGUIRendererComponent 로
 -- 선언하면 런타임 nil 이 되어 라벨이 한 번도 갱신되지 않는다 (docs/16 §15 D-12).
@@ -191,6 +194,7 @@ method void OnCellTouchDrag(integer cellIndex, UITouchDragEvent touchEvent)
     if self._T.dragSrc == nil then return end
     if self._T.dragMoved then
         self:MoveDragGhost(touchEvent.TouchPoint)
+        self:UpdateDropLine(touchEvent.TouchPoint)
         return
     end
     local dx = touchEvent.TouchPoint.x - self._T.dragStart.x
@@ -208,6 +212,7 @@ method void OnCellTouchDrag(integer cellIndex, UITouchDragEvent touchEvent)
     end
     self:ShowDragGhost(token)
     self:MoveDragGhost(touchEvent.TouchPoint)
+    self:UpdateDropLine(touchEvent.TouchPoint)
     self:SetFeedback("'" .. token.label .. "' 블록을 옮길 칸 위에서 놓으세요.")
 end
 
@@ -234,19 +239,63 @@ method void ShowDragGhost(table token)
 end
 
 @ExecSpace("ClientOnly")
+method Vector2 WindowToCanvas(Vector2 windowPoint)
+    -- 실창 픽셀(터치 이벤트·GetWorldCorners 공통 좌표계) → 캔버스 좌표.
+    -- ScreenToUIPosition 은 이 좌표계와 어긋난다(§41.6 실측 — 화살표 자기보정과
+    -- 같은 함정). 전화면 루트 그룹의 코너로 정규화해 환산한다.
+    local root = self.dragGhost.Parent
+    if root == nil or root.UITransformComponent == nil then return Vector2(0, 0) end
+    local rootTransform = root.UITransformComponent
+    local corners = rootTransform:GetWorldCorners()
+    if corners == nil or corners[1] == nil or corners[3] == nil then return Vector2(0, 0) end
+    local width = corners[3].x - corners[1].x
+    local height = corners[2].y - corners[1].y
+    if width <= 0 or height <= 0 then return Vector2(0, 0) end
+    local size = rootTransform.RectSize
+    local nx = (windowPoint.x - corners[1].x) / width
+    local ny = (windowPoint.y - corners[1].y) / height
+    return Vector2(nx * size.x - size.x / 2, ny * size.y - size.y / 2)
+end
+
+@ExecSpace("ClientOnly")
 method void MoveDragGhost(Vector2 screenPoint)
-    -- 고스트는 전화면 루트 직속이라 캔버스 좌표를 그대로 쓴다 (UIDraggable 과
-    -- 같은 ScreenToUIPosition 환산 — 해상도 배율과 무관하게 커서 1:1).
+    -- 고스트는 전화면 루트 직속 — 실창 픽셀을 루트 코너 정규화로 환산해 붙인다.
     if self.dragGhost == nil or not self.dragGhost.Enable then return end
     local transform = self.dragGhost.UITransformComponent
     if transform == nil then return end
-    transform.anchoredPosition = _UILogic:ScreenToUIPosition(screenPoint)
+    transform.anchoredPosition = self:WindowToCanvas(screenPoint)
+end
+
+@ExecSpace("ClientOnly")
+method void UpdateDropLine(Vector2 screenPoint)
+    -- T-17c: 커서가 올라간 칸의 왼쪽 경계에 삽입 안내선을 세운다. 칸 밖이거나
+    -- 원본 칸 위(드롭=취소·제자리)면 숨긴다. 좌표는 고스트와 같은 캔버스 환산.
+    if self.dropLine == nil then return end
+    local target = self:CellIndexAtPoint(screenPoint)
+    if target == 0 or target == self._T.dragSrc then
+        self.dropLine.Enable = false
+        return
+    end
+    local cell = self._T.cells[target]
+    if cell == nil or cell.UITransformComponent == nil then
+        self.dropLine.Enable = false
+        return
+    end
+    local corners = cell.UITransformComponent:GetWorldCorners()
+    if corners == nil or corners[1] == nil or corners[2] == nil then return end
+    -- 왼쪽 경계 중앙(실창 픽셀) → 루트 코너 정규화 환산. 칸 간격 6px 의 한가운데(-3).
+    local edge = self:WindowToCanvas(Vector2(corners[1].x, (corners[1].y + corners[2].y) / 2))
+    local transform = self.dropLine.UITransformComponent
+    if transform == nil then return end
+    transform.anchoredPosition = Vector2(edge.x - 3, edge.y)
+    self.dropLine.Enable = true
 end
 
 @ExecSpace("ClientOnly")
 method void HideDragGhost()
-    -- 드롭·취소 공용 정리.
+    -- 드롭·취소 공용 정리 (안내선 포함).
     if self.dragGhost ~= nil then self.dragGhost.Enable = false end
+    if self.dropLine ~= nil then self.dropLine.Enable = false end
 end
 
 @ExecSpace("ClientOnly")
