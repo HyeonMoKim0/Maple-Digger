@@ -1,0 +1,72 @@
+-- T-16 경로 미리보기 시뮬레이터 (docs/31 §2 — 클라이언트 표시 전용)
+-- 서버 실행 규칙의 클라이언트 사본이다. 권위가 없고 마커 표시에만 쓰인다.
+-- ⚠ 규칙 동시 수정 계약: 아래 각 메서드는 서버 대응 함수를 주석으로 명기한다.
+--   서버 쪽 규칙이 바뀌면 여기도 같이 고친다 (docs/31 §6-2, ValidateClientList 와
+--   같은 이중 관리 계약).
+@Logic
+script PathPreviewSimulator extends Logic
+
+@ExecSpace("ClientOnly")
+method table SimulateSteps(table program, integer startX, integer startY)
+    -- 프로그램 최상위 목록을 순서대로 가상 실행해 스텝 목록을 만든다.
+    -- 각 스텝 = { glyph, cellX, cellY }. 스텝 순번 = 스트립 칸 순번 (docs/31 §2.1).
+    -- 1차 PR 범위: 반복/IF 를 만나면 그 앞까지만 그린다 (docs/31 §3 — 2차에서 확장).
+    local steps = {}
+    local x = startX
+    local y = startY
+    for i = 1, #program do
+        local command = program[i]
+        if type(command) ~= "table" then break end
+        if command.type == "move" then
+            -- 서버 대응: WorkerController.DoMove — 벽이면 제자리 유지.
+            local dx, dy = 0, 0
+            if command.dir == "E" then dx = 1
+            elseif command.dir == "W" then dx = -1
+            elseif command.dir == "N" then dy = 1
+            elseif command.dir == "S" then dy = -1 end
+            if self:IsCellWalkable(x + dx, y + dy) then
+                x = x + dx
+                y = y + dy
+            end
+            table.insert(steps, { glyph = command.dir, cellX = x, cellY = y, tint = "move" })
+        elseif command.type == "mine" then
+            table.insert(steps, { glyph = "M", cellX = x, cellY = y, tint = "work" })
+        elseif command.type == "load" then
+            table.insert(steps, { glyph = "L", cellX = x, cellY = y, tint = "work" })
+        elseif command.type == "unload" then
+            table.insert(steps, { glyph = "U", cellX = x, cellY = y, tint = "work" })
+        else
+            -- repeat / if — 1차 PR 에서는 여기서 미리보기를 멈춘다.
+            break
+        end
+    end
+    return steps
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsCellWalkable(integer cellX, integer cellY)
+    -- 서버 대응: WorkerController.IsCellWalkable — 타일이 있고 이름이 비지 않으면 통행 가능.
+    local tilemap = self:GetTilemap()
+    if tilemap == nil then return false end
+    local tile = tilemap:GetTile(Vector2Int(cellX, cellY))
+    return tile ~= nil and tile.Name ~= ""
+end
+
+@ExecSpace("ClientOnly")
+method RectTileMapComponent GetTilemap()
+    -- 현재 맵의 RectTileMapComponent 를 맵 단위로 캐시한다
+    -- (선례: WorkerVisualController.MoveShardToCell).
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return nil end
+    local map = player.CurrentMap
+    if self._T.tilemapMap == map and self._T.tilemap ~= nil and isvalid(self._T.tilemap) then
+        return self._T.tilemap
+    end
+    ---@type RectTileMapComponent
+    local tilemap = map:GetFirstChildComponentByTypeName("RectTileMapComponent")
+    self._T.tilemapMap = map
+    self._T.tilemap = tilemap
+    return tilemap
+end
+
+end

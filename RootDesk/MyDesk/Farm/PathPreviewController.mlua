@@ -1,0 +1,210 @@
+-- T-16 경로 미리보기 마커 풀 (docs/31 — 실행 전 시각화)
+-- 선택 일꾼의 프로그램을 PathPreviewSimulator 로 가상 실행해, 맵 타일 위에
+-- "순번+문자" 반투명 마커를 표시한다. 표시 시점 계약 (docs/31 §2.4):
+--   Idle / Stopped = 표시 · Running = 숨김. 편집 즉시 갱신은
+--   BlockProgramController.RefreshDisplay 가 RefreshPreview() 를 밀어 넣는다.
+-- 마커는 클라이언트 로컬 스폰이라 서버가 치워 주지 않는다 — 맵 교체·종료 시
+-- 직접 Destroy 한다 (선례: WorkerVisualController F5 §3).
+@Logic
+script PathPreviewController extends Logic
+
+property string MarkerModelId = "pathmarker"
+-- 블록 상한 30 과 같다 (WorkerController.MaxProgramBlocks) — 스텝 수가 이를 넘지 않는다.
+property integer MaxMarkers = 30
+-- command-tile-slate-blank 는 192px = 1.92 unit. 단독 마커 0.88 unit, 겹침 슬롯 0.44 unit.
+property number TileScaleSingle = 0.458
+property number TileScaleShared = 0.229
+-- 월드 TextRendererComponent 의 FontSize 는 UI 픽셀이 아니라 월드 스케일 기준이다
+-- (46 이면 화면 전체를 덮는다 — 2026-08-25 실측). 한 자리 값이 정상 범위.
+property number FontSizeSingle = 3
+property number FontSizeShared = 1.8
+-- 겹침 2×2 서브 슬롯 오프셋 (docs/31 §2.3 — 타일당 4개, 초과는 2차 PR 의 +N 몫).
+property number SharedSlotOffset = 0.24
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- 폴링 상태와 마커 풀 컨테이너를 초기화한다.
+    self._T.markers = {}
+    self._T.map = nil
+    self._T.lastKey = ""
+end
+
+@ExecSpace("ClientOnly")
+method void OnUpdate(number delta)
+    -- 선택 일꾼의 상태·위치·선택 인덱스 변화를 감지해 재계산한다. 프로그램
+    -- "편집" 변화는 여기로 오지 않는다 — RefreshDisplay 가 직접 밀어 넣는다.
+    local worker = _BlockProgramController:GetSelectedWorker()
+    local key = ""
+    if worker ~= nil then
+        key = worker.ProgramState .. "|" .. tostring(worker.CellX) .. "|" .. tostring(worker.CellY)
+            .. "|" .. tostring(_BlockProgramController:GetSelectedWorkerIndex())
+    end
+    if key == self._T.lastKey then return end
+    self._T.lastKey = key
+    self:RefreshPreview()
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshPreview()
+    -- 미리보기 전체 재계산 — 편집 즉시 / 상태 전환 / 탭 전환의 단일 수렴점.
+    local worker = _BlockProgramController:GetSelectedWorker()
+    if worker == nil then
+        self:HideAll()
+        return
+    end
+    if worker.ProgramState == "Running" then
+        -- 실행 중 숨김 (docs/31 §2.4). 실행 중 스텝 표시는 U4(스트립 강조)의 몫.
+        self:HideAll()
+        return
+    end
+    local program = _BlockProgramController:GetProgram()
+    if program == nil or #program == 0 then
+        self:HideAll()
+        return
+    end
+    local tilemap = _PathPreviewSimulator:GetTilemap()
+    if tilemap == nil then
+        self:HideAll()
+        return
+    end
+    local steps = _PathPreviewSimulator:SimulateSteps(program, worker.CellX, worker.CellY)
+    self:RenderSteps(steps, tilemap)
+end
+
+@ExecSpace("ClientOnly")
+method void RenderSteps(table steps, RectTileMapComponent tilemap)
+    -- 스텝을 셀 단위로 묶어 슬롯을 배정하고 마커 풀에 칠한다.
+    -- 같은 셀 2~4개 = 2×2 나란히 배치, 5개째부터는 표시 생략 (2차 PR 에서 +N).
+    local cellGroups = {}
+    for i = 1, #steps do
+        local step = steps[i]
+        local cellKey = tostring(step.cellX) .. "," .. tostring(step.cellY)
+        if cellGroups[cellKey] == nil then cellGroups[cellKey] = {} end
+        table.insert(cellGroups[cellKey], i)
+    end
+
+    local shown = 0
+    for i = 1, #steps do
+        if shown >= self.MaxMarkers then break end
+        local step = steps[i]
+        local cellKey = tostring(step.cellX) .. "," .. tostring(step.cellY)
+        local group = cellGroups[cellKey]
+        local slot = 0
+        for g = 1, #group do
+            if group[g] == i then slot = g break end
+        end
+        if slot > 4 then
+            -- 타일당 4개 초과 — 1차 PR 에서는 생략만 하고 로그로 남긴다.
+            log("[PathPreview] cell " .. cellKey .. " marker " .. tostring(i) .. " folded (slot>" .. tostring(4) .. ")")
+        else
+            shown = shown + 1
+            local marker = self:EnsureMarker(shown)
+            if marker ~= nil then
+                self:PaintMarker(marker, step, i, slot, #group > 1, tilemap)
+            end
+        end
+    end
+    for i = shown + 1, #self._T.markers do
+        local marker = self._T.markers[i]
+        if marker ~= nil and isvalid(marker) then marker.Enable = false end
+    end
+    log("[PathPreview] rendered steps=" .. tostring(#steps) .. " shown=" .. tostring(shown))
+end
+
+@ExecSpace("ClientOnly")
+method void PaintMarker(Entity marker, table step, integer stepNo, integer slot, boolean shared, RectTileMapComponent tilemap)
+    -- 마커 하나의 위치·크기·문구·틴트를 칠한다.
+    local world = tilemap:ToWorldPosition(Vector2Int(step.cellX, step.cellY))
+    local offsetX, offsetY = 0, 0
+    local tileScale = self.TileScaleSingle
+    local fontSize = self.FontSizeSingle
+    if shared then
+        tileScale = self.TileScaleShared
+        fontSize = self.FontSizeShared
+        local d = self.SharedSlotOffset
+        if slot == 1 then offsetX, offsetY = -d, d
+        elseif slot == 2 then offsetX, offsetY = d, d
+        elseif slot == 3 then offsetX, offsetY = -d, -d
+        else offsetX, offsetY = d, -d end
+    end
+    marker.TransformComponent.Position = Vector3(world.x + offsetX, world.y + offsetY, 0)
+    marker.Enable = true
+
+    local tile = marker:GetChildByName("Tile", false)
+    if tile ~= nil then
+        tile.TransformComponent.Scale = Vector3(tileScale, tileScale, 1)
+        local renderer = tile.SpriteRendererComponent
+        if renderer ~= nil then
+            -- 반투명 고스트 (docs/31 §2.5). 틴트 계열은 스트립 셀과 동일
+            -- (BlockProgramController.PaintCell — 이동=슬레이트 / 행동=녹색).
+            if step.tint == "work" then
+                renderer.Color = Color(0.78, 0.93, 0.78, 0.62)
+            else
+                renderer.Color = Color(1, 1, 1, 0.62)
+            end
+        end
+    end
+    local labelEntity = marker:GetChildByName("Label", false)
+    if labelEntity ~= nil then
+        -- 월드 텍스트는 TextRendererComponent (TextComponent 는 UI 전용 — 월드에서 무렌더).
+        local label = labelEntity.TextRendererComponent
+        if label ~= nil then
+            label.Text = tostring(stepNo) .. step.glyph
+            label.FontSize = fontSize
+            label.FontColor = Color(0.3, 0.2, 0.1, 0.95)
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method Entity EnsureMarker(integer index)
+    -- 풀에서 index 번째 마커를 얻는다. 맵이 바뀌었으면 풀을 통째로 버리고 새로 만든다.
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return nil end
+    local map = player.CurrentMap
+    if self._T.map ~= map then
+        self:DestroyAll()
+        self._T.map = map
+    end
+    local marker = self._T.markers[index]
+    if marker ~= nil and isvalid(marker) then return marker end
+    marker = _SpawnService:SpawnByModelId(self.MarkerModelId, "PathPreview" .. tostring(index), Vector3(0, 0, 0), map)
+    if marker == nil then
+        log_error("[PathPreview] marker spawn failed model=" .. self.MarkerModelId)
+        return nil
+    end
+    self._T.markers[index] = marker
+    return marker
+end
+
+@ExecSpace("ClientOnly")
+method void HideAll()
+    -- 마커를 파괴하지 않고 전부 끈다 — 편집 재개 시 풀을 재사용한다.
+    if self._T.markers == nil then return end
+    for i = 1, #self._T.markers do
+        local marker = self._T.markers[i]
+        if marker ~= nil and isvalid(marker) then marker.Enable = false end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void DestroyAll()
+    -- 클라이언트 로컬 스폰 정리 계약 (F5 §3) — 맵 교체·세션 종료 시 직접 파괴한다.
+    if self._T.markers == nil then
+        self._T.markers = {}
+        return
+    end
+    for i = 1, #self._T.markers do
+        local marker = self._T.markers[i]
+        if marker ~= nil and isvalid(marker) then marker:Destroy() end
+    end
+    self._T.markers = {}
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 세션 종료 정리 — 런타임 잔존 마커 0 을 보장한다 (docs/28 주의사항 10 상당).
+    self:DestroyAll()
+end
+
+end

@@ -142,6 +142,7 @@ method void ConnectStripCells()
     -- 이름 규칙으로 순회한다 — 이름이 곧 표시 순서다.
     self._T.cells = {}
     self._T.cellHandlers = {}
+    self._T.cellNums = {}
     if self.programGrid == nil then return end
     for i = 1, self.StripCellCount do
         local suffix = tostring(i)
@@ -149,6 +150,12 @@ method void ConnectStripCells()
         local cellEntity = self.programGrid:GetChildByName("Cell" .. suffix, false)
         if cellEntity == nil then break end
         self._T.cells[i] = cellEntity
+        -- T-16: 셀 좌상단 순번 오버레이 (docs/31 §2.1 — 맵 마커와 같은 번호).
+        -- Num 자식이 없는 임포트본에서도 죽지 않게 nil 을 허용한다.
+        local numEntity = cellEntity:GetChildByName("Num", false)
+        if numEntity ~= nil then
+            self._T.cellNums[i] = numEntity.TextGUIRendererComponent
+        end
         local cellIndex = i
         self._T.cellHandlers[i] = cellEntity:ConnectEvent(ButtonClickEvent, function() self:OnStripCellClicked(cellIndex) end)
     end
@@ -173,16 +180,31 @@ method void RefreshDisplay()
         local cell = self._T.cells[i]
         if i > total then
             cell.Enable = false
+            self:SetCellNumber(i, "")
         elseif i == cellCount and total > cellCount then
             -- 초과 접기: 마지막 칸을 +N 으로 표시. 접힌 블록은 클릭 삭제 불가 —
             -- 앞쪽을 지워 펼친 뒤 지운다.
             self._T.strip[i] = { kind = "overflow" }
             self:PaintCell(cell, "+" .. tostring(total - cellCount + 1), "overflow")
+            -- 접힘 칸은 단일 블록이 아니라서 순번을 갖지 않는다 (docs/31 §3-5).
+            self:SetCellNumber(i, "")
         else
             local token = self._T.strip[i]
             self:PaintCell(cell, token.label, token.tint)
+            -- T-16: 순번 = 스트립 인덱스. 맵 마커와 같은 번호를 공유한다 (docs/31 §2.1).
+            self:SetCellNumber(i, tostring(i))
         end
     end
+    -- T-16 (docs/31 §2.4): 모든 편집 경로가 이 함수로 수렴하므로, 여기 한 줄이
+    -- 곧 "편집 즉시 미리보기 재계산" 계약이다.
+    _PathPreviewController:RefreshPreview()
+end
+
+@ExecSpace("ClientOnly")
+method void SetCellNumber(integer cellIndex, string label)
+    -- T-16: 셀 순번 오버레이 갱신. Num 자식이 없는 셀은 조용히 건너뛴다.
+    local numText = self._T.cellNums[cellIndex]
+    if numText ~= nil then numText.Text = label end
 end
 
 @ExecSpace("ClientOnly")
