@@ -765,9 +765,10 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnSaleCloseClicked()
-    -- Closing a sub-panel returns to the mine-select menu it was opened from.
+    -- 2026-08-25: T-15 개편 후 판매는 HUD [판매] 직행이라 닫기는 그냥 닫는다.
+    -- (예전엔 광산 선택에서 열려 닫기가 선택 화면으로 복귀했다 — 그 잔재가
+    -- "판매 닫기를 눌렀는데 광산 선택 UI가 뜬다"로 보였다. 오너 보고.)
     if self.salePanel ~= nil then self.salePanel.Enable = false end
-    if self.selectPanel ~= nil then self.selectPanel.Enable = true end
     self:RefreshUI(true)
 end
 
