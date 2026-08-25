@@ -22,6 +22,14 @@ property string MineNodeCurrent = "d39f51305bb541329e861e5ea151e63e"
 property string MineNodeNext = "56181d0bc5a84a608e8086f00c4191dc"
 property string MineNodeLocked = "1afd5d06d91744b3869a7283badf62db"
 property TextGUIRendererComponent resourceText = "92a7aa15-4a6d-44ce-95ee-23c2786b6452"
+-- 헤더 재화 5종을 텍스트 대신 아이콘+숫자 쌍으로 표기한다 (2026-08-25 오너 요청).
+-- 아이콘 RUID 는 docs/20 확정 5종을 .ui 에 정적 배선했고, 여기는 숫자만 쓴다.
+-- resourceText 는 Enable=false 로 남겨 두고 더 이상 쓰지 않는다.
+property TextGUIRendererComponent goldText = "c8730082-0e70-4574-af3f-4b09dcd2b1e0"
+property TextGUIRendererComponent tokenText = "486782dd-8399-4fc2-8805-44530f220117"
+property TextGUIRendererComponent stoneText = "64d3742f-5cae-4b37-8691-0d52a7eb7256"
+property TextGUIRendererComponent ironText = "6cf92c40-70fd-4361-b48e-0a6cee098605"
+property TextGUIRendererComponent goldOreText = "9b055aae-d61f-45a0-a9df-1f2e3c1ddfaf"
 property TextGUIRendererComponent beginnerText = "fc24d4e9-609e-4f60-a132-819ea831b3ea"
 property TextGUIRendererComponent deepText = "1117b212-de2b-4454-b1c0-38a4a54b7b25"
 property TextGUIRendererComponent gemText = "09c0cab1-2448-4452-9f7a-278c59474da6"
@@ -210,9 +218,13 @@ method void RefreshUI(boolean force)
     if not force and state == self._T.lastState then return end
     self._T.lastState = state
 
-    if self.resourceText ~= nil then
-        self.resourceText.Text = "골드 " .. tostring(profile.Gold) .. "  |  토큰 " .. tostring(profile.MineTokens) .. "\n돌 " .. tostring(profile.Stone) .. "  철 " .. tostring(profile.Iron) .. "  금광석 " .. tostring(profile.GoldOre)
-    end
+    -- 헤더 재화는 아이콘+숫자 쌍 5개로 그린다 (2026-08-25 오너 요청 —
+    -- resourceText 문자열 표기는 폐지, 엔티티는 Enable=false 로 잔존).
+    if self.goldText ~= nil then self.goldText.Text = tostring(profile.Gold) end
+    if self.tokenText ~= nil then self.tokenText.Text = tostring(profile.MineTokens) end
+    if self.stoneText ~= nil then self.stoneText.Text = tostring(profile.Stone) end
+    if self.ironText ~= nil then self.ironText.Text = tostring(profile.Iron) end
+    if self.goldOreText ~= nil then self.goldOreText.Text = tostring(profile.GoldOre) end
     -- T-15 개정 (2026-08-22 오너): 카드에는 광산 이름만, 일러스트 위에 표시한다.
     -- 해금·강화 비용은 카드에 상시 표기하지 않는다 — 강화 비용은 [광산 강화]
     -- 확인 팝업이, 해금 부족분은 서버 거절 문구(DescribeShortfall)가 알려 준다.
