@@ -133,6 +133,18 @@ property SpriteGUIRendererComponent cartCostOreIcon = "e0d171f4-eb91-4fb0-b1bb-b
 property string OreIconStoneRUID = "184829e852ab4810898f5bb72b9db8a3"
 property string OreIconIronRUID = "79f438d0427142f09f979b58e982b1bd"
 property string OreIconGoldRUID = "658807fea5a24a0299a2b909c36b3025"
+-- 2026-08-25 (docs/16 §65): 일꾼 탭 선택 진하게 + 버튼 아래 적재량 표기.
+-- 스킨은 버튼 엔티티 자신의 스프라이트 (워커 탭 §52-11 과 같은 0.55 규칙).
+property SpriteGUIRendererComponent cartWorkerSkin1 = "c9d87a4e-ad97-46d6-b5be-5dd7e4f98ea6"
+property SpriteGUIRendererComponent cartWorkerSkin2 = "e7b052b6-fa61-457b-8c89-e6cbb2db27b4"
+property SpriteGUIRendererComponent cartWorkerSkin3 = "26e77396-6738-45ea-b225-72cd37602140"
+property SpriteGUIRendererComponent cartWorkerSkin4 = "68b01220-83bb-47a6-8b64-524aec3e2323"
+property SpriteGUIRendererComponent cartWorkerSkin5 = "22a4e518-aaa1-4b95-8938-98a34550a4ba"
+property TextGUIRendererComponent cartWorkerCap1 = "9975ceaf-b7ff-4710-9306-a6b79e8e3855"
+property TextGUIRendererComponent cartWorkerCap2 = "349e5127-e435-47f2-9eff-738f788655ec"
+property TextGUIRendererComponent cartWorkerCap3 = "4255271a-5fea-48fa-89ff-aff0a747990a"
+property TextGUIRendererComponent cartWorkerCap4 = "8291e42a-ab6b-4a13-a64a-29c233862321"
+property TextGUIRendererComponent cartWorkerCap5 = "48b173f5-fc4d-4346-b23b-db4d70c53366"
 -- T-07 (F7-E §9.2 결정 9): 광산 선택 화면의 "튜토리얼 다시 보기" 진입점.
 property ButtonComponent btnTutorialReplay = "a32d8d87-4584-4d14-88c2-bd69b18231d9"
 
@@ -269,7 +281,8 @@ method void RefreshUI(boolean force)
     end
     if self.workerStatusText ~= nil then self.workerStatusText.Text = self:GetWorkerPurchaseStatus(profile) end
     if self.rareSummaryText ~= nil then self.rareSummaryText.Text = "희귀 컬렉션  돌 " .. tostring(profile.RareStoneCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareStoneStored) .. ") · 철 " .. tostring(profile.RareIronCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareIronStored) .. ") · 금 " .. tostring(profile.RareGoldCollectionLevel) .. "/10 (보관 " .. tostring(profile.RareGoldStored) .. ")" end
-    if self.cartSummaryText ~= nil then self.cartSummaryText.Text = self:GetCartSummary(profile) end
+    -- 2026-08-25 (§65): 헤더 요약("일꾼 N · 적재량 …")은 폐지 — 탭 아래 개별
+    -- 적재량 + 선택 탭 진하게가 대체한다 (cartSummaryText 엔티티는 Enable=false).
     self:RefreshCartUpgradeView(profile)
     if self.rareSummaryText ~= nil then self.rareSummaryText.Text = self:GetRareSummary(profile) end
     self:RefreshSaleSummary(profile)
@@ -517,14 +530,28 @@ method string GetCartOreLabel()
 end
 
 @ExecSpace("ClientOnly")
-method string GetCartSummary(AccountProfileService profile)
-    -- Header line only (worker + capacity); the next-upgrade line moved to GetCartUpgradeLine (2026-08-21 오너 요청).
-    local workerIndex = self._T.cartWorkerIndex
-    local capacity = self:GetCartCapacity(profile, workerIndex)
-    if workerIndex > profile.OwnedWorkerCount then
-        return "일꾼 " .. tostring(workerIndex) .. "  ·  아직 고용되지 않았습니다"
+method void RefreshCartWorkerTabs(AccountProfileService profile)
+    -- 2026-08-25 (§65): 선택 탭 진하게(0.55 — §52-11 워커 탭 규칙) + 탭 아래
+    -- 일꾼별 적재량 "N/50칸" (미고용은 "—").
+    local skins = { self.cartWorkerSkin1, self.cartWorkerSkin2, self.cartWorkerSkin3, self.cartWorkerSkin4, self.cartWorkerSkin5 }
+    local caps = { self.cartWorkerCap1, self.cartWorkerCap2, self.cartWorkerCap3, self.cartWorkerCap4, self.cartWorkerCap5 }
+    local selected = Color(0.55, 0.55, 0.55, 1)
+    local normal = Color(1, 1, 1, 1)
+    for workerIndex = 1, 5 do
+        local skin = skins[workerIndex]
+        if skin ~= nil then
+            if workerIndex == self._T.cartWorkerIndex then skin.Color = selected
+            else skin.Color = normal end
+        end
+        local capText = caps[workerIndex]
+        if capText ~= nil then
+            if workerIndex <= profile.OwnedWorkerCount then
+                capText.Text = tostring(self:GetCartCapacity(profile, workerIndex)) .. "/50칸"
+            else
+                capText.Text = "—"
+            end
+        end
     end
-    return "일꾼 " .. tostring(workerIndex) .. "  ·  적재량 " .. tostring(capacity) .. " / 50칸"
 end
 
 @ExecSpace("ClientOnly")
@@ -532,6 +559,7 @@ method void RefreshCartUpgradeView(AccountProfileService profile)
     -- 2026-08-25 (docs/16 §64): 수레 강화 Before/After 뷰 + 비용 아이콘 표기.
     -- 옛 GetCartUpgradeLine 문자열 줄을 대체한다 (비용 공식은 서버
     -- RequestCartUpgrade 와 동일 — 20 × 1.25^(level-1) 반올림 / 광물 5×level).
+    self:RefreshCartWorkerTabs(profile)
     local workerIndex = self._T.cartWorkerIndex
     local capacity = self:GetCartCapacity(profile, workerIndex)
     local level = math.max(0, math.floor((capacity - 20) / 2))
