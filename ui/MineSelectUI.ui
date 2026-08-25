@@ -1140,11 +1140,11 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 545,
-                "y": -15.9999084
+                "x": 513,
+                "y": -19.99991
               },
               "OffsetMin": {
-                "x": 425,
+                "x": 457,
                 "y": -75.99991
               },
               "Pivot": {
@@ -1152,8 +1152,8 @@
                 "y": 0
               },
               "RectSize": {
-                "x": 120,
-                "y": 60
+                "x": 56,
+                "y": 56
               },
               "UIMode": 1,
               "UIScale": {
@@ -1166,14 +1166,9 @@
                 "x": 485,
                 "y": -75.99991
               },
-              "Rotation": {
+              "Position": {
                 "x": 0,
                 "y": 0,
-                "z": 0
-              },
-              "Position": {
-                "x": 485,
-                "y": 244.000092,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -1187,7 +1182,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -1196,7 +1190,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "a5f9c4101165445a9a0aaefeb14b0c56"
+                "DataId": "5af542ecf45c4992bfe2eddebb7932ff"
               },
               "LocalPosition": {
                 "x": 0,
@@ -1247,7 +1241,7 @@
               },
               "OutlineWidth": 3,
               "RaycastTarget": true,
-              "Type": 1,
+              "Type": 0,
               "Enable": true
             },
             {
@@ -1336,7 +1330,7 @@
               },
               "SizeFit": false,
               "SortingLayer": "UI",
-              "Text": "닫기",
+              "Text": "",
               "Underlay": false,
               "UseConstraintX": false,
               "UseConstraintY": false,
@@ -9780,16 +9774,16 @@
                 "y": -16
               },
               "OffsetMin": {
-                "x": -136,
-                "y": -76
+                "x": -72,
+                "y": -72
               },
               "Pivot": {
                 "x": 1,
                 "y": 1
               },
               "RectSize": {
-                "x": 120,
-                "y": 60
+                "x": 56,
+                "y": 56
               },
               "UIMode": 1,
               "UIScale": {
@@ -9802,14 +9796,9 @@
                 "x": -16,
                 "y": -16
               },
-              "Rotation": {
+              "Position": {
                 "x": 0,
                 "y": 0,
-                "z": 0
-              },
-              "Position": {
-                "x": 364,
-                "y": 344,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -9823,7 +9812,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -9832,7 +9820,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "a5f9c4101165445a9a0aaefeb14b0c56"
+                "DataId": "5af542ecf45c4992bfe2eddebb7932ff"
               },
               "LocalPosition": {
                 "x": 0,
@@ -9883,7 +9871,7 @@
               },
               "OutlineWidth": 3,
               "RaycastTarget": true,
-              "Type": 1,
+              "Type": 0,
               "Enable": true
             },
             {
@@ -9972,7 +9960,7 @@
               },
               "SizeFit": false,
               "SortingLayer": "UI",
-              "Text": "닫기",
+              "Text": "",
               "Underlay": false,
               "UseConstraintX": false,
               "UseConstraintY": false,
@@ -16136,20 +16124,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 358.056,
-                "y": 253
+                "x": 326.056,
+                "y": 251
               },
               "OffsetMin": {
-                "x": 238.05599999999998,
-                "y": 193
+                "x": 270.056,
+                "y": 195
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 120,
-                "y": 60
+                "x": 56,
+                "y": 56
               },
               "UIMode": 1,
               "UIScale": {
@@ -16186,7 +16174,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "a5f9c4101165445a9a0aaefeb14b0c56"
+                "DataId": "5af542ecf45c4992bfe2eddebb7932ff"
               },
               "LocalPosition": {
                 "x": 0,
@@ -16237,7 +16225,7 @@
               },
               "OutlineWidth": 3,
               "RaycastTarget": true,
-              "Type": 1,
+              "Type": 0,
               "Enable": true
             },
             {
@@ -16299,7 +16287,7 @@
                 "a": 1
               },
               "OverrideSorting": false,
-              "Text": "닫기",
+              "Text": "",
               "Enable": true
             }
           ],
@@ -21636,11 +21624,11 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 365,
+                "x": 343,
                 "y": 298
               },
               "OffsetMin": {
-                "x": 265,
+                "x": 287,
                 "y": 242
               },
               "Pivot": {
@@ -21648,7 +21636,7 @@
                 "y": 0.5
               },
               "RectSize": {
-                "x": 100,
+                "x": 56,
                 "y": 56
               },
               "UIMode": 1,
@@ -21662,14 +21650,9 @@
                 "x": 315,
                 "y": 270
               },
-              "Rotation": {
+              "Position": {
                 "x": 0,
                 "y": 0,
-                "z": 0
-              },
-              "Position": {
-                "x": 315,
-                "y": 270,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -21683,7 +21666,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -21692,7 +21674,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "a5f9c4101165445a9a0aaefeb14b0c56"
+                "DataId": "5af542ecf45c4992bfe2eddebb7932ff"
               },
               "LocalPosition": {
                 "x": 0,
@@ -21743,7 +21725,7 @@
               },
               "OutlineWidth": 3,
               "RaycastTarget": true,
-              "Type": 1,
+              "Type": 0,
               "Enable": true
             },
             {
@@ -21832,7 +21814,7 @@
               },
               "SizeFit": false,
               "SortingLayer": "UI",
-              "Text": "닫기",
+              "Text": "",
               "Underlay": false,
               "UseConstraintX": false,
               "UseConstraintY": false,
@@ -25105,20 +25087,20 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 365,
-                "y": 294
+                "x": 343,
+                "y": 278
               },
               "OffsetMin": {
-                "x": 265,
-                "y": 206
+                "x": 287,
+                "y": 222
               },
               "Pivot": {
                 "x": 0.5,
                 "y": 0.5
               },
               "RectSize": {
-                "x": 100,
-                "y": 88
+                "x": 56,
+                "y": 56
               },
               "UIMode": 1,
               "UIScale": {
@@ -25131,14 +25113,9 @@
                 "x": 315,
                 "y": 250
               },
-              "Rotation": {
+              "Position": {
                 "x": 0,
                 "y": 0,
-                "z": 0
-              },
-              "Position": {
-                "x": 315,
-                "y": 250,
                 "z": 0
               },
               "QuaternionRotation": {
@@ -25152,7 +25129,6 @@
                 "y": 1,
                 "z": 1
               },
-              "ZRotation": 0,
               "Enable": true
             },
             {
@@ -25161,7 +25137,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "a5f9c4101165445a9a0aaefeb14b0c56"
+                "DataId": "5af542ecf45c4992bfe2eddebb7932ff"
               },
               "LocalPosition": {
                 "x": 0,
@@ -25179,10 +25155,10 @@
               "SortingLayer": "UI",
               "StartFrameIndex": 0,
               "Color": {
-                "r": 0.101960786,
-                "g": 0.101960786,
-                "b": 0.101960786,
-                "a": 0.235294119
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
               },
               "DropShadow": false,
               "DropShadowAngle": 120,
@@ -25212,7 +25188,7 @@
               },
               "OutlineWidth": 3,
               "RaycastTarget": true,
-              "Type": 1,
+              "Type": 0,
               "Enable": true
             },
             {
@@ -25301,7 +25277,7 @@
               },
               "SizeFit": false,
               "SortingLayer": "UI",
-              "Text": "닫기",
+              "Text": "",
               "Underlay": false,
               "UseConstraintX": false,
               "UseConstraintY": false,
