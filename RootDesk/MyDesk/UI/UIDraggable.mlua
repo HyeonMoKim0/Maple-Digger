@@ -10,6 +10,13 @@ script UIDraggable extends Component
 property any downHandler = nil
 property any dragHandler = nil
 
+-- T-17 (2026-08-25 오너 결정): 창은 **상단 영역을 잡았을 때만** 이동한다 — 본문
+-- 클릭 중 오드래그(특히 블록 편집기에서 셀을 끌 때 창이 따라오는 문제)를 막는다.
+-- 모든 창 공통. 값은 UI px(창 상단부터의 높이). 0 이하면 예전처럼 전체 드래그.
+-- 별도 DragHandle 자식(2026-08-20 폐기안)과 달리 엔티티를 추가하지 않으므로
+-- 버튼 클릭 우선권을 해치지 않는다 — 좌표 판정만 한다.
+property number HandleHeight = 90
+
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- 창 엔티티 자신에게서 터치 이벤트를 받는다.
@@ -47,6 +54,21 @@ method void OnTouchDown(UITouchDownEvent event)
     if _TutorialController:IsUiDragLocked() then return end
     local transform = self.Entity.UITransformComponent
     if transform ~= nil then _UILogic:SetSiblingIndex(transform, 1000000) end
+    -- T-17 상단 핸들 판정: 잡은 지점이 창 상단 HandleHeight 안일 때만 드래그를
+    -- 무장한다. GetWorldCorners 는 실화면 픽셀(하좌·상좌·상우·하우 순)이라
+    -- TouchPoint 와 같은 좌표계다 — 핸들 높이는 실창 배율로 환산한다.
+    self._T.dragArmed = false
+    if transform == nil then return end
+    if self.HandleHeight > 0 then
+        local corners = transform:GetWorldCorners()
+        if corners == nil or corners[2] == nil then return end
+        local topY = corners[2].y
+        local rectScreenH = topY - corners[1].y
+        if rectScreenH <= 0 or transform.RectSize.y <= 0 then return end
+        local handleScreenH = rectScreenH * (self.HandleHeight / transform.RectSize.y)
+        if event.TouchPoint.y < topY - handleScreenH then return end
+    end
+    self._T.dragArmed = true
     self._T.lastUI = _UILogic:ScreenToUIPosition(event.TouchPoint)
 end
 
@@ -57,6 +79,8 @@ method void OnTouchDrag(UITouchDragEvent event)
     -- 따라오는 문제가 있었다 (2026-08-20 오너 보고) — 절대 좌표 차분은 해상도와
     -- 무관하게 커서와 1:1 로 붙는다. 창 중앙은 화면 밖으로 나가지 않게 클램프.
     if _TutorialController:IsUiDragLocked() then return end
+    -- T-17: 상단 핸들 밖에서 시작한 드래그는 무시한다 (OnTouchDown 이 무장 판정).
+    if self._T.dragArmed ~= true then return end
     local transform = self.Entity.UITransformComponent
     if transform == nil then return end
     local cursorUI = _UILogic:ScreenToUIPosition(event.TouchPoint)
