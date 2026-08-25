@@ -39,6 +39,17 @@
 
 ## 기록
 
+### 2026-08-25 — T-15 카드 일러스트 3종: 이름 없는 시각 자산은 슬롯 비율을 강제해 보고 고른다
+
+`main` 직접. 검수 `docs/16` §55 · 승인표 `docs/21` §9. T-15(§52)가 placeholder 로 남긴 `MineSelectUI` 카드 일러스트 슬롯 3개(300×160)에 자산 선정·배선.
+
+- 검색 결과 11종 전부 이름 공란(시각 자산 텍스트 검색의 알려진 한계) → `msw-asset-verify` 로 fxsprite 실물 배치. **2단계 판정이 유효했다**: 1차 원본 비율로 형태·대비를 거르고, 2차에 비균등 Scale 로 **슬롯 비율(1.875:1)을 강제**해 늘어남 왜곡까지 본 뒤 확정 — 1.33 비율인 갱도 벽(`e9bd34b5…`)이 강제 후에도 읽힘을 확인하고 채택했다.
+- 선정: 초급 `c167735f…`(청록 수정 군락 — farm01 광맥 마커와 동일 계열이라 인지 일치) · 깊은 `e9bd34b5…`(목재 지지대 갱도) · 보석 `56f4e109…`(파란 수정 동굴 파노라마 2:1). 기각 8종은 관찰과 함께 §9 기각표에 남겼다.
+- 배선: `Illust` `ImageRUID` 교체 + `Type=Simple(0)` + `Color` 흰색 명시(§41.4 함정) + `IllustHint` 3개 `Enable=false`. UIBuilder 만 사용, 신규 엔티티 0 · 코드 0줄.
+- 검증: ui_lint ERROR 0 · 빌드 오류 0(Info 27 baseline) · Play 카드 3장 렌더 스크린샷 · 런타임 Error/Warning 0 · 후보 전량 Destroy(클라 로컬 — 프로필·서버 무변경).
+
+**남은 것**: 오너 카드 3장 미감 판정 (docs/16 §55).
+
 ### 2026-08-23 — 설정 창 "계정 데이터 초기화" (브랜치 `feat/t15-mineselect-redesign`, 검수 `docs/16` §53 · 계약 `docs/25` §10)
 
 오너 요청: 개인 계정 데이터를 초기화하는 기능을 설정 창에. `ui/SettingsUI` Panel 480→580 + `BtnDataReset`(진홍 글자, 다시 보기 아래) / `SettingsPanelController.OnDataResetClicked` 가 `_UIPopup` 확인 팝업 경유로만 `RequestProfileReset()` / 서버 `AccountProfileService.ResetProfileToDefault` 는 **직전 저장본을 `RecoveryArchiveStorageKey` 로 아카이브 → 본본+백업을 기본 프로필로 TransactSet → 성공 뒤에만 메모리 교체** → 잉여 일꾼(Worker02~05) 3맵 전부 Destroy → farm01 복귀·일꾼 1 재구성(`RestoreLastMineAndWorker` 재사용). 튜토리얼 자동 시작(E1·E14)과 사운드 기본값 재적용은 기존 @Sync 감시가 그대로 이어받아 **신규 클라 코드 0줄**. 정적 검증(바인딩 281/0, lint ERROR 0, 레거시 TextComponent 0)에 이어 **같은 날 Maker 런타임 검증까지 완료** — 오너 승인 하에 실계정 리셋 실측(빌드 오류 0 · 팝업/배치 스크린샷 · gold 86→0 · Worker02~05 소멸 · 저장소 실기록 · 튜토리얼 자동 시작 E1·E14) 후 아카이브 키에서 원복(유실 0, 재저장 잔여물 0). 상세 로그는 `docs/16` §53.
