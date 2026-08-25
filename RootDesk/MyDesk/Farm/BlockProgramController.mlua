@@ -36,6 +36,11 @@ property Entity programGrid = "af4877f2-c4d8-451a-a15b-5b8cb1670cce"
 -- 그리드 셀 수 (ui/BlockProgramUI.ui 의 Cell01..CellNN 과 일치해야 한다).
 property integer StripCellCount = 36
 property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
+-- T-17b: 드래그 고스트 — 드래그 확정 중 커서를 따라오는 잔상 셀 (그룹 루트 직속,
+-- raycast 없음). 문구·틴트는 원본 토큰을 복제하고, 놓으면 숨긴 뒤 이동을 수행한다.
+property Entity dragGhost = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
+property TextGUIRendererComponent dragGhostText = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
+property SpriteGUIRendererComponent dragGhostSprite = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
 property ButtonComponent btnWorker1 = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
 -- 워커 칩 5개는 레거시 TextComponent 를 쓴다. TextGUIRendererComponent 로
 -- 선언하면 런타임 nil 이 되어 라벨이 한 번도 갱신되지 않는다 (docs/16 §15 D-12).
@@ -182,7 +187,12 @@ end
 method void OnCellTouchDrag(integer cellIndex, UITouchDragEvent touchEvent)
     -- T-17: 임계 거리(화면 12px)를 넘으면 "이동"으로 확정한다. 확정 순간
     -- 이동 가능 여부를 판정해, 제어 칸이면 즉시 취소 안내를 낸다.
-    if self._T.dragSrc == nil or self._T.dragMoved then return end
+    -- 확정 후에는 고스트 셀이 커서를 따라온다 (T-17b — 오너 요청).
+    if self._T.dragSrc == nil then return end
+    if self._T.dragMoved then
+        self:MoveDragGhost(touchEvent.TouchPoint)
+        return
+    end
     local dx = touchEvent.TouchPoint.x - self._T.dragStart.x
     local dy = touchEvent.TouchPoint.y - self._T.dragStart.y
     if dx * dx + dy * dy < 144 then return end
@@ -196,7 +206,47 @@ method void OnCellTouchDrag(integer cellIndex, UITouchDragEvent touchEvent)
         self:SetFeedback("이동/행동 블록만 드래그로 옮길 수 있습니다.")
         return
     end
+    self:ShowDragGhost(token)
+    self:MoveDragGhost(touchEvent.TouchPoint)
     self:SetFeedback("'" .. token.label .. "' 블록을 옮길 칸 위에서 놓으세요.")
+end
+
+@ExecSpace("ClientOnly")
+method void ShowDragGhost(table token)
+    -- T-17b: 고스트를 원본 토큰의 문구·틴트(PaintCell 과 동일 계열)로 켠다.
+    -- 원본 칸은 반투명으로 눌러 "여기서 뽑혀 나왔다"를 보인다 — 원복은 드롭 후
+    -- RefreshDisplay 의 전체 재도색이 한다.
+    if self.dragGhost == nil then return end
+    if self.dragGhostText ~= nil then self.dragGhostText.Text = token.label end
+    if self.dragGhostSprite ~= nil then
+        if token.tint == "work" then
+            self.dragGhostSprite.Color = Color(0.78, 0.93, 0.78, 0.85)
+        else
+            self.dragGhostSprite.Color = Color(1, 1, 1, 0.85)
+        end
+    end
+    self.dragGhost.Enable = true
+    local srcCell = self._T.cells[self._T.dragSrc]
+    if srcCell ~= nil and srcCell.SpriteGUIRendererComponent ~= nil then
+        local color = srcCell.SpriteGUIRendererComponent.Color
+        srcCell.SpriteGUIRendererComponent.Color = Color(color.r, color.g, color.b, 0.35)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void MoveDragGhost(Vector2 screenPoint)
+    -- 고스트는 전화면 루트 직속이라 캔버스 좌표를 그대로 쓴다 (UIDraggable 과
+    -- 같은 ScreenToUIPosition 환산 — 해상도 배율과 무관하게 커서 1:1).
+    if self.dragGhost == nil or not self.dragGhost.Enable then return end
+    local transform = self.dragGhost.UITransformComponent
+    if transform == nil then return end
+    transform.anchoredPosition = _UILogic:ScreenToUIPosition(screenPoint)
+end
+
+@ExecSpace("ClientOnly")
+method void HideDragGhost()
+    -- 드롭·취소 공용 정리.
+    if self.dragGhost ~= nil then self.dragGhost.Enable = false end
 end
 
 @ExecSpace("ClientOnly")
@@ -205,6 +255,7 @@ method void OnCellTouchUp(integer cellIndex, UITouchUpEvent touchEvent)
     -- 확정 전(짧은 탭)은 아무것도 하지 않는다 — 기존 클릭 삭제가 처리한다.
     local src = self._T.dragSrc
     self._T.dragSrc = nil
+    self:HideDragGhost()
     if src == nil or not self._T.dragMoved then return end
     local dst = self:CellIndexAtPoint(touchEvent.TouchPoint)
     self:MoveStripToken(src, dst)
