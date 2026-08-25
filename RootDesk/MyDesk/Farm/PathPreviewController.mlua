@@ -67,20 +67,21 @@ method void RefreshPreview()
         self:HideAll()
         return
     end
-    local steps = _PathPreviewSimulator:SimulateSteps(program, worker.CellX, worker.CellY)
+    local steps = _PathPreviewSimulator:SimulateProgram(program, _BlockProgramController:GetStrip(), worker)
     self:RenderSteps(steps, tilemap)
 end
 
 @ExecSpace("ClientOnly")
 method void RenderSteps(table steps, RectTileMapComponent tilemap)
     -- 스텝을 셀 단위로 묶어 슬롯을 배정하고 마커 풀에 칠한다.
-    -- 같은 셀 2~4개 = 2×2 나란히 배치, 5개째부터는 표시 생략 (2차 PR 에서 +N).
+    -- 같은 셀 2~4개 = 2×2 나란히 배치. 5개 이상이면 4번째 슬롯을 +N 접기
+    -- 마커로 바꾸고 나머지를 접는다 (docs/31 §5 확정 6 — 스트립 +N 과 동일 규칙).
     local cellGroups = {}
     for i = 1, #steps do
         local step = steps[i]
         local cellKey = tostring(step.cellX) .. "," .. tostring(step.cellY)
-        if cellGroups[cellKey] == nil then cellGroups[cellKey] = {} end
-        table.insert(cellGroups[cellKey], i)
+        if cellGroups[cellKey] == nil then cellGroups[cellKey] = { count = 0, seen = 0 } end
+        cellGroups[cellKey].count = cellGroups[cellKey].count + 1
     end
 
     local shown = 0
@@ -89,18 +90,22 @@ method void RenderSteps(table steps, RectTileMapComponent tilemap)
         local step = steps[i]
         local cellKey = tostring(step.cellX) .. "," .. tostring(step.cellY)
         local group = cellGroups[cellKey]
-        local slot = 0
-        for g = 1, #group do
-            if group[g] == i then slot = g break end
-        end
-        if slot > 4 then
-            -- 타일당 4개 초과 — 1차 PR 에서는 생략만 하고 로그로 남긴다.
-            log("[PathPreview] cell " .. cellKey .. " marker " .. tostring(i) .. " folded (slot>" .. tostring(4) .. ")")
+        group.seen = group.seen + 1
+        local slot = group.seen
+        if group.count > 4 and slot == 4 then
+            -- 5개째부터 접힘: 4번째 슬롯이 +N 표기를 맡는다.
+            shown = shown + 1
+            local marker = self:EnsureMarker(shown)
+            if marker ~= nil then
+                self:PaintFoldMarker(marker, step, group.count - 3, tilemap)
+            end
+        elseif slot > 4 then
+            -- 이미 +N 에 접힌 스텝 — 그리지 않는다.
         else
             shown = shown + 1
             local marker = self:EnsureMarker(shown)
             if marker ~= nil then
-                self:PaintMarker(marker, step, i, slot, #group > 1, tilemap)
+                self:PaintMarker(marker, step, slot, group.count > 1, tilemap)
             end
         end
     end
@@ -112,15 +117,13 @@ method void RenderSteps(table steps, RectTileMapComponent tilemap)
 end
 
 @ExecSpace("ClientOnly")
-method void PaintMarker(Entity marker, table step, integer stepNo, integer slot, boolean shared, RectTileMapComponent tilemap)
-    -- 마커 하나의 위치·크기·문구·틴트를 칠한다.
+method void PlaceMarker(Entity marker, table step, integer slot, boolean shared, RectTileMapComponent tilemap)
+    -- 슬롯 위치·타일 스케일 배정의 공용 본체. 반환 없이 marker 를 배치만 한다.
     local world = tilemap:ToWorldPosition(Vector2Int(step.cellX, step.cellY))
     local offsetX, offsetY = 0, 0
     local tileScale = self.TileScaleSingle
-    local fontSize = self.FontSizeSingle
     if shared then
         tileScale = self.TileScaleShared
-        fontSize = self.FontSizeShared
         local d = self.SharedSlotOffset
         if slot == 1 then offsetX, offsetY = -d, d
         elseif slot == 2 then offsetX, offsetY = d, d
@@ -129,10 +132,19 @@ method void PaintMarker(Entity marker, table step, integer stepNo, integer slot,
     end
     marker.TransformComponent.Position = Vector3(world.x + offsetX, world.y + offsetY, 0)
     marker.Enable = true
-
     local tile = marker:GetChildByName("Tile", false)
     if tile ~= nil then
         tile.TransformComponent.Scale = Vector3(tileScale, tileScale, 1)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void PaintMarker(Entity marker, table step, integer slot, boolean shared, RectTileMapComponent tilemap)
+    -- 마커 하나의 위치·크기·문구·틴트를 칠한다. 순번은 시뮬레이터가 스트립
+    -- 역인덱스로 부여한 step.no 다 (docs/31 §2.1 — 스트립 칸과 같은 번호).
+    self:PlaceMarker(marker, step, slot, shared, tilemap)
+    local tile = marker:GetChildByName("Tile", false)
+    if tile ~= nil then
         local renderer = tile.SpriteRendererComponent
         if renderer ~= nil then
             -- 반투명 고스트 (docs/31 §2.5). 틴트 계열은 스트립 셀과 동일
@@ -149,8 +161,36 @@ method void PaintMarker(Entity marker, table step, integer stepNo, integer slot,
         -- 월드 텍스트는 TextRendererComponent (TextComponent 는 UI 전용 — 월드에서 무렌더).
         local label = labelEntity.TextRendererComponent
         if label ~= nil then
-            label.Text = tostring(stepNo) .. step.glyph
+            local text = tostring(step.no) .. step.glyph
+            if step.repeatLabel ~= nil then
+                -- 반복 몸통 1회분 마커 — ×N 병기 (docs/31 §5 확정 2).
+                text = text .. "\n" .. tostring(step.repeatLabel)
+            end
+            label.Text = text
+            local fontSize = self.FontSizeSingle
+            if shared then fontSize = self.FontSizeShared end
             label.FontSize = fontSize
+            label.FontColor = Color(0.3, 0.2, 0.1, 0.95)
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void PaintFoldMarker(Entity marker, table step, integer foldedCount, RectTileMapComponent tilemap)
+    -- 타일당 5개째부터의 접힘 마커 — 스트립 초과 접기와 같은 +N 표기·회색 계열
+    -- (BlockProgramController.PaintCell 의 overflow 틴트).
+    self:PlaceMarker(marker, step, 4, true, tilemap)
+    local tile = marker:GetChildByName("Tile", false)
+    if tile ~= nil then
+        local renderer = tile.SpriteRendererComponent
+        if renderer ~= nil then renderer.Color = Color(0.82, 0.82, 0.82, 0.62) end
+    end
+    local labelEntity = marker:GetChildByName("Label", false)
+    if labelEntity ~= nil then
+        local label = labelEntity.TextRendererComponent
+        if label ~= nil then
+            label.Text = "+" .. tostring(foldedCount)
+            label.FontSize = self.FontSizeShared
             label.FontColor = Color(0.3, 0.2, 0.1, 0.95)
         end
     end

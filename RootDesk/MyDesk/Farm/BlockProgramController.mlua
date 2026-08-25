@@ -466,6 +466,14 @@ method table GetProgram()
 end
 
 @ExecSpace("ClientOnly")
+method table GetStrip()
+    -- T-16 2차: 미리보기 순번 부여용 평탄 토큰 (FlattenList 산출물 그대로).
+    -- 토큰이 원본 노드 참조를 들고 있어 시뮬레이터가 노드→칸 번호 역인덱스를 만든다.
+    if self._T.strip == nil then return {} end
+    return self._T.strip
+end
+
+@ExecSpace("ClientOnly")
 method table GetSanitizedProgram()
     -- 직렬화용 사본 — 빈 body 제어 블록을 걷어낸다. MSW `JSONEncode` 는 빈
     -- Lua 테이블을 `LEA-3001 UnknownType` 으로 거부하므로 (2026-08-18 실측),
