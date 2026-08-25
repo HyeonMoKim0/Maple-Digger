@@ -231,6 +231,16 @@ method void ShowDragGhost(table token)
         end
     end
     self.dragGhost.Enable = true
+    -- 창(UIDraggable)이 잡힐 때마다 SetSiblingIndex(1000000) 으로 맨 앞에 오므로,
+    -- 고스트·안내선도 드래그 시작마다 다시 맨 앞으로 올린다 — 안 하면 창을 한 번
+    -- 이라도 옮긴 뒤부터 고스트가 창 뒤로 깔린다 (2026-08-26 오너 보고).
+    -- 순서: 안내선 → 고스트 (고스트가 최상위).
+    if self.dropLine ~= nil and self.dropLine.UITransformComponent ~= nil then
+        _UILogic:SetSiblingIndex(self.dropLine.UITransformComponent, 1000000)
+    end
+    if self.dragGhost.UITransformComponent ~= nil then
+        _UILogic:SetSiblingIndex(self.dragGhost.UITransformComponent, 1000000)
+    end
     local srcCell = self._T.cells[self._T.dragSrc]
     if srcCell ~= nil and srcCell.SpriteGUIRendererComponent ~= nil then
         local color = srcCell.SpriteGUIRendererComponent.Color
