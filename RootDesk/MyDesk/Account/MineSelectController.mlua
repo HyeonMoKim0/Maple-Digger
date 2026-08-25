@@ -61,10 +61,18 @@ property TextGUIRendererInputComponent saleAmountInput = "35a53a3e-b413-4f1c-aca
 property ButtonComponent btnProtectedMinus = "7938b512-6149-4c10-a7df-2d9a5ca5e491"
 property ButtonComponent btnProtectedPlus = "86b5da70-4909-4c0d-a5c7-0f2efb953ae2"
 property TextGUIRendererComponent protectedAmountValueText = "93c3e908-60b3-4298-b689-25450e7692b1"
-property ButtonComponent btnQuickOne = "17fb7222-327e-45c9-8f31-e3592659a17a"
-property ButtonComponent btnQuickTen = "f179fa04-2b7b-4493-811c-8df7f4fb77b3"
-property ButtonComponent btnQuickHundred = "4cb338a6-780e-4a9f-99da-8d62d96b6a3a"
 property ButtonComponent btnQuickAll = "6c8f9913-59c7-4613-8ec8-399c092b8c53"
+-- 2026-08-25 오너 요청: 1/10/100 버튼을 슬라이더로 대체. 프로젝트 슬라이더 표준 —
+-- 양 끝 ±(1단위 미세 조정) + 아래 직접 입력창. 보호 수량 스테퍼도 같은 표준.
+property SliderComponent saleSlider = "d92a0f83-5002-4d8c-89f7-b71732c16619"
+property ButtonComponent btnSaleMinus = "c5af1c99-6ff5-4909-93a5-4474cc9da705"
+property ButtonComponent btnSalePlus = "fd10f5e2-7165-4e1c-b7d4-e445cc0efcde"
+property SliderComponent protSlider = "78dafa5b-ffe4-478e-a24c-7e2aaeb018b7"
+property TextGUIRendererInputComponent protAmountInput = "37d4baf3-ac86-4b37-abdd-79496f6ddb8c"
+-- 광물 선택 버튼 배경 — 선택된 버튼을 어둡게 표시 (§52-11 워커 탭 규칙).
+property SpriteGUIRendererComponent oreStoneSprite = "d876c4ed-bd2b-4461-b25a-e93a5cc534c3"
+property SpriteGUIRendererComponent oreIronSprite = "a7b5e659-c7dd-43ce-bbd9-33e5009a9e59"
+property SpriteGUIRendererComponent oreGoldSprite = "6b1a5af9-d13d-4a66-95b9-a047ed0b838a"
 property ButtonComponent btnSellSelected = "78f6afd5-aa5d-45c6-9ef3-268d1a37f83e"
 property ButtonComponent btnToggleProtected = "e802e753-5484-40b5-b941-04c34ec1d023"
 property ButtonComponent btnSaveProtection = "3635c978-5a77-4118-8d49-519629327e6f"
@@ -147,10 +155,15 @@ method void OnBeginPlay()
     self:ConnectButton("oreStone", self.btnOreStone, self.OnOreStoneClicked)
     self:ConnectButton("oreIron", self.btnOreIron, self.OnOreIronClicked)
     self:ConnectButton("oreGold", self.btnOreGold, self.OnOreGoldClicked)
-    self:ConnectButton("quickOne", self.btnQuickOne, self.OnQuickOneClicked)
-    self:ConnectButton("quickTen", self.btnQuickTen, self.OnQuickTenClicked)
-    self:ConnectButton("quickHundred", self.btnQuickHundred, self.OnQuickHundredClicked)
+    self:ConnectButton("saleMinus", self.btnSaleMinus, self.OnSaleMinusClicked)
+    self:ConnectButton("salePlus", self.btnSalePlus, self.OnSalePlusClicked)
     self:ConnectButton("quickAll", self.btnQuickAll, self.OnQuickAllClicked)
+    if self.saleSlider ~= nil then
+        self._T.saleSliderHandler = self.saleSlider.Entity:ConnectEvent(SliderValueChangedEvent, self.OnSaleSliderChanged)
+    end
+    if self.protSlider ~= nil then
+        self._T.protSliderHandler = self.protSlider.Entity:ConnectEvent(SliderValueChangedEvent, self.OnProtSliderChanged)
+    end
     self:ConnectButton("sellSelected", self.btnSellSelected, self.OnSellSelectedClicked)
     self:ConnectButton("toggleProtected", self.btnToggleProtected, self.OnToggleProtectedClicked)
     self:ConnectButton("saveProtection", self.btnSaveProtection, self.OnSaveProtectionClicked)
@@ -579,6 +592,26 @@ method integer GetSelectedEffectiveProtection(AccountProfileService profile)
 end
 
 @ExecSpace("ClientOnly")
+method void ApplyOreButtonSkins()
+    -- 선택된 광물 버튼을 어둡게 표시 — "선택: X" 텍스트를 대체한다
+    -- (2026-08-25 오너 요청, §52-11 워커 탭과 같은 규칙).
+    local selected = Color(0.55, 0.55, 0.55, 1)
+    local normal = Color(1, 1, 1, 1)
+    if self.oreStoneSprite ~= nil then
+        if self._T.selectedOre == "stone" then self.oreStoneSprite.Color = selected
+        else self.oreStoneSprite.Color = normal end
+    end
+    if self.oreIronSprite ~= nil then
+        if self._T.selectedOre == "iron" then self.oreIronSprite.Color = selected
+        else self.oreIronSprite.Color = normal end
+    end
+    if self.oreGoldSprite ~= nil then
+        if self._T.selectedOre == "gold" then self.oreGoldSprite.Color = selected
+        else self.oreGoldSprite.Color = normal end
+    end
+end
+
+@ExecSpace("ClientOnly")
 method string OreLabel(string oreType)
     -- 요약에 코드값(stone)이 아니라 한글 라벨을 보여 준다.
     if oreType == "stone" then return "돌" end
@@ -592,20 +625,26 @@ method void RefreshSaleSummary(AccountProfileService profile)
     if self.saleSummaryText ~= nil then
         local autoLabel = "끔"
         if self:GetSelectedAutoSell(profile) then autoLabel = "켬" end
-        local protectionLabel = "해제"
-        if self._T.includeProtected then protectionLabel = "포함" end
         local balance = self:GetSelectedBalance(profile)
         local effective = self:GetSelectedEffectiveProtection(profile)
         local sellable = balance - effective
         if sellable < 0 then sellable = 0 end
-        self.saleSummaryText.Text = "선택: " .. self:OreLabel(self._T.selectedOre) .. "  |  보유 " .. tostring(balance) .. "  |  보호 " .. tostring(effective) .. " (설정 " .. tostring(self:GetSelectedProtection(profile)) .. ")\n지금 팔 수 있는 수량 " .. tostring(sellable) .. "  |  자동판매 " .. autoLabel .. "  |  보호분 판매 " .. protectionLabel
+        -- 2026-08-25 개정: "선택: X" 는 광물 버튼 어둡게로, "보호분 판매 Y" 는
+        -- 아래 토글이 이미 보여 주므로 요약에서 뺀다 (오너 요청).
+        self.saleSummaryText.Text = "보유 " .. tostring(balance) .. "  |  보호 " .. tostring(effective) .. " (설정 " .. tostring(self:GetSelectedProtection(profile)) .. ")\n지금 팔 수 있는 수량 " .. tostring(sellable) .. "  |  자동판매 " .. autoLabel
     end
     if self._T.protectedAmountDraft == nil then
         self._T.protectedAmountDraft = self:GetSelectedProtection(profile)
+        if self.protAmountInput ~= nil then self.protAmountInput.Text = tostring(self._T.protectedAmountDraft) end
+        self:SyncProtSlider()
     end
-    if self.protectedAmountValueText ~= nil then
-        self.protectedAmountValueText.Text = tostring(self._T.protectedAmountDraft)
+    if self.saleSlider ~= nil then
+        self.saleSlider.MaxValue = math.max(1, self:GetSelectedBalance(profile))
     end
+    if self.protSlider ~= nil then
+        self.protSlider.MaxValue = 999
+    end
+    self:ApplyOreButtonSkins()
     if self.protectedToggleSprite ~= nil then
         if self._T.includeProtected then self.protectedToggleSprite.ImageRUID = DataRef(self.ToggleOnRUID)
         else self.protectedToggleSprite.ImageRUID = DataRef(self.ToggleOffRUID) end
@@ -669,7 +708,11 @@ method void SelectOre(string oreType)
     -- 계속 남아 이후의 서버 거부 사유를 덮는다.
     self._T.localSaleHint = ""
     local profile = self:GetProfile()
-    if profile ~= nil then self._T.protectedAmountDraft = self:GetSelectedProtection(profile) end
+    if profile ~= nil then
+        self._T.protectedAmountDraft = self:GetSelectedProtection(profile)
+        if self.protAmountInput ~= nil then self.protAmountInput.Text = tostring(self._T.protectedAmountDraft) end
+        self:SyncProtSlider()
+    end
     self:RefreshUI(true)
 end
 
@@ -717,7 +760,7 @@ method void OnSellClicked()
     if self.rarePanel ~= nil then self.rarePanel.Enable = false end
     if self.upgradePanel ~= nil then self.upgradePanel.Enable = false end
     self:SelectOre(self._T.selectedOre)
-    if self.saleAmountInput ~= nil then self.saleAmountInput.Text = "1" end
+    self:SetSaleAmount(1)
 end
 
 @ExecSpace("ClientOnly")
@@ -763,24 +806,47 @@ end
 
 @ExecSpace("ClientOnly")
 method void SetSaleAmount(integer amount)
-    if self.saleAmountInput ~= nil then self.saleAmountInput.Text = tostring(math.max(0, amount)) end
+    -- 판매 수량 갱신 단일 경로 (슬라이더·±버튼·전량·패널 열기 공용).
+    -- 슬라이더 Value 대입이 SliderValueChangedEvent 를 재발화하지만, 핸들러는
+    -- 같은 값을 입력창에 다시 쓸 뿐이라 루프가 생기지 않는다 (§52-13 계열).
+    local clamped = math.max(0, amount)
+    if self.saleAmountInput ~= nil then self.saleAmountInput.Text = tostring(clamped) end
+    if self.saleSlider ~= nil then
+        local profile = self:GetProfile()
+        if profile ~= nil then self.saleSlider.MaxValue = math.max(1, self:GetSelectedBalance(profile)) end
+        self.saleSlider.Value = clamped
+    end
     self._T.localSaleHint = ""
     self:RefreshUI(true)
 end
 
 @ExecSpace("ClientOnly")
-method void OnQuickOneClicked()
-    self:SetSaleAmount(1)
+method void OnSaleSliderChanged(SliderValueChangedEvent event)
+    -- 슬라이더 → 입력창 단방향 동기화. 판매 시점 값은 입력창에서 읽는다
+    -- (OnSellSelectedClicked 의 ReadNonNegative — 직접 입력도 같은 경로).
+    if self.saleSlider == nil or self.saleAmountInput == nil then return end
+    self.saleAmountInput.Text = tostring(math.floor(self.saleSlider.Value))
 end
 
 @ExecSpace("ClientOnly")
-method void OnQuickTenClicked()
-    self:SetSaleAmount(10)
+method void NudgeSaleAmount(integer delta)
+    -- ± 미세 조정: 직접 입력 중이던 값을 기준으로 1단위 가감, 0~보유량 클램프.
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local amount = self:ReadNonNegative(self.saleAmountInput, 0) + delta
+    local balance = self:GetSelectedBalance(profile)
+    if amount > balance then amount = balance end
+    self:SetSaleAmount(math.max(0, amount))
 end
 
 @ExecSpace("ClientOnly")
-method void OnQuickHundredClicked()
-    self:SetSaleAmount(100)
+method void OnSaleMinusClicked()
+    self:NudgeSaleAmount(-1)
+end
+
+@ExecSpace("ClientOnly")
+method void OnSalePlusClicked()
+    self:NudgeSaleAmount(1)
 end
 
 @ExecSpace("ClientOnly")
@@ -816,7 +882,10 @@ end
 method void OnSaveProtectionClicked()
     local profile = self:GetProfile()
     if profile == nil then return end
-    local protectedAmount = math.max(0, self._T.protectedAmountDraft or self:GetSelectedProtection(profile))
+    -- 직접 입력창에 타이핑만 하고 저장을 누른 경우까지 잡는다 — 입력값 우선.
+    local protectedAmount = self:ReadNonNegative(self.protAmountInput, math.max(0, self._T.protectedAmountDraft or self:GetSelectedProtection(profile)))
+    self._T.protectedAmountDraft = protectedAmount
+    self:SyncProtSlider()
     profile:RequestSaleSetting(self._T.selectedOre, self:GetSelectedAutoSell(profile), protectedAmount)
 end
 
@@ -824,18 +893,42 @@ end
 method void OnToggleAutoSellClicked()
     local profile = self:GetProfile()
     if profile == nil then return end
-    local protectedAmount = math.max(0, self._T.protectedAmountDraft or self:GetSelectedProtection(profile))
+    local protectedAmount = self:ReadNonNegative(self.protAmountInput, math.max(0, self._T.protectedAmountDraft or self:GetSelectedProtection(profile)))
+    self._T.protectedAmountDraft = protectedAmount
     profile:RequestSaleSetting(self._T.selectedOre, not self:GetSelectedAutoSell(profile), protectedAmount)
+end
+
+@ExecSpace("ClientOnly")
+method void SetProtectedDraft(integer amount)
+    -- 보호 수량 초안 갱신 단일 경로 (슬라이더·±버튼·직접 입력 공용).
+    self._T.protectedAmountDraft = math.max(0, amount)
+    if self.protAmountInput ~= nil then self.protAmountInput.Text = tostring(self._T.protectedAmountDraft) end
+    self._T.localSaleHint = "보호 수량 " .. tostring(self._T.protectedAmountDraft) .. " — 저장을 누르면 적용됩니다."
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method void SyncProtSlider()
+    -- Value 대입의 이벤트 재발화는 같은 값을 다시 쓰는 것으로 끝난다 (루프 없음).
+    if self.protSlider ~= nil then self.protSlider.Value = self._T.protectedAmountDraft or 0 end
+end
+
+@ExecSpace("ClientOnly")
+method void OnProtSliderChanged(SliderValueChangedEvent event)
+    if self.protSlider == nil then return end
+    self:SetProtectedDraft(math.floor(self.protSlider.Value))
 end
 
 @ExecSpace("ClientOnly")
 method void AdjustProtectedAmount(integer delta)
     local profile = self:GetProfile()
     if profile == nil then return end
-    if self._T.protectedAmountDraft == nil then self._T.protectedAmountDraft = self:GetSelectedProtection(profile) end
-    self._T.protectedAmountDraft = math.max(0, self._T.protectedAmountDraft + delta)
-    self._T.localSaleHint = "보호 수량 " .. tostring(self._T.protectedAmountDraft) .. " — 저장을 누르면 적용됩니다."
-    self:RefreshUI(true)
+    local base = self._T.protectedAmountDraft
+    if base == nil then base = self:GetSelectedProtection(profile) end
+    -- 직접 입력 중이던 값을 우선한다 (± 는 입력값 기준 미세 조정).
+    base = self:ReadNonNegative(self.protAmountInput, base)
+    self:SetProtectedDraft(base + delta)
+    self:SyncProtSlider()
 end
 
 @ExecSpace("ClientOnly")
@@ -1045,9 +1138,8 @@ method table GetTutorialButtons()
         oreStone = self.btnOreStone,
         oreIron = self.btnOreIron,
         oreGold = self.btnOreGold,
-        quickOne = self.btnQuickOne,
-        quickTen = self.btnQuickTen,
-        quickHundred = self.btnQuickHundred,
+        saleMinus = self.btnSaleMinus,
+        salePlus = self.btnSalePlus,
         quickAll = self.btnQuickAll,
         sellSelected = self.btnSellSelected,
         toggleProtected = self.btnToggleProtected,
@@ -1102,10 +1194,17 @@ method void OnEndPlay()
     self:DisconnectButton("oreStone", self.btnOreStone)
     self:DisconnectButton("oreIron", self.btnOreIron)
     self:DisconnectButton("oreGold", self.btnOreGold)
-    self:DisconnectButton("quickOne", self.btnQuickOne)
-    self:DisconnectButton("quickTen", self.btnQuickTen)
-    self:DisconnectButton("quickHundred", self.btnQuickHundred)
+    self:DisconnectButton("saleMinus", self.btnSaleMinus)
+    self:DisconnectButton("salePlus", self.btnSalePlus)
     self:DisconnectButton("quickAll", self.btnQuickAll)
+    if self._T.saleSliderHandler ~= nil and self.saleSlider ~= nil then
+        self.saleSlider.Entity:DisconnectEvent(SliderValueChangedEvent, self._T.saleSliderHandler)
+        self._T.saleSliderHandler = nil
+    end
+    if self._T.protSliderHandler ~= nil and self.protSlider ~= nil then
+        self.protSlider.Entity:DisconnectEvent(SliderValueChangedEvent, self._T.protSliderHandler)
+        self._T.protSliderHandler = nil
+    end
     self:DisconnectButton("sellSelected", self.btnSellSelected)
     self:DisconnectButton("toggleProtected", self.btnToggleProtected)
     self:DisconnectButton("saveProtection", self.btnSaveProtection)
