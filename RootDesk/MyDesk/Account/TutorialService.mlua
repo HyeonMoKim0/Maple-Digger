@@ -51,6 +51,8 @@ method boolean RequestStart(Entity player)
         return false
     end
     profile:PushMineBonusesToSimulator()
+    -- 2026-08-25 (docs/16 §58): 튜토리얼 동안은 일꾼 1만 — 나머지는 캡처 후 디스폰.
+    profile:SuspendExtraWorkersForTutorial()
     log("[Tutorial] started step=1")
     return true
 end
@@ -145,6 +147,11 @@ method boolean RequestAdvance(Entity player, integer step)
     end
     -- 완료(8→9) 시 완화 C3 캐시가 즉시 꺼지도록 갱신한다 (E8).
     profile:PushMineBonusesToSimulator()
+    -- 2026-08-25 (docs/16 §58): 완주 시 디스폰해 뒀던 일꾼 2~5를 저장 지점에서 재개.
+    -- 8단계에서 방금 고용된 일꾼도 이 경로(RestoreOwnedWorker)로 배치된다.
+    if tutorial.step == 9 then
+        profile:ResumeExtraWorkersAfterTutorial()
+    end
     log("[Tutorial] advanced step=" .. tostring(step) .. " -> " .. tostring(tutorial.step))
     return true
 end
@@ -191,6 +198,8 @@ method boolean RequestSkip(Entity player)
         return false
     end
     profile:PushMineBonusesToSimulator()
+    -- 2026-08-25 (docs/16 §58): 스킵으로 끝나도 디스폰해 둔 일꾼을 재개한다.
+    profile:ResumeExtraWorkersAfterTutorial()
     log("[Tutorial] skipped at step=" .. tostring(tutorial.step))
     return true
 end
@@ -217,6 +226,10 @@ method boolean RequestReplay(Entity player, boolean fromStart)
         profile:RestoreProfileSnapshot(snapshot)
         return false
     end
+    -- 2026-08-25 (docs/16 §58): 다시 보기도 일꾼 1만 — 오너 실플레이에서 일꾼 2
+    -- 보유 계정의 1단계가 진행 불능이었다 (판정은 일꾼 1 전용인데 편집기 [실행]
+    -- 대상이 다른 일꾼일 수 있다).
+    profile:SuspendExtraWorkersForTutorial()
     log("[Tutorial] replay start step=" .. tostring(tutorial.step) .. " rewardsClaimed=" .. tostring(tutorial.rewardsClaimed))
     return true
 end

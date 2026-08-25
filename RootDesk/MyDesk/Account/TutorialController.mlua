@@ -634,6 +634,9 @@ method void Activate(integer step, boolean replay)
     -- 좌표 안내가 어긋나지 않는다 — 드래그된 창을 원위치로 보정한다. 활성 중
     -- 드래그 자체는 IsUiDragLocked 가 UIDraggable 에서 차단한다.
     self:ResetDraggablePanels()
+    -- 2026-08-25 (docs/16 §58): 튜토리얼은 일꾼 1 전용 — 편집기 [실행] 대상을
+    -- 일꾼 1로 강제한다 (일꾼 2 선택 상태로 진입하면 1단계 판정이 영영 안 된다).
+    if _BlockProgramController ~= nil then _BlockProgramController:SelectWorker(1) end
     self:EnterStep(step)
     log("[Tutorial] activated step=" .. tostring(step) .. " replay=" .. tostring(replay))
 end

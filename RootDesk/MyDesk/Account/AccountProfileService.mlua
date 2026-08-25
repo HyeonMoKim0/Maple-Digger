@@ -2075,41 +2075,14 @@ method void AutoRunSavedPrograms()
     local resumedCount = 0
     local invalidCount = 0
     for workerIndex = 1, #self._T.profile.workers do
-        local record = self._T.profile.workers[workerIndex]
-        if record ~= nil and type(record.lastValidProgramJson) == "string" and record.lastValidProgramJson ~= "" then
-            ---@type WorkerController
-            local worker = self:GetWorkerByIndex(workerIndex)
-            if worker ~= nil then
-                if record.programRunning == false then
-                    -- 2026-08-25: 로그아웃 당시 정지 상태 — 재실행하지 않고 복원된
-                    -- 위치에 그대로 둔다 (수동 [실행] 대기).
-                    log("[AccountProfile] auto-run skipped worker=" .. tostring(workerIndex) .. " reason=was-stopped")
-                else
-                    local program = self:DecodeJsonSafely(record.lastValidProgramJson)
-                    if type(program) == "table" and #program > 0 and worker:ValidateProgram(program) then
-                        -- 2026-08-25 개정: 실행 지점 스냅숏이 있고 같은 광산이면 그
-                        -- 지점부터 재개한다(위치는 RestoreOwnedWorker 가 이미 복원).
-                        -- 재개가 불가하면(스냅숏 불일치·타 광산) 시작 셀에서 처음부터 —
-                        -- 프로그램은 상대 이동이라 저장 위치 재생은 경로를 통째로 민다.
-                        local resumed = false
-                        local workerMap = worker.Entity.CurrentMap
-                        if type(record.execStateJson) == "string" and record.execStateJson ~= ""
-                            and workerMap ~= nil and workerMap.Name == record.cellMineId then
-                            resumed = worker:ResumeProgram(program, record.execStateJson)
-                        end
-                        if resumed then
-                            resumedCount = resumedCount + 1
-                        else
-                            worker:ResetToStartCell()
-                            worker:RunProgram(program)
-                        end
-                        ranCount = ranCount + 1
-                    else
-                        invalidCount = invalidCount + 1
-                        log_warning("[AccountProfile] saved program invalid worker=" .. tostring(workerIndex) .. " - staying Idle")
-                    end
-                end
-            end
+        local result = self:AutoRunWorker(workerIndex)
+        if result == "resumed" then
+            resumedCount = resumedCount + 1
+            ranCount = ranCount + 1
+        elseif result == "ran" then
+            ranCount = ranCount + 1
+        elseif result == "invalid" then
+            invalidCount = invalidCount + 1
         end
     end
     if invalidCount > 0 then
@@ -2129,6 +2102,73 @@ method void RequestSavedProgram(integer workerIndex)
     local record = self._T.profile.workers[workerIndex]
     if record == nil or type(record.lastValidProgramJson) ~= "string" or record.lastValidProgramJson == "" then return end
     _BlockProgramController:DeliverSavedProgram(workerIndex, record.lastValidProgramJson, senderUserId)
+end
+
+@ExecSpace("ServerOnly")
+method string AutoRunWorker(integer workerIndex)
+    -- 한 일꾼의 저장 프로그램 자동 재개 (2026-08-25 §57.1 분리 — 로그인 일괄
+    -- AutoRunSavedPrograms 와 튜토리얼 종료 복귀가 공유한다).
+    -- 반환: "resumed"(지점 재개) / "ran"(처음부터) / "skipped"(정지 로그아웃) /
+    -- "invalid"(프로그램 손상) / "none"(기록·일꾼 없음)
+    local record = self._T.profile.workers[workerIndex]
+    if record == nil or type(record.lastValidProgramJson) ~= "string" or record.lastValidProgramJson == "" then return "none" end
+    ---@type WorkerController
+    local worker = self:GetWorkerByIndex(workerIndex)
+    if worker == nil then return "none" end
+    if record.programRunning == false then
+        -- 로그아웃 당시 정지 상태 — 재실행하지 않고 복원된 위치에 그대로 둔다.
+        log("[AccountProfile] auto-run skipped worker=" .. tostring(workerIndex) .. " reason=was-stopped")
+        return "skipped"
+    end
+    local program = self:DecodeJsonSafely(record.lastValidProgramJson)
+    if type(program) ~= "table" or #program == 0 or not worker:ValidateProgram(program) then
+        log_warning("[AccountProfile] saved program invalid worker=" .. tostring(workerIndex) .. " - staying Idle")
+        return "invalid"
+    end
+    -- 실행 지점 스냅숏이 있고 같은 광산이면 그 지점부터 재개(위치는 RestoreOwnedWorker
+    -- 가 이미 복원). 불가하면 시작 셀에서 처음부터 — 상대 이동 경로 보존.
+    local workerMap = worker.Entity.CurrentMap
+    if type(record.execStateJson) == "string" and record.execStateJson ~= ""
+        and workerMap ~= nil and workerMap.Name == record.cellMineId then
+        if worker:ResumeProgram(program, record.execStateJson) then return "resumed" end
+    end
+    worker:ResetToStartCell()
+    worker:RunProgram(program)
+    return "ran"
+end
+
+@ExecSpace("ServerOnly")
+method void SuspendExtraWorkersForTutorial()
+    -- 2026-08-25 (docs/16 §58): 튜토리얼(1회차·다시 보기) 동안 일꾼 1만 남긴다.
+    -- 1~6단계 판정이 일꾼 1 전용이라, 편집기 선택이 다른 일꾼이면 [실행]이 그쪽으로
+    -- 가서 진행 불능이 된다 (오너 실플레이 보고 — 일꾼 2 보유 계정의 1단계).
+    -- 일꾼 2~5는 상태(수레·손·셀·실행 지점 §57.1)를 캡처하고 세 광산 전부에서
+    -- 디스폰한다 — 종료 시 ResumeExtraWorkersAfterTutorial 이 그 지점부터 재개.
+    if not self:CanWriteProfile() then return end
+    self:CaptureCurrentWorkerState()
+    ---@type WorkerController
+    local worker1 = self:GetWorkerByIndex(1)
+    if worker1 ~= nil and worker1.ProgramState == "Running" then
+        worker1:StopProgram()
+    end
+    self:DespawnExtraWorkers()
+    log("[AccountProfile] tutorial worker suspend done workers=" .. tostring(#self._T.profile.workers))
+end
+
+@ExecSpace("ServerOnly")
+method void ResumeExtraWorkersAfterTutorial()
+    -- 튜토리얼 종료(완주·스킵) 시 일꾼 2~5를 캡처해 둔 셀·실행 지점에서 재개한다.
+    -- 일꾼 1 은 튜토리얼이 끝낸 상태 그대로 둔다 — 캡처본으로 되돌리면 튜토리얼
+    -- 중의 수레·손 변화가 유실되고, 프로그램은 사용자가 수동 [실행]으로 잇는다.
+    if not self:CanWriteProfile() then return end
+    local resumedCount = 0
+    for workerIndex = 2, #self._T.profile.workers do
+        if self:RestoreOwnedWorker(workerIndex) then
+            self:AutoRunWorker(workerIndex)
+            resumedCount = resumedCount + 1
+        end
+    end
+    log("[AccountProfile] tutorial worker resume done count=" .. tostring(resumedCount))
 end
 
 @ExecSpace("Server")
