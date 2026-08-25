@@ -75,8 +75,10 @@ method boolean VerifyStep(AccountProfileService profile, integer step)
         -- 적재: 수레에 실렸다.
         return worker.CartCount > 0
     elseif step == 4 then
-        -- 하역: 수레가 비고 계정 돌이 적립됐다.
-        return worker.CartCount == 0 and (data.stone or 0) > 0
+        -- 하역: 하역 성공이 1회 이상 있었다 (2026-08-25 docs/16 §59 개정).
+        -- 이전 판정(수레 0 + 계정 돌 > 0)은 자동판매·보호 상황에서 돌 수치가 안
+        -- 늘면 실패했다. 클라 신호와 같은 축(UnloadCount)으로 판정한다.
+        return worker.UnloadCount > 0
     elseif step == 5 or step == 6 then
         -- 반복/조건: 서버 최종 검증을 통과한 마지막 프로그램에 해당 제어 블록이
         -- 있다 (RunProgram 이 기록한 lastValidProgramJson — 클라이언트 위조 불가).

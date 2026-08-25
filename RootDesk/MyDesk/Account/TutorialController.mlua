@@ -435,7 +435,7 @@ method void TakeSnapshot()
     -- 판정 신호 비교 기준. 정착 시간(SettleSeconds) 뒤에 찍는다.
     local profile = self:GetProfile()
     local worker = self:GetWorker()
-    local snapshot = { stone = 0, gold = 0, owned = 1, cellX = 0, cellY = 0, cartCount = 0 }
+    local snapshot = { stone = 0, gold = 0, owned = 1, cellX = 0, cellY = 0, cartCount = 0, unloadCount = 0 }
     if profile ~= nil then
         snapshot.stone = profile.Stone
         snapshot.gold = profile.Gold
@@ -445,6 +445,7 @@ method void TakeSnapshot()
         snapshot.cellX = worker.CellX
         snapshot.cellY = worker.CellY
         snapshot.cartCount = worker.CartCount
+        snapshot.unloadCount = worker.UnloadCount
     end
     self._T.snapshot = snapshot
 end
@@ -579,7 +580,10 @@ method boolean IsStepSignalMet(integer step)
     elseif step == 3 then
         return worker.CartCount > snapshot.cartCount
     elseif step == 4 then
-        return profile ~= nil and worker.CartCount == 0 and snapshot.cartCount > 0 and profile.Stone > snapshot.stone
+        -- 2026-08-25 (docs/16 §59): 계정 돌 증가(profile.Stone > snapshot.stone)로
+        -- 판정하면 자동판매가 보호 수량 위를 즉시 팔아 수치가 안 늘 때 하역해도
+        -- 영구 실패한다 — 경제와 무관한 하역 횟수 카운터로 판정한다.
+        return worker.UnloadCount > (snapshot.unloadCount or 0)
     elseif step == 5 then
         return self._T.lastRunHadRepeat and self._T.runSeen and worker.ProgramState == "Idle"
     elseif step == 6 then
