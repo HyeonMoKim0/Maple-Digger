@@ -36,6 +36,14 @@ property Entity programGrid = "af4877f2-c4d8-451a-a15b-5b8cb1670cce"
 -- 그리드 셀 수 (ui/BlockProgramUI.ui 의 Cell01..CellNN 과 일치해야 한다).
 property integer StripCellCount = 36
 property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
+-- T-17b: 드래그 고스트 — 드래그 확정 중 커서를 따라오는 잔상 셀 (그룹 루트 직속,
+-- raycast 없음). 문구·틴트는 원본 토큰을 복제하고, 놓으면 숨긴 뒤 이동을 수행한다.
+property Entity dragGhost = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
+property TextGUIRendererComponent dragGhostText = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
+property SpriteGUIRendererComponent dragGhostSprite = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
+-- T-17c: 드롭 위치 안내선 — 커서가 올라간 칸의 왼쪽 경계(= 그 칸 앞 삽입)에
+-- 세로로 긴 주황 선을 세운다. 드롭 규칙("대상 칸 앞 삽입")의 시각 표현.
+property Entity dropLine = "a798fd1a-e9d5-4caf-97cf-44e8af0d31f2"
 property ButtonComponent btnWorker1 = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
 -- 워커 칩 5개는 레거시 TextComponent 를 쓴다. TextGUIRendererComponent 로
 -- 선언하면 런타임 nil 이 되어 라벨이 한 번도 갱신되지 않는다 (docs/16 §15 D-12).
@@ -142,6 +150,12 @@ method void ConnectStripCells()
     -- 이름 규칙으로 순회한다 — 이름이 곧 표시 순서다.
     self._T.cells = {}
     self._T.cellHandlers = {}
+    self._T.cellNums = {}
+    self._T.cellDownHandlers = {}
+    self._T.cellDragHandlers = {}
+    self._T.cellUpHandlers = {}
+    self._T.dragMoved = false
+    self._T.dragSrc = nil
     if self.programGrid == nil then return end
     for i = 1, self.StripCellCount do
         local suffix = tostring(i)
@@ -149,9 +163,242 @@ method void ConnectStripCells()
         local cellEntity = self.programGrid:GetChildByName("Cell" .. suffix, false)
         if cellEntity == nil then break end
         self._T.cells[i] = cellEntity
+        -- T-16: 셀 좌상단 순번 오버레이 (docs/31 §2.1 — 맵 마커와 같은 번호).
+        -- Num 자식이 없는 임포트본에서도 죽지 않게 nil 을 허용한다.
+        local numEntity = cellEntity:GetChildByName("Num", false)
+        if numEntity ~= nil then
+            self._T.cellNums[i] = numEntity.TextGUIRendererComponent
+        end
         local cellIndex = i
         self._T.cellHandlers[i] = cellEntity:ConnectEvent(ButtonClickEvent, function() self:OnStripCellClicked(cellIndex) end)
+        -- T-17: 셀 드래그 재배치 — 짧게 누르면 삭제(기존), 끌면 이동.
+        self._T.cellDownHandlers[i] = cellEntity:ConnectEvent(UITouchDownEvent, function(touchEvent) self:OnCellTouchDown(cellIndex, touchEvent) end)
+        self._T.cellDragHandlers[i] = cellEntity:ConnectEvent(UITouchDragEvent, function(touchEvent) self:OnCellTouchDrag(cellIndex, touchEvent) end)
+        self._T.cellUpHandlers[i] = cellEntity:ConnectEvent(UITouchUpEvent, function(touchEvent) self:OnCellTouchUp(cellIndex, touchEvent) end)
     end
+end
+
+@ExecSpace("ClientOnly")
+method void OnCellTouchDown(integer cellIndex, UITouchDownEvent touchEvent)
+    -- T-17: 드래그 후보 시작. 실제 이동 여부는 임계 거리(OnCellTouchDrag)가 정한다.
+    self._T.dragMoved = false
+    self._T.dragSrc = cellIndex
+    self._T.dragStart = touchEvent.TouchPoint
+end
+
+@ExecSpace("ClientOnly")
+method void OnCellTouchDrag(integer cellIndex, UITouchDragEvent touchEvent)
+    -- T-17: 임계 거리(화면 12px)를 넘으면 "이동"으로 확정한다. 확정 순간
+    -- 이동 가능 여부를 판정해, 제어 칸이면 즉시 취소 안내를 낸다.
+    -- 확정 후에는 고스트 셀이 커서를 따라온다 (T-17b — 오너 요청).
+    if self._T.dragSrc == nil then return end
+    if self._T.dragMoved then
+        self:MoveDragGhost(touchEvent.TouchPoint)
+        self:UpdateDropLine(touchEvent.TouchPoint)
+        return
+    end
+    local dx = touchEvent.TouchPoint.x - self._T.dragStart.x
+    local dy = touchEvent.TouchPoint.y - self._T.dragStart.y
+    if dx * dx + dy * dy < 144 then return end
+    self._T.dragMoved = true
+    local token = self._T.strip[self._T.dragSrc]
+    if token == nil or token.kind == "overflow" or token.node == nil
+        or (token.node.type ~= "move" and token.node.type ~= "mine" and token.node.type ~= "load" and token.node.type ~= "unload") then
+        -- 제어(반복/IF/])·접힘 칸은 드래그 이동 대상이 아니다 (2026-08-25 오너 결정
+        -- — 단일 블록만). dragMoved 는 유지해 뒤따르는 클릭 삭제도 함께 막는다.
+        self._T.dragSrc = nil
+        self:SetFeedback("이동/행동 블록만 드래그로 옮길 수 있습니다.")
+        return
+    end
+    self:ShowDragGhost(token)
+    self:MoveDragGhost(touchEvent.TouchPoint)
+    self:UpdateDropLine(touchEvent.TouchPoint)
+    self:SetFeedback("'" .. token.label .. "' 블록을 옮길 칸 위에서 놓으세요.")
+end
+
+@ExecSpace("ClientOnly")
+method void ShowDragGhost(table token)
+    -- T-17b: 고스트를 원본 토큰의 문구·틴트(PaintCell 과 동일 계열)로 켠다.
+    -- 원본 칸은 반투명으로 눌러 "여기서 뽑혀 나왔다"를 보인다 — 원복은 드롭 후
+    -- RefreshDisplay 의 전체 재도색이 한다.
+    if self.dragGhost == nil then return end
+    if self.dragGhostText ~= nil then self.dragGhostText.Text = token.label end
+    if self.dragGhostSprite ~= nil then
+        if token.tint == "work" then
+            self.dragGhostSprite.Color = Color(0.78, 0.93, 0.78, 0.85)
+        else
+            self.dragGhostSprite.Color = Color(1, 1, 1, 0.85)
+        end
+    end
+    self.dragGhost.Enable = true
+    -- 창(UIDraggable)이 잡힐 때마다 SetSiblingIndex(1000000) 으로 맨 앞에 오므로,
+    -- 고스트·안내선도 드래그 시작마다 다시 맨 앞으로 올린다 — 안 하면 창을 한 번
+    -- 이라도 옮긴 뒤부터 고스트가 창 뒤로 깔린다 (2026-08-26 오너 보고).
+    -- 순서: 안내선 → 고스트 (고스트가 최상위).
+    if self.dropLine ~= nil and self.dropLine.UITransformComponent ~= nil then
+        _UILogic:SetSiblingIndex(self.dropLine.UITransformComponent, 1000000)
+    end
+    if self.dragGhost.UITransformComponent ~= nil then
+        _UILogic:SetSiblingIndex(self.dragGhost.UITransformComponent, 1000000)
+    end
+    local srcCell = self._T.cells[self._T.dragSrc]
+    if srcCell ~= nil and srcCell.SpriteGUIRendererComponent ~= nil then
+        local color = srcCell.SpriteGUIRendererComponent.Color
+        srcCell.SpriteGUIRendererComponent.Color = Color(color.r, color.g, color.b, 0.35)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method Vector2 WindowToCanvas(Vector2 windowPoint)
+    -- **GetWorldCorners 픽셀** → 캔버스 좌표. ⚠ 좌표계 2개 주의(2026-08-25 실측):
+    -- 터치 이벤트 TouchPoint 는 ScreenToUIPosition 으로(커서 앵커 줌 §42 가 증명),
+    -- GetWorldCorners 는 이 루트 코너 정규화로(안내선 §68 후속2 가 증명) 환산해야
+    -- 한다. 둘을 섞어 비교하면 실마우스에서 어긋난다 — 비교는 항상 캔버스에서.
+    local root = self.dragGhost.Parent
+    if root == nil or root.UITransformComponent == nil then return Vector2(0, 0) end
+    local rootTransform = root.UITransformComponent
+    local corners = rootTransform:GetWorldCorners()
+    if corners == nil or corners[1] == nil or corners[3] == nil then return Vector2(0, 0) end
+    local width = corners[3].x - corners[1].x
+    local height = corners[2].y - corners[1].y
+    if width <= 0 or height <= 0 then return Vector2(0, 0) end
+    local size = rootTransform.RectSize
+    local nx = (windowPoint.x - corners[1].x) / width
+    local ny = (windowPoint.y - corners[1].y) / height
+    return Vector2(nx * size.x - size.x / 2, ny * size.y - size.y / 2)
+end
+
+@ExecSpace("ClientOnly")
+method void MoveDragGhost(Vector2 touchPoint)
+    -- 고스트는 전화면 루트 직속 — 터치 좌표는 ScreenToUIPosition 으로 환산해야
+    -- 실마우스 커서와 1:1 로 붙는다 (WindowToCanvas 를 쓰면 어긋난다 — 위 주석).
+    if self.dragGhost == nil or not self.dragGhost.Enable then return end
+    local transform = self.dragGhost.UITransformComponent
+    if transform == nil then return end
+    transform.anchoredPosition = _UILogic:ScreenToUIPosition(touchPoint)
+end
+
+@ExecSpace("ClientOnly")
+method void UpdateDropLine(Vector2 screenPoint)
+    -- T-17c: 커서가 올라간 칸의 왼쪽 경계에 삽입 안내선을 세운다. 칸 밖이거나
+    -- 원본 칸 위(드롭=취소·제자리)면 숨긴다. 좌표는 고스트와 같은 캔버스 환산.
+    if self.dropLine == nil then return end
+    local target = self:CellIndexAtPoint(screenPoint)
+    if target == 0 or target == self._T.dragSrc then
+        self.dropLine.Enable = false
+        return
+    end
+    local cell = self._T.cells[target]
+    if cell == nil or cell.UITransformComponent == nil then
+        self.dropLine.Enable = false
+        return
+    end
+    local corners = cell.UITransformComponent:GetWorldCorners()
+    if corners == nil or corners[1] == nil or corners[2] == nil then return end
+    -- 왼쪽 경계 중앙(실창 픽셀) → 루트 코너 정규화 환산. 칸 간격 6px 의 한가운데(-3).
+    local edge = self:WindowToCanvas(Vector2(corners[1].x, (corners[1].y + corners[2].y) / 2))
+    local transform = self.dropLine.UITransformComponent
+    if transform == nil then return end
+    transform.anchoredPosition = Vector2(edge.x - 3, edge.y)
+    self.dropLine.Enable = true
+end
+
+@ExecSpace("ClientOnly")
+method void HideDragGhost()
+    -- 드롭·취소 공용 정리 (안내선 포함).
+    if self.dragGhost ~= nil then self.dragGhost.Enable = false end
+    if self.dropLine ~= nil then self.dropLine.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OnCellTouchUp(integer cellIndex, UITouchUpEvent touchEvent)
+    -- T-17: 드래그가 확정된 상태로 놓으면 대상 칸을 찾아 이동을 수행한다.
+    -- 확정 전(짧은 탭)은 아무것도 하지 않는다 — 기존 클릭 삭제가 처리한다.
+    local src = self._T.dragSrc
+    self._T.dragSrc = nil
+    self:HideDragGhost()
+    if src == nil or not self._T.dragMoved then return end
+    local dst = self:CellIndexAtPoint(touchEvent.TouchPoint)
+    self:MoveStripToken(src, dst)
+end
+
+@ExecSpace("ClientOnly")
+method integer CellIndexAtPoint(Vector2 touchPoint)
+    -- 터치 좌표가 어느 활성 셀 위인지 판정한다. ⚠ TouchPoint 와 GetWorldCorners
+    -- 는 좌표계가 다르므로(§68 후속3) **양쪽 다 캔버스로 환산해** 비교한다 —
+    -- 섞어 비교하면 실마우스에서 한 칸씩 어긋난다.
+    local canvasPoint = _UILogic:ScreenToUIPosition(touchPoint)
+    for i = 1, #self._T.cells do
+        local cell = self._T.cells[i]
+        if cell ~= nil and cell.Enable then
+            local transform = cell.UITransformComponent
+            if transform ~= nil then
+                local corners = transform:GetWorldCorners()
+                if corners ~= nil and corners[1] ~= nil and corners[3] ~= nil then
+                    local low = self:WindowToCanvas(corners[1])
+                    local high = self:WindowToCanvas(corners[3])
+                    if canvasPoint.x >= low.x and canvasPoint.x <= high.x
+                        and canvasPoint.y >= low.y and canvasPoint.y <= high.y then
+                        return i
+                    end
+                end
+            end
+        end
+    end
+    return 0
+end
+
+@ExecSpace("ClientOnly")
+method void MoveStripToken(integer srcIndex, integer dstIndex)
+    -- T-17 이동 규칙 (2026-08-25 오너 결정 — 단일 블록만):
+    --   대상이 일반 칸 = 그 블록 앞에 삽입 · 제어 시작 칸 = 그 제어 블록 앞 ·
+    --   `]` 칸 = 그 제어 블록 몸통의 맨 뒤 · 칸 밖/접힘 칸 = 취소.
+    local srcToken = self._T.strip[srcIndex]
+    if srcToken == nil or srcToken.node == nil then return end
+    if dstIndex == 0 or dstIndex == srcIndex then
+        self:SetFeedback("이동을 취소했습니다.")
+        self:RefreshDisplay()
+        return
+    end
+    local dstToken = self._T.strip[dstIndex]
+    if dstToken == nil or dstToken.kind == "overflow" or dstToken.node == nil then
+        self:SetFeedback("이동을 취소했습니다.")
+        self:RefreshDisplay()
+        return
+    end
+    -- 원본 노드를 제 리스트에서 뺀다 (토큰이 원본 노드·리스트 참조를 든다 — T-14).
+    local removed = false
+    for i = 1, #srcToken.list do
+        if srcToken.list[i] == srcToken.node then
+            table.remove(srcToken.list, i)
+            removed = true
+            break
+        end
+    end
+    if not removed then
+        log("[BlockProgram] drag source missing from tree - repaint")
+        self:RefreshDisplay()
+        return
+    end
+    if (dstToken.node.type == "repeat" or dstToken.node.type == "if") and dstToken.label == "]" then
+        table.insert(dstToken.node.body, srcToken.node)
+    else
+        local inserted = false
+        for i = 1, #dstToken.list do
+            if dstToken.list[i] == dstToken.node then
+                table.insert(dstToken.list, i, srcToken.node)
+                inserted = true
+                break
+            end
+        end
+        if not inserted then
+            -- 대상이 사라진 극단 케이스 — 프로그램 끝에 붙여 블록 유실을 막는다.
+            table.insert(self._T.program, srcToken.node)
+        end
+    end
+    self:RefreshDisplay()
+    self:SetFeedback("'" .. srcToken.label .. "' 블록을 옮겼습니다.")
+    log("[BlockProgram] strip drag-move '" .. srcToken.label .. "' " .. tostring(srcIndex) .. " -> " .. tostring(dstIndex))
 end
 
 @ExecSpace("ClientOnly")
@@ -173,16 +420,31 @@ method void RefreshDisplay()
         local cell = self._T.cells[i]
         if i > total then
             cell.Enable = false
+            self:SetCellNumber(i, "")
         elseif i == cellCount and total > cellCount then
             -- 초과 접기: 마지막 칸을 +N 으로 표시. 접힌 블록은 클릭 삭제 불가 —
             -- 앞쪽을 지워 펼친 뒤 지운다.
             self._T.strip[i] = { kind = "overflow" }
             self:PaintCell(cell, "+" .. tostring(total - cellCount + 1), "overflow")
+            -- 접힘 칸은 단일 블록이 아니라서 순번을 갖지 않는다 (docs/31 §3-5).
+            self:SetCellNumber(i, "")
         else
             local token = self._T.strip[i]
             self:PaintCell(cell, token.label, token.tint)
+            -- T-16: 순번 = 스트립 인덱스. 맵 마커와 같은 번호를 공유한다 (docs/31 §2.1).
+            self:SetCellNumber(i, tostring(i))
         end
     end
+    -- T-16 (docs/31 §2.4): 모든 편집 경로가 이 함수로 수렴하므로, 여기 한 줄이
+    -- 곧 "편집 즉시 미리보기 재계산" 계약이다.
+    _PathPreviewController:RefreshPreview()
+end
+
+@ExecSpace("ClientOnly")
+method void SetCellNumber(integer cellIndex, string label)
+    -- T-16: 셀 순번 오버레이 갱신. Num 자식이 없는 셀은 조용히 건너뛴다.
+    local numText = self._T.cellNums[cellIndex]
+    if numText ~= nil then numText.Text = label end
 end
 
 @ExecSpace("ClientOnly")
@@ -252,6 +514,12 @@ method void OnStripCellClicked(integer cellIndex)
     -- T-14 (docs/28 §2.3, 2026-08-21 개정): 칸 클릭 = 그 블록 삭제. 제어 블록은
     -- 시작 칸이든 ] 칸이든 **껍데기만** 지우고 몸통은 제자리에 펼쳐 보존한다 —
     -- 괄호 짝도 안 깨지고, 클릭 한 번에 프로그램 전체가 증발하지 않는다.
+    -- T-17: 방금 드래그 이동(또는 이동 시도)이 끝났으면 이 클릭은 삭제가 아니다 —
+    -- 버튼 클릭이 드래그 릴리스에 딸려 오는 것을 삼킨다.
+    if self._T.dragMoved then
+        self._T.dragMoved = false
+        return
+    end
     local token = self._T.strip[cellIndex]
     if token == nil then return end
     if token.kind == "overflow" then
@@ -441,6 +709,14 @@ end
 method table GetProgram()
     -- T-05: 라이브러리 저장이 읽는 현재 편집기 프로그램 (F7-C §1).
     return self._T.program
+end
+
+@ExecSpace("ClientOnly")
+method table GetStrip()
+    -- T-16 2차: 미리보기 순번 부여용 평탄 토큰 (FlattenList 산출물 그대로).
+    -- 토큰이 원본 노드 참조를 들고 있어 시뮬레이터가 노드→칸 번호 역인덱스를 만든다.
+    if self._T.strip == nil then return {} end
+    return self._T.strip
 end
 
 @ExecSpace("ClientOnly")
@@ -958,6 +1234,16 @@ method void OnEndPlay()
         for i = 1, #self._T.cells do
             if self._T.cellHandlers[i] ~= nil then
                 self._T.cells[i]:DisconnectEvent(ButtonClickEvent, self._T.cellHandlers[i])
+            end
+            -- T-17 드래그 핸들러 3종 해제.
+            if self._T.cellDownHandlers ~= nil and self._T.cellDownHandlers[i] ~= nil then
+                self._T.cells[i]:DisconnectEvent(UITouchDownEvent, self._T.cellDownHandlers[i])
+            end
+            if self._T.cellDragHandlers ~= nil and self._T.cellDragHandlers[i] ~= nil then
+                self._T.cells[i]:DisconnectEvent(UITouchDragEvent, self._T.cellDragHandlers[i])
+            end
+            if self._T.cellUpHandlers ~= nil and self._T.cellUpHandlers[i] ~= nil then
+                self._T.cells[i]:DisconnectEvent(UITouchUpEvent, self._T.cellUpHandlers[i])
             end
         end
     end

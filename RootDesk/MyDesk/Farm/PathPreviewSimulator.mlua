@@ -1,0 +1,218 @@
+-- T-16 경로 미리보기 시뮬레이터 (docs/31 §2 — 클라이언트 표시 전용)
+-- 서버 실행 규칙의 클라이언트 사본이다. 권위가 없고 마커 표시에만 쓰인다.
+-- ⚠ 규칙 동시 수정 계약: 각 메서드는 서버 대응 함수를 주석으로 명기한다.
+--   서버 쪽 규칙이 바뀌면 여기도 같이 고친다 (docs/31 §6-2, ValidateClientList 와
+--   같은 이중 관리 계약).
+-- 2차 PR (docs/31 §5 확정 1·2): 반복은 몸통 1회분만 전개하고 ×N 병기, IF 는
+-- 미리보기 시점의 실제 맵 상태(VeinMarker @Sync)로 판정해 그 경로만 그린다.
+-- 판정에 쓰는 손·수레·광맥 잔량은 시뮬레이션 로컬 상태로 추적한다.
+@Logic
+script PathPreviewSimulator extends Logic
+
+-- 서버 대응: WorkerController.HandCapacity (비동기 프로퍼티라 값 복제 — 기본 3).
+property integer HandCapacity = 3
+
+@ExecSpace("ClientOnly")
+method table SimulateProgram(table program, table strip, WorkerController worker)
+    -- 프로그램 트리를 가상 실행해 스텝 목록을 만든다. 각 스텝 =
+    -- { no, glyph, cellX, cellY, tint, repeatLabel }. no 는 스트립 칸 순번과
+    -- 동일해야 하므로(docs/31 §2.1) FlattenList 가 만든 strip 토큰의 노드
+    -- 참조로 역인덱스를 만들어 부여한다.
+    local actionIndex = {}
+    for i = 1, #strip do
+        local token = strip[i]
+        if token.node ~= nil and token.node.type ~= "repeat" and token.node.type ~= "if" then
+            actionIndex[token.node] = i
+        end
+    end
+
+    local state = {
+        x = worker.CellX,
+        y = worker.CellY,
+        handType = worker.PendingOre,
+        handCount = worker.PendingOreCount,
+        cartCount = worker.CartCount,
+        cartCapacity = worker.CartCapacity,
+        veins = self:SnapshotVeins(),
+        depots = self:SnapshotDepots(),
+        steps = {},
+    }
+    self:SimulateList(program, state, actionIndex, nil)
+    return state.steps
+end
+
+@ExecSpace("ClientOnly")
+method void SimulateList(table list, table state, table actionIndex, any repeatLabel)
+    -- 몸통 하나를 순서대로 가상 실행한다. repeatLabel 은 이 몸통을 감싸는
+    -- **가장 안쪽** 반복의 ×N 표기다 (중첩 반복은 안쪽 값만 병기 — 2026-08-25
+    -- 구현 결정, docs/31 §6-실행). 재귀 깊이는 검증기 상한 3 이라 안전하다.
+    for i = 1, #list do
+        local command = list[i]
+        if type(command) ~= "table" then return end
+        if command.type == "move" then
+            -- 서버 대응: WorkerController.DoMove — 벽이면 제자리 유지.
+            local dx, dy = 0, 0
+            if command.dir == "E" then dx = 1
+            elseif command.dir == "W" then dx = -1
+            elseif command.dir == "N" then dy = 1
+            elseif command.dir == "S" then dy = -1 end
+            if self:IsCellWalkable(state.x + dx, state.y + dy) then
+                state.x = state.x + dx
+                state.y = state.y + dy
+            end
+            self:EmitStep(state, actionIndex, command, command.dir, "move", repeatLabel)
+        elseif command.type == "mine" then
+            -- 서버 대응: WorkerController.DoMine — 손 가득/광맥 없음/종류 불일치면
+            -- 획득 없음. 행운(yield) 확률은 미리보기에서 배제해 결정적으로 둔다.
+            local cellKey = tostring(state.x) .. "," .. tostring(state.y)
+            local vein = state.veins[cellKey]
+            if state.handCount < self.HandCapacity and vein ~= nil and vein.reserve > 0
+                and (state.handType == "" or state.handType == vein.oreType) then
+                state.handType = vein.oreType
+                state.handCount = state.handCount + 1
+                vein.reserve = vein.reserve - 1
+            end
+            self:EmitStep(state, actionIndex, command, "M", "work", repeatLabel)
+        elseif command.type == "load" then
+            -- 서버 대응: WorkerController.DoLoad — 수레 여유만큼만 옮긴다.
+            local space = state.cartCapacity - state.cartCount
+            local moved = math.min(space, state.handCount)
+            if moved > 0 then
+                state.cartCount = state.cartCount + moved
+                state.handCount = state.handCount - moved
+                if state.handCount <= 0 then
+                    state.handType = ""
+                    state.handCount = 0
+                end
+            end
+            self:EmitStep(state, actionIndex, command, "L", "work", repeatLabel)
+        elseif command.type == "unload" then
+            -- 서버 대응: WorkerController.DoUnload — depot 셀에서만 수레를 비운다.
+            -- depot 위치는 MarkerKind=="depot" marker 가 진실이다 (docs/31 §4).
+            local cellKey = tostring(state.x) .. "," .. tostring(state.y)
+            if state.depots[cellKey] == true and state.cartCount > 0 then
+                state.cartCount = 0
+            end
+            self:EmitStep(state, actionIndex, command, "U", "work", repeatLabel)
+        elseif command.type == "repeat" then
+            -- 몸통 1회분만 전개 + ×N 병기 (docs/31 §5 확정 2 — 마커 폭증 차단).
+            local countLabel = tostring(command.count)
+            if command.count == "inf" then countLabel = "∞" end
+            if type(command.body) == "table" then
+                self:SimulateList(command.body, state, actionIndex, "×" .. countLabel)
+            end
+        elseif command.type == "if" then
+            -- 서버 대응: WorkerController.EvaluateCondition — 실제 맵 상태로 판정해
+            -- 성립한 경로만 그린다 (docs/31 §5 확정 1). 불성립이면 몸통을 건너뛴다.
+            if self:EvaluateCondition(command.cond, state) and type(command.body) == "table" then
+                self:SimulateList(command.body, state, actionIndex, repeatLabel)
+            end
+        end
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void EmitStep(table state, table actionIndex, table node, string glyph, string tint, any repeatLabel)
+    -- 스텝 1건 기록. 순번은 스트립 역인덱스에서 얻는다 — 없으면(이론상 어긋남)
+    -- 표시 대신 건너뛰어 잘못된 번호를 만들지 않는다.
+    local no = actionIndex[node]
+    if no == nil then return end
+    table.insert(state.steps, {
+        no = no,
+        glyph = glyph,
+        cellX = state.x,
+        cellY = state.y,
+        tint = tint,
+        repeatLabel = repeatLabel,
+    })
+end
+
+@ExecSpace("ClientOnly")
+method boolean EvaluateCondition(string condition, table state)
+    -- 서버 대응: WorkerController.EvaluateCondition. 광맥 잔량은 시뮬레이션 중
+    -- 채굴로 줄어든 로컬 사본(state.veins)을 본다.
+    if condition == "ore_present" or condition == "ore_absent" then
+        local cellKey = tostring(state.x) .. "," .. tostring(state.y)
+        local vein = state.veins[cellKey]
+        local present = vein ~= nil and vein.reserve > 0
+        if condition == "ore_present" then return present end
+        return not present
+    elseif condition == "cart_full" then
+        return state.cartCount >= state.cartCapacity
+    elseif condition == "cart_empty" then
+        return state.cartCount == 0
+    end
+    return false
+end
+
+@ExecSpace("ClientOnly")
+method table SnapshotVeins()
+    -- 서버 대응: VeinTickSimulator.HasOre (= GetReserveStage >= 1). 클라이언트가
+    -- 읽을 수 있는 진실은 VeinMarker @Sync(ReserveStage·OreType·IsActive)다.
+    -- 특별 광맥은 IsActive 일 때만 잔량이 있는 것으로 본다.
+    local snapshot = {}
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return snapshot end
+    local markers = player.CurrentMap:GetChildComponentsByTypeName("script.VeinMarker", false)
+    if markers == nil then return snapshot end
+    for _, component in ipairs(markers) do
+        ---@type VeinMarker
+        local marker = component
+        if marker.MarkerKind ~= "depot" then
+            local reserve = marker.ReserveStage
+            if marker.MarkerKind == "special" and not marker.IsActive then reserve = 0 end
+            snapshot[tostring(marker.CellX) .. "," .. tostring(marker.CellY)] = {
+                reserve = reserve,
+                oreType = marker.OreType,
+            }
+        end
+    end
+    return snapshot
+end
+
+@ExecSpace("ClientOnly")
+method table SnapshotDepots()
+    -- depot 셀 집합 — MarkerKind=="depot" marker 위치가 진실 (선례:
+    -- WorkerVisualController.FindDepotController).
+    local snapshot = {}
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return snapshot end
+    local markers = player.CurrentMap:GetChildComponentsByTypeName("script.VeinMarker", false)
+    if markers == nil then return snapshot end
+    for _, component in ipairs(markers) do
+        ---@type VeinMarker
+        local marker = component
+        if marker.MarkerKind == "depot" then
+            snapshot[tostring(marker.CellX) .. "," .. tostring(marker.CellY)] = true
+        end
+    end
+    return snapshot
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsCellWalkable(integer cellX, integer cellY)
+    -- 서버 대응: WorkerController.IsCellWalkable — 타일이 있고 이름이 비지 않으면 통행 가능.
+    local tilemap = self:GetTilemap()
+    if tilemap == nil then return false end
+    local tile = tilemap:GetTile(Vector2Int(cellX, cellY))
+    return tile ~= nil and tile.Name ~= ""
+end
+
+@ExecSpace("ClientOnly")
+method RectTileMapComponent GetTilemap()
+    -- 현재 맵의 RectTileMapComponent 를 맵 단위로 캐시한다
+    -- (선례: WorkerVisualController.MoveShardToCell).
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return nil end
+    local map = player.CurrentMap
+    if self._T.tilemapMap == map and self._T.tilemap ~= nil and isvalid(self._T.tilemap) then
+        return self._T.tilemap
+    end
+    ---@type RectTileMapComponent
+    local tilemap = map:GetFirstChildComponentByTypeName("RectTileMapComponent")
+    self._T.tilemapMap = map
+    self._T.tilemap = tilemap
+    return tilemap
+end
+
+end
