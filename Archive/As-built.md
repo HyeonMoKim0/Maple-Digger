@@ -8,7 +8,7 @@
 - 우선 플랫폼: PC 1920×1080
 - 맵: `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map`, 모두 RectTile(`TileMapMode=1`). **`map01`(템플릿)은 2026-08-18 출시 준비로 삭제됨**
 - **초보 광산은 2026-08-21 확장** — 바닥 10×10 (x −4..5 / y −6..3), 광맥 6개(rt 5/8/8/8/6/15 · 상한 ≈121/분 상한 보존형), 특별 후보 4곳, 시작점 5개 전원 전담 광맥 서쪽 앞칸. **(0,0) 창고·(1,0) 광맥은 튜토리얼 앵커라 불변** (TutorialController 가 좌표를 하드코딩). 배치표 docs/18 T-11 · 검수 docs/16 §44 · 밸런스 docs/22 §9
-- **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **이동·카메라는 살아 있다** — 보이지 않는 플레이어의 이동이 넓은 광산의 카메라 팬 수단이다. 되돌리려면 같은 컴포넌트들을 Enable=true (docs/16 §33)
+- **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **키보드 입력도 차단됨 (2026-08-25, docs/16 §60)**: `PlayerControllerComponent Enable=false` — 방향키 이동·Alt 점프 무반응. 카메라 팬은 휠 드래그·줌(§42)이 전담하고, 맵 이동(`PlayerComponent.MoveToMapPosition`)은 살아 있다. 되돌리려면 해당 컴포넌트 Enable=true (docs/16 §33·§60)
 - 동적 일꾼 Body: `KinematicbodyComponent`
 - 시뮬레이션 틱: 0.4초, 틱당 액션 1개
 - 현재 기준: `main`(PR #19 병합 `e98f948`, 2026-08-21)에서 **T-13 B 완결 + F9 성능·부하 기준 + 초보 광산 10×10 확장까지 반영** — AI 몫의 티켓·기획 공백 0건. 남은 것은 오너 직접 게이트(클릭·청취·미감·실기기 체감)뿐이며, **그 전량이 `docs/29-최종-검수표.md` 한 장에 플레이 동선 순서로 모여 있다**(A 신규 계정 튜토리얼 / B 화면·조작 일괄 / C 출시 빌드 체감 / D 결정 대기 2건). A·B·C 전량 통과 = C212 조건 ② 충족 = MVP 완료 판정.
