@@ -752,6 +752,15 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnSellClicked()
+    -- 2026-08-25 (docs/16 §63): [판매] 는 토글 — 판매 계열(판매·희귀)이 열려
+    -- 있으면 닫는다 ([광산 선택]·[인벤토리] 와 같은 재클릭 닫기). 튜토리얼
+    -- 7단계는 EnterStep 이 패널을 닫고 시작하므로 첫 클릭은 항상 '열기'다.
+    if (self.salePanel ~= nil and self.salePanel.Enable) or (self.rarePanel ~= nil and self.rarePanel.Enable) then
+        if self.salePanel ~= nil then self.salePanel.Enable = false end
+        if self.rarePanel ~= nil then self.rarePanel.Enable = false end
+        self:RefreshUI(true)
+        return
+    end
     -- One centre modal at a time (docs/08 §6.1). Leaving selectPanel enabled
     -- stacked two same-sized panels and made both unreadable (docs/16 §13 D-8).
     if self.selectPanel ~= nil then self.selectPanel.Enable = false end
