@@ -1124,6 +1124,10 @@ method boolean RestoreCurrentWorkerState()
     for workerIndex = 1, #self._T.profile.workers do
         if self:RestoreOwnedWorker(workerIndex) then restoredCount = restoredCount + 1 end
     end
+    -- 이 경로(로그인·맵 전환)는 일꾼 1~N 전원을 되살리므로 튜토리얼 중단 상태도
+    -- 함께 해소된다. 플래그를 남겨 두면 나중 Deactivate 가 살아 있는 일꾼에게
+    -- AutoRunWorker 를 다시 걸어 프로그램이 제멋대로 재시작한다 (2026-08-26).
+    self._T.tutorialWorkersSuspended = false
     if restoredCount <= 0 then return false end
     self:SetRecoveryStatus("저장된 일꾼 " .. tostring(restoredCount) .. "명의 수레 상태를 복구했습니다.")
     log("[AccountProfile] owned workers restored count=" .. tostring(restoredCount))
@@ -2152,15 +2156,24 @@ method void SuspendExtraWorkersForTutorial()
         worker1:StopProgram()
     end
     self:DespawnExtraWorkers()
+    -- 2026-08-26: "지금 중단 중"을 서버가 기억한다. 종료 경로가 여럿이라(완주·
+    -- 스킵·다시 보기 닫기·비정상 step=0) 어느 경로로 끝나든 복귀가 한 번은
+    -- 돌아야 하는데, 플래그가 없으면 중복 호출인지 누락인지 구분할 수 없다.
+    self._T.tutorialWorkersSuspended = true
     log("[AccountProfile] tutorial worker suspend done workers=" .. tostring(#self._T.profile.workers))
 end
 
 @ExecSpace("ServerOnly")
 method void ResumeExtraWorkersAfterTutorial()
-    -- 튜토리얼 종료(완주·스킵) 시 일꾼 2~5를 캡처해 둔 셀·실행 지점에서 재개한다.
-    -- 일꾼 1 은 튜토리얼이 끝낸 상태 그대로 둔다 — 캡처본으로 되돌리면 튜토리얼
-    -- 중의 수레·손 변화가 유실되고, 프로그램은 사용자가 수동 [실행]으로 잇는다.
+    -- 튜토리얼 종료(완주·스킵·다시 보기 닫기) 시 일꾼 2~5를 캡처해 둔 셀·실행
+    -- 지점에서 재개한다. 일꾼 1 은 튜토리얼이 끝낸 상태 그대로 둔다 — 캡처본으로
+    -- 되돌리면 튜토리얼 중의 수레·손 변화가 유실되고, 프로그램은 사용자가 수동
+    -- [실행]으로 잇는다.
+    -- **멱등**: 중단 중이 아니면 조용히 넘긴다. 종료 경로가 여럿이라 중복 호출이
+    -- 정상이고, RestoreOwnedWorker 자체도 이미 살아 있는 일꾼은 재설정만 한다.
     if not self:CanWriteProfile() then return end
+    if self._T.tutorialWorkersSuspended ~= true then return end
+    self._T.tutorialWorkersSuspended = false
     local resumedCount = 0
     for workerIndex = 2, #self._T.profile.workers do
         if self:RestoreOwnedWorker(workerIndex) then
@@ -2265,6 +2278,18 @@ end
 method boolean RequestTutorialReplay(boolean fromStart)
     -- T-07: 다시 보기 진입 (F7-E §9.2).
     return _TutorialService:RequestReplay(self.Entity, fromStart)
+end
+
+@ExecSpace("Server")
+method void RequestTutorialWorkersResume()
+    -- 2026-08-26 (오너 보고): 튜토리얼이 **어떤 경로로 끝나든** 디스폰해 둔 일꾼
+    -- 2~5를 되살린다. 클라이언트의 Deactivate 한 곳에서만 부른다 — 종료 경로가
+    -- 완주·스킵·다시 보기 닫기·비정상(step=0) 넷인데 그중 서버까지 오는 것은
+    -- 완주와 (1회차) 스킵뿐이라, 다시 보기를 닫으면 일꾼이 영영 사라져 있었다.
+    -- 멱등이라 완주 경로에서 이미 복귀한 뒤 다시 불려도 안전하다.
+    if senderUserId ~= self.Entity.PlayerComponent.UserId then return end
+    if not self.IsLoaded or self._T.profile == nil then return end
+    self:ResumeExtraWorkersAfterTutorial()
 end
 
 @ExecSpace("Server")

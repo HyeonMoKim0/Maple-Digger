@@ -686,6 +686,13 @@ method void Deactivate(boolean showCompletionHint)
     -- 7·8단계가 접어 둔 편집기 패널을 기본 상태(펼침)로 되돌린다.
     _BlockProgramController:ForceExpandPanelForTutorial()
     if self.tutorialRoot ~= nil then self.tutorialRoot.Enable = false end
+    -- 2026-08-26 (오너 보고 — 다시 보기 후 일꾼이 안 돌아옴): 튜토리얼이 켜지면
+    -- 서버가 일꾼 2~5를 디스폰한다(§58). 그 복귀를 완주·스킵 경로에만 달아 뒀더니
+    -- **다시 보기를 닫는 경로에는 서버 호출이 아예 없어** 일꾼이 재접속 전까지
+    -- 사라진 채였다. 종료는 전부 이 메서드를 지나므로 여기서 한 번 요청한다 —
+    -- 서버 쪽이 멱등이라 이미 복귀한 뒤 다시 불려도 안전하다.
+    local profile = self:GetProfile()
+    if profile ~= nil then profile:RequestTutorialWorkersResume() end
     -- T-14 (docs/28): §9.3 완료 후 자연어 힌트는 자연어 입력 제거와 함께 폐지됐다.
     -- showCompletionHint 인자는 호출부 호환을 위해 남기되 아무것도 하지 않는다.
     log("[Tutorial] deactivated hint=" .. tostring(showCompletionHint))
