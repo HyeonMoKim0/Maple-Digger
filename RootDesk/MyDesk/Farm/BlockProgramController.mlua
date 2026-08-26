@@ -35,6 +35,11 @@ property TextGUIRendererComponent programLabelText = "0aa4c8fa-c647-466d-96f2-99
 property Entity programGrid = "af4877f2-c4d8-451a-a15b-5b8cb1670cce"
 -- 그리드 셀 수 (ui/BlockProgramUI.ui 의 Cell01..CellNN 과 일치해야 한다).
 property integer StripCellCount = 36
+-- T-18b (2026-08-26 오너 보고 — "일부 구간에서 안 뜨고 이동도 안 된다"):
+-- 드롭 판정을 칸 안쪽으로만 하면 **칸 사이 6px 틈**과 **행 위아래**가 전부
+-- 사각지대가 된다(실측: 56px 밴드 밖 y=-152·-92 에서 즉시 판정 0). 정확히
+-- 안 들어와도 이 반경 안이면 가장 가까운 칸으로 붙인다. 0 이하면 옛 엄격 판정.
+property number DropSnapRadius = 40
 property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
 -- T-17b: 드래그 고스트 — 드래그 확정 중 커서를 따라오는 잔상 셀 (그룹 루트 직속,
 -- raycast 없음). 문구·틴트는 원본 토큰을 복제하고, 놓으면 숨긴 뒤 이동을 수행한다.
@@ -315,7 +320,11 @@ method void UpdateDropLine(Vector2 screenPoint)
         return
     end
     local corners = cell.UITransformComponent:GetWorldCorners()
-    if corners == nil or corners[1] == nil or corners[2] == nil then return end
+    if corners == nil or corners[1] == nil or corners[2] == nil then
+        -- 그냥 return 하면 안내선이 직전 자리에 남아 엉뚱한 곳을 가리킨다.
+        self.dropLine.Enable = false
+        return
+    end
     -- 왼쪽 경계 중앙(실창 픽셀) → 루트 코너 정규화 환산. 칸 간격 6px 의 한가운데(-3).
     local edge = self:WindowToCanvas(Vector2(corners[1].x, (corners[1].y + corners[2].y) / 2))
     local transform = self.dropLine.UITransformComponent
@@ -348,7 +357,12 @@ method integer CellIndexAtPoint(Vector2 touchPoint)
     -- 터치 좌표가 어느 활성 셀 위인지 판정한다. ⚠ TouchPoint 와 GetWorldCorners
     -- 는 좌표계가 다르므로(§68 후속3) **양쪽 다 캔버스로 환산해** 비교한다 —
     -- 섞어 비교하면 실마우스에서 한 칸씩 어긋난다.
+    -- T-18b: 칸 안쪽 정확 판정이 1순위이고, 빗나가면 **가장 가까운 칸에 붙인다**.
+    -- 엄격 판정만 두면 칸 사이 6px 틈과 56px 행 밴드 바깥이 통째로 사각지대라,
+    -- 커서가 조금만 위아래로 흘러도 안내선이 사라지고 드롭이 취소됐다.
     local canvasPoint = _UILogic:ScreenToUIPosition(touchPoint)
+    local bestIndex = 0
+    local bestDist = -1
     for i = 1, #self._T.cells do
         local cell = self._T.cells[i]
         if cell ~= nil and cell.Enable then
@@ -358,13 +372,33 @@ method integer CellIndexAtPoint(Vector2 touchPoint)
                 if corners ~= nil and corners[1] ~= nil and corners[3] ~= nil then
                     local low = self:WindowToCanvas(corners[1])
                     local high = self:WindowToCanvas(corners[3])
-                    if canvasPoint.x >= low.x and canvasPoint.x <= high.x
-                        and canvasPoint.y >= low.y and canvasPoint.y <= high.y then
-                        return i
+                    -- 점→사각형 거리(안이면 0). 축마다 벗어난 만큼만 센다.
+                    local dx = 0
+                    if canvasPoint.x < low.x then
+                        dx = low.x - canvasPoint.x
+                    elseif canvasPoint.x > high.x then
+                        dx = canvasPoint.x - high.x
+                    end
+                    local dy = 0
+                    if canvasPoint.y < low.y then
+                        dy = low.y - canvasPoint.y
+                    elseif canvasPoint.y > high.y then
+                        dy = canvasPoint.y - high.y
+                    end
+                    if dx <= 0 and dy <= 0 then return i end
+                    local dist = dx * dx + dy * dy
+                    if bestDist < 0 or dist < bestDist then
+                        bestDist = dist
+                        bestIndex = i
                     end
                 end
             end
         end
+    end
+    -- 반경 밖은 여전히 취소다 — 스트립에서 멀리 떨어뜨려 드롭 취소하는 길을 남긴다.
+    if self.DropSnapRadius > 0 and bestIndex > 0
+        and bestDist >= 0 and bestDist <= self.DropSnapRadius * self.DropSnapRadius then
+        return bestIndex
     end
     return 0
 end
@@ -527,7 +561,9 @@ method void RefreshDisplay()
         if total == 0 then
             self.programLabelText.Text = "공용 프로그램 (비어 있음 - 블록을 눌러 추가)"
         else
-            self.programLabelText.Text = "공용 프로그램 (클릭=삭제 · 끌기=이동 · 제어 칸=범위 조절)"
+            -- ⚠ 한 줄을 넘기면 2줄로 흘러 셀 첫 행을 덮는다 (2026-08-26 실측 회귀).
+            -- 문구를 늘릴 때는 Play 로 줄바꿈부터 확인할 것.
+            self.programLabelText.Text = "공용 프로그램 (클릭=삭제 · 끌기=이동/범위)"
         end
     end
     local cellCount = #self._T.cells
