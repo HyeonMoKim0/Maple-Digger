@@ -39,8 +39,19 @@ property string DepotDefinitionsJson = ""
 property string VeinDefinitionsJson = ""
 property string WorkerStartsJson = ""
 property string SpecialVeinCandidatesJson = ""
+-- D10 §7 (post-MVP 필드 확장, docs/32): 레벨 2~5 각각의 이동 가능 사각 범위·
+-- 추가 광맥·경계 돌멩이 셀. 기존 세 맵은 아직 이 값이 비어 있고, 그동안은
+-- ApplyFieldLevel(2+)가 정의 없음으로 조용히 건너뛴다 — 레벨 1(현재 배치)만
+-- 유효한 상태가 기존 MVP와 동일하게 유지된다.
+property string FieldLevelDefinitionsJson = ""
 property table VeinState = {}
 property table Depot = {}
+
+-- D10 §6: 광산별 필드 레벨(1~5). 맵 강화(MineLevel, 0~10, 스탯 4종)와는 별개
+-- 트랙이다 — 계정 프로필이 소유하며, 맵 진입·확장 성공 시에만
+-- AccountProfileService:PushFieldLevelToSimulator 가 갱신한다(§6.1 API 계약).
+@Sync
+property integer FieldLevel = 1
 
 @Sync
 property integer DepotStone = 0
@@ -91,8 +102,14 @@ method void OnBeginPlay()
     self._T.markerList = {}
     self._T.activeSpecialVeins = {}
     self._T.nextSpecialCandidateIndex = 1
+    self._T.fieldLevelDefinitions = {}
+    self._T.occupiedCells = {}
     self._T.tilemap = self.Entity:GetFirstChildComponentByTypeName("RectTileMapComponent")
     self.CurrentTick = 0
+    -- D10 §6: 세션 시작은 항상 레벨 1에서 재개한다. 실제 계정 레벨은
+    -- AccountProfileService:PushFieldLevelToSimulator 가 맵 진입 직후(§5.5와
+    -- 같은 호출 지점) ApplyFieldLevel로 다시 밀어 올린다.
+    self.FieldLevel = 1
     self.DepotStone = 0
     self.DepotIron = 0
     self.DepotGold = 0
@@ -458,7 +475,147 @@ method boolean LoadLayout()
         self._T.specialCandidateCount = self._T.specialCandidateCount + 1
         table.insert(self._T.specialVeinCandidates, candidate)
     end
+
+    -- D10 §7: 레벨 2~5 정의는 레벨 1 점유 셀(광맥·Depot) 기준으로 겹침을
+    -- 검사해야 하므로, 여기서 만든 occupied 를 그대로 넘긴다.
+    self._T.occupiedCells = occupied
+    if not self:LoadFieldLevelDefinitions() then return false end
     return true
+end
+
+@ExecSpace("ServerOnly")
+method boolean LoadFieldLevelDefinitions()
+    -- D10 §7 (post-MVP 필드 확장): FieldLevelDefinitionsJson을 레벨→정의 테이블로
+    -- 디코드·검증한다. 데이터가 없는 기존 세 맵에서는 빈 테이블로 통과시킨다 —
+    -- 그 상태에서 ApplyFieldLevel(2+)는 정의 없음으로 조용히 건너뛴다.
+    self._T.fieldLevelDefinitions = {}
+    local definitions = self:DecodeLayoutTable(self.FieldLevelDefinitionsJson, "field level definitions")
+    if definitions == nil then
+        if self._T.layoutError ~= "" then return false end
+        return true
+    end
+
+    -- 레벨 1(현재 배치) 범위를 시작 사각형으로 삼는다. Depot 한 점이면 다음
+    -- 레벨이 그 점을 포함하기만 하면 되므로 "이전 레벨을 포함해야 한다" 검사의
+    -- 최소 기준으로 충분하다 — 레벨 1 자체의 정확한 바닥 범위는 RectTileMap
+    -- 실측값이라 이 스크립트가 따로 들고 있지 않는다.
+    local previous = { minX = self.DepotCellX, maxX = self.DepotCellX, minY = self.DepotCellY, maxY = self.DepotCellY }
+    local seenLevels = {}
+    for i = 1, #definitions do
+        local def = definitions[i]
+        if def == nil or def.level == nil or type(def.level) ~= "number" then
+            self._T.layoutError = "field level definition " .. tostring(i) .. " missing level"
+            return false
+        end
+        local level = math.floor(def.level)
+        if level < 2 or level > 5 then
+            self._T.layoutError = "field level out of range=" .. tostring(level)
+            return false
+        end
+        if seenLevels[level] then
+            self._T.layoutError = "duplicate field level=" .. tostring(level)
+            return false
+        end
+        if def.minX == nil or def.maxX == nil or def.minY == nil or def.maxY == nil then
+            self._T.layoutError = "field level " .. tostring(level) .. " missing bounds"
+            return false
+        end
+        if def.minX > def.maxX or def.minY > def.maxY then
+            self._T.layoutError = "field level " .. tostring(level) .. " invalid bounds"
+            return false
+        end
+        if def.minX > previous.minX or def.maxX < previous.maxX or def.minY > previous.minY or def.maxY < previous.maxY then
+            self._T.layoutError = "field level " .. tostring(level) .. " does not contain the previous level's range"
+            return false
+        end
+
+        local additionalVeins = def.additionalVeins
+        if additionalVeins == nil then additionalVeins = {} end
+        for j = 1, #additionalVeins do
+            local vein = additionalVeins[j]
+            if vein == nil or vein.id == nil or vein.id == "" or vein.cellX == nil or vein.cellY == nil or vein.oreType == nil or vein.oreType == "" or vein.markerId == nil or vein.markerId == "" then
+                self._T.layoutError = "field level " .. tostring(level) .. " invalid vein " .. tostring(j)
+                return false
+            end
+            if vein.oreType ~= "stone" and vein.oreType ~= "iron" and vein.oreType ~= "gold" then
+                self._T.layoutError = "field level " .. tostring(level) .. " unsupported oreType=" .. vein.oreType
+                return false
+            end
+            if vein.cellX < def.minX or vein.cellX > def.maxX or vein.cellY < def.minY or vein.cellY > def.maxY then
+                self._T.layoutError = "field level " .. tostring(level) .. " vein outside its own range id=" .. vein.id
+                return false
+            end
+            local key = self:CellKey(vein.cellX, vein.cellY)
+            if self._T.occupiedCells[key] then
+                self._T.layoutError = "field level " .. tostring(level) .. " vein overlaps occupied cell id=" .. vein.id
+                return false
+            end
+            self._T.occupiedCells[key] = true
+        end
+
+        local boundaryRockCells = def.boundaryRockCells
+        if boundaryRockCells == nil then boundaryRockCells = {} end
+        seenLevels[level] = true
+        self._T.fieldLevelDefinitions[level] = {
+            level = level,
+            minX = def.minX,
+            maxX = def.maxX,
+            minY = def.minY,
+            maxY = def.maxY,
+            additionalVeins = additionalVeins,
+            boundaryRockCells = boundaryRockCells,
+        }
+        previous = { minX = def.minX, maxX = def.maxX, minY = def.minY, maxY = def.maxY }
+    end
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method void ApplyFieldLevel(integer level)
+    -- D10 §6/§8: 필드 레벨(1~5)에 따라 이동 가능 범위(타일 페인트)와 광맥을
+    -- 단계적으로 연다. 레벨을 낮추는 요청은 없다고 가정한다(구매만 있음) —
+    -- target <= 현재 레벨이면 그대로 반환한다. 계정 프로필이 소유한 값이며,
+    -- 맵 진입·확장 성공 시에만 호출된다(PushFieldLevelToSimulator).
+    local target = math.max(1, math.min(5, math.floor(level)))
+    if target <= self.FieldLevel then return end
+    if self._T.tilemap == nil then
+        log_error("[VeinTick] field level apply skipped - no tilemap mineId=" .. self.MineId)
+        return
+    end
+    for nextLevel = self.FieldLevel + 1, target do
+        local def = self._T.fieldLevelDefinitions[nextLevel]
+        if def == nil then
+            -- 아직 이 레벨의 맵 데이터가 저작되지 않았다(§9 미결 1·2) — 계정
+            -- 레벨은 그 이상 올리지 않고 여기서 멈춘다. 오류가 아니라 예상된
+            -- 상태이므로 log_error 대신 경고로만 남긴다.
+            log_warning("[VeinTick] field level up skipped mineId=" .. self.MineId .. " level=" .. tostring(nextLevel) .. " reason=no-definition")
+            break
+        end
+        self._T.tilemap:BoxFill(0, Vector2Int(def.minX, def.minY), Vector2Int(def.maxX, def.maxY))
+        local addedVeins = 0
+        for i = 1, #def.additionalVeins do
+            local vein = def.additionalVeins[i]
+            local initialStage = vein.initialStage
+            if initialStage == nil then initialStage = self.MaxReserveStage end
+            local recoverTicks = vein.recoverTicks
+            if recoverTicks == nil then recoverTicks = self.StoneRecoverTicks end
+            self:AddVein(vein.cellX, vein.cellY, vein.oreType, initialStage, recoverTicks)
+            addedVeins = addedVeins + 1
+        end
+        self.FieldLevel = nextLevel
+        log("[VeinTick] field level applied mineId=" .. self.MineId .. " level=" .. tostring(self.FieldLevel)
+            .. " cells=(" .. def.minX .. ".." .. def.maxX .. "," .. def.minY .. ".." .. def.maxY .. ")"
+            .. " veinsAdded=" .. tostring(addedVeins))
+    end
+end
+
+@ExecSpace("ServerOnly")
+method table GetBoundaryRockCells(integer level)
+    -- D10 §4: 시각 레이어(경계 돌멩이 배치)가 나중에 읽을 저작 데이터. 레벨
+    -- 정의가 없으면 빈 테이블을 돌려준다.
+    local def = self._T.fieldLevelDefinitions[level]
+    if def == nil then return {} end
+    return def.boundaryRockCells
 end
 
 @ExecSpace("ServerOnly")

@@ -151,6 +151,54 @@ method boolean RequestMineUpgrade(Entity player)
 end
 
 @ExecSpace("ServerOnly")
+method table GetFieldUpgradeCost(Entity player, string mineId, integer level)
+    -- D10 §6: 다음 필드 레벨(1~5)의 골드·대표 광물 비용. 레벨 5면 nil.
+    -- 맵 강화(GetMineUpgradeCost)와 나란한 별도 시스템 — mineLevels(0~10)와
+    -- 다른 fieldLevels(1~5) 트랙을 쓴다(docs/32 §1).
+    if player == nil or level < 1 or level >= 5 then return nil end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil then return nil end
+    return {
+        gold = profile:GetFieldUpgradeGoldCost(level),
+        oreType = profile:GetMineRepresentativeOre(mineId),
+        oreCost = profile:GetFieldUpgradeOreCost(level),
+    }
+end
+
+@ExecSpace("ServerOnly")
+method boolean RequestFieldUpgrade(Entity player)
+    -- D10 §6: 필드 확장은 맵 강화와 같은 제약(해당 광산 입장 상태에서만) 아래
+    -- 별도 레벨 트랙(1~5)을 올린다.
+    if player == nil then return false end
+    ---@type AccountProfileService
+    local profile = player:GetComponent("script.AccountProfileService")
+    if profile == nil or not profile.IsLoaded then return false end
+    local mine = player.CurrentMap
+    if mine == nil then return false end
+    local mineId = profile:MineIdForMapName(mine.Name)
+    if mineId == "" then
+        profile:SetTransactionMessage("광산에 입장한 상태에서만 필드를 확장할 수 있습니다.")
+        return false
+    end
+    if mineId == "deep_mine" and not profile.DeepMineUnlocked then
+        profile:SetTransactionMessage("미해금 광산은 필드를 확장할 수 없습니다. 먼저 해금해 주세요.")
+        return false
+    end
+    if mineId == "gem_mine" and not profile.GemMineUnlocked then
+        profile:SetTransactionMessage("미해금 광산은 필드를 확장할 수 없습니다. 먼저 해금해 주세요.")
+        return false
+    end
+    local currentLevel = profile:GetProfile().fieldLevels[mineId]
+    if currentLevel >= 5 then
+        return profile:PurchaseFieldUpgrade(mineId, 0, profile:GetMineRepresentativeOre(mineId), 0)
+    end
+    local cost = self:GetFieldUpgradeCost(player, mineId, currentLevel)
+    if cost == nil then return false end
+    return profile:PurchaseFieldUpgrade(mineId, cost.gold, cost.oreType, cost.oreCost)
+end
+
+@ExecSpace("ServerOnly")
 method boolean RequestCartUpgrade(Entity player, integer workerIndex)
     if player == nil then return false end
     local profile = player:GetComponent("script.AccountProfileService")

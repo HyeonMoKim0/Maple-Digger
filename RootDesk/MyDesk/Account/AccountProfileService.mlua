@@ -45,6 +45,22 @@ property integer MineLevelGem = 0
 @Sync
 property string MineUpgradeInfoJson = ""
 
+-- D10 §6 (post-MVP 필드 확장, docs/32): 맵별 필드 레벨(1~5) 표시용 미러.
+-- 맵 강화(MineLevel, 0~10)와는 별개 트랙이다 — 용어 혼동 금지(docs/32 §1).
+@Sync
+property integer FieldLevelBeginner = 1
+
+@Sync
+property integer FieldLevelDeep = 1
+
+@Sync
+property integer FieldLevelGem = 1
+
+-- D10 §6.1: 현재 입장 광산의 필드 확장 표기 계약(레벨·다음 비용). 맵 강화의
+-- MineUpgradeInfoJson과 같은 원칙 — 서버 계산값을 그대로 내려보낸다.
+@Sync
+property string FieldUpgradeInfoJson = ""
+
 -- T-05 (F7-C): 프로그램 라이브러리 전체를 표시용으로 하향. 클라이언트는 읽기 전용.
 @Sync
 property string ProgramLibraryJson = ""
@@ -270,6 +286,9 @@ method table CreateDefaultProfile()
         goldOre = 0,
         -- v8 (F7-B §5.1): 맵별 영구 강화 레벨 0~10. 미해금 맵도 0으로 기록한다.
         mineLevels = { beginner_mine = 0, deep_mine = 0, gem_mine = 0 },
+        -- D10 §6 (post-MVP 필드 확장, 무버전 확장 필드): 맵별 필드 레벨 1~5.
+        -- 해금 직후 기본값 1(docs/32 §6) — mineLevels(0~10)와 별개 트랙이다.
+        fieldLevels = { beginner_mine = 1, deep_mine = 1, gem_mine = 1 },
         -- v8 (F7-E §10.2): 튜토리얼 진행 상태. step 0 = 미시작, 9 = 완료.
         tutorial = {
             step = 0,
@@ -674,6 +693,7 @@ method table NormalizeProfile(table profile)
     -- v7 → v8: 필드가 없으면 변환 실패가 아니라 기본값이다 (F7-A §2.1).
     if type(profile.crystal) == "number" then normalized.crystal = math.max(0, math.floor(profile.crystal)) end
     normalized.mineLevels = self:NormalizeMineLevels(profile.mineLevels)
+    normalized.fieldLevels = self:NormalizeFieldLevels(profile.fieldLevels)
     normalized.tutorial = self:NormalizeTutorial(profile.tutorial)
     normalized.settings = self:NormalizeSettings(profile.settings)
     normalized.appearance = self:NormalizeAppearance(profile.appearance)
@@ -706,6 +726,20 @@ method table NormalizeMineLevels(any source)
     for mineId, level in pairs(source) do
         if levels[mineId] ~= nil and type(level) == "number" then
             levels[mineId] = math.max(0, math.min(10, math.floor(level)))
+        end
+    end
+    return levels
+end
+
+@ExecSpace("ServerOnly")
+method table NormalizeFieldLevels(any source)
+    -- D10 §6: 맵별 필드 레벨 1~5 정수. 필드가 없는 기존 프로필은 세 맵 모두
+    -- 1(기본값)로 정규화한다 — mineLevels의 0 기본값과 다르다(docs/32 §6).
+    local levels = { beginner_mine = 1, deep_mine = 1, gem_mine = 1 }
+    if type(source) ~= "table" then return levels end
+    for mineId, level in pairs(source) do
+        if levels[mineId] ~= nil and type(level) == "number" then
+            levels[mineId] = math.max(1, math.min(5, math.floor(level)))
         end
     end
     return levels
@@ -970,6 +1004,10 @@ method void SyncRuntimeState()
     self.MineLevelDeep = self._T.profile.mineLevels.deep_mine
     self.MineLevelGem = self._T.profile.mineLevels.gem_mine
     self.MineUpgradeInfoJson = self:BuildMineUpgradeInfoJson()
+    self.FieldLevelBeginner = self._T.profile.fieldLevels.beginner_mine
+    self.FieldLevelDeep = self._T.profile.fieldLevels.deep_mine
+    self.FieldLevelGem = self._T.profile.fieldLevels.gem_mine
+    self.FieldUpgradeInfoJson = self:BuildFieldUpgradeInfoJson()
     self.ProgramLibraryJson = self._T.profile.programLibraryJson or "{}"
     self.TutorialStep = self._T.profile.tutorial.step or 0
     self.TutorialCompleted = self._T.profile.tutorial.completed == true
@@ -1120,6 +1158,10 @@ method boolean RestoreCurrentWorkerState()
     if not self:CanWriteProfile() then return false end
     -- 맵 진입 시점의 보너스 캐시 갱신 (F7-B §5.5). 로그인·광산 전환 모두 이 경로를 지난다.
     self:PushMineBonusesToSimulator()
+    -- D10 §6: 필드 레벨도 같은 지점에서 시뮬레이터에 다시 밀어 올린다 — 세션
+    -- 시작은 항상 레벨 1(VeinTickSimulator.OnBeginPlay)이므로 여기서 계정
+    -- 레벨까지 ApplyFieldLevel로 따라잡아야 한다.
+    self:PushFieldLevelToSimulator()
     local restoredCount = 0
     for workerIndex = 1, #self._T.profile.workers do
         if self:RestoreOwnedWorker(workerIndex) then restoredCount = restoredCount + 1 end
@@ -1613,6 +1655,103 @@ method void PushMineBonusesToSimulator()
     -- 맵 진입·강화 성공·튜토리얼 상태 전환이 전부 이 경로를 지나므로 캐시가
     -- 최신으로 유지된다 (매 틱 프로필 조회 금지 원칙과 같은 구조).
     sim:SetTutorialSuppression(_TutorialService:IsRelaxationActive(self._T.profile))
+end
+
+@ExecSpace("ServerOnly")
+method integer GetFieldUpgradeGoldCost(integer currentLevel)
+    -- D10 §6: n = 현재 레벨(1~4), 골드 floor(80 × 1.8^(n-1)). 레벨 1→2가 80,
+    -- 레벨 4→5가 466 (docs/32 §6 예시값과 일치하도록 반올림 없이 버림).
+    local n = currentLevel
+    return math.floor(80 * (1.8 ^ (n - 1)))
+end
+
+@ExecSpace("ServerOnly")
+method integer GetFieldUpgradeOreCost(integer currentLevel)
+    -- D10 §6: 대표 광물 40 × 현재 레벨.
+    return 40 * currentLevel
+end
+
+@ExecSpace("ServerOnly")
+method void PushFieldLevelToSimulator()
+    -- D10 §6: 맵 강화 보너스 캐시(PushMineBonusesToSimulator)와 같은 원칙 —
+    -- 맵 진입 시와 확장 성공 시에만 계정이 소유한 필드 레벨을 시뮬레이터에
+    -- 통지한다. 시뮬레이터는 레벨을 낮추지 않으므로(ApplyFieldLevel), 매 틱
+    -- 부르지 않아도 안전하다.
+    local map = self.Entity.CurrentMap
+    if map == nil then return end
+    ---@type VeinTickSimulator
+    local sim = map:GetComponent("script.VeinTickSimulator")
+    if sim == nil then return end
+    local mineId = sim.MineId
+    local levels = self._T.profile.fieldLevels
+    if levels == nil or levels[mineId] == nil then return end
+    sim:ApplyFieldLevel(levels[mineId])
+end
+
+@ExecSpace("ServerOnly")
+method boolean PurchaseFieldUpgrade(string mineId, integer goldCost, string oreType, integer oreCost)
+    -- D10 §6: 저장 성공 뒤에만 비용 차감과 레벨 증가를 확정한다. 실패 시 롤백.
+    -- 맵 강화(PurchaseMineUpgrade)와 완전히 같은 구조 — 별도 필드(fieldLevels)만 다르다.
+    if not self:CanWriteProfile() or goldCost < 0 or oreCost < 0 then return false end
+    local profile = self._T.profile
+    if profile.fieldLevels == nil or profile.fieldLevels[mineId] == nil then return false end
+    local currentLevel = profile.fieldLevels[mineId]
+    if currentLevel >= 5 then
+        self:SetTransactionMessage("이미 최대 레벨입니다. 비용은 차감되지 않았습니다.")
+        return false
+    end
+    local oreBalance = 0
+    local stoneCost = 0
+    local ironCost = 0
+    local goldOreCost = 0
+    if oreType == "stone" then oreBalance = profile.stone stoneCost = oreCost
+    elseif oreType == "iron" then oreBalance = profile.iron ironCost = oreCost
+    elseif oreType == "gold" then oreBalance = profile.goldOre goldOreCost = oreCost
+    else return false end
+    if profile.gold < goldCost or oreBalance < oreCost then
+        self:SetTransactionMessage("필드 확장 재화가 부족합니다. " .. self:DescribeShortfall(goldCost, 0, stoneCost, ironCost, goldOreCost))
+        return false
+    end
+    local snapshot = _HttpService:JSONEncode(profile)
+    profile.gold = profile.gold - goldCost
+    if oreType == "stone" then profile.stone = profile.stone - oreCost
+    elseif oreType == "iron" then profile.iron = profile.iron - oreCost
+    else profile.goldOre = profile.goldOre - oreCost end
+    profile.fieldLevels[mineId] = currentLevel + 1
+    self:SyncRuntimeState()
+    self:MarkProfileDirty()
+    if not self:SaveProfileAndWait() then
+        self._T.profile = self:NormalizeProfile(self:DecodeJsonSafely(snapshot))
+        self:SyncRuntimeState()
+        self:SetTransactionMessage("필드 확장 저장에 실패해 레벨과 비용을 되돌렸습니다. 다시 시도해 주세요.")
+        return false
+    end
+    -- 확장 성공 시 현재 맵 시뮬레이터에 갱신을 통지한다 (맵 강화와 같은 원칙).
+    self:PushFieldLevelToSimulator()
+    self:SetTransactionMessage("필드 확장 완료: Lv." .. tostring(profile.fieldLevels[mineId]) .. " / 5")
+    log("[AccountProfile] field upgraded mineId=" .. mineId .. " level=" .. tostring(profile.fieldLevels[mineId]) .. " gold=-" .. tostring(goldCost) .. " ore=" .. oreType .. "-" .. tostring(oreCost))
+    return true
+end
+
+@ExecSpace("ServerOnly")
+method string BuildFieldUpgradeInfoJson()
+    -- D10 §6.1: 현재 입장 광산의 필드 확장 표기 계약. 맵 강화의
+    -- BuildMineUpgradeInfoJson보다 단순하다 — 스탯 4종 분해가 없다.
+    local mineId = self:MineIdForMapName(self._T.profile.lastMineId)
+    if mineId == "" then return "" end
+    local level = self._T.profile.fieldLevels[mineId]
+    local isMax = level >= 5
+    local info = { mineId = mineId, level = level, maxLevel = isMax }
+    if isMax then
+        info.nextCostGold = 0
+        info.nextCostOreType = ""
+        info.nextCostOre = 0
+    else
+        info.nextCostGold = self:GetFieldUpgradeGoldCost(level)
+        info.nextCostOreType = self:GetMineRepresentativeOre(mineId)
+        info.nextCostOre = self:GetFieldUpgradeOreCost(level)
+    end
+    return _HttpService:JSONEncode(info)
 end
 
 @ExecSpace("ServerOnly")
@@ -2309,6 +2448,13 @@ end
 method boolean RequestMineUpgrade()
     -- Routes the local player's mine-upgrade request to the progression authority.
     return _ProgressionService:RequestMineUpgrade(self.Entity)
+end
+
+@ExecSpace("Server")
+method boolean RequestFieldUpgrade()
+    -- D10 §6.1: 필드 확장(1~5) 요청을 진행 권한(ProgressionService)으로 라우팅한다.
+    -- 맵 강화(RequestMineUpgrade)와 나란한, 별도 시스템의 진입점이다.
+    return _ProgressionService:RequestFieldUpgrade(self.Entity)
 end
 
 @ExecSpace("Server")
