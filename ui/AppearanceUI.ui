@@ -211,7 +211,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "93024bfd2d324753ae92878d299e1ef6"
+                "DataId": "7691424f38e647cdb4ac8d213d782bf7"
               },
               "LocalPosition": {
                 "x": 0.0,
@@ -752,12 +752,12 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 736.0,
-                "y": 0.0
+                "x": 730.0,
+                "y": -35.0
               },
               "OffsetMin": {
-                "x": 680.0,
-                "y": -56.0
+                "x": 674.0,
+                "y": -91.0
               },
               "Pivot": {
                 "x": 0.0,
@@ -775,8 +775,8 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 680.0,
-                "y": 0.0
+                "x": 674.0,
+                "y": -35.0
               },
               "Rotation": {
                 "x": 0.0,
@@ -784,8 +784,8 @@
                 "z": 0.0
               },
               "Position": {
-                "x": 0.0,
-                "y": 0.0,
+                "x": 284.0,
+                "y": 455.0,
                 "z": 0.0
               },
               "QuaternionRotation": {

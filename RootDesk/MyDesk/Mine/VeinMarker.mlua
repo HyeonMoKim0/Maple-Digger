@@ -1,67 +1,75 @@
--- MAP-AUTHORED MINE MARKER CONTRACT
--- Markers carry stable logical IDs for layout validation, and (F5 §2.1) the
--- read-only visual state the client renders. The server owns every value here;
--- clients never write them.
 @Component
 script VeinMarker extends Component
 
-property string MarkerId = ""
-property string MarkerKind = "normal"
+	property string MarkerId = ""
 
--- F5 §2.1 동기화 표면. 서버만 쓰고 클라이언트는 읽기만 한다.
-@Sync
-property integer CellX = 0
+	property string MarkerKind = "normal"
 
-@Sync
-property integer CellY = 0
+	@Sync
+	property integer CellX = 0
 
-@Sync
-property integer ReserveStage = 0
+	@Sync
+	property integer CellY = 0
 
-@Sync
-property string OreType = ""
+	@Sync
+	property integer ReserveStage = 0
 
--- 특별 광맥이 활성 목록에 있는지. 일반 marker 는 항상 false 다.
-@Sync
-property boolean IsActive = false
+	@Sync
+	property string OreType = ""
 
--- stage 또는 oreType 이 바뀔 때마다 증가한다. 클라이언트는 이 값이 변할 때만
--- 스프라이트를 다시 고르면 되므로 매 틱 RUID 를 재계산하지 않아도 된다.
-@Sync
-property integer VisualRevision = 0
+	@Sync
+	property boolean IsActive = false
 
-@ExecSpace("ServerOnly")
-method void OnBeginPlay()
-    -- Derives this marker's cell from its authored position and registers itself
-    -- with the current mine's server simulator.
-    local mine = self.Entity.CurrentMap.VeinTickSimulator
-    if mine == nil then
-        log_error("[VeinMarker] simulator missing id=" .. self.MarkerId)
-        return
-    end
+	@Sync
+	property integer VisualRevision = 0
 
-    -- RectTile 에서 1 셀 = 1 world unit 이고, 맵에 저작된 marker 위치가 곧 셀
-    -- 좌표다. 별도 좌표 property 를 두면 맵과 이중 관리가 되므로 위치에서 얻는다.
-    local pos = self.Entity.TransformComponent.Position
-    self.CellX = math.floor(pos.x + 0.5)
-    self.CellY = math.floor(pos.y + 0.5)
+	@ExecSpace("ServerOnly")
+	method void OnBeginPlay()
+		    -- Derives this marker's cell from its authored position and registers itself
+		    -- with the current mine's server simulator.
+		    local mine = self.Entity.CurrentMap.VeinTickSimulator
+		    if mine == nil then
+		        log_error("[VeinMarker] simulator missing id=" .. self.MarkerId)
+		        return
+		    end
+		
+		    -- RectTile 에서 1 셀 = 1 world unit 이고, 맵에 저작된 marker 위치가 곧 셀
+		    -- 좌표다. 별도 좌표 property 를 두면 맵과 이중 관리가 되므로 위치에서 얻는다.
+		    local pos = self.Entity.TransformComponent.Position
+		    self.CellX = math.floor(pos.x + 1)
+		    self.CellY = math.floor(pos.y + 1)
+		
+		    -- 맵에 저작된 마커는 정수 좌표(셀의 좌하단)를 사용하지만,
+		    -- RectTileMap:ToWorldPosition 은 셀 중심 좌표를 반환한다.
+		    -- 논리 셀 좌표는 위에서 확정한 뒤, 표시/상호작용 기준점만 타일 중심으로
+		    -- 옮겨서 격자 오버레이와 광석 스프라이트가 같은 중심을 공유하게 한다.
+		    local tilemap = self.Entity.CurrentMap:GetFirstChildComponentByTypeName("RectTileMapComponent")
+		    if tilemap ~= nil then
+		        local center = tilemap:ToWorldPosition(Vector2Int(self.CellX, self.CellY))
+		        self.Entity.TransformComponent.Position = Vector3(center.x, center.y, pos.z)
+		        log("[VeinMarker] centered id=" .. self.MarkerId
+		            .. " cell=(" .. self.CellX .. "," .. self.CellY .. ")"
+		            .. " world=(" .. center.x .. "," .. center.y .. ")")
+		    else
+		        log_warning("[VeinMarker] tilemap missing while centering id=" .. self.MarkerId)
+		    end
+		
+		    -- 3번째 인자로 자기 자신을 넘겨야 시뮬레이터가 매 틱 stage 를 밀어 넣을 수 있다.
+		    mine:RegisterMarker(self.MarkerId, self.MarkerKind, self)
+	end
 
-    -- 3번째 인자로 자기 자신을 넘겨야 시뮬레이터가 매 틱 stage 를 밀어 넣을 수 있다.
-    mine:RegisterMarker(self.MarkerId, self.MarkerKind, self)
-end
-
-@ExecSpace("ServerOnly")
-method void ApplyVeinState(string oreType, integer stage, boolean isActive)
-    -- Writes one visual snapshot, bumping VisualRevision only on a real change.
-    -- Called every tick by the simulator, so the no-change path must stay cheap
-    -- and must not touch @Sync properties (each write costs a sync message).
-    if self.OreType == oreType and self.ReserveStage == stage and self.IsActive == isActive then
-        return
-    end
-    self.OreType = oreType
-    self.ReserveStage = stage
-    self.IsActive = isActive
-    self.VisualRevision = self.VisualRevision + 1
-end
+	@ExecSpace("ServerOnly")
+	method void ApplyVeinState(string oreType, integer stage, boolean isActive)
+		    -- Writes one visual snapshot, bumping VisualRevision only on a real change.
+		    -- Called every tick by the simulator, so the no-change path must stay cheap
+		    -- and must not touch @Sync properties (each write costs a sync message).
+		    if self.OreType == oreType and self.ReserveStage == stage and self.IsActive == isActive then
+		        return
+		    end
+		    self.OreType = oreType
+		    self.ReserveStage = stage
+		    self.IsActive = isActive
+		    self.VisualRevision = self.VisualRevision + 1
+	end
 
 end

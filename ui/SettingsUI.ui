@@ -211,7 +211,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "93024bfd2d324753ae92878d299e1ef6"
+                "DataId": "7691424f38e647cdb4ac8d213d782bf7"
               },
               "LocalPosition": {
                 "x": 0.0,
@@ -370,7 +370,7 @@
           "name": "Panel",
           "path": "/ui/SettingsUI/Panel",
           "nameEditable": true,
-          "enable": false,
+          "enable": true,
           "visible": true,
           "localize": true,
           "displayOrder": 1,
@@ -2108,12 +2108,12 @@
               },
               "MobileOnly": false,
               "OffsetMax": {
-                "x": 28.0,
-                "y": -480.0
+                "x": 228.9348,
+                "y": -38.6067963
               },
               "OffsetMin": {
-                "x": -28.0,
-                "y": -536.0
+                "x": 172.9348,
+                "y": -94.6068
               },
               "Pivot": {
                 "x": 0.5,
@@ -2131,8 +2131,8 @@
               },
               "UIVersion": 2,
               "anchoredPosition": {
-                "x": 0.0,
-                "y": -480.0
+                "x": 200.9348,
+                "y": -38.6067963
               },
               "Rotation": {
                 "x": 0.0,
@@ -2140,8 +2140,8 @@
                 "z": 0.0
               },
               "Position": {
-                "x": 0.0,
-                "y": -190.0,
+                "x": 200.9348,
+                "y": 251.3932,
                 "z": 0.0
               },
               "QuaternionRotation": {

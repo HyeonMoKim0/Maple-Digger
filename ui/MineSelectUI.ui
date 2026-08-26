@@ -211,7 +211,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "93024bfd2d324753ae92878d299e1ef6"
+                "DataId": "7691424f38e647cdb4ac8d213d782bf7"
               },
               "LocalPosition": {
                 "x": 0.0,
@@ -22081,7 +22081,7 @@
               },
               "Position": {
                 "x": 0.0,
-                "y": 0.0,
+                "y": 175.0,
                 "z": 0.0
               },
               "QuaternionRotation": {

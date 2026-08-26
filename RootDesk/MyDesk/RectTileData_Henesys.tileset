@@ -7,7 +7,7 @@
   "Usage": 0,
   "UsePublish": 1,
   "UseService": 0,
-  "CoreVersion": "26.3.0.0",
+  "CoreVersion": "26.7.0.0",
   "StudioVersion": "0.1.0.0",
   "DynamicLoading": 0,
   "ContentProto": {
@@ -685,6 +685,16 @@
           "Id": "2978323e1e6441898681d09ad5f0c0a6",
           "Name": "Henesys_water_16",
           "IsCollidable": true
+        },
+        {
+          "Id": "7d20f55ec7ec40be80dd2684627c240a",
+          "Name": "Name135",
+          "IsCollidable": false
+        },
+        {
+          "Id": "33f9302fc9c24684b82cf4c2196a2d49",
+          "Name": "Name136",
+          "IsCollidable": false
         }
       ]
     }

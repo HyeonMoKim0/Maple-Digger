@@ -35,6 +35,9 @@ property TextGUIRendererComponent programLabelText = "0aa4c8fa-c647-466d-96f2-99
 property Entity programGrid = "af4877f2-c4d8-451a-a15b-5b8cb1670cce"
 -- 그리드 셀 수 (ui/BlockProgramUI.ui 의 Cell01..CellNN 과 일치해야 한다).
 property integer StripCellCount = 36
+-- 방향 블록 공통 아이콘. UIBuilder 로 팔레트·프로그램 셀·드래그 고스트에
+-- 같은 리소스를 배치하고, 아래 표시 함수에서 방향별 Z 회전만 바꾼다.
+property string DirectionIconRuid = "03af6020eaf541e1937dd23d48476aa5"
 -- T-18b (2026-08-26 오너 보고 — "일부 구간에서 안 뜨고 이동도 안 된다"):
 -- 드롭 판정을 칸 안쪽으로만 하면 **칸 사이 6px 틈**과 **행 위아래**가 전부
 -- 사각지대가 된다(실측: 56px 밴드 밖 y=-152·-92 에서 즉시 판정 0). 정확히
@@ -128,6 +131,7 @@ method void OnBeginPlay()
     self._T.lastOwnedCount = self:GetOwnedWorkerCount()
     self:RefreshDisplay()
     self:SetFeedback("블록을 눌러 프로그램을 만들어 주세요.")
+    log("[BlockProgram] direction icon ready ruid=" .. self.DirectionIconRuid)
     log("[BlockProgram] MVP UI ready - strip cells=" .. tostring(#self._T.cells))
 end
 
@@ -244,7 +248,16 @@ method void ShowDragGhost(table token)
     -- 원본 칸은 반투명으로 눌러 "여기서 뽑혀 나왔다"를 보인다 — 원복은 드롭 후
     -- RefreshDisplay 의 전체 재도색이 한다.
     if self.dragGhost == nil then return end
-    if self.dragGhostText ~= nil then self.dragGhostText.Text = token.label end
+    local isMove = token.tint == "move"
+    if self.dragGhostText ~= nil then
+        -- 이동 블록은 문자(E/W/N/S) 대신 방향 아이콘으로 읽게 한다.
+        self.dragGhostText.Text = isMove and "" or token.label
+    end
+    local ghostIcon = self.dragGhost:GetChildByName("Icon", false)
+    if ghostIcon ~= nil then
+        ghostIcon.Enable = isMove
+        if isMove then self:ApplyDirectionIcon(ghostIcon, token.label, false) end
+    end
     if self.dragGhostSprite ~= nil then
         if token.tint == "work" then
             self.dragGhostSprite.Color = Color(0.78, 0.93, 0.78, 0.85)
@@ -706,8 +719,14 @@ method void PaintCell(any cell, string label, string tint)
     -- 셀 하나의 문구·틴트를 칠한다. 문자 + 계열 틴트 병행 (docs/20 §6 —
     -- 색 단독 표기 금지). 배경 파츠는 command-tile-slate-blank 이고 틴트만 바꾼다.
     cell.Enable = true
+    local isMove = tint == "move" and (label == "E" or label == "W" or label == "N" or label == "S")
     local text = cell.TextGUIRendererComponent
-    if text ~= nil then text.Text = label end
+    if text ~= nil then text.Text = isMove and "" or label end
+    local icon = cell:GetChildByName("Icon", false)
+    if icon ~= nil then
+        icon.Enable = isMove
+        if isMove then self:ApplyDirectionIcon(icon, label, true) end
+    end
     local sprite = cell.SpriteGUIRendererComponent
     if sprite == nil then return end
     if tint == "work" then
@@ -719,6 +738,76 @@ method void PaintCell(any cell, string label, string tint)
     else
         sprite.Color = Color(1, 1, 1, 1)               -- 이동 = 슬레이트 원색
     end
+end
+
+@ExecSpace("ClientOnly")
+method Entity DirectionIconSource(string direction)
+    -- 팔레트 버튼의 Icon 자식이 방향별 단일 기준이다. Maker에서 조정한
+    -- RUID/PosX·PosY/LocalPosition/Flip 값을 그대로 프로그램 셀에 복제한다.
+    local button = nil
+    if direction == "E" then
+        button = self.btnMoveE
+    elseif direction == "W" then
+        button = self.btnMoveW
+    elseif direction == "N" then
+        button = self.btnMoveN
+    elseif direction == "S" then
+        button = self.btnMoveS
+    end
+    if button == nil or button.Entity == nil then return nil end
+    return button.Entity:GetChildByName("Icon", false)
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyDirectionIcon(Entity targetIcon, string direction, boolean alignCell)
+    if targetIcon == nil then return end
+    local targetTransform = targetIcon.UITransformComponent
+    local targetSprite = targetIcon.SpriteGUIRendererComponent
+    if targetTransform == nil or targetSprite == nil then return end
+
+    local sourceIcon = self:DirectionIconSource(direction)
+    if sourceIcon ~= nil then
+        local sourceTransform = sourceIcon.UITransformComponent
+        local sourceSprite = sourceIcon.SpriteGUIRendererComponent
+        if sourceTransform ~= nil then
+            -- 버튼 아이콘과 같은 좌측 기준을 재현한다. anchoredPosition만
+            -- 복사하면 셀 Icon의 middle-center anchor가 남아 위치가 어긋나므로,
+            -- anchor/Pivot/RectSize까지 함께 복제한다.
+            targetTransform.AlignmentOption = sourceTransform.AlignmentOption
+            targetTransform.AnchorsMin = sourceTransform.AnchorsMin
+            targetTransform.AnchorsMax = sourceTransform.AnchorsMax
+            targetTransform.Pivot = sourceTransform.Pivot
+            targetTransform.RectSize = sourceTransform.RectSize
+            targetTransform.anchoredPosition = sourceTransform.anchoredPosition
+            if alignCell and targetIcon.Parent ~= nil and targetIcon.Parent.UITransformComponent ~= nil then
+                -- 버튼의 x=21/22는 136px 팔레트 버튼 기준이다. 56px 셀에서는
+                -- 아이콘(34px)을 셀 중앙에 놓을 수 있도록 x=11로 환산한다.
+                local cellWidth = targetIcon.Parent.UITransformComponent.RectSize.x
+                local iconWidth = targetTransform.RectSize.x
+                targetTransform.anchoredPosition = Vector2((cellWidth - iconWidth) / 2, targetTransform.anchoredPosition.y)
+            end
+            targetTransform.ZRotation = sourceTransform.ZRotation
+        end
+        if sourceSprite ~= nil then
+            targetSprite.ImageRUID = sourceSprite.ImageRUID
+            targetSprite.LocalPosition = sourceSprite.LocalPosition
+            targetSprite.LocalScale = sourceSprite.LocalScale
+            targetSprite.PreserveSprite = sourceSprite.PreserveSprite
+            targetSprite.FlipX = sourceSprite.FlipX
+            targetSprite.FlipY = sourceSprite.FlipY
+        end
+        return
+    end
+
+    -- 예외적으로 팔레트 아이콘을 찾지 못한 경우에만 기존 공통 아이콘을
+    -- 안전한 기본값으로 사용한다. 정상 경로에서는 위의 복제 분기가 실행된다.
+    targetTransform.anchoredPosition = Vector2(0, 0)
+    targetTransform.ZRotation = 0
+    targetSprite.ImageRUID = DataRef(self.DirectionIconRuid)
+    targetSprite.LocalPosition = Vector2(0, 0)
+    targetSprite.LocalScale = Vector2(1, 1)
+    targetSprite.FlipX = false
+    targetSprite.FlipY = false
 end
 
 @ExecSpace("ClientOnly")
