@@ -522,15 +522,35 @@ method void ResizeControlRange(table srcToken, table dstToken)
         self:RefreshDisplay()
         return
     end
+    -- T-18c (2026-08-26 오너 보고 — "] 는 옮겨지지가 않아"): 두 손잡이를 **대칭**으로
+    -- 만든다. 잡은 경계를 반대쪽 경계 너머로 끌면 예전에는 빈 범위로 접혀
+    -- "아무 일도 안 일어난 것"처럼 보였다 — 제어가 줄 맨 끝에 빈 몸통으로 있으면
+    -- ] 뒤에 블록이 없어 **항상** 그 경우였다. 이제는 반대쪽 경계가 따라와서
+    -- "그 방향으로 쓸어 담기"가 된다.
     local isClosing = (srcToken.label == "]")
     local newStart = bodyStart
     local newEnd = bodyEnd
     if isClosing then
-        newEnd = target
-        if newEnd < newStart - 1 then newEnd = newStart - 1 end
+        if target >= bodyStart then
+            newEnd = target
+        else
+            -- ] 을 시작 경계보다 앞으로 → 앞쪽으로 쓸어 담는다.
+            newStart = target
+            newEnd = bodyStart - 1
+        end
     else
-        newStart = target
-        if newStart > newEnd + 1 then newStart = newEnd + 1 end
+        if target <= bodyEnd then
+            newStart = target
+        else
+            -- 여는 칸을 끝 경계보다 뒤로 → 뒤쪽으로 쓸어 담는다 (위의 거울).
+            newStart = bodyEnd + 1
+            newEnd = target
+        end
+    end
+    if newStart == bodyStart and newEnd == bodyEnd then
+        self:SetFeedback("범위가 그대로입니다.")
+        self:RefreshDisplay()
+        return
     end
     -- **제자리 수술**: body·list 를 새 테이블로 갈아 끼우면 열림 스택
     -- (openControls[k].body == openBodies[k+1])의 참조가 끊어져, 아직 닫지 않은
@@ -544,7 +564,11 @@ method void ResizeControlRange(table srcToken, table dstToken)
     self:RefreshDisplay()
     local countLabel = "반복"
     if ctrl.type == "if" then countLabel = "IF" end
-    self:SetFeedback(countLabel .. " 범위를 바꿨습니다 — 안에 든 블록 " .. tostring(#body) .. "개.")
+    if #body == 0 then
+        self:SetFeedback(countLabel .. " 범위를 비웠습니다. 경계 칸을 감쌀 블록 위로 끌면 다시 채워집니다.")
+    else
+        self:SetFeedback(countLabel .. " 범위를 바꿨습니다 — 안에 든 블록 " .. tostring(#body) .. "개.")
+    end
     log("[BlockProgram] control range resized type=" .. tostring(ctrl.type)
         .. " handle=" .. tostring(srcToken.label) .. " body=" .. tostring(#body)
         .. " start=" .. tostring(newStart) .. " end=" .. tostring(newEnd))
