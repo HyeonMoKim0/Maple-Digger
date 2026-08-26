@@ -11,7 +11,9 @@
 - **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **키보드 입력도 차단됨 (2026-08-25, docs/16 §60)**: `PlayerControllerComponent Enable=false` — 방향키 이동·Alt 점프 무반응. 카메라 팬은 휠 드래그·줌(§42)이 전담하고, 맵 이동(`PlayerComponent.MoveToMapPosition`)은 살아 있다. 되돌리려면 해당 컴포넌트 Enable=true (docs/16 §33·§60)
 - 동적 일꾼 Body: `KinematicbodyComponent`
 - 시뮬레이션 틱: 0.4초, 틱당 액션 1개
-- 현재 기준: `main`(PR #19 병합 `e98f948`, 2026-08-21)에서 **T-13 B 완결 + F9 성능·부하 기준 + 초보 광산 10×10 확장까지 반영** — AI 몫의 티켓·기획 공백 0건. 남은 것은 오너 직접 게이트(클릭·청취·미감·실기기 체감)뿐이며, **그 전량이 `docs/29-최종-검수표.md` 한 장에 플레이 동선 순서로 모여 있다**(A 신규 계정 튜토리얼 / B 화면·조작 일괄 / C 출시 빌드 체감 / D 결정 대기 2건). A·B·C 전량 통과 = C212 조건 ② 충족 = MVP 완료 판정.
+- 현재 기준: `main`(**PR #25 병합 `6ea5df0`, 2026-08-26**)에서 **T-13 B · F9 성능·부하 기준 · 초보 광산 10×10 확장 · T-15 광산 선택 개편 · T-16 경로 미리보기 · T-17 블록 드래그까지 반영** — AI 몫의 티켓·기획 공백 0건. 남은 것은 오너 직접 게이트(클릭·청취·미감·실기기 체감)뿐이며, **그 전량이 `docs/29-최종-검수표.md` 한 장에 플레이 동선 순서로 모여 있다**(A 튜토리얼 A1~A11+A5-R / B 화면·조작 B1~B30 / C 출시 빌드 체감 C1 / D 결정 대기 D1). A·B·C 전량 통과 = C212 조건 ② 충족 = MVP 완료 판정.
+  - **T-15~T-17 은 `docs/18` 티켓 체계 밖에서 오너 직결 요청으로 들어온 작업**이다(`main` 직접 또는 단발 PR). 티켓표에는 2026-08-26 에 사후 등재했다.
+  - ⚠ **새 오너 검수 항목이 생기면 `docs/16` 과 `docs/29` 양쪽에 같은 커밋으로 적는다.** 2026-08-22~25 에 §52·§53·§58~§67 이 `docs/16` 에만 쌓여 검수표가 8건을 놓쳤고, 2026-08-26 에 일괄 편입했다.
 
 ## 현재 상태
 
@@ -21,8 +23,10 @@
 | 일꾼 인터프리터·손·수레 | 엔티티 `@Component` | `RootDesk/MyDesk/Mine/WorkerController.mlua` | 서버 검증, 스택 인터프리터, 원자적 mine/load/unload, 일꾼별 시작 셀·수레·프로그램. **셀 위치도 저장된다(2026-08-25, docs/16 §57)** — 로그아웃·맵 전환 시 `cellX/cellY/cellMineId` 캡처, 같은 광산에서만 복원(무효 셀은 시작 셀). **실행 지점도 저장된다(§57.1)** — `execStateJson`(경로형 프레임 스택) + `programRunning`. 실행 중 로그아웃 = 같은 광산이면 그 셀·그 블록에서 `ResumeProgram` 으로 이어서 실행, 정지 로그아웃 = 자동 실행 없이 그 자리 대기, 스냅숏 불일치·타 광산 = `ResetToStartCell` 후 처음부터. 편집기 버퍼는 로그인 시 마지막 유효 프로그램을 자동 로드(빈 버퍼 한정·튜토리얼 1회차 제외). **`ProgramState` 는 3값** — `Idle`(미실행·자연 완료) / `Running` / `Stopped`(사용자 정지·맵 전환·서버 거절), C217. `ResetExecution` 은 항상 `Idle` 로 착지하고 정지 계열 호출자만 덮어쓴다. **손은 `PendingOre` + `PendingOreCount`(0~3) 쌍** — 용량 3, 같은 광물 이어 캐기(2026-08-18 오너 결정, docs/13 §5.3 개정). 다른 종류 광맥은 소모 없이 실패, `load` 는 수레 여유만큼 부분 적재하고 잔량을 손에 남긴다. `ConfigureFromProfile` 은 5인자(count 추가) |
 | 일꾼 공용 모델 | `.model` | `RootDesk/MyDesk/Models/Farm/Worker.model` | modelId `worker`, RectTile용 `KinematicbodyComponent`와 `WorkerController` 포함. `Drone.model`은 레거시 원본 |
 | 프로그램 라이브러리 (T-05) | 서버 원장 + 클라 `@Logic` + `.ui` | `AccountProfileService.mlua`(원장) · `RootDesk/MyDesk/Farm/ProgramLibraryController.mlua` · `ui/ProgramLibraryUI.ui` | 계정 공용 3→20슬롯. **기본가 50골드 확정(C222)**, 이후 ×1.2. 저장/개명/복제/삭제/슬롯구매, 최종 검증은 `WorkerController.ValidateProgram` 단일 소유. 재접속 자동 실행 구현 완료 |
-| 블록 편집기 (T-14 개편) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음. **자연어 입력은 2026-08-18 T-14 로 MVP 에서 제거됐다** (docs/03 §6·§8 폐지). 프로그램 표시는 `ProgramGrid` 56×56 셀 9×4=36칸 스트립 — 평탄 토큰(열린 제어는 `]` 칸 없음), 문자+계열 틴트, 초과 `+N` 접기, **칸 클릭 = 그 블록 삭제**(제어는 몸통 통째 + 열림 스택 동기 정리). ⚠️ `RenderList` 는 편집기에서 안 쓰지만 **라이브러리 상세 미리보기가 소비한다 — 지우면 안 된다** (docs/16 §39). 워커 칩 3종 스왑(T-13 A1)은 그대로, 상태 결정은 `GetWorkerChipState` 단일 소유 |
-| 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭. **칩 배경은 파일에 `tab-worker-normal` 이 박혀 있고 런타임이 덮어쓴다** — 파일값만 보고 판단하면 안 된다 |
+| 블록 편집기 (T-14 개편 · T-16/T-17 후속) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Farm/BlockProgramController.mlua` | 활성 파일이 legacy `Farm/` 경로에 있음(T-10 이관 대상 — **T-16 신규 2파일도 같은 폴더에 들어가 부채가 커졌다**). **자연어 입력은 2026-08-18 T-14 로 MVP 에서 제거됐다** (docs/03 §6·§8 폐지). 프로그램 표시는 `ProgramGrid` 56×56 셀 9×4=36칸 스트립 — 평탄 토큰(열린 제어는 `]` 칸 없음), 문자+계열 틴트, 초과 `+N` 접기.<br>**칸 상호작용은 2가지** — **짧은 탭(화면 12px 미만) = 그 블록 삭제**, **임계 초과 드래그 = 순서 이동**(T-17). ⚠️ **제어 블록 칸 클릭은 껍데기만 삭제하고 몸통은 제자리에 펼쳐 보존한다** (2026-08-21 오너 개정, docs/28 §2.3 — 옛 "몸통 통째 삭제"는 *첫 칸 클릭 한 번 = 프로그램 전체 증발* 함정이라 폐기됐다). 드래그는 **이동/행동 칸만** 가능하고 제어 칸은 거부 · 드롭 대상은 일반 칸=그 앞 / 제어 시작 칸=제어 블록 앞 / `]` 칸=몸통 맨 뒤 / 칸 밖=취소. 드래그 릴리스에 딸려 오는 버튼 클릭은 `dragMoved` 로 1회 삼킨다.<br>⚠️ **UI 좌표계 2개를 섞지 말 것 (§68.1 — 실제로 두 번 틀렸다)**: **터치 이벤트 `TouchPoint` → 캔버스는 `ScreenToUIPosition`**, **`GetWorldCorners` → 캔버스는 전화면 루트 코너 정규화(`UIDraggable.CornerToCanvas`)**. 둘을 직접 비교하면 어긋난다. 내부 일관성(주입 테스트 통과)은 좌표계가 맞다는 증거가 **아니다** — 같은 소스끼리는 틀린 좌표계에서도 일치하고, 실마우스가 섞이는 순간 드러난다. ⚠️ `RenderList` 는 편집기에서 안 쓰지만 **라이브러리 상세 미리보기가 소비한다 — 지우면 안 된다** (docs/16 §39). 워커 칩 3종 스왑(T-13 A1)은 그대로, 상태 결정은 `GetWorkerChipState` 단일 소유 |
+| 블록 UI | `.ui` | `ui/BlockProgramUI.ui` | PC 우선. 반복/횟수 분리 + Worker01~05 선택 탭. **칩 배경은 파일에 `tab-worker-normal` 이 박혀 있고 런타임이 덮어쓴다** — 파일값만 보고 판단하면 안 된다. 36칸 각각에 **순번 오버레이 `Num` 자식 텍스트(T-16)** 와 **`UITouchReceiveComponent`(T-17 드래그)** 가 붙어 있다 |
+| 경로 미리보기 (T-16) | 클라이언트 `@Logic` + `.model` | `RootDesk/MyDesk/Farm/PathPreviewSimulator.mlua`(규칙 사본) · `PathPreviewController.mlua`(마커 풀) · `RootDesk/MyDesk/Models/Mine/PathMarker.model` | 실행 **전** 경로를 맵 위 반투명 고스트 타일 마커로 표시. 스트립 칸 순번과 맵 마커 번호가 **같은 블록**을 가리킨다. 표시 시점 계약: 편집 중=표시 / **Running=전체 숨김** / 정지 후=현재 셀 기준 재계산. 갱신은 `BlockProgramController.RefreshDisplay` 끝의 `RefreshPreview()` 1줄(블록 추가·삭제·드래그 이동 즉시). 반복은 **몸통 1회분 + `×N` 병기**(중첩은 가장 안쪽만), IF 는 **@Sync 스냅숏으로 실제 판정**, 타일당 5개째부터 `+N` 접기. ⚠️ **`PathPreviewSimulator` 는 서버 `VeinTickSimulator`/`WorkerController` 규칙의 클라 사본이다** — 각 함수에 서버 대응 함수가 주석 계약으로 달려 있고, **서버 이동·채굴 규칙을 고치면 여기도 같이 고쳐야 미리보기가 거짓말을 하지 않는다**. ⚠️ 월드 텍스트는 **`TextRendererComponent`**(UI 전용 `TextComponent` 는 월드에서 **무렌더 무오류**), `FontSize` 는 **월드 스케일**이라 정상 범위가 한 자리 수(단독 3 / 겹침 1.8) |
+| UI 창 드래그·전면화 | 클라이언트 공용 `@Component`/`@Logic` | `RootDesk/MyDesk/UI/UIDraggable.mlua`, `UIWindowManager.mlua` | **창은 상단 `HandleHeight = 90`(UI px, 전 창 공통·오너 확정) 을 잡았을 때만 이동한다** — 0 이하로 두면 예전의 전체 드래그. 엔티티 추가 없이 `OnTouchDown` 에서 `GetWorldCorners` 판정 후에만 드래그 무장(버튼 클릭 우선권 무해). ⚠️ **잡을 때마다 `SetSiblingIndex(1000000)` 으로 창을 형제 맨 앞에 올린다** — 루트 직속 오버레이(T-17 고스트·안내선)는 창을 한 번 옮긴 뒤 그 아래로 깔리므로, **그런 오버레이는 표시할 때마다 스스로 다시 맨 앞으로 올려야 한다**(§68.2). `UIWindowManager` 는 버튼 dim(눌림 표시) 기준의 단일 소유자 — **패널 구조를 바꾸면 dim 기준도 같이 옮긴다**(§62 가 T-15 잔재로 오배선됐던 축) |
 | 광산 HUD·인벤토리 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Mine/MineInventoryController.mlua`, `ui/MineHUD.ui`, `ui/MineInventoryUI.ui` | 서버 `@Sync` 값만 표시. T-08 승인 아이콘 7종, T-13 B Filled 수레 게이지·특별 광맥 아이콘·3광물 슬롯 배선 — **2026-08-21 재업로드 RUID 로 검증 완료** (`docs/16` §41.3). 수량 뱃지 엔티티는 오너 삭제(텍스트만) |
 | 광산 선택 화면 | 클라이언트 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/MineSelectController.mlua`, `ui/MineSelectUI.ui` | 광산 선택·판매·수레·희귀·**맵 강화(T-03)** 5패널. 광산 노드 3상태 스왑(T-13 C)에 더해 비용 칩, 보호 수량 ±1 스테퍼, 보호분/자동판매 토글 SpriteSwap, 보호 경고 아이콘(T-13 B) — **2026-08-21 재업로드 RUID 로 검증 완료** (`docs/16` §41.3, 토글 ON 스왑·스테퍼 ±1 실측) |
 | 계정·경제·광산 해금·맵 강화 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | **프로필 스키마 v8 적용 완료.** `tutorial`·`settings` 소비자와 T-06 `appearance` 무버전 확장까지 구현·병합됐다. 맵 강화·경제·복구·동시 접속 잠금 구현 완료 |
@@ -38,6 +42,42 @@
 | 튜토리얼 (T-07) | 서버 `@Logic` + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/TutorialService.mlua` · `TutorialController.mlua` · `ui/TutorialUI.ui` | F7-E 8단계. **판정·보상·완화(C1~C3)는 서버(TutorialService)가 소유**하고 클라는 안내·잠금/dim·@Sync 신호 감시만 한다. 진행 원장은 profile.tutorial(v8), 표시용 @Sync 는 `TutorialStep/Completed/Skipped` 3종. **완화 활성 = completed·skipped 둘 다 false && step 1~8** — 다시 보기(replay)는 플래그를 건드리지 않아 자동으로 완화 미적용. C3 억제 캐시는 `PushMineBonusesToSimulator` 가 맵 진입·강화·튜토리얼 전환 시 갱신. **자동 실행(T-05)은 완화 활성 중 skip** — 안 하면 1단계가 저절로 통과된다. `ui/TutorialUI.ui` 는 GroupOrder 8(토스트 위·Recovery 아래), Recovery 는 9 로 +1 (밀집 0..9). 5·6단계 팔레트는 기배운 L/W/U 포함(U3 산술 — docs/16 §35.3) |
 
 ## 기록
+
+### 2026-08-26 — T-17 블록 드래그 재배치: UI 좌표계를 섞은 것이 "실마우스에서만" 틀렸다 (PR #25)
+
+브랜치 `feat/t17-block-drag` → PR #25 병합. 검수 `docs/16` §68·§68.1·§68.2 · `docs/29` B22. 오너 요청 2건 — 블록을 드래그로 옮기기 / 블록을 끌 때 창이 따라오지 않기.
+
+- **셀 드래그**: 36칸에 `UITouchReceiveComponent` 추가. 짧은 탭(12px 미만)=기존 삭제 유지, 임계 초과=이동. 단일 블록만 이동 가능(제어 칸 거부). 이동 직후 T-16 미리보기 자동 재계산.
+- **창 상단 핸들**: `UIDraggable.HandleHeight = 90` — 엔티티 추가 없이 `OnTouchDown` 판정만으로 처리해 버튼 클릭 우선권을 해치지 않았다(2026-08-20 `DragHandle` 자식 폐기안보다 나은 해법).
+- **후속 3건이 전부 같은 뿌리였다.** 고스트(b) → 안내선(c) → **좌표계 통일(d)**: 터치 이벤트와 `GetWorldCorners` 는 **서로 다른 픽셀 좌표계**인데 이를 섞어 비교했다. 1차 히트 판정과 2차 고스트가 각각 이 함정이었고, 안내선은 ~50 캔버스 px 떠 있었다.
+- **교훈(가장 중요)**: **내부 일관성은 좌표계가 맞다는 증거가 아니다.** 같은 소스에서 나온 값끼리는 **틀린 좌표계에서도 서로 일치**하므로 이벤트 주입 테스트가 전부 통과했다. 다른 소스(실마우스)가 섞이는 순간에만 드러났다 — **오너 실조작 보고가 유일한 탐지 수단이었다.** UI 좌표를 다루는 값마다 "어느 변환으로 캔버스에 가는가"를 먼저 밝힌다.
+- **z-order(e)**: `UIDraggable` 이 창을 잡을 때마다 맨 앞으로 올려서, 창을 한 번 옮기면 루트 직속 고스트·안내선이 창 아래로 깔렸다. → **루트 직속 오버레이는 표시할 때마다 스스로 맨 앞으로 올린다.**
+
+### 2026-08-25 — T-16 경로 미리보기: 클라에 서버 규칙 사본을 두는 대가 (2개 PR)
+
+브랜치 `feat/t16-path-preview`(1차) · `feat/t16-preview-control`(2차). 기획 `docs/31` · 검수 `docs/29` B19~B21. 실행 **전** 경로를 맵 위에 고스트 타일 마커로 보여준다.
+
+- 오너 질의응답으로 표시 규칙 12건을 먼저 확정하고 들어가 재작업이 없었다 — 반복은 1회분+`×N`, IF 는 실제 맵 상태 판정, 갱신은 편집 즉시, 다중 일꾼은 선택 1명만.
+- **구조적 부채를 하나 만들었다**: `PathPreviewSimulator` 는 서버 이동·채굴·조건 규칙의 **클라 사본**이다. 각 함수에 서버 대응 함수를 주석 계약으로 달아 뒀지만, **서버 규칙을 고치면 여기도 고쳐야** 미리보기가 거짓말을 하지 않는다. 공용 모듈 분리는 `docs/31` §4 로 남겼다.
+- 순번은 스트립 인덱스가 아니라 **`FlattenList` 토큰의 노드 참조 역인덱스**로 매긴다 — 제어 토큰이 끼면 "스텝 순서 ≠ 스트립 인덱스"가 되기 때문(`GetStrip` 신설).
+- **플랫폼 실측 2건**: 월드 텍스트는 `TextRendererComponent` 이고 UI 전용 `TextComponent` 를 월드에 붙이면 **무렌더 무오류**로 조용히 사라진다. `TextRendererComponent.FontSize` 는 UI 픽셀이 아니라 **월드 스케일**이라 46 이면 화면을 덮는다(정상은 한 자리 수).
+
+### 2026-08-25 — 판매·수레·닫기 UI 개편 묶음: 개편이 남긴 "이전 구조 기준" 잔재 3건
+
+`main` 직접 다수 커밋. 검수 `docs/16` §56·§60~§67 · `docs/29` B6·B25~B30. T-15 로 화면 구조가 바뀐 뒤 **옛 구조를 전제한 배선이 세 군데서 뒤늦게 드러났다.**
+
+- **§61** 판매 닫기가 `selectPanel` 을 켰다(판매가 HUD 직행이 된 뒤에도 "열었던 곳으로 복귀" 규칙 잔재) · **§62** `UIWindowManager` 의 버튼 dim 기준이 T-15 이전 구조라 판매 패널이 `[광산 선택]` 을 어둡게 했다 · **§63** `[판매]` 만 토글이 아니었다.
+- **교훈: 화면 구조를 개편하면 "그 화면을 참조하는 상태 소유자"까지 같이 옮긴다.** 셋 다 개편 당시엔 오류가 없었고 **오너 실조작에서만** 드러났다 — dim·복귀 경로는 로그로 증명되지 않는 축이다.
+- 그 밖에: 판매 설정 개편으로 **프로젝트 슬라이더 표준 확립 — 양 끝 ±(1단위) + 아래 직접 입력창**(이후 모든 슬라이더 동일, 최종값은 항상 입력창에서 읽는다) · 수레 창 헤더 폐지 + Before/After 행 · 닫기 버튼 9곳 X 아이콘화 · 희귀 판매 상태 줄 폐지.
+- **§60** 비표시 플레이어의 키보드 입력 차단(`PlayerControllerComponent Enable=false`) — §33 때는 이동이 카메라 팬 수단이었으나 §42 휠 팬·줌이 대체해 존재 이유가 사라졌다. 맵 이동(`PlayerComponent`)·카메라는 유지.
+
+### 2026-08-25 — 튜토리얼 2건: 판정은 행위와 같은 축에 둔다
+
+`main` 직접. 검수 `docs/16` §58·§59 · `docs/29` A10·A11. 둘 다 **오너의 docs/29 A 세션 실플레이 보고**로 발견됐다.
+
+- **§59 (가장 중요)**: 4단계 판정이 **계정 돌 증가(경제 하류 효과)** 에 얹혀 있어, 자동 판매·보호 상황에서 잔고가 안 늘면 하역해도 **영구 실패**했다. → `WorkerController.UnloadCount`(@Sync 하역 성공 누적) 신설, 클라 증가분·서버 절대값 모두 이 단일 축으로 교체. **교훈: 판정은 행위와 같은 축에 둔다 — 하류 효과(잔고)에 얹지 않는다.**
+- **§58**: 일꾼 2 보유 계정에서 다시 보기 1단계가 진행 불능(판정은 일꾼 1 전용인데 편집기 `[실행]` 은 선택 칩으로 간다). → 튜토리얼 시작 시 전 일꾼 캡처 후 **일꾼 2~5 디스폰 + 일꾼 1 강제 선택**, 종료 시 저장 셀·실행 지점에서 재개(`AutoRunWorker` 분리).
+- **두 결함 모두 자동 검증을 통과한 상태였다** — 오너 계정의 실제 데이터 조합(일꾼 2명·자동 판매 ON)에서만 나온다. 튜토리얼 판정은 **기본 계정이 아닌 실계정 조합**으로도 봐야 한다.
 
 ### 2026-08-25 — T-15 카드 일러스트 3종: 이름 없는 시각 자산은 슬롯 비율을 강제해 보고 고른다
 
