@@ -32,6 +32,7 @@
 | 계정·경제·광산 해금·맵 강화 | 서버 `@Component` + `@Logic` | `RootDesk/MyDesk/Account/AccountProfileService.mlua`, `AccountRecoveryController.mlua`, `EconomyService.mlua`, `ProgressionService.mlua` | **프로필 스키마 v8 적용 완료.** `tutorial`·`settings` 소비자와 T-06 `appearance` 무버전 확장까지 구현·병합됐다. 맵 강화·경제·복구·동시 접속 잠금 구현 완료 |
 | 외형·도감·무료 뽑기 (T-06) | 서버 원장 + 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/Account/AppearanceService.mlua`, `AppearanceController.mlua`, `ui/AppearanceUI.ui` | 30종 카탈로그, 도감 점수·수레 보너스, 제작·교환·천장·장착, 저장 실패 정확 롤백 구현 완료. Maker 자동 검증과 30종 실착 완료(`docs/16` §40). 오너 실클릭·최종 미감 판정만 남음 |
 | 실행 맵 | `.map` | `map/farm01.map`, `map/deep_mine.map`, `map/gem_mine.map` | 세 맵 모두 RectTile. Worker01 직접 배치, Worker02~05 런타임 생성. 시작점 분산·marker·맵 전환·F5 시각·사운드/BGM 구현 완료. 남은 관련 항목은 F9 성능·부하 문서다 |
+| 맵 뒷배경 (2026-08-26) | `.model` + 맵 배치 | `RootDesk/MyDesk/Models/MapObjects/MineBackground` (`model_id: minebackground`) · 세 맵의 `MineBackground` 엔티티 | 오너 제공 동굴 배경(RUID `8de388cb…`, 1672×941 16:9, 그룹 hyNDP)을 **타일맵 뒤**에 깔아 **타일 바깥 여백만** 채운다(오너 확정 범위 — 필드는 건드리지 않는다). ⚠️ **`SortingLayer` 가 최우선이라 `OrderInLayer`·`z` 로는 타일 뒤로 못 간다**: 타일맵이 `MapLayer0` 이므로 배경도 `MapLayer0` + `OrderInLayer=-1` 이어야 한다. 기본값 `Default` 로 두면 `order=-100`·`z=1100` 이어도 타일을 덮는다(실측). 맵별 배율은 타일 범위 실측 기반 `max((W+3.2)/16.72, (H+3.2)/9.41)` — farm01 1.40 / deep_mine 1.19 / gem_mine 1.62. ⚠ 최대 줌아웃(3배)에서는 배경 가장자리가 보인다(의도된 한계). 승인표 `docs/21` §11 |
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다**. **선택 링 오프셋 `RingOffsetY = -0.1`(일꾼 셀 기준 WorldY 0.4)은 2026-08-18 오너 Play 실측값** — 이전 -0.32 는 너무 아래였다. **채굴 먼지 오프셋은 광맥 종류별 오너 실측값**(2026-08-18): 셀 기준 일반 `(-0.75, -0.25)` · 특별 `(-0.75, -0.5)` — 먼지는 광맥의 왼쪽(일꾼 쪽) 아래. 옛 `HitFxOffsetY`+`ShardPivotOffset*` 2계층을 대체했고, pivot 쏠림이 실측값에 포함돼 있어 **자산·`ShardScale` 변경 시 오너와 재측정**. 특별 판정은 marker `MarkerKind=="special"`. ⚠ 오너가 준 원본 수치는 Position 직접 입력한 **맵 절대좌표**였다 — 좌표를 받으면 어느 필드를 읽었는지부터 확인 (docs/16 §32.6) |
 | F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. **RUID 7종은 2026-08-16 오너 청취로 확정**(docs/21 §3 승인 완료 — 2종 유지·5종 교체). ⚠️ `depot_unload` 만 1.52s 로 쿨다운 0.4s 를 넘어 겹칠 수 있다. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 `3512470b…`(`sound-604`, 87.3s) 확정**, 기본 볼륨은 **C220 확정 BGM 0.8 · 효과음 0.7**. `PlayBGM` 루프 실측 완료. `SetBgm/SfxVolume` 이 F10 §2.2 경계값(0=Pause, 복귀=Resume — 재`PlayBGM` 금지) 전담 |
@@ -74,6 +75,15 @@
 > **최근 구간(2026-08-22~)만 상세를 유지한다.** 그 이전은 마일스톤 요약으로 접었고,
 > 원본 세션 기록은 git 이력(커밋 메시지)·`docs/16`(검수 근거)·`docs/2x`(계약) 에 그대로 있다.
 > 압축 시점 2026-08-26 (878줄 → 이 파일). 압축 전 원본은 커밋 `75a5723` 이전 이력에서 볼 수 있다.
+
+### 2026-08-26 — 맵 뒷배경: SortingLayer 가 최우선이라 z 로는 뒤로 못 보낸다
+
+오너 제공 동굴 이미지를 세 광산의 **타일 바깥 여백**에 깔았다. 승인표 `docs/21` §11 · 검수 `docs/29` B33.
+
+- **배선**: 업로드(그룹 hyNDP, RUID `8de388cb…`) → `MapObjects/MineBackground` 모델 → 세 맵에 `placeModel`. 맵별 배율은 타일 범위를 **실측**해 `max((W+3.2)/16.72, (H+3.2)/9.41)` 로 계산(1.40 / 1.19 / 1.62) — 16:9 이미지와 정사각형에 가까운 필드의 비율 차를 흡수한다.
+- **핵심 함정**: 처음엔 기본값 `SortingLayer=Default` 로 `OrderInLayer=-100`·`z=1100` 을 줬는데 **타일맵을 덮었다.** 타일맵이 `MapLayer0` 이라 레이어 우선순위에서 진다 — **`SortingLayer` 가 1순위라 `OrderInLayer`·`z` 로는 절대 못 넘는다**(platform.md §6). 같은 레이어로 내리자마자 의도대로 뒤로 갔다.
+- **`.map` 3개를 건드렸지만 값 변경은 0**: 줄 변경 242/176 은 전부 `1.0`→`1` 표기 정규화(MapBuilder 직렬화)다. 함정 8 대로 **엔티티 단위 의미 대조**로 판정했다 — 추가 1건(MineBackground)뿐, 삭제 0, 값 변경 0.
+- **알려진 한계**: 최대 줌아웃(3배, 시야 38.4×21.6)에서는 배경 가장자리가 보인다. 덮으려면 2.3배 확대가 필요해 원본 1672px 이 흐려지고 장식 액자 구도가 깨져, 기본 줌 기준으로 맞췄다.
 
 ### 2026-08-26 — T-17 블록 드래그 재배치 (PR #25)
 

@@ -3497,6 +3497,72 @@
           ],
           "@version": 1
         }
+      },
+      {
+        "id": "533ce993-3c3e-450f-90d8-01334c22281d",
+        "path": "/maps/gem_mine/MineBackground",
+        "componentNames": "MOD.Core.TransformComponent,MOD.Core.SpriteRendererComponent",
+        "jsonString": {
+          "name": "MineBackground",
+          "path": "/maps/gem_mine/MineBackground",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 22,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minebackground",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 7,
+                "y": -1,
+                "z": 1100
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1.62,
+                "y": 1.62,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "SpriteRUID": "8de388cb6d594cedaaa45397b9af6f3d",
+              "Color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "DrawMode": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "PlayRate": 1,
+              "OrderInLayer": -1,
+              "StartFrameIndex": 0,
+              "EndFrameIndex": 2147483647,
+              "Enable": true,
+              "SortingLayer": "MapLayer0"
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minebackground",
+            "sub_entity_id": null,
+            "root_entity_id": "533ce993-3c3e-450f-90d8-01334c22281d",
+            "replaced_model_id": null
+          }
+        }
       }
     ]
   }
