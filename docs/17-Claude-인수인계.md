@@ -139,11 +139,14 @@
 
 | 순위 | 할 일 | 성격 | 비고 |
 |:-:|---|---|---|
-| **1** | **T-10 `Farm/` → `Mine/` 경로 이관** | 기술부채 | ⚠ **부채가 커지는 중** — T-16 신규 2파일(`PathPreviewController`·`PathPreviewSimulator`)이 legacy `Farm/` 에 들어갔다. 현재 `Farm/` 6개 = 그 2개 + `BlockProgramController` · `ProgramLibraryController` + 미사용 레거시 `DroneController` · `FarmTickSimulator`. **오너 검수와 파일이 겹치므로 검수 완료 후 착수** |
-| 2 | **미사용 레거시 2파일 제거** — `Farm/DroneController.mlua` · `Farm/FarmTickSimulator.mlua` | 기술부채 | D0 리네임 대상인데 아직 남아 있다. 참조 0건 확인 후 삭제 (T-10 과 묶어도 됨) |
-| 3 | **병합 완료 브랜치 정리** | 위생 | 로컬 4개(`260820JT`·`codex/feat/t06-appearance`·`feat/t12a-bgm-wiring`·`fix/tutorial-replay-and-log-gate`) + 원격 다수 |
-| 4 | **`Archive/As-built.md` 압축** | 위생 | 838줄 / 158KB — 한 번의 Read 로 안 들어온다. **세션 재개가 이 파일에 의존하므로** 완료 마일스톤 기록을 요약으로 접을 필요가 있다 |
-| 5 | **`docs/28` §5 U4 — 실행 중 스텝 강조** | 기능 | `docs/29` 의도적 제외 항목. T-16 이 "실행 전"을, U4 가 "실행 중"을 분담하는 상보 관계 |
+| **1** | **"조용한 실패를 알린다" 묶음 3건** — `docs/23` §7-5 자동화 틱 실패 HUD 신호 · `docs/22` §6-3 프로그램 복사 위치 경고 · §6-4 일꾼 구매 효과 제한 알림 | 기능 (**유일한 미구현 기능 잔여**) | 셋 다 같은 축이라 함께 설계한다. ⚠ **착수 전 오너 판단 1회 필요** — T-16 경로 미리보기가 "실행 전"을 이미 그림으로 대신하므로, 남은 몫은 **실행 *중*** 의 조용한 실패이고 경고를 어디까지 얹을지가 결정 사항이다. §6-3 은 근본 원인이 T-11 로 사라져 **필요 여부부터** 판단 |
+| 2 | **미사용 레거시 2파일 제거** — `Farm/DroneController.mlua` · `Farm/FarmTickSimulator.mlua` | 기술부채 | D0 리네임 대상인데 아직 남아 있다. 참조 0건 확인 후 삭제 (3 과 묶어도 됨) |
+| 3 | **T-10 `Farm/` → `Mine/` 경로 이관** | 기술부채 | ⚠ **부채가 커지는 중** — T-16 신규 2파일(`PathPreviewController`·`PathPreviewSimulator`)이 legacy `Farm/` 에 들어갔다. 현재 `Farm/` 6개 = 그 2개 + `BlockProgramController` · `ProgramLibraryController` + 위 레거시 2개. **`BlockProgramController` 가 `docs/29` B1·B2·B19~B22 검수 대상이라 검수 완료 후 착수** |
+| 4 | **`docs/28` §5 U4 — 실행 중 스텝 강조** | 기능 | `docs/29` 의도적 제외 항목. T-16 이 "실행 전"을, U4 가 "실행 중"을 분담하는 상보 관계 — 위 1번과 같이 보면 설계가 겹친다 |
+| 5 | **post-MVP** — `docs/30` 곡괭이 강화 · T-09 모바일 | 기능 | 곡괭이 강화는 밸런스 재계산(`docs/22`)과 프로필 스키마 확장(F7-A)을 동반한다. **MVP 판정 후** |
+
+> **완료됨**: `Archive/As-built.md` 압축(2026-08-26 — 878줄/158KB → 208줄/44KB, 한 번의 Read 로 들어온다).
+> **보류(오너 결정)**: 병합 완료 브랜치 정리 — 나중에 필요할 수 있어 **남겨 두기로 했다**(2026-08-26).
 
 > 아래 T-07 착수 지침 이하는 완료 시점의 이력이다.
 
