@@ -52,7 +52,8 @@
               "DepotDefinitionsJson": "[{\"id\":\"depot-main\",\"cellX\":0,\"cellY\":0,\"markerId\":\"depot-main-marker\"}]",
               "VeinDefinitionsJson": "[{\"id\":\"vein-stone-01\",\"cellX\":1,\"cellY\":0,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":5,\"markerId\":\"vein-stone-01-marker\"},{\"id\":\"vein-stone-02\",\"cellX\":3,\"cellY\":1,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":8,\"markerId\":\"vein-stone-02-marker\"},{\"id\":\"vein-stone-03\",\"cellX\":4,\"cellY\":-2,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":8,\"markerId\":\"vein-stone-03-marker\"},{\"id\":\"vein-stone-04\",\"cellX\":2,\"cellY\":-3,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":8,\"markerId\":\"vein-stone-04-marker\"},{\"id\":\"vein-stone-05\",\"cellX\":-2,\"cellY\":-4,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":6,\"markerId\":\"vein-stone-05-marker\"},{\"id\":\"vein-stone-06\",\"cellX\":-3,\"cellY\":2,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":15,\"markerId\":\"vein-stone-06-marker\"}]",
               "WorkerStartsJson": "[{\"workerIndex\":1,\"cellX\":0,\"cellY\":0},{\"workerIndex\":2,\"cellX\":2,\"cellY\":1},{\"workerIndex\":3,\"cellX\":3,\"cellY\":-2},{\"workerIndex\":4,\"cellX\":1,\"cellY\":-3},{\"workerIndex\":5,\"cellX\":-3,\"cellY\":-4}]",
-              "SpecialVeinCandidatesJson": "[{\"id\":\"special-slot-01\",\"cellX\":-1,\"cellY\":1,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-01-marker\"},{\"id\":\"special-slot-02\",\"cellX\":4,\"cellY\":0,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-02-marker\"},{\"id\":\"special-slot-03\",\"cellX\":0,\"cellY\":-5,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-03-marker\"},{\"id\":\"special-slot-04\",\"cellX\":2,\"cellY\":3,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-04-marker\"}]"
+              "SpecialVeinCandidatesJson": "[{\"id\":\"special-slot-01\",\"cellX\":-1,\"cellY\":1,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-01-marker\"},{\"id\":\"special-slot-02\",\"cellX\":4,\"cellY\":0,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-02-marker\"},{\"id\":\"special-slot-03\",\"cellX\":0,\"cellY\":-5,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-03-marker\"},{\"id\":\"special-slot-04\",\"cellX\":2,\"cellY\":3,\"oreType\":\"stone\",\"recoverTicks\":5,\"markerId\":\"special-slot-04-marker\"}]",
+              "FieldLevelDefinitionsJson": "[{\"level\":2,\"minX\":-5,\"maxX\":6,\"minY\":-7,\"maxY\":4,\"additionalVeins\":[{\"id\":\"vein-stone-07\",\"cellX\":-5,\"cellY\":-2,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":20,\"markerId\":\"vein-stone-07-marker\"},{\"id\":\"vein-stone-08\",\"cellX\":6,\"cellY\":3,\"oreType\":\"stone\",\"initialStage\":3,\"recoverTicks\":20,\"markerId\":\"vein-stone-08-marker\"}],\"boundaryRockCells\":[]}]"
             },
             {
               "@type": "script.MineNoticeController",
@@ -1859,10 +1860,22 @@
           "displayOrder": 15,
           "pathConstraints": "///",
           "revision": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minebackground",
+            "sub_entity_id": null,
+            "root_entity_id": "59226665-3e70-46ad-b4be-a8b1efd514d2",
+            "replaced_model_id": null
+          },
           "modelId": "minebackground",
           "@components": [
             {
               "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
               "Position": {
                 "x": 1,
                 "y": -1,
@@ -1879,11 +1892,79 @@
                 "y": 1.4,
                 "z": 1
               },
+              "ZRotation": 0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.SpriteRendererComponent",
+              "ActionSheet": {},
+              "DrawMode": 0,
+              "EndFrameIndex": 2147483647,
+              "FlipX": false,
+              "FlipY": false,
+              "OrderInLayer": -1,
+              "PlayRate": 1,
+              "RenderSetting": 0,
+              "SortingLayer": "MapLayer0",
               "SpriteRUID": "8de388cb6d594cedaaa45397b9af6f3d",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "Enable": true
+            }
+          ],
+          "@version": 1
+        }
+      },
+      {
+        "id": "11047733-c914-4d80-83db-d93428da83d7",
+        "path": "/maps/farm01/VeinMarker07",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
+        "jsonString": {
+          "name": "VeinMarker07",
+          "path": "/maps/farm01/VeinMarker07",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 16,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": -5,
+                "y": -2,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-stone-07-marker",
+              "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
               "Color": {
                 "r": 1,
                 "g": 1,
@@ -1894,19 +1975,97 @@
               "FlipX": false,
               "FlipY": false,
               "PlayRate": 1,
-              "OrderInLayer": -1,
+              "OrderInLayer": 1,
               "StartFrameIndex": 0,
               "EndFrameIndex": 2147483647,
-              "Enable": true,
-              "SortingLayer": "MapLayer0"
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
             }
           ],
           "@version": 1,
           "origin": {
             "type": "Model",
-            "entry_id": "minebackground",
+            "entry_id": "minemarker",
             "sub_entity_id": null,
-            "root_entity_id": "59226665-3e70-46ad-b4be-a8b1efd514d2",
+            "root_entity_id": "11047733-c914-4d80-83db-d93428da83d7",
+            "replaced_model_id": null
+          }
+        }
+      },
+      {
+        "id": "505b40ba-acdd-471f-b397-b16e9fbb2bf2",
+        "path": "/maps/farm01/VeinMarker08",
+        "componentNames": "MOD.Core.TransformComponent,script.VeinMarker,MOD.Core.SpriteRendererComponent,script.VeinMarkerController",
+        "jsonString": {
+          "name": "VeinMarker08",
+          "path": "/maps/farm01/VeinMarker08",
+          "nameEditable": true,
+          "enable": true,
+          "visible": true,
+          "localize": false,
+          "displayOrder": 17,
+          "pathConstraints": "///",
+          "revision": 1,
+          "modelId": "minemarker",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Position": {
+                "x": 6,
+                "y": 3,
+                "z": 0
+              },
+              "QuaternionRotation": {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "w": 1
+              },
+              "Scale": {
+                "x": 1,
+                "y": 1,
+                "z": 1
+              },
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarker",
+              "Enable": true,
+              "MarkerId": "vein-stone-08-marker",
+              "MarkerKind": "normal"
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "SpriteRUID": "0f44530d655f4e33bfbe43423450ee9f",
+              "Color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              },
+              "DrawMode": 0,
+              "FlipX": false,
+              "FlipY": false,
+              "PlayRate": 1,
+              "OrderInLayer": 1,
+              "StartFrameIndex": 0,
+              "EndFrameIndex": 2147483647,
+              "Enable": true
+            },
+            {
+              "@type": "script.VeinMarkerController",
+              "Enable": true
+            }
+          ],
+          "@version": 1,
+          "origin": {
+            "type": "Model",
+            "entry_id": "minemarker",
+            "sub_entity_id": null,
+            "root_entity_id": "505b40ba-acdd-471f-b397-b16e9fbb2bf2",
             "replaced_model_id": null
           }
         }
