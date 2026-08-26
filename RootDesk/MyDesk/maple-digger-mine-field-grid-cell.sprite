@@ -1,0 +1,23 @@
+{
+  "Id": "",
+  "GameId": "",
+  "EntryKey": "sprite://4c00158c8d6c454f8e6c5d7c5c09dd23",
+  "ContentType": "x-mod/sprite",
+  "Content": "",
+  "Usage": 0,
+  "UsePublish": 1,
+  "UseService": 0,
+  "CoreVersion": "26.7.0.0",
+  "StudioVersion": "0.1.0.0",
+  "DynamicLoading": 0,
+  "ContentProto": {
+    "Use": "Json",
+    "Json": {
+      "upload_keyname": "6e/dd/6edd2f7d1b4545119739e3f495e55774/sprite/4c00158c8d6c454f8e6c5d7c5c09dd23/639233311668187895",
+      "upload_hash": "407893244581E56AE453284B8BEF606A9784C230FABEEB97673B186A0F3D68DF",
+      "name": "maple-digger-mine-field-grid-cell",
+      "resource_guid": "4c00158c8d6c454f8e6c5d7c5c09dd23",
+      "resource_version": "6a8ea95eb9028dbcc0793c05"
+    }
+  }
+}
