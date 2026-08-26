@@ -305,12 +305,68 @@ method void MoveDragGhost(Vector2 touchPoint)
 end
 
 @ExecSpace("ClientOnly")
+method boolean IsPointPastCellCenter(integer cellIndex, Vector2 screenPoint)
+    -- T-18d: 드롭 경계는 칸의 **앞/뒤 두 자리**다. 커서가 오른쪽 절반이면 뒤에 넣는다.
+    -- 항상 "그 칸 앞"으로만 넣으면 ① 자기 바로 뒤 칸에 놓을 때 제자리가 되고
+    -- ② **줄 맨 끝 자리에는 아예 놓을 수 없다** (2026-08-26 오너 보고).
+    local cell = self._T.cells[cellIndex]
+    if cell == nil or cell.UITransformComponent == nil then return false end
+    local corners = cell.UITransformComponent:GetWorldCorners()
+    if corners == nil or corners[1] == nil or corners[3] == nil then return false end
+    local low = self:WindowToCanvas(corners[1])
+    local high = self:WindowToCanvas(corners[3])
+    local canvasPoint = _UILogic:ScreenToUIPosition(screenPoint)
+    return canvasPoint.x > (low.x + high.x) / 2
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsNoOpBoundary(integer srcIndex, integer dstIndex, boolean insertAfter)
+    -- 자기 **바로 앞/뒤** 경계에 놓는 것은 순서가 그대로다. 그런데도 안내선을
+    -- 띄우면 "여기로 옮겨진다"고 읽히는데 실제로는 아무 일도 없어 고장으로 보인다
+    -- — 오너 보고의 "판정선 위치로 이동하지 않는" 경우가 정확히 이것이다.
+    if srcIndex == dstIndex then return true end
+    local src = self._T.strip[srcIndex]
+    local dst = self._T.strip[dstIndex]
+    if src == nil or dst == nil or src.list == nil or src.list ~= dst.list then return false end
+    local si = 0
+    local di = 0
+    for i = 1, #src.list do
+        if src.list[i] == src.node then si = i end
+        if src.list[i] == dst.node then di = i end
+    end
+    if si == 0 or di == 0 then return false end
+    if not insertAfter and di == si + 1 then return true end
+    if insertAfter and di == si - 1 then return true end
+    return false
+end
+
+@ExecSpace("ClientOnly")
+method boolean IsControlDrag()
+    -- 제어 손잡이(반복/IF/])는 "경계 칸" 단위라 앞/뒤 절반 구분이 없다.
+    local token = self._T.strip[self._T.dragSrc]
+    if token == nil or token.node == nil then return false end
+    return token.node.type == "repeat" or token.node.type == "if"
+end
+
+@ExecSpace("ClientOnly")
 method void UpdateDropLine(Vector2 screenPoint)
-    -- T-17c: 커서가 올라간 칸의 왼쪽 경계에 삽입 안내선을 세운다. 칸 밖이거나
-    -- 원본 칸 위(드롭=취소·제자리)면 숨긴다. 좌표는 고스트와 같은 캔버스 환산.
+    -- T-17c: 삽입 안내선. T-18d 개정 — 선을 세우는 자리와 실제 삽입 자리가
+    -- 반드시 같아야 한다(앞/뒤 경계 동일 판정 + 제자리 경계는 숨김).
     if self.dropLine == nil then return end
     local target = self:CellIndexAtPoint(screenPoint)
-    if target == 0 or target == self._T.dragSrc then
+    if target == 0 then
+        self.dropLine.Enable = false
+        return
+    end
+    local isControl = self:IsControlDrag()
+    local insertAfter = false
+    if not isControl then
+        insertAfter = self:IsPointPastCellCenter(target, screenPoint)
+        if self:IsNoOpBoundary(self._T.dragSrc, target, insertAfter) then
+            self.dropLine.Enable = false
+            return
+        end
+    elseif target == self._T.dragSrc then
         self.dropLine.Enable = false
         return
     end
@@ -325,11 +381,18 @@ method void UpdateDropLine(Vector2 screenPoint)
         self.dropLine.Enable = false
         return
     end
-    -- 왼쪽 경계 중앙(실창 픽셀) → 루트 코너 정규화 환산. 칸 간격 6px 의 한가운데(-3).
-    local edge = self:WindowToCanvas(Vector2(corners[1].x, (corners[1].y + corners[2].y) / 2))
+    -- 경계 중앙(실창 픽셀) → 루트 코너 정규화 환산. 칸 간격 6px 의 한가운데.
+    -- 뒤에 넣을 때는 **오른쪽** 경계에 세운다 — 안 그러면 선과 결과가 어긋난다.
+    local edgeX = corners[1].x
+    local gap = -3
+    if insertAfter and corners[3] ~= nil then
+        edgeX = corners[3].x
+        gap = 3
+    end
+    local edge = self:WindowToCanvas(Vector2(edgeX, (corners[1].y + corners[2].y) / 2))
     local transform = self.dropLine.UITransformComponent
     if transform == nil then return end
-    transform.anchoredPosition = Vector2(edge.x - 3, edge.y)
+    transform.anchoredPosition = Vector2(edge.x + gap, edge.y)
     self.dropLine.Enable = true
 end
 
@@ -349,7 +412,13 @@ method void OnCellTouchUp(integer cellIndex, UITouchUpEvent touchEvent)
     self:HideDragGhost()
     if src == nil or not self._T.dragMoved then return end
     local dst = self:CellIndexAtPoint(touchEvent.TouchPoint)
-    self:MoveStripToken(src, dst)
+    -- T-18d: 안내선과 **같은 함수**로 앞/뒤를 정한다 — 두 곳이 각자 판정하면
+    -- 선이 가리킨 자리와 실제 삽입 자리가 갈린다.
+    local insertAfter = false
+    if dst > 0 and not self:IsControlDrag() then
+        insertAfter = self:IsPointPastCellCenter(dst, touchEvent.TouchPoint)
+    end
+    self:MoveStripToken(src, dst, insertAfter)
 end
 
 @ExecSpace("ClientOnly")
@@ -404,7 +473,7 @@ method integer CellIndexAtPoint(Vector2 touchPoint)
 end
 
 @ExecSpace("ClientOnly")
-method void MoveStripToken(integer srcIndex, integer dstIndex)
+method void MoveStripToken(integer srcIndex, integer dstIndex, boolean insertAfter)
     -- T-17 이동 규칙 (2026-08-25 오너 결정 — 단일 블록만):
     --   대상이 일반 칸 = 그 블록 앞에 삽입 · 제어 시작 칸 = 그 제어 블록 앞 ·
     --   `]` 칸 = 그 제어 블록 몸통의 맨 뒤 · 칸 밖/접힘 칸 = 취소.
@@ -427,6 +496,12 @@ method void MoveStripToken(integer srcIndex, integer dstIndex)
         self:ResizeControlRange(srcToken, dstToken)
         return
     end
+    -- T-18d: 자기 바로 앞/뒤 경계는 순서가 그대로다. 옮겼다고 알리면 거짓말이 된다.
+    if self:IsNoOpBoundary(srcIndex, dstIndex, insertAfter) then
+        self:SetFeedback("'" .. srcToken.label .. "' 는 이미 그 자리입니다.")
+        self:RefreshDisplay()
+        return
+    end
     -- 원본 노드를 제 리스트에서 뺀다 (토큰이 원본 노드·리스트 참조를 든다 — T-14).
     local removed = false
     for i = 1, #srcToken.list do
@@ -447,7 +522,11 @@ method void MoveStripToken(integer srcIndex, integer dstIndex)
         local inserted = false
         for i = 1, #dstToken.list do
             if dstToken.list[i] == dstToken.node then
-                table.insert(dstToken.list, i, srcToken.node)
+                -- T-18d: 커서가 칸의 오른쪽 절반이면 **그 칸 뒤**에 넣는다.
+                -- 안내선이 오른쪽 경계에 섰을 때와 같은 자리여야 한다.
+                local at = i
+                if insertAfter then at = i + 1 end
+                table.insert(dstToken.list, at, srcToken.node)
                 inserted = true
                 break
             end
