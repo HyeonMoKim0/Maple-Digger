@@ -19,3 +19,9 @@ build/
 
 # skill-local npm deps (msw-painter render)
 .claude/skills/msw-painter/scripts/node_modules/
+
+# 에이전트 도구 런타임 상태 (logs·state) — .omc/ 와 같은 성격이다.
+.omx/
+
+# 작업 중 캡처·SVG 스크래치. 결과물은 docs/ 나 RUID 로 남고 원본은 재생성된다.
+.tmp/
