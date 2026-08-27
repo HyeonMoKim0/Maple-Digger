@@ -385,6 +385,9 @@ method void OnInventoryClicked()
     if self.inventoryPanel.Enable and _AppearanceController ~= nil then
         _AppearanceController:ClosePanel()
     end
+    if self.inventoryPanel.Enable and _ControlsPanelController ~= nil then
+        _ControlsPanelController:ClosePanel()
+    end
     self:RefreshUI(true)
 end
 

@@ -199,6 +199,7 @@ method void OnOpenClicked()
     if _MineInventoryController ~= nil then _MineInventoryController:OnCloseClicked() end
     if _SettingsPanelController ~= nil then _SettingsPanelController:ClosePanel() end
     if _ProgramLibraryController ~= nil then _ProgramLibraryController:OnCloseClicked() end
+    if _ControlsPanelController ~= nil then _ControlsPanelController:ClosePanel() end
     local profile = self:GetProfile()
     self._T.messageAtOpen = profile ~= nil and profile.LastTransactionMessage or ""
     self._T.lastState = ""

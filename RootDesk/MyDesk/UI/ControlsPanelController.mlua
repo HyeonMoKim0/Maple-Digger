@@ -1,0 +1,80 @@
+-- 조작법 안내 창 (2026-08-27 오너 요청). 표시 전용이라 상태를 갖지 않는다 —
+-- 여닫기와 모달 배타만 담당한다.
+--
+-- ⚠ 창의 문구는 **실제 배선을 설명한다**. 근거는 전부 코드다:
+--   ESC 닫기        → UIWindowManager.OnKeyDown (KeyboardKey.Escape)
+--   마우스 왼쪽      → ButtonComponent / UITouchReceiveComponent 기본 입력
+--   휠 버튼 드래그    → CameraControlLogic.OnKeyDown (KeyboardKey.Mouse2) + 팬 추적
+--   휠 굴리기        → CameraControlLogic.OnMouseScroll (MouseScrollEvent) 줌
+-- 조작을 바꾸면 `ui/ControlsUI.ui` 의 Row1~Row4 텍스트도 함께 고쳐야 한다.
+-- 안내가 틀리는 것은 조용한 실패다 — 플레이어는 자기가 잘못한 줄 안다.
+@Logic
+script ControlsPanelController extends Logic
+
+-- UIBuilder 가 채운 ui/ControlsUI.ui 의 엔티티 UUID.
+property Entity controlsPanel = "01c5e5c7-4f83-4274-87e8-72354467f9af"
+property ButtonComponent btnControlsOpen = "0a1bfd3c-7007-428d-a747-19ac3ecf1c84"
+property ButtonComponent btnControlsClose = "9f462828-731b-4fd3-b459-4206034d3147"
+
+@ExecSpace("ClientOnly")
+method void OnBeginPlay()
+    -- 닫힌 상태로 시작하고 여닫기 버튼을 연결한다.
+    self._T.handlers = {}
+    if self.controlsPanel ~= nil then self.controlsPanel.Enable = false end
+    self:ConnectButton("open", self.btnControlsOpen, self.OnOpenClicked)
+    self:ConnectButton("close", self.btnControlsClose, self.OnCloseClicked)
+    log("[ControlsPanel] ready")
+end
+
+@ExecSpace("ClientOnly")
+method void ConnectButton(string key, ButtonComponent button, any callback)
+    -- SettingsPanelController 와 같은 연결 패턴 — 핸들러는 OnEndPlay 에서 해제한다.
+    if button == nil then return end
+    self._T.handlers[key] = button.Entity:ConnectEvent(ButtonClickEvent, callback)
+end
+
+@ExecSpace("ClientOnly")
+method void OnOpenClicked()
+    -- 재클릭이면 닫는다 (다른 상단 버튼과 같은 토글 규칙).
+    -- 중앙 모달은 한 번에 하나다 (docs/08 §6.1) — 열기 전에 나머지를 모두 닫는다.
+    if self.controlsPanel == nil then return end
+    if self.controlsPanel.Enable then
+        self.controlsPanel.Enable = false
+        log("[ControlsPanel] closed by toggle")
+        return
+    end
+    if _MineSelectController ~= nil then _MineSelectController:CloseAllPanelsForTutorial() end
+    if _MineInventoryController ~= nil then _MineInventoryController:OnCloseClicked() end
+    if _SettingsPanelController ~= nil then _SettingsPanelController:ClosePanel() end
+    if _AppearanceController ~= nil then _AppearanceController:ClosePanel() end
+    if _ProgramLibraryController ~= nil then _ProgramLibraryController:OnCloseClicked() end
+    self.controlsPanel.Enable = true
+    log("[ControlsPanel] opened")
+end
+
+@ExecSpace("ClientOnly")
+method void OnCloseClicked()
+    -- 창의 X 버튼.
+    if self.controlsPanel ~= nil then self.controlsPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void ClosePanel()
+    -- 다른 중앙 모달이 열릴 때 호출된다 (모달 배타 — docs/08 §6.1).
+    if self.controlsPanel ~= nil then self.controlsPanel.Enable = false end
+end
+
+@ExecSpace("ClientOnly")
+method void OnEndPlay()
+    -- 연결한 이벤트 핸들러를 전부 해제한다.
+    if self._T.handlers == nil then return end
+    if self.btnControlsOpen ~= nil and self._T.handlers["open"] ~= nil then
+        self.btnControlsOpen.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers["open"])
+    end
+    if self.btnControlsClose ~= nil and self._T.handlers["close"] ~= nil then
+        self.btnControlsClose.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers["close"])
+    end
+    self._T.handlers = {}
+end
+
+end

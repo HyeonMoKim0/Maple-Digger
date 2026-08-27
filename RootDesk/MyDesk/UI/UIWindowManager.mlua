@@ -20,6 +20,7 @@ property Entity appearancePanel = "ea31af8c-0e68-433b-b40b-c7d55eed3b62"
 property Entity libraryPanel = "631cb6db-5789-43c2-88dc-17ad124e90e9"
 property Entity inventoryPanel = "3434f74e-d21b-4493-a1f7-9406a7796a4c"
 property Entity programPanel = "54c94cbd-758e-4d66-a3fc-2f885989564a"
+property Entity controlsPanel = "01c5e5c7-4f83-4274-87e8-72354467f9af"
 
 -- 여는 버튼 스프라이트 (dim 대상)
 property SpriteGUIRendererComponent btnOpenSprite = "94c58c02-b4ac-4901-b9b7-0f02e69568c9"
@@ -31,6 +32,8 @@ property SpriteGUIRendererComponent btnInventorySprite = "7e830fdf-624e-4d91-83d
 -- 2026-08-25 (docs/16 §62): HUD [판매] 버튼. T-15 로 판매가 HUD 직행이 된 뒤에도
 -- 판매·희귀 패널 열림이 [광산 선택] 버튼을 어둡게 하고 [판매] 는 배선이 없었다.
 property SpriteGUIRendererComponent btnSellHudSprite = "bab28105-8228-42f6-9436-717874fa9af1"
+-- 2026-08-27: 상단 띠 6번째 [조작법] 버튼.
+property SpriteGUIRendererComponent btnControlsSprite = "0a1bfd3c-7007-428d-a747-19ac3ecf1c84"
 
 property number DimFactor = 0.55
 property any keyHandler = nil
@@ -85,6 +88,7 @@ method void OnUpdate(number delta)
     self:ApplyShade("library", self.btnLibrarySprite, self:IsOpen(self.libraryPanel))
     self:ApplyShade("inventory", self.btnInventorySprite, self:IsOpen(self.inventoryPanel))
     self:ApplyShade("toggle", self.btnToggleSprite, self:IsOpen(self.programPanel))
+    self:ApplyShade("controls", self.btnControlsSprite, self:IsOpen(self.controlsPanel))
 end
 
 @ExecSpace("ClientOnly")
@@ -123,6 +127,11 @@ method void OnKeyDown(KeyDownEvent event)
     elseif self:IsOpen(self.libraryPanel) then
         self.libraryPanel.Enable = false
         log("[UIWindowManager] esc close library")
+    elseif self:IsOpen(self.controlsPanel) then
+        -- 조작법 창은 "ESC 로 창을 닫는다"고 스스로 안내한다 — 그 안내가
+        -- 자기 자신에게도 맞아야 하므로 이 분기가 없으면 곧바로 거짓말이 된다.
+        self.controlsPanel.Enable = false
+        log("[UIWindowManager] esc close controls")
     end
 end
 

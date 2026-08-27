@@ -937,6 +937,7 @@ method void OnOpenClicked()
     -- T-12-B: 중앙 모달은 한 번에 하나 — 설정 모달이 열려 있으면 닫는다 (F5 §6.1).
     if _SettingsPanelController ~= nil then _SettingsPanelController:ClosePanel() end
     if _AppearanceController ~= nil then _AppearanceController:ClosePanel() end
+    if _ControlsPanelController ~= nil then _ControlsPanelController:ClosePanel() end
     if self.selectPanel ~= nil then self.selectPanel.Enable = true end
     if self.salePanel ~= nil then self.salePanel.Enable = false end
     if self.rarePanel ~= nil then self.rarePanel.Enable = false end
@@ -967,6 +968,7 @@ method void OnSellClicked()
     end
     -- One centre modal at a time (docs/08 §6.1). Leaving selectPanel enabled
     -- stacked two same-sized panels and made both unreadable (docs/16 §13 D-8).
+    if _ControlsPanelController ~= nil then _ControlsPanelController:ClosePanel() end
     if self.selectPanel ~= nil then self.selectPanel.Enable = false end
     if self.salePanel ~= nil then self.salePanel.Enable = true end
     if self.cartPanel ~= nil then self.cartPanel.Enable = false end

@@ -207,6 +207,7 @@ method void OnOpenClicked()
         return
     end
     if _AppearanceController ~= nil then _AppearanceController:ClosePanel() end
+    if _ControlsPanelController ~= nil then _ControlsPanelController:ClosePanel() end
     local profile = self:GetProfile()
     if profile ~= nil then self._T.msgAtOpen = profile.LastTransactionMessage end
     self._T.lastState = ""
