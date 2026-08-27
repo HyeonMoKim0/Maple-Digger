@@ -30,9 +30,9 @@ property TextGUIRendererComponent tokenText = "486782dd-8399-4fc2-8805-44530f220
 property TextGUIRendererComponent stoneText = "64d3742f-5cae-4b37-8691-0d52a7eb7256"
 property TextGUIRendererComponent ironText = "6cf92c40-70fd-4361-b48e-0a6cee098605"
 property TextGUIRendererComponent goldOreText = "9b055aae-d61f-45a0-a9df-1f2e3c1ddfaf"
-property TextGUIRendererComponent beginnerText = "fc24d4e9-609e-4f60-a132-819ea831b3ea"
-property TextGUIRendererComponent deepText = "1117b212-de2b-4454-b1c0-38a4a54b7b25"
-property TextGUIRendererComponent gemText = "09c0cab1-2448-4452-9f7a-278c59474da6"
+-- 카드 이름 텍스트(BeginnerCol/DeepCol/GemCol 의 NameText)와 그 바인딩
+-- beginnerText/deepText/gemText 는 2026-08-27 오너가 제거했다 — 아래 입장
+-- 버튼이 이미 광산 이름을 달고 있어 같은 문구가 카드에 두 번 나왔다.
 property TextGUIRendererComponent feedbackText = "615d1852-39b4-4c8b-bf71-2dcd86ea3144"
 -- T-15 개편: 상단 탭 2개([광산]/[강화·고용])와 탭 컨테이너. 탭 전환은 컨테이너
 -- Enable 토글이 전부이고, 열림/닫힘 상태는 여전히 selectPanel 이 소유한다.
@@ -263,12 +263,10 @@ method void RefreshUI(boolean force)
     if self.stoneText ~= nil then self.stoneText.Text = tostring(profile.Stone) end
     if self.ironText ~= nil then self.ironText.Text = tostring(profile.Iron) end
     if self.goldOreText ~= nil then self.goldOreText.Text = tostring(profile.GoldOre) end
-    -- T-15 개정 (2026-08-22 오너): 카드에는 광산 이름만, 일러스트 위에 표시한다.
-    -- 해금·강화 비용은 카드에 상시 표기하지 않는다 — 강화 비용은 [광산 강화]
-    -- 확인 팝업이, 해금 부족분은 서버 거절 문구(DescribeShortfall)가 알려 준다.
-    if self.beginnerText ~= nil then self.beginnerText.Text = "초급 광산" end
-    if self.deepText ~= nil then self.deepText.Text = "깊은 광산" end
-    if self.gemText ~= nil then self.gemText.Text = "보석 광산" end
+    -- 카드 이름은 입장 버튼이 달고 있다 (2026-08-27 오너 — 별도 NameText 를
+    -- 두니 같은 문구가 두 번 나와 제거했다). 해금·강화 비용도 카드에 상시
+    -- 표기하지 않는다 — 강화 비용은 [광산 강화] 확인 팝업이, 해금 부족분은
+    -- 서버 거절 문구(DescribeShortfall)가 알려 준다.
     self:RefreshMineNodes(profile)
     if self.feedbackText ~= nil then
         -- 실패·거절류는 전역 TransactionNoticeLogic 이 팝업으로 안내한다 —
