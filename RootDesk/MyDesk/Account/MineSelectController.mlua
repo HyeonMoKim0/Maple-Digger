@@ -775,6 +775,16 @@ method integer GetSelectedEffectiveProtection(AccountProfileService profile)
 end
 
 @ExecSpace("ClientOnly")
+method integer GetSellableAmount(AccountProfileService profile)
+    -- 지금 [선택 수량 판매]가 통과할 수 있는 최대 수량. 판정 기준은 서버
+    -- `EconomyService.SellOre` 와 같다 — 보호분 판매가 꺼져 있으면 보호 수량을 뺀다.
+    -- 화면의 "지금 팔 수 있는 수량"(RefreshSaleSummary)과도 같은 값이다.
+    local balance = self:GetSelectedBalance(profile)
+    if self._T.includeProtected == true then return balance end
+    return math.max(0, balance - self:GetSelectedEffectiveProtection(profile))
+end
+
+@ExecSpace("ClientOnly")
 method void ApplyOreButtonSkins()
     -- 선택된 광물 버튼을 어둡게 표시 — "선택: X" 텍스트를 대체한다
     -- (2026-08-25 오너 요청, §52-11 워커 탭과 같은 규칙).
@@ -860,7 +870,11 @@ method void RefreshSaleFeedback(AccountProfileService profile)
         self.saleFeedbackText.Text = self._T.localSaleHint
         return
     end
-    if profile.LastTransactionMessage ~= "" and not _TransactionNoticeLogic:IsSuppressed(profile.LastTransactionMessage) then
+    -- 수량을 바꾼 뒤에는 그 수량으로 받은 거절 사유를 더 띄우지 않는다 (SetSaleAmount
+    -- 가 그 시점의 시퀀스를 적어 둔다). 서버가 새 응답을 주면 seq 가 올라가 다시 뜬다.
+    local dismissedSeq = self._T.dismissedSaleSeq
+    if dismissedSeq == nil then dismissedSeq = -1 end
+    if profile.LastTransactionMessage ~= "" and profile.LastTransactionSeq > dismissedSeq and not _TransactionNoticeLogic:IsSuppressed(profile.LastTransactionMessage) then
         self.saleFeedbackText.Text = profile.LastTransactionMessage
         return
     end
@@ -1004,12 +1018,17 @@ method void SetSaleAmount(integer amount)
     -- 같은 값을 입력창에 다시 쓸 뿐이라 루프가 생기지 않는다 (§52-13 계열).
     local clamped = math.max(0, amount)
     if self.saleAmountInput ~= nil then self.saleAmountInput.Text = tostring(clamped) end
+    local profile = self:GetProfile()
     if self.saleSlider ~= nil then
-        local profile = self:GetProfile()
         if profile ~= nil then self.saleSlider.MaxValue = math.max(1, self:GetSelectedBalance(profile)) end
         self.saleSlider.Value = clamped
     end
     self._T.localSaleHint = ""
+    -- 수량을 바꿨으면 직전 거절 사유는 더 이상 이 수량 얘기가 아니다. `@Sync` 인
+    -- LastTransactionMessage 는 클라가 지울 수 없으므로 **읽은 시퀀스를 기억해**
+    -- 덮는다. 문구가 아니라 시퀀스로 판별하는 이유는 같은 거절이 연달아 왔을 때도
+    -- 새 응답임을 알아야 하기 때문이다 (SetTransactionMessage 가 seq 를 올린다).
+    if profile ~= nil then self._T.dismissedSaleSeq = profile.LastTransactionSeq end
     self:RefreshUI(true)
 end
 
@@ -1044,15 +1063,32 @@ end
 
 @ExecSpace("ClientOnly")
 method void OnQuickAllClicked()
+    -- [전량] = **지금 팔 수 있는 전량**이다. 보유량을 그대로 넣으면 보호 수량이 있는
+    -- 계정에서 서버가 항상 거절해(`EconomyService.SellOre` 의 보호분 검사) 이 버튼이
+    -- "누르면 반드시 실패하는" 함정이 된다. 튜토리얼 7단계 시퀀스가
+    -- `sellOpen → quickAll → sellSelected` 라 그 자리에서 통째로 멈췄다
+    -- (2026-08-27 오너 실플레이: 보유 610 · 보호 120 인데 610 을 요청).
     local profile = self:GetProfile()
     if profile == nil then return end
-    self:SetSaleAmount(self:GetSelectedBalance(profile))
+    self:SetSaleAmount(self:GetSellableAmount(profile))
 end
 
 @ExecSpace("ClientOnly")
 method void OnToggleProtectedClicked()
     self._T.includeProtected = not self._T.includeProtected
     self._T.localSaleHint = ""
+    -- 토글이 [전량]의 의미를 바꾼다. 지금 수량이 새 상한을 벗어나거나 0이면 새 상한에
+    -- 맞춰 준다 — 그러지 않으면 "보유량이 전부 보호분이라 [전량]이 0 → 보호분 판매를
+    -- 켰는데도 수량이 0이라 여전히 못 판다"는 두 번째 막힘이 생긴다.
+    local profile = self:GetProfile()
+    if profile ~= nil then
+        local sellable = self:GetSellableAmount(profile)
+        local amount = self:ReadNonNegative(self.saleAmountInput, 0)
+        if amount <= 0 or amount > sellable then
+            self:SetSaleAmount(sellable)
+            return
+        end
+    end
     self:RefreshUI(true)
 end
 
