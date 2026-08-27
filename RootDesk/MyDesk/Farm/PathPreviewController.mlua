@@ -16,10 +16,32 @@ property number TileScaleSingle = 0.458
 property number TileScaleShared = 0.229
 -- 월드 TextRendererComponent 의 FontSize 는 UI 픽셀이 아니라 월드 스케일 기준이다
 -- (46 이면 화면 전체를 덮는다 — 2026-08-25 실측). 한 자리 값이 정상 범위.
-property number FontSizeSingle = 3
-property number FontSizeShared = 1.8
+-- 2026-08-27: 명령 글자가 아이콘으로 빠지고 번호만 좌상단에 남아 한 단계 줄였다.
+property number FontSizeSingle = 2.4
+property number FontSizeShared = 1.5
+-- 접힘 +N 은 아이콘 없이 가운데 단독이라 번호보다 크게 둔다.
+property number FontSizeFold = 1.8
 -- 겹침 2×2 서브 슬롯 오프셋 (docs/31 §2.3 — 타일당 4개, 초과는 2차 PR 의 +N 몫).
 property number SharedSlotOffset = 0.24
+
+-- command-tile-slate-blank 원본 192px = 1.92 unit. 타일 반폭 계산의 기준값이다.
+property number TileNativeUnit = 1.92
+-- 아이콘 최대변 / 타일 폭. 명령 블록 스트립 셀의 46/68 과 같은 비율.
+property number IconRatio = 0.68
+-- 번호·×N 을 타일 반폭의 몇 배 지점에 둘지 (1.0 = 모서리에 딱 붙음).
+property number CornerRatio = 0.62
+-- 흰 글자 외곽선 두께. 타일 배경이 밝은 베이지라 외곽선 없이는 묻힌다
+-- (2026-08-27 오너 지정 — 흰색 + 검정 외곽선).
+property number LabelOutlineWidth = 0.25
+-- 명령 아이콘 RUID. ui/BlockProgramUI.ui 팔레트 버튼과 같은 자산을 쓴다.
+-- 단일 기준은 docs/21 §방향·작업 아이콘 이며 값 변경 시 그 문서와 함께 고친다.
+property string IconEast = "b7a81f29f42e46b79d62c1765f7d209b"
+property string IconWest = "30f9dd0a1af546d2a9e5cd5579ce4e93"
+property string IconNorth = "1726bd1b89654a53bbc6586f3903e3b9"
+property string IconSouth = "83ac425ab4644ab6ae7c8668534a92be"
+property string IconMine = "ddd58b8393774207b2cb4316bc866e19"
+property string IconLoad = "8baf5c1c62084b5daf4e47b91e8126c1"
+property string IconUnload = "2085fa77dd2345f596b9fd4fd550c7fd"
 
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
@@ -27,6 +49,44 @@ method void OnBeginPlay()
     self._T.markers = {}
     self._T.map = nil
     self._T.lastKey = ""
+    self._T.iconShown = 0
+    self:CacheIconMeta()
+end
+
+@ExecSpace("ClientOnly")
+method void CacheIconMeta()
+    -- 아이콘 7종의 원본 크기·pivot 을 한 번만 읽어 둔다.
+    --
+    -- 이 아이콘들은 메이플 원본 자산(source=MAPLESTORY)이라 원래 용도의
+    -- 기준점이 그대로 남아 있고, pivot 이 전부 제각각이다 — 2026-08-27 실측:
+    --   E 55x44 pivot=(-0.33, 1.00) / W 55x44 pivot=(1.89, -0.25)
+    --   N 44x51 (0.48, -0.04) / S 44x51 (0.50, 0.41) / M 39x35 (0.08, 0.09)
+    --   L 32x25 (0.00, 0.00)  / U 30x15 (-0.03, -0.20)
+    -- E·W 는 pivot 이 스프라이트 경계 **바깥**이라 아이콘이 타일 밖으로 밀린다.
+    -- 배경 타일(command-tile-slate-blank)만 pivot 이 정중앙(0.5, 0.5)이라
+    -- 지금까지 타일은 멀쩡하고 아이콘만 뒤죽박죽으로 보였다.
+    --
+    -- 실측값을 상수로 박지 않고 런타임에 읽는 이유: 자산을 바꾸면 pivot 보정값은
+    -- 무효가 된다(msw-asset-verify). 크기도 docs/21 기재(56x44 등)와 1~3px
+    -- 어긋나 있어 하드코딩이 이미 부정확했다.
+    self._T.spriteMeta = {}
+    local list = { self.IconEast, self.IconWest, self.IconNorth, self.IconSouth,
+                   self.IconMine, self.IconLoad, self.IconUnload }
+    local loaded = 0
+    for i = 1, #list do
+        local ruid = list[i]
+        local sp = _ResourceService:LoadSpriteAndWait(ruid)
+        if sp ~= nil then
+            self._T.spriteMeta[ruid] = {
+                w = sp.Width, h = sp.Height, ppu = sp.PixelPerUnit,
+                px = sp.PivotPixel.x, py = sp.PivotPixel.y,
+            }
+            loaded = loaded + 1
+        else
+            log_error("[PathPreview] sprite meta load failed ruid=" .. ruid)
+        end
+    end
+    log("[PathPreview] icon meta cached " .. tostring(loaded) .. "/" .. tostring(#list))
 end
 
 @ExecSpace("ClientOnly")
@@ -76,6 +136,8 @@ method void RenderSteps(table steps, RectTileMapComponent tilemap)
     -- 스텝을 셀 단위로 묶어 슬롯을 배정하고 마커 풀에 칠한다.
     -- 같은 셀 2~4개 = 2×2 나란히 배치. 5개 이상이면 4번째 슬롯을 +N 접기
     -- 마커로 바꾸고 나머지를 접는다 (docs/31 §5 확정 6 — 스트립 +N 과 동일 규칙).
+    -- 아이콘이 실제로 칠해진 수 — Verify 단계의 로그 증거로 쓴다.
+    self._T.iconShown = 0
     local cellGroups = {}
     for i = 1, #steps do
         local step = steps[i]
@@ -113,7 +175,8 @@ method void RenderSteps(table steps, RectTileMapComponent tilemap)
         local marker = self._T.markers[i]
         if marker ~= nil and isvalid(marker) then marker.Enable = false end
     end
-    log("[PathPreview] rendered steps=" .. tostring(#steps) .. " shown=" .. tostring(shown))
+    log("[PathPreview] rendered steps=" .. tostring(#steps) .. " shown=" .. tostring(shown)
+        .. " icons=" .. tostring(self._T.iconShown))
 end
 
 @ExecSpace("ClientOnly")
@@ -136,6 +199,104 @@ method void PlaceMarker(Entity marker, table step, integer slot, boolean shared,
     if tile ~= nil then
         tile.TransformComponent.Scale = Vector3(tileScale, tileScale, 1)
     end
+    self:LayoutChildren(marker, tileScale)
+end
+
+@ExecSpace("ClientOnly")
+method void LayoutChildren(Entity marker, number tileScale)
+    -- 아이콘·번호·×N 을 타일 스케일에 맞춰 배치한다. Tile 만 Scale 로 줄어들고
+    -- 나머지는 그 형제라, 타일 반폭을 매번 다시 재서 코너 위치를 잡아야 한다.
+    local half = self.TileNativeUnit * tileScale * 0.5
+    -- 아이콘 위치는 여기서 잡지 않는다 — pivot 보정이 아이콘마다 달라서
+    -- ApplyMarkerIcon 이 스프라이트 메타를 보고 직접 넣는다.
+    local labelEntity = marker:GetChildByName("Label", false)
+    if labelEntity ~= nil then
+        -- 번호는 좌상단 — 명령 블록 스트립 셀의 Num 과 같은 자리다.
+        labelEntity.TransformComponent.Position =
+            Vector3(-half * self.CornerRatio, half * self.CornerRatio, 0)
+    end
+    local repeatEntity = marker:GetChildByName("Repeat", false)
+    if repeatEntity ~= nil then
+        repeatEntity.TransformComponent.Position = Vector3(0, -half * self.CornerRatio, 0)
+    end
+end
+
+@ExecSpace("ClientOnly")
+method string CommandIconRuid(string glyph)
+    -- 명령 글자 → 아이콘 RUID. 아이콘이 없는 글자면 빈 문자열.
+    if glyph == "E" then return self.IconEast end
+    if glyph == "W" then return self.IconWest end
+    if glyph == "N" then return self.IconNorth end
+    if glyph == "S" then return self.IconSouth end
+    if glyph == "M" then return self.IconMine end
+    if glyph == "L" then return self.IconLoad end
+    if glyph == "U" then return self.IconUnload end
+    return ""
+end
+
+@ExecSpace("ClientOnly")
+method number CommandIconMaxPx(string glyph)
+    -- 스프라이트 메타를 못 읽었을 때만 쓰는 폴백값(docs/21 기재 크기).
+    -- 정상 경로는 CacheIconMeta 가 읽어 둔 Sprite.Width/Height 를 쓴다 —
+    -- 아래 값은 실제 원본과 1~3px 어긋나 있어 어디까지나 최후 수단이다.
+    if glyph == "E" or glyph == "W" then return 56 end
+    if glyph == "N" or glyph == "S" then return 52 end
+    if glyph == "M" then return 40 end
+    if glyph == "L" then return 32 end
+    if glyph == "U" then return 32 end
+    return 48
+end
+
+@ExecSpace("ClientOnly")
+method boolean ApplyMarkerIcon(Entity marker, string glyph, number tileScale)
+    -- 명령 글자에 맞는 아이콘을 칠한다. 칠했으면 true.
+    local icon = marker:GetChildByName("Icon", false)
+    if icon == nil then return false end
+    local ruid = self:CommandIconRuid(glyph)
+    local renderer = icon.SpriteRendererComponent
+    if ruid == "" or renderer == nil then
+        icon.Enable = false
+        return false
+    end
+    icon.Enable = true
+    renderer.SpriteRUID = ruid
+    -- 타일보다는 진하게 두되 고스트 계열은 유지한다 (docs/31 §2.5).
+    renderer.Color = Color(1, 1, 1, 0.92)
+    -- 월드 스프라이트에는 RectSize·PreserveSprite 가 없다 — 원본 픽셀 × Scale 이
+    -- 곧 화면 크기다. 최대변을 목표 폭에 맞춰 7종을 같은 크기로 정규화한다.
+    local targetUnit = self.TileNativeUnit * tileScale * self.IconRatio
+    local meta = self._T.spriteMeta ~= nil and self._T.spriteMeta[ruid] or nil
+    local ppu = 100
+    local maxPx = self:CommandIconMaxPx(glyph)
+    if meta ~= nil then
+        ppu = meta.ppu
+        maxPx = math.max(meta.w, meta.h)
+    end
+    local nativeUnit = maxPx / ppu
+    local scale = 1
+    if nativeUnit > 0 then scale = targetUnit / nativeUnit end
+    icon.TransformComponent.Scale = Vector3(scale, scale, 1)
+    -- pivot 보정. 스프라이트는 pivot 점이 엔티티 원점에 오도록 그려지므로,
+    -- 시각 중심을 원점으로 되돌리려면 (pivot - 중심) 만큼 엔티티를 민다.
+    -- 오프셋은 Scale 이 함께 키우므로 반드시 scale 을 곱한다 (msw-asset-verify).
+    -- X 만 재고 Y 를 빼먹으면 아이콘이 위아래로 떠 있게 된다 — 두 축 모두 잡는다.
+    local offX, offY = 0, 0
+    if meta ~= nil then
+        offX = (meta.px - meta.w * 0.5) / ppu * scale
+        offY = (meta.py - meta.h * 0.5) / ppu * scale
+    end
+    icon.TransformComponent.Position = Vector3(offX, offY, 0)
+    return true
+end
+
+@ExecSpace("ClientOnly")
+method void StyleLabel(TextRendererComponent label, number fontSize)
+    -- 흰 글자 + 검정 외곽선 (2026-08-27 오너 지정). 타일 배경이 밝은 베이지라
+    -- 외곽선 없이 흰 글자만 쓰면 묻힌다.
+    label.FontSize = fontSize
+    label.FontColor = Color(1, 1, 1, 1)
+    label.OutlineColor = Color(0, 0, 0, 1)
+    label.OutlineWidth = self.LabelOutlineWidth
 end
 
 @ExecSpace("ClientOnly")
@@ -143,6 +304,10 @@ method void PaintMarker(Entity marker, table step, integer slot, boolean shared,
     -- 마커 하나의 위치·크기·문구·틴트를 칠한다. 순번은 시뮬레이터가 스트립
     -- 역인덱스로 부여한 step.no 다 (docs/31 §2.1 — 스트립 칸과 같은 번호).
     self:PlaceMarker(marker, step, slot, shared, tilemap)
+    local tileScale = self.TileScaleSingle
+    if shared then tileScale = self.TileScaleShared end
+    local fontSize = self.FontSizeSingle
+    if shared then fontSize = self.FontSizeShared end
     local tile = marker:GetChildByName("Tile", false)
     if tile ~= nil then
         local renderer = tile.SpriteRendererComponent
@@ -156,21 +321,34 @@ method void PaintMarker(Entity marker, table step, integer slot, boolean shared,
             end
         end
     end
+    -- 명령 종류는 아이콘이 맡고 글자는 뺀다 — 스트립 셀의 useIcon 분기와 같은
+    -- 규칙이다 (BlockProgramController.PaintCell). 번호는 그대로 남는다.
+    if self:ApplyMarkerIcon(marker, step.glyph, tileScale) then
+        self._T.iconShown = self._T.iconShown + 1
+    end
     local labelEntity = marker:GetChildByName("Label", false)
     if labelEntity ~= nil then
         -- 월드 텍스트는 TextRendererComponent (TextComponent 는 UI 전용 — 월드에서 무렌더).
         local label = labelEntity.TextRendererComponent
         if label ~= nil then
-            local text = tostring(step.no) .. step.glyph
+            labelEntity.Enable = true
+            label.Text = tostring(step.no)
+            self:StyleLabel(label, fontSize)
+        end
+    end
+    local repeatEntity = marker:GetChildByName("Repeat", false)
+    if repeatEntity ~= nil then
+        local repeatLabel = repeatEntity.TextRendererComponent
+        if repeatLabel ~= nil then
             if step.repeatLabel ~= nil then
                 -- 반복 몸통 1회분 마커 — ×N 병기 (docs/31 §5 확정 2).
-                text = text .. "\n" .. tostring(step.repeatLabel)
+                -- 번호가 좌상단으로 가면서 ×N 은 하단 중앙으로 분리됐다.
+                repeatEntity.Enable = true
+                repeatLabel.Text = tostring(step.repeatLabel)
+                self:StyleLabel(repeatLabel, fontSize * 0.85)
+            else
+                repeatEntity.Enable = false
             end
-            label.Text = text
-            local fontSize = self.FontSizeSingle
-            if shared then fontSize = self.FontSizeShared end
-            label.FontSize = fontSize
-            label.FontColor = Color(0.3, 0.2, 0.1, 0.95)
         end
     end
 end
@@ -185,13 +363,20 @@ method void PaintFoldMarker(Entity marker, table step, integer foldedCount, Rect
         local renderer = tile.SpriteRendererComponent
         if renderer ~= nil then renderer.Color = Color(0.82, 0.82, 0.82, 0.62) end
     end
+    -- 접힘 마커는 단일 명령이 아니므로 아이콘·×N 을 쓰지 않는다 — +N 만 가운데.
+    local icon = marker:GetChildByName("Icon", false)
+    if icon ~= nil then icon.Enable = false end
+    local repeatEntity = marker:GetChildByName("Repeat", false)
+    if repeatEntity ~= nil then repeatEntity.Enable = false end
     local labelEntity = marker:GetChildByName("Label", false)
     if labelEntity ~= nil then
         local label = labelEntity.TextRendererComponent
         if label ~= nil then
+            labelEntity.Enable = true
+            -- LayoutChildren 이 좌상단으로 보낸 번호 자리를 가운데로 되돌린다.
+            labelEntity.TransformComponent.Position = Vector3(0, 0, 0)
             label.Text = "+" .. tostring(foldedCount)
-            label.FontSize = self.FontSizeShared
-            label.FontColor = Color(0.3, 0.2, 0.1, 0.95)
+            self:StyleLabel(label, self.FontSizeFold)
         end
     end
 end
