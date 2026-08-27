@@ -27,6 +27,14 @@ property number WarmupSeconds = 3.0
 -- 그대로 진행 불능이 된다 (docs/16 §48).
 property integer TutorialWorkerGoal = 2
 
+-- #4 진단 스위치 (2026-08-27 오너 보고 — "창 크기를 바꾸면 화살표가 어긋난다").
+-- ⚠️ **원인 특정용으로 임시로 켜 두었다. 원인을 잡으면 반드시 false 로 되돌린다**
+-- — 릴리스는 조용해야 한다(`MineLogPolicy`·`PerfProbeLogic` 과 같은 원칙).
+-- 켜져 있으면 `UpdateArrowTarget` 의 환산 입출력과 조기 return 사유가 Maker
+-- Console 에 `[TutorialArrow]` 로 찍힌다. `LogArrow` 가 직전과 같은 줄을
+-- 걸러 내므로, 값이 바뀌는 순간에만 새 줄이 남는다.
+property boolean DebugArrow = true
+
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- 초기 상태: 비활성. 활성화는 OnUpdate 의 @Sync 감시가 결정한다.
@@ -113,8 +121,8 @@ method table GetStepConfig(integer step)
     -- 7·8단계는 `(-660, 208)` 유지 — 그때는 중앙 판매/선택 모달이 주인공이라 왼쪽으로 비켜야 한다.
     if step == 1 then
         return {
-            guide = "일꾼을 오른쪽으로 한 칸 보내 봐요.\n[동 E]를 누르고 [실행]을 누르세요.",
-            fail = "일꾼이 움직이지 못했어요. [동 E] 하나만 넣고 다시 실행해 보세요.",
+            guide = "일꾼을 오른쪽으로 한 칸 보내 봐요.\n[동]를 누르고 [실행]을 누르세요.",
+            fail = "일꾼이 움직이지 못했어요. [동] 하나만 넣고 다시 실행해 보세요.",
             allowed = { moveE = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
@@ -123,8 +131,8 @@ method table GetStepConfig(integer step)
         }
     elseif step == 2 then
         return {
-            guide = "일꾼 발밑에 돌 광맥이 있어요.\n[채굴 M]을 넣고 [실행]으로 캐 봅시다.",
-            fail = "여기엔 캘 광물이 없어요. 잠시 기다렸다가 다시 [채굴 M]을 실행해 보세요.",
+            guide = "일꾼 발밑에 돌 광맥이 있어요.\n[채굴]을 넣고 [실행]으로 캐 봅시다.",
+            fail = "여기엔 캘 광물이 없어요. 잠시 기다렸다가 다시 [채굴]을 실행해 보세요.",
             allowed = { mine = true, run = true, clear = true },
             reset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 0 },
             clearProgram = true,
@@ -133,8 +141,8 @@ method table GetStepConfig(integer step)
         }
     elseif step == 3 then
         return {
-            guide = "손에 든 돌을 수레에 실어요.\n[적재 L]을 넣고 [실행]을 누르세요.",
-            fail = "수레에 싣지 못했어요. [적재 L]을 넣고 다시 실행해 보세요.",
+            guide = "손에 든 돌을 수레에 실어요.\n[적재]을 넣고 [실행]을 누르세요.",
+            fail = "수레에 싣지 못했어요. [적재]을 넣고 다시 실행해 보세요.",
             allowed = { load = true, run = true, clear = true },
             reset = { cellX = 1, cellY = 0, hand = "stone", handCount = 1, cart = 0 },
             clearProgram = true,
@@ -145,8 +153,8 @@ method table GetStepConfig(integer step)
         -- §4 예외: 4단계는 진입 시 시작 셀 복귀를 하지 않는다 (1~3단계의 결과
         -- 상태 — (1,0)·수레 돌 1 — 를 유지). 실패 복귀만 그 상태로 되돌린다.
         return {
-            guide = "창고는 시작 자리예요.\n[서 W]로 돌아가 [하역 U]로 내리면 창고에 쌓입니다.",
-            fail = "창고에 내리지 못했어요. [서 W]로 창고(시작 칸)에 돌아간 뒤 [하역 U]를 실행하세요.",
+            guide = "창고는 시작 자리예요.\n[서]로 돌아가 [하역]로 내리면 창고에 쌓입니다.",
+            fail = "창고에 내리지 못했어요. [서]로 창고(시작 칸)에 돌아간 뒤 [하역]를 실행하세요.",
             allowed = { moveW = true, unload = true, run = true, clear = true },
             reset = nil,
             failReset = { cellX = 1, cellY = 0, hand = "", handCount = 0, cart = 1 },
@@ -158,7 +166,7 @@ method table GetStepConfig(integer step)
         return {
             -- T-15b: 순서 강제 잠금으로 [횟수] 버튼을 누를 수 없게 됐다 — 기본값
             -- ×2 를 그대로 쓰도록 안내한다 (VerifyStep(5)는 반복 존재만 본다).
-            guide = "같은 일을 여러 번 시키려면 [반복 추가]로 묶어요.\n횟수는 ×2 그대로 두고 안에 [동E]·[채굴M]·[적재L]·[서W]·[하역U]를 넣고 [끝 ]]으로 닫은 뒤 실행하세요.",
+            guide = "같은 일을 여러 번 시키려면 [반복 추가]로 묶어요.\n횟수는 ×2 그대로 두고 안에 [동]·[채굴]·[적재]·[서]·[하역]을 넣고 [끝 ]]으로 닫은 뒤 실행하세요.",
             fail = "반복이 끝났지만 목표를 채우지 못했어요. 안내대로 반복 안에 블록을 넣고 다시 실행해 보세요.",
             allowed = { repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
@@ -168,7 +176,7 @@ method table GetStepConfig(integer step)
         }
     elseif step == 6 then
         return {
-            guide = "광물이 있을 때만 캐게 하려면 [IF 추가]를 써요.\n반복 안에 IF(광물 있음)[채굴 M·적재 L]을 넣어 실행해 보세요.",
+            guide = "광물이 있을 때만 캐게 하려면 [IF 추가]를 써요.\n반복 안에 IF(광물 있음)[채굴·적재]를 넣어 실행해 보세요.",
             fail = "조건 블록이 비어 있거나 실행이 끝나지 않았어요. IF 안에 블록을 넣고 다시 실행해 보세요.",
             allowed = { ifAdd = true, condition = true, repeatAdd = true, repeatCount = true, endBlock = true, moveE = true, mine = true, load = true, moveW = true, unload = true, run = true, clear = true },
             reset = { cellX = 0, cellY = 0, hand = "", handCount = 0, cart = 0 },
@@ -276,6 +284,17 @@ method void ReleaseAllLocks()
             self:RestoreButtonColor(key, button.Entity.SpriteGUIRendererComponent)
         end
     end
+    -- ⚠️ dim 캐시(색)와 Enable 은 이 컨트롤러가 **잠시 빌려 쓴** 값이다. 캐시는
+    -- 잠금이 걸린 순간의 스냅숏이라, 튜토리얼 도중 상태가 바뀌면 원복이 그
+    -- 과거 값을 되살린다. 그래서 원복 뒤에는 반드시 상태의 **단일 소유자**에게
+    -- 다시 파생시킨다.
+    --   · 일꾼 칩: 8단계가 곧 [일꾼 고용]이라 캐시는 항상 "사기 전(회색)" 이다.
+    --     이걸 안 되돌리면 방금 산 일꾼 2 칩이 회색으로 굳는다(2026-08-27 오너 보고).
+    --   · 광산 강화 버튼: 미입장 광산은 Enable=false 가 정상인데 위 루프가 전부
+    --     true 로 열어 둔다. RefreshUI 는 state 해시가 같으면 조기 return 하므로
+    --     force 로 강제 재도출해야 한다.
+    if _BlockProgramController ~= nil then _BlockProgramController:RefreshWorkerButtons() end
+    if _MineSelectController ~= nil then _MineSelectController:ForceRefresh() end
 end
 
 @ExecSpace("ClientOnly")
@@ -380,6 +399,54 @@ method boolean IsSaleBlockedByProtection()
 end
 
 @ExecSpace("ClientOnly")
+method void LogArrow(string body)
+    -- #4 진단 전용 로거. `UpdateArrowTarget` 은 매 프레임 도므로 그대로 찍으면
+    -- 초당 60줄이 쌓여 콘솔에서 읽을 수 없다 — **직전과 내용이 같으면 건너뛴다.**
+    -- 좌표를 정수로 반올림해 넘기므로, 값이 안 흔들리는 동안에는 한 줄만 남고
+    -- 창 크기·대상이 바뀌는 순간에만 새 줄이 찍힌다. (docs/24 §5 로그량 원칙)
+    if not self.DebugArrow then return end
+    if self._T.arrowDbgLast == body then return end
+    self._T.arrowDbgLast = body
+    log("[TutorialArrow] " .. body)
+end
+
+@ExecSpace("ClientOnly")
+method Vector2 CanvasCenterOf(Entity target)
+    -- UI 계층을 루트까지 걸어 올라가 캔버스(1920×1080, 중앙 원점) 중심 좌표를 낸다.
+    --
+    -- ⚠️ **`GetWorldCorners()` 를 쓰지 않는 것이 이 함수의 존재 이유다.** 그 API 는
+    -- 엔티티마다 갱신 시점이 달라 같은 프레임에 형제끼리도 배율이 어긋난다
+    -- (2026-08-27 실측 — docs/16 §80.3). 여기서 쓰는 값(AnchorsMin/Max, Pivot,
+    -- anchoredPosition, RectSize)은 전부 **캔버스 기준 저작값**이라 캐시도
+    -- 해상도도 타지 않는다.
+    --
+    -- 한 단계 공식 — 자식 중심의, 부모 중심 기준 오프셋:
+    --   (앵커중심 − 0.5) × 부모크기  +  anchoredPosition  +  (0.5 − pivot) × 자기크기
+    -- 이를 루트(부모에 UITransform 이 없는 지점 = 전화면 그룹, 중심이 원점)까지 누적한다.
+    -- stretch 앵커(AnchorsMin ≠ Max)는 앵커 중점으로 근사한다 — 잠금 대상 버튼은
+    -- 전부 점 앵커라 실사용 경로에서는 정확하다.
+    local cx = 0.0
+    local cy = 0.0
+    local cur = target
+    local guard = 0
+    while cur ~= nil and guard < 16 do
+        guard = guard + 1
+        local t = cur.UITransformComponent
+        if t == nil then break end
+        local parent = cur.Parent
+        if parent == nil then break end
+        local pt = parent.UITransformComponent
+        if pt == nil then break end
+        local ax = (t.AnchorsMin.x + t.AnchorsMax.x) * 0.5
+        local ay = (t.AnchorsMin.y + t.AnchorsMax.y) * 0.5
+        cx = cx + (ax - 0.5) * pt.RectSize.x + t.anchoredPosition.x + (0.5 - t.Pivot.x) * t.RectSize.x
+        cy = cy + (ay - 0.5) * pt.RectSize.y + t.anchoredPosition.y + (0.5 - t.Pivot.y) * t.RectSize.y
+        cur = parent
+    end
+    return Vector2(cx, cy)
+end
+
+@ExecSpace("ClientOnly")
 method void UpdateArrowTarget()
     -- 화살표를 현재 seq 대상 버튼 옆에 붙인다. GetWorldCorners 는 실창 픽셀을
     -- 돌려주므로 전화면 UI 그룹(/ui/TutorialUI)의 코너로 자기보정해 1920×1080
@@ -399,35 +466,57 @@ method void UpdateArrowTarget()
         return
     end
     local button = self:GetButtonRegistry()[key]
-    if button == nil or not isvalid(button) then return end
-    if self._T.uiGroupRef == nil then
-        self._T.uiGroupRef = _EntityService:GetEntityByPath("/ui/TutorialUI")
+    if button == nil or not isvalid(button) then
+        -- ⚠️ 아래 조기 return 들은 전부 "화살표를 그 자리에 그대로 둔다" — 즉
+        -- config 폴백 자리(arrowX/arrowY)에 멈춘 채 엉뚱한 버튼을 가리키는
+        -- 것처럼 보인다 (2026-08-27 오너 보고 #4). 그래서 사유마다 로그를 뗀다.
+        self:LogArrow("bail=button-missing key=" .. tostring(key))
+        return
     end
-    local group = self._T.uiGroupRef
-    if group == nil then return end
-    local okC, corners = pcall(function() return button.Entity.UITransformComponent:GetWorldCorners() end)
-    local okR, rc = pcall(function() return group.UITransformComponent:GetWorldCorners() end)
-    if not okC or not okR or corners == nil or rc == nil then return end
-    local sw = rc[3].x - rc[1].x
-    local sh = rc[2].y - rc[1].y
-    if sw <= 0 or sh <= 0 then return end
-    local left = (corners[1].x - rc[1].x) / sw * 1920 - 960
-    local right = (corners[3].x - rc[1].x) / sw * 1920 - 960
-    local bottom = (corners[1].y - rc[1].y) / sh * 1080 - 540
-    local top = (corners[2].y - rc[1].y) / sh * 1080 - 540
+    if not self.arrow.Enable then self.arrow.Enable = true end
+    local arrowTransform = self.arrow.UITransformComponent
+    -- ⚠️⚠️ **`GetWorldCorners()` 를 쓰지 않는다** (2026-08-27 실측으로 완전 폐기).
+    -- 이 API 는 **엔티티마다 다른 시점의 캐시**를 돌려준다 — 같은 프레임·같은
+    -- 부모의 형제인데도 배율이 갈렸다: Arrow 0.6146 vs Tooltip 0.7646,
+    -- TutRoot 0.7646 vs BPRoot 0.6146 (`[SPACE]` 실측). 정적 레이아웃에서
+    -- 일어날 수 없는 값이므로, 이 API 로는 어떤 자도 만들 수 없다.
+    --   · 옛 구현(그룹 rect 정규화)이 창 크기에 따라 어긋난 이유가 이것이고,
+    --   · 그 대안으로 넣었던 "화살표 자기보정"은 **낡은 코너에 매 프레임 델타를
+    --     더해 양의 되먹임으로 발산**했다(실측 `anchored.x = -37,276,772`).
+    --     §76 카메라의 "1프레임 지연값을 매 프레임 유도하면 발산한다" 와 같은 함정.
+    --
+    -- 대신 **저작값만으로 계층을 걸어 올라간다**(`CanvasCenterOf`). 앵커·피벗·
+    -- anchoredPosition·RectSize 는 전부 캔버스(1920×1080) 기준 저작값이라
+    -- 캐시도 해상도도 타지 않는다. 검증: Tooltip → canvas(240.0,-400.0) 로
+    -- 실제 anchoredPosition 과 정확히 일치.
+    local btnTransform = button.Entity.UITransformComponent
+    if btnTransform == nil then
+        self:LogArrow("bail=button-transform-missing key=" .. tostring(key))
+        return
+    end
+    local center = self:CanvasCenterOf(button.Entity)
+    local cx = center.x
+    local cy = center.y
+    local half = btnTransform.RectSize.y * 0.5
+    local bottom = cy - half
+    local top = cy + half
     -- 화살표 자산(ba442ba7…)은 위쪽을 가리키는 스프라이트다. 기본은 버튼 아래에서
     -- 위를 가리키고, 버튼이 화면 하단이라 자리가 없으면 위에서 세로 반전(↓)한다.
-    local x = (left + right) * 0.5
+    local x = cx
     local y = bottom - 50
     local flipY = 1
     if y - 35 < -530 then
         y = top + 50
         flipY = -1
     end
-    if not self.arrow.Enable then self.arrow.Enable = true end
-    local arrowTransform = self.arrow.UITransformComponent
     arrowTransform.anchoredPosition = Vector2(x, y)
     arrowTransform.UIScale = Vector3(1, flipY, 1)
+    -- #4 진단: 창 크기를 바꾼 상태에서 이 줄의 canvas 값이 버튼의 설계 좌표와
+    -- 어긋나면 환산이 깨진 것이고, 값이 맞는데 화면이 틀리면 화살표 앵커·부모
+    -- 쪽 문제다. 둘을 가르는 것이 이 로그의 목적이다.
+    self:LogArrow("key=" .. tostring(key)
+        .. " btnCanvas=(" .. string.format("%.0f,%.0f", cx, cy) .. ")"
+        .. " -> arrow(" .. string.format("%.0f,%.0f", x, y) .. ") flipY=" .. tostring(flipY))
 end
 
 @ExecSpace("ClientOnly")

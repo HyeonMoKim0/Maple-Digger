@@ -109,6 +109,15 @@ property TextGUIRendererComponent upgradeCostText = "d443a231-d989-43e8-899c-04d
 property TextGUIRendererComponent upgradeFeedbackText = "a6b622b8-8cdb-424b-af7a-537c162eb1c6"
 property ButtonComponent btnUpgradeConfirm = "2a60b2d6-93d8-47a7-8f6b-44b90267e732"
 property ButtonComponent btnUpgradeClose = "2378aa23-8236-4829-ab5b-60e27c47de5e"
+-- T-19 P2 필드 확장 구매 진입점 (docs/32 §6.1). [강화·고용] 탭 상단에 붙는다.
+-- ⚠️ 맵 강화(mineLevels 0~10)와 **별개 트랙**이다 — 필드 확장은 fieldLevels 1~5 이고
+-- 이동·채굴 가능 공간을 넓힌다 (docs/32 §1 용어 혼동 금지).
+-- 표시값은 서버 FieldUpgradeInfoJson 그대로이며 클라이언트는 재계산하지 않는다
+-- (맵 강화 §5.6.3 과 같은 원칙). 서버가 "입장 중인 광산"만 확장하므로
+-- (ProgressionService.RequestFieldUpgrade) 대상 선택 UI 가 없다 — 버튼 1개다.
+property TextGUIRendererComponent fieldLevelText = "dd739706-0a2c-4b55-b598-9a506b950078"
+property TextGUIRendererComponent fieldCostText = "cd3cbab3-92c6-4c3d-b12d-5e0d9db41c34"
+property ButtonComponent btnFieldUpgrade = "469cb1f8-d877-4e63-8097-4d1885e4a47b"
 property ButtonComponent btnCartOpen = "19e45405-fc93-4caa-a99f-8fec5650b877"
 property Entity cartPanel = "2ddf0bf0-6b16-4e5a-8422-56f1685cbf55"
 property ButtonComponent btnCartClose = "fad448d9-9044-4c6c-925f-353d66eaea43"
@@ -170,6 +179,7 @@ method void OnBeginPlay()
     self:ConnectButton("tabUpgrade", self.btnTabUpgrade, self.OnTabUpgradeClicked)
     self:ConnectButton("upgradeConfirm", self.btnUpgradeConfirm, self.OnUpgradeConfirmClicked)
     self:ConnectButton("upgradeClose", self.btnUpgradeClose, self.OnUpgradeCloseClicked)
+    self:ConnectButton("fieldUpgrade", self.btnFieldUpgrade, self.OnFieldUpgradeClicked)
     self:ConnectButton("open", self.btnOpen, self.OnOpenClicked)
     self:ConnectButton("close", self.btnClose, self.OnCloseClicked)
     self:ConnectButton("sell", self.btnSell, self.OnSellClicked)
@@ -250,6 +260,9 @@ method void RefreshUI(boolean force)
     -- T-03 맵 강화 표기 계약. 키에서 빠지면 강화해도 패널·레벨 표시가 갱신되지
     -- 않는다 (docs/23 §5-3 무증상 실패).
     state = state .. ":" .. profile.MineUpgradeInfoJson .. ":" .. tostring(profile.MineLevelBeginner) .. ":" .. tostring(profile.MineLevelDeep) .. ":" .. tostring(profile.MineLevelGem)
+    -- T-19 P2 필드 확장 표기 계약. 맵 강화와 같은 이유로 감지 키에 반드시 있어야
+    -- 한다 — 빠지면 확장해도 레벨·비용 줄이 갱신되지 않는 무증상 실패가 된다.
+    state = state .. ":" .. profile.FieldUpgradeInfoJson .. ":" .. tostring(profile.FieldLevelBeginner) .. ":" .. tostring(profile.FieldLevelDeep) .. ":" .. tostring(profile.FieldLevelGem)
     -- T-15: 같은 문구가 재전송돼도(시퀀스만 증가) 피드백 줄이 다시 그려지게 한다
     -- (팝업 억제 목록 반영이 한 프레임 안에 화면에 닿아야 한다).
     state = state .. ":" .. tostring(profile.LastTransactionSeq)
@@ -285,6 +298,23 @@ method void RefreshUI(boolean force)
     if self.rareSummaryText ~= nil then self.rareSummaryText.Text = self:GetRareSummary(profile) end
     self:RefreshSaleSummary(profile)
     self:RefreshUpgradePanel(profile)
+    self:RefreshFieldPanel(profile)
+end
+
+@ExecSpace("ClientOnly")
+method void ForceRefresh()
+    -- 외부(TutorialController.ReleaseAllLocks)가 버튼 Enable 을 일괄로 건드린 뒤
+    -- 상태를 다시 파생시키는 창구. RefreshUI 는 state 해시가 같으면 조기
+    -- return 하므로 force 없이는 잠금 해제 직후의 잘못된 Enable 이 그대로 굳는다.
+    self:RefreshUI(true)
+end
+
+@ExecSpace("ClientOnly")
+method string MineDisplayName(string mineId)
+    -- mineId → 화면 표시명. 맵 강화·필드 확장이 같은 어휘를 쓰도록 한곳에 둔다.
+    if mineId == "deep_mine" then return "깊은 광산" end
+    if mineId == "gem_mine" then return "보석 광산" end
+    return "초보 광산"
 end
 
 @ExecSpace("ClientOnly")
@@ -322,9 +352,7 @@ method void RefreshUpgradePanel(AccountProfileService profile)
     local info = _HttpService:JSONDecode(raw)
     if info == nil then return end
 
-    local mineName = "초보 광산"
-    if info.mineId == "deep_mine" then mineName = "깊은 광산"
-    elseif info.mineId == "gem_mine" then mineName = "보석 광산" end
+    local mineName = self:MineDisplayName(tostring(info.mineId))
     self.upgradeLevelText.Text = mineName .. "   Lv." .. tostring(math.floor(info.level)) .. " / 10"
 
     local isMax = info.maxLevel == true
@@ -362,6 +390,87 @@ method void RefreshUpgradePanel(AccountProfileService profile)
             self.upgradeFeedbackText.Text = "강화 비용은 입장 중인 광산의 대표 광물로 지불합니다."
         end
     end
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshFieldPanel(AccountProfileService profile)
+    -- T-19 P2 (docs/32 §6.1): 서버 FieldUpgradeInfoJson 을 그대로 그린다.
+    -- 재계산 금지 — 비용식(80×1.8^(n-1) / 40×n)은 서버가 단일 소유한다.
+    if self.fieldLevelText == nil then return end
+    local raw = profile.FieldUpgradeInfoJson
+    if raw == nil or raw == "" then
+        -- 광산 밖이거나 아직 프로필이 안 실린 상태. 버튼은 잠근다.
+        self.fieldLevelText.Text = "광산에 입장하면 필드를 확장할 수 있습니다."
+        if self.fieldCostText ~= nil then self.fieldCostText.Text = "" end
+        self:ApplyFieldButton(false)
+        return
+    end
+    local info = _HttpService:JSONDecode(raw)
+    if info == nil then return end
+    local isMax = info.maxLevel == true
+    self.fieldLevelText.Text = self:MineDisplayName(tostring(info.mineId))
+        .. "   Lv." .. tostring(math.floor(info.level)) .. " / 5"
+    if self.fieldCostText ~= nil then
+        if isMax then
+            self.fieldCostText.Text = "이 광산의 필드는 최대 크기입니다."
+        else
+            self.fieldCostText.Text = "다음 확장 비용: 골드 " .. tostring(math.floor(info.nextCostGold))
+                .. " · " .. self:OreLabel(tostring(info.nextCostOreType)) .. " " .. tostring(math.floor(info.nextCostOre))
+        end
+    end
+    self:ApplyFieldButton(not isMax)
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyFieldButton(boolean usable)
+    -- ⚠️ 튜토리얼 잠금 중에는 Enable 을 되살리지 않는다. RefreshUI 는 매 프레임
+    -- 도는데 ApplyStepLocks 가 끈 버튼을 여기서 다시 켜면 잠금이 무력화된다
+    -- (ApplyUpgradeButton 과 같은 가드 — F7-E §5.1).
+    if self.btnFieldUpgrade == nil then return end
+    if not usable then
+        self.btnFieldUpgrade.Enable = false
+        return
+    end
+    if _TutorialController == nil or not _TutorialController:IsUiDragLocked() then
+        self.btnFieldUpgrade.Enable = true
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void OnFieldUpgradeClicked()
+    -- 맵 강화(TryOpenUpgrade)와 같은 확인 팝업 경유. 서버가 입장 중인 광산만
+    -- 확장하므로 대상 선택 단계가 없다 (ProgressionService.RequestFieldUpgrade).
+    -- 결과 안내(성공/부족/실패)는 전역 TransactionNoticeLogic 이 팝업으로 띄운다.
+    local profile = self:GetProfile()
+    if profile == nil then return end
+    local raw = profile.FieldUpgradeInfoJson
+    if raw == nil or raw == "" then
+        if self.feedbackText ~= nil then
+            self.feedbackText.Text = "필드 확장은 그 광산에 입장한 뒤 할 수 있습니다."
+        end
+        return
+    end
+    local info = _HttpService:JSONDecode(raw)
+    if info == nil then return end
+    if info.maxLevel == true then
+        if self.feedbackText ~= nil then
+            self.feedbackText.Text = "이 광산의 필드는 이미 최대 크기입니다."
+        end
+        return
+    end
+    local level = math.floor(info.level)
+    local costLine = "다음 확장 비용: 골드 " .. tostring(math.floor(info.nextCostGold))
+        .. " · " .. self:OreLabel(tostring(info.nextCostOreType)) .. " " .. tostring(math.floor(info.nextCostOre))
+    local message = "필드를 확장하시겠습니까?\nLv." .. tostring(level) .. " → Lv." .. tostring(level + 1)
+        .. "\n이동·채굴 가능 공간이 넓어집니다.\n" .. costLine
+    log("[MineSelectUI] field upgrade confirm popup mine=" .. tostring(info.mineId) .. " " .. costLine)
+    _UIPopup:Open(message, function()
+        local requestProfile = self:GetProfile()
+        if requestProfile ~= nil then
+            log("[MineSelectUI] field upgrade request sent (popup confirm)")
+            requestProfile:RequestFieldUpgrade()
+        end
+    end, nil)
 end
 
 @ExecSpace("ClientOnly")
@@ -1203,6 +1312,9 @@ method table GetTutorialButtons()
         upgradeBeginner = self.btnUpgradeBeginner,
         upgradeDeep = self.btnUpgradeDeep,
         upgradeGem = self.btnUpgradeGem,
+        -- T-19 P2: 잠금 목록에 반드시 넣는다 — 빠지면 튜토리얼 중에도 필드
+        -- 확장이 눌린다 (F7-E §5.1 "잠금 목록 완전성").
+        fieldUpgrade = self.btnFieldUpgrade,
         tabMines = self.btnTabMines,
         tabUpgrade = self.btnTabUpgrade,
         rareOpen = self.btnRareOpen,
