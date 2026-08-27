@@ -45,6 +45,14 @@ property Entity inventoryPanel = "3434f74e-d21b-4493-a1f7-9406a7796a4c"
 -- (docs/08 §5.1 "미구현 필드의 처리", docs/16 §10.2 D-6).
 property integer MineLevelMax = 10
 
+-- H10 폭 잠금 (2026-08-27). `WorkerStateText` rect 는 330 이지만 슬레이트 프레임
+-- 장식이 오른쪽 끝 30px 를 덮어 **실가용폭은 300** 이다 — 328px 문구가 화면에서
+-- 프레임 밑으로 파고드는 것을 실측해 정했다. `BestFit` 은 이 컴포넌트가
+-- `Overflow(0)` 이라 아예 동작하지 않아(실기 확인) 같은 일을 코드로 한다.
+property number WorkerStateMaxWidth = 300
+property number WorkerStateFontSize = 22
+property number WorkerStateMinFontSize = 15
+
 @ExecSpace("ClientOnly")
 method void OnBeginPlay()
     -- Initializes cached HUD state, popup visibility, and UI event handlers.
@@ -151,7 +159,7 @@ method void RefreshUI(boolean force)
     end
     -- H10: per-worker program state for every owned worker.
     if self.workerStateText ~= nil then
-        self.workerStateText.Text = "실행 상태  " .. workerStates
+        self:ApplyWorkerStateText("실행 상태  " .. workerStates)
     end
     self:ApplyStateLamp(worker.ProgramState)
     -- Session depot total is kept under its own label so it is never mistaken
@@ -238,7 +246,7 @@ end
 
 @ExecSpace("ClientOnly")
 method void ApplyStateLamp(string programState)
-    -- 선택 일꾼의 실행 상태를 램프 색으로 보조한다. 문구(`실행 상태  1 Running`)는
+    -- 선택 일꾼의 실행 상태를 램프 색으로 보조한다. 문구(`실행 상태  진행 1,2`)는
     -- 그대로 남는다 — 색 단독 표기는 docs/20 §6 위반이다.
     -- 모르는 상태는 Idle 로 떨어뜨린다. `Blocked` 가 나중에 생겨도 배선이 깨지지
     -- 않고 파랑으로 보일 뿐이며, 그때 이 분기에 한 줄을 더한다 (C217).
@@ -253,15 +261,65 @@ method void ApplyStateLamp(string programState)
 end
 
 @ExecSpace("ClientOnly")
+method void ApplyWorkerStateText(string line)
+    -- H10 문구를 넣되 **가용폭(300)을 넘으면 들어갈 때까지 글자를 줄인다.**
+    -- 상태별 묶음 표기라 폭은 유계지만, 5명이 서로 다른 5칸으로 흩어지는 최악 조합은
+    -- 404px 라 포맷만으로는 막을 수 없다 (2026-08-27 `GetPreferredWidth` 실측:
+    -- 1칸 181 · 3칸 283 · 4칸 333 · 5칸 404). 평상시(1~3칸)에는 축소가 걸리지 않아
+    -- 옆 행들과 같은 22 로 뜬다.
+    --
+    -- `BestFit` 으로 하려 했으나 이 컴포넌트는 `Overflow(0)` 이라 "넘쳤다"고 판정하지
+    -- 않아 전혀 축소되지 않았다(실기 확인) — 그래서 직접 잰다. `RefreshUI` 가 상태 키가
+    -- 바뀔 때만 여기까지 오므로 매 프레임 레이아웃을 재는 비용은 없다.
+    local text = self.workerStateText
+    if text == nil then return end
+    text.FontSize = self.WorkerStateFontSize
+    text.Text = line
+    local width = text:GetPreferredWidth(line)
+    if width <= self.WorkerStateMaxWidth then return end
+    local scaled = math.floor(self.WorkerStateFontSize * self.WorkerStateMaxWidth / width)
+    if scaled < self.WorkerStateMinFontSize then scaled = self.WorkerStateMinFontSize end
+    text.FontSize = scaled
+    log("[MineInventoryUI] H10 shrink " .. tostring(self.WorkerStateFontSize) .. "->" .. tostring(scaled) .. " width=" .. tostring(math.floor(width)) .. " max=" .. tostring(self.WorkerStateMaxWidth))
+end
+
+@ExecSpace("ClientOnly")
 method string GetWorkerStateSummary(integer ownedCount)
-    -- Builds "1 Running · 2 Idle" for every owned worker (max 5).
-    local summary = ""
+    -- 상태별로 묶어 "진행 1,2  대기 3" 한 줄을 만든다 (최대 5명).
+    --
+    -- 옛 형식은 일꾼마다 토큰 하나(`1 Running  ·  2 Running`)였는데, 토큰 하나가
+    -- 구분자까지 약 132px 라 **폭이 일꾼 수에 비례**했다. 2명에서 이미 rect(330)을
+    -- 넘겨 옆 칸을 침범했고 5명이면 740px 로 두 배를 넘겼다 (2026-08-27 오너 보고).
+    -- 여기서는 폭이 **서로 다른 상태 수**(최대 4)에만 비례하므로 5명이어도 한 줄이다.
+    --
+    -- 상태 순서는 고정이다 — 일꾼이 상태를 오갈 때 칸 순서가 흔들리면 "어디를 봐야
+    -- 하는지"가 매번 달라진다. `Blocked` 는 아직 판정 로직이 없지만(C217) 생겼을 때
+    -- 배선이 깨지지 않도록 자리만 미리 잡아 둔다.
+    local order = { "Running", "Idle", "Blocked", "Stopped", "-" }
+    local label = { Running = "진행", Idle = "대기", Blocked = "막힘", Stopped = "정지" }
+    local buckets = {}
     for index = 1, ownedCount do
         local worker = self:GetWorkerByIndex(index)
-        local workerState = "-"
-        if worker ~= nil then workerState = worker.ProgramState end
-        if summary ~= "" then summary = summary .. "  ·  " end
-        summary = summary .. tostring(index) .. " " .. tostring(workerState)
+        -- 일꾼 엔티티를 못 찾은 경우도 "미확인"으로 남긴다. 숨기면 검수에서 누락과
+        -- 구분되지 않는다 (docs/08 §5.1 "값이 0이거나 미구현이어도 숨기지 않는다").
+        -- 모르는 상태 문자열도 같은 칸으로 떨어뜨려 조용히 사라지지 않게 한다.
+        local key = "-"
+        if worker ~= nil then key = tostring(worker.ProgramState) end
+        if label[key] == nil then key = "-" end
+        if buckets[key] == nil then buckets[key] = "" end
+        if buckets[key] ~= "" then buckets[key] = buckets[key] .. "," end
+        buckets[key] = buckets[key] .. tostring(index)
+    end
+    local summary = ""
+    for orderIndex = 1, #order do
+        local key = order[orderIndex]
+        local indices = buckets[key]
+        if indices ~= nil and indices ~= "" then
+            local name = label[key]
+            if name == nil then name = "미확인" end
+            if summary ~= "" then summary = summary .. "  " end
+            summary = summary .. name .. " " .. indices
+        end
     end
     if summary == "" then return "-" end
     return summary
