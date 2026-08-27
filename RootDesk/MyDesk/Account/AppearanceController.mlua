@@ -42,6 +42,18 @@ property ButtonComponent pityHair = "6aa5fdfa-f7db-4755-9913-cd154563b7af"
 property ButtonComponent pityFace = "205e0744-1126-4b49-9cca-dca743682fbe"
 property ButtonComponent pityOutfit = "b9c39c9d-0eeb-460e-babb-16a4a99b13e7"
 
+-- 일꾼 칩 스킨. docs/26 §5.2 tab-worker-* 의 확정 RUID 이며 광산 명령 블록
+-- (BlockProgramController) 과 같은 값을 쓴다. 값을 바꿀 일이 생기면 그 문서가
+-- 단일 기준이고 두 컨트롤러를 함께 고친다. 미보유는 전용 스프라이트 대신
+-- normal 에 회색 틴트를 얹는다 (2026-08-27 오너 지정).
+property string TabSpriteSelected = "dc5c3e88865a42c48a627cfe42aa5de8"
+property string TabSpriteNormal = "e1c50c7553614819b54ba237d75fdf8f"
+-- 부위 탭(헤어/얼굴/의상)은 150x64 가로형이라 126x128 정사각인 tab-worker 를
+-- 쓰면 눌려 보인다. 같은 스왑 규칙을 와이드 9-slice 버튼 페어로 적용한다
+-- (docs/26 §5.1 button-slate-blank / button-green-blank).
+property string PartTabSelected = "4b726e80aa58409f8e1f03cc2a4e5da3"
+property string PartTabNormal = "93024bfd2d324753ae92878d299e1ef6"
+
 property ButtonComponent slot1 = "4f7a7a47-b46a-4bfe-a40f-17face8ff263"
 property ButtonComponent slot2 = "9f62c98b-06e4-4ce6-8f0d-f6ab30fc7a5c"
 property ButtonComponent slot3 = "a718e721-b24c-4d3d-8174-7766079cfd72"
@@ -341,6 +353,7 @@ method void Refresh(AccountProfileService profile)
     if type(info.pieces) ~= "table" then return end
     if self._T.selectedWorker > (info.ownedWorkerCount or 1) then self._T.selectedWorker = 1 end
     self:RefreshWorkerTabs(info.ownedWorkerCount or 1)
+    self:RefreshPartTabs()
     self:RefreshSlots(info)
     self:RefreshSummary(info, profile)
     if self.pityPanel ~= nil then self.pityPanel.Enable = info.pity ~= nil and info.pity.pending == true end
@@ -349,8 +362,10 @@ end
 
 @ExecSpace("ClientOnly")
 method void RefreshWorkerTabs(integer ownedCount)
-    -- T-15c (2026-08-22 오너): 수레 강화 패널과 같은 타일 룩. 선택된 일꾼 탭은
-    -- 어둡게, 미보유는 반투명으로 구분한다.
+    -- 2026-08-27 오너: 광산 명령 블록의 일꾼 칩과 같은 3상태 스킨으로 통일한다.
+    -- 선택은 tab-worker-selected, 그 외는 normal, 미보유는 normal + 회색 틴트.
+    -- 이전 구현은 RUID 스왑 없이 Color 만 바꿨고 선택이 회색이라 명령 블록의
+    -- "회색 = 잠금" 과 의미가 뒤집혀 있었다.
     for index = 1, 5 do
         local button = self:GetWorkerButton(index)
         if button ~= nil then
@@ -358,15 +373,44 @@ method void RefreshWorkerTabs(integer ownedCount)
             local sprite = button.Entity.SpriteGUIRendererComponent
             if sprite ~= nil then
                 if index > ownedCount then
-                    sprite.Color = Color(1, 1, 1, 0.4)
-                elseif index == self._T.selectedWorker then
+                    sprite.ImageRUID = DataRef(self.TabSpriteNormal)
                     sprite.Color = Color(0.55, 0.55, 0.55, 1)
+                elseif index == self._T.selectedWorker then
+                    sprite.ImageRUID = DataRef(self.TabSpriteSelected)
+                    sprite.Color = Color(1, 1, 1, 1)
                 else
+                    sprite.ImageRUID = DataRef(self.TabSpriteNormal)
                     sprite.Color = Color(1, 1, 1, 1)
                 end
             end
         end
     end
+    log("[Appearance] worker chips owned=" .. tostring(ownedCount)
+        .. " selected=" .. tostring(self._T.selectedWorker))
+end
+
+@ExecSpace("ClientOnly")
+method void RefreshPartTabs()
+    -- 부위 3탭도 선택/비선택 스프라이트를 스왑한다 (docs/15 §UI 구조).
+    -- 이전에는 선택 표시가 전혀 없어 어느 부위를 보고 있는지 알 수 없었다.
+    self:ApplyPartTabSkin(self.partHair, "hair")
+    self:ApplyPartTabSkin(self.partFace, "face")
+    self:ApplyPartTabSkin(self.partOutfit, "outfit")
+    log("[Appearance] part tab selected=" .. self._T.selectedPart)
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyPartTabSkin(ButtonComponent button, string part)
+    -- 한 부위 탭의 배경 스프라이트를 선택 여부에 맞춘다.
+    if button == nil then return end
+    local sprite = button.Entity.SpriteGUIRendererComponent
+    if sprite == nil then return end
+    if part == self._T.selectedPart then
+        sprite.ImageRUID = DataRef(self.PartTabSelected)
+    else
+        sprite.ImageRUID = DataRef(self.PartTabNormal)
+    end
+    sprite.Color = Color(1, 1, 1, 1)
 end
 
 @ExecSpace("ClientOnly")
@@ -423,8 +467,12 @@ method void RefreshSummary(table info, AccountProfileService profile)
         .. "\n희귀 " .. tostring(probabilities.rareLabel or "") .. " · 영웅 " .. tostring(probabilities.epicLabel or "") .. " · 전설 " .. tostring(probabilities.legendaryLabel or "")
     local selected = self:FindPiece(info, self._T.selectedPieceId)
     if self.selectedText ~= nil then
-        local line = "피스를 선택하세요. 슬롯 선택만으로는 저장되지 않습니다."
-        if selected ~= nil then line = selected.name .. "  [" .. selected.rarityLabel .. "]  " .. (selected.owned and "보유" or "미보유") .. "  도감 +" .. tostring(selected.score) end
+        -- 일꾼 칩 라벨이 숫자만 남았고 부위 탭은 색·이미지로만 구분되므로,
+        -- 지금 무엇을 고른 상태인지는 이 줄이 문장으로 알려 준다 (docs/20 §6 —
+        -- 아이콘·색 단독 표기 금지).
+        local head = "일꾼 " .. tostring(self._T.selectedWorker) .. " · " .. self:PartLabel(self._T.selectedPart) .. "  |  "
+        local line = head .. "피스를 선택하세요. 슬롯 선택만으로는 저장되지 않습니다."
+        if selected ~= nil then line = head .. selected.name .. "  [" .. selected.rarityLabel .. "]  " .. (selected.owned and "보유" or "미보유") .. "  도감 +" .. tostring(selected.score) end
         -- 실패·거절류는 전역 TransactionNoticeLogic 이 팝업으로 안내한다 (T-15) —
         -- 같은 문구를 인라인에 중복 표기하지 않는다.
         if profile.LastTransactionMessage ~= self._T.messageAtOpen and profile.LastTransactionMessage ~= ""
@@ -456,6 +504,15 @@ method any FindPiece(table info, string pieceId)
     if pieceId == "" then return nil end
     for _, piece in ipairs(info.pieces) do if piece.id == pieceId then return piece end end
     return nil
+end
+
+@ExecSpace("ClientOnly")
+method string PartLabel(string part)
+    -- 부위 키를 화면 문구로 옮긴다. 부위 탭 버튼의 라벨과 같은 낱말을 쓴다.
+    if part == "hair" then return "헤어" end
+    if part == "face" then return "얼굴" end
+    if part == "outfit" then return "의상" end
+    return part
 end
 
 @ExecSpace("ClientOnly")
