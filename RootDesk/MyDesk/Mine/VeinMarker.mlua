@@ -23,6 +23,16 @@ script VeinMarker extends Component
 	@Sync
 	property integer VisualRevision = 0
 
+	-- 부유석(일반 광맥) 스프라이트의 pivot 결함 보정. 그림의 시각 중심이 캔버스
+	-- pivot보다 왼쪽·위에 있어 셀 중심에 놓으면 좌상단으로 치우쳐 보인다
+	-- (2026-08-27 오너 관측). 연출 의도 오프셋이 아니라 자산 결함 보정이므로
+	-- MarkerKind == "normal" 에만 적용한다 — 특별 광맥(신비한 광석)·Depot(광차)은
+	-- 자산이 달라 pivot도 다르다. 값은 VeinScale 0.7 기준 실측치라 스케일이나
+	-- 자산을 바꾸면 다시 재야 한다 (msw-asset-verify "pivot 보정" 절).
+	property number VeinPivotOffsetX = 0.02
+
+	property number VeinPivotOffsetY = -0.55
+
 	@ExecSpace("ServerOnly")
 	method void OnBeginPlay()
 		    -- Derives this marker's cell from its authored position and registers itself
@@ -35,9 +45,13 @@ script VeinMarker extends Component
 		
 		    -- RectTile 에서 1 셀 = 1 world unit 이고, 맵에 저작된 marker 위치가 곧 셀
 		    -- 좌표다. 별도 좌표 property 를 두면 맵과 이중 관리가 되므로 위치에서 얻는다.
+		    -- 셀 c 는 world [c, c+1) 을 차지한다 (ToWorldPosition(c) = c+0.5 실측).
+		    -- floor(pos)는 저작 좌표(정수 모서리)와 아래에서 옮긴 중심 좌표(c+0.5)
+		    -- 어느 쪽에서 다시 계산해도 같은 셀이 나온다. floor(pos+1)은 정수 저작
+		    -- 좌표를 한 칸 우상단 셀로 밀어 광맥 전체가 고갈 표시되는 회귀였다.
 		    local pos = self.Entity.TransformComponent.Position
-		    self.CellX = math.floor(pos.x + 1)
-		    self.CellY = math.floor(pos.y + 1)
+		    self.CellX = math.floor(pos.x)
+		    self.CellY = math.floor(pos.y)
 		
 		    -- 맵에 저작된 마커는 정수 좌표(셀의 좌하단)를 사용하지만,
 		    -- RectTileMap:ToWorldPosition 은 셀 중심 좌표를 반환한다.
@@ -46,7 +60,14 @@ script VeinMarker extends Component
 		    local tilemap = self.Entity.CurrentMap:GetFirstChildComponentByTypeName("RectTileMapComponent")
 		    if tilemap ~= nil then
 		        local center = tilemap:ToWorldPosition(Vector2Int(self.CellX, self.CellY))
-		        self.Entity.TransformComponent.Position = Vector3(center.x, center.y, pos.z)
+		        -- pivot 보정은 일반 광맥(부유석)에만 더한다 (property 주석 참조).
+		        local offsetX = 0.0
+		        local offsetY = 0.0
+		        if self.MarkerKind == "normal" then
+		            offsetX = self.VeinPivotOffsetX
+		            offsetY = self.VeinPivotOffsetY
+		        end
+		        self.Entity.TransformComponent.Position = Vector3(center.x + offsetX, center.y + offsetY, pos.z)
 		        log("[VeinMarker] centered id=" .. self.MarkerId
 		            .. " cell=(" .. self.CellX .. "," .. self.CellY .. ")"
 		            .. " world=(" .. center.x .. "," .. center.y .. ")")

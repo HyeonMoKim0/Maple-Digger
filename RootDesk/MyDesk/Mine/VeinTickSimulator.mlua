@@ -289,10 +289,16 @@ method void RegisterMarker(string markerId, string markerKind, VeinMarker marker
     table.insert(self._T.markerList, marker)
 
     -- 저작된 marker 셀이 실제 광맥/창고와 어긋나면 연출이 조용히 빈 채로 남는다.
-    -- 등록 시점에 대조해 로그로 드러낸다.
+    -- 등록 시점에 대조해 로그로 드러낸다. 단, 미해금 필드 레벨(D10 §7)의
+    -- additionalVeins 에 예약된 셀은 아직 광맥이 없는 게 정상이므로 오류가 아니다.
     if markerKind == "normal" and not self:IsVein(marker.CellX, marker.CellY) then
-        log_error("[VeinTick] marker cell has no vein id=" .. markerId
-            .. " cell=(" .. marker.CellX .. "," .. marker.CellY .. ")")
+        if self:IsFutureLevelVeinCell(marker.CellX, marker.CellY) then
+            log("[VeinTick] marker reserved for future field level id=" .. markerId
+                .. " cell=(" .. marker.CellX .. "," .. marker.CellY .. ")")
+        else
+            log_error("[VeinTick] marker cell has no vein id=" .. markerId
+                .. " cell=(" .. marker.CellX .. "," .. marker.CellY .. ")")
+        end
     end
     log("[VeinTick] marker registered id=" .. markerId .. " kind=" .. markerKind
         .. " cell=(" .. marker.CellX .. "," .. marker.CellY .. ")")
@@ -924,6 +930,21 @@ end
 method table GetVein(integer cellX, integer cellY)
     -- Returns the vein state at a cell or nil when the cell is not a vein.
     return self.VeinState[self:CellKey(cellX, cellY)]
+end
+
+@ExecSpace("ServerOnly")
+method boolean IsFutureLevelVeinCell(integer cellX, integer cellY)
+    -- Reports whether a cell is reserved as an additional vein of a not-yet
+    -- unlocked field level (D10 §7). Marker registration uses this to tell
+    -- "authoring mistake" apart from "vein that appears at a later level".
+    if self._T.fieldLevelDefinitions == nil then return false end
+    for _, def in pairs(self._T.fieldLevelDefinitions) do
+        for i = 1, #def.additionalVeins do
+            local vein = def.additionalVeins[i]
+            if vein.cellX == cellX and vein.cellY == cellY then return true end
+        end
+    end
+    return false
 end
 
 @ExecSpace("ServerOnly")

@@ -236,6 +236,14 @@ method void Repaint()
             self._T.pulseElapsed = -1
         end
     else
+        -- 광맥이 아직 없으면(미해금 필드 레벨의 예비 마커 — OreType 이 빈 값)
+        -- 고갈 스프라이트 대신 아예 숨긴다. 미개척 구역은 배경만 보여야 한다
+        -- (docs/32 §5). 해금되면 서버가 ore/stage 를 밀어 넣어 다시 그려진다.
+        if marker.OreType == "" then
+            self:UpdateBadge(marker, false)
+            renderer.Enable = false
+            return
+        end
         ruid = self:StageRuid(marker.ReserveStage)
         -- vein_recover cue (F5 §4 / docs/21 §3 "화면 내 stage 상승"). 일반
         -- 광맥의 회복 연출은 자산이 없어 스프라이트 교체 + 이 사운드가 전부다
