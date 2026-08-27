@@ -43,15 +43,20 @@ property string DirectionIconRuid = "03af6020eaf541e1937dd23d48476aa5"
 -- 사각지대가 된다(실측: 56px 밴드 밖 y=-152·-92 에서 즉시 판정 0). 정확히
 -- 안 들어와도 이 반경 안이면 가장 가까운 칸으로 붙인다. 0 이하면 옛 엄격 판정.
 property number DropSnapRadius = 40
-property TextGUIRendererComponent feedbackText = "d24cb5fb-6524-4dc9-a58f-2889777374aa"
+-- 추가 거절 흔들림 (2026-08-27): 눌린 팔레트 버튼을 위아래 ±Amplitude px 로
+-- Duration 초 동안 감쇠 진동시킨다. Speed 는 sin 각속도(rad/s) — 40 이면
+-- 0.35초에 두 번 남짓 오르내린다.
+property number ShakeDuration = 0.35
+property number ShakeAmplitude = 4
+property number ShakeSpeed = 40
 -- T-17b: 드래그 고스트 — 드래그 확정 중 커서를 따라오는 잔상 셀 (그룹 루트 직속,
 -- raycast 없음). 문구·틴트는 원본 토큰을 복제하고, 놓으면 숨긴 뒤 이동을 수행한다.
 property Entity dragGhost = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
 property TextGUIRendererComponent dragGhostText = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
 property SpriteGUIRendererComponent dragGhostSprite = "a5edce44-c3ad-45f2-9ffd-b9d86ff16176"
--- T-17c: 드롭 위치 안내선 — 커서가 올라간 칸의 왼쪽 경계(= 그 칸 앞 삽입)에
--- 세로로 긴 주황 선을 세운다. 드롭 규칙("대상 칸 앞 삽입")의 시각 표현.
-property Entity dropLine = "a798fd1a-e9d5-4caf-97cf-44e8af0d31f2"
+-- T-19 (2026-08-27 오너): 주황 안내선(구 dropLine)을 폐기하고, 삽입 경계
+-- 양옆 칸을 DropGapSpread px 씩 벌려 "여기에 들어간다"를 보여 준다.
+property number DropGapSpread = 6
 property ButtonComponent btnWorker1 = "b82c7a2d-41a0-40ef-93e9-f98b9a13b2cd"
 -- 워커 칩 5개는 레거시 TextComponent 를 쓴다. TextGUIRendererComponent 로
 -- 선언하면 런타임 nil 이 되어 라벨이 한 번도 갱신되지 않는다 (docs/16 §15 D-12).
@@ -74,9 +79,8 @@ property SpriteGUIRendererComponent worker4ChipSprite = "d7a3b959-0a71-4742-9b94
 property SpriteGUIRendererComponent worker5ChipSprite = "cdf167d4-b5da-48f9-9ac9-fa6a8c144d7f"
 -- docs/26 §5.2 tab-worker-* 의 확정 RUID. 값을 바꿀 일이 생기면 그 문서가
 -- 단일 기준이며 여기와 함께 고친다.
-property string TabSpriteSelected = "acfb0998854a4fb4b1a9927afd2a9993"
-property string TabSpriteNormal = "db0c502147114dbfb47a5e87322937b4"
-property string TabSpriteDisabled = "a864624d7b454085bcb76f86a0ed8d07"
+property string TabSpriteSelected = "dc5c3e88865a42c48a627cfe42aa5de8"
+property string TabSpriteNormal = "e1c50c7553614819b54ba237d75fdf8f"
 property integer SelectedWorkerIndex = 1
 
 -- Panel collapse toggle (C201 / docs/08 §6.3). btnToggle is a sibling of the
@@ -140,16 +144,82 @@ method void AddCommand(table command, string label)
     -- Appends one command to the currently open program body.
     if self:CountBlocks(self._T.program) >= self.MaxProgramBlocks then
         self:SetFeedback("프로그램은 최대 30블록까지 만들 수 있습니다.")
+        self:ShakeButton(self:PaletteButtonForCommand(command))
         return
     end
     if (command.type == "repeat" or command.type == "if") and #self._T.openBodies - 1 >= self.MaxProgramDepth then
         self:SetFeedback("제어 블록은 최대 3단계까지 중첩할 수 있습니다.")
+        self:ShakeButton(self:PaletteButtonForCommand(command))
         return
     end
     local body = self._T.openBodies[#self._T.openBodies]
     table.insert(body, command)
     self:RefreshDisplay()
     log("[BlockProgram] added block '" .. label .. "' depth=" .. tostring(#self._T.openBodies - 1))
+end
+
+@ExecSpace("ClientOnly")
+method ButtonComponent PaletteButtonForCommand(table command)
+    -- AddCommand 가 거절한 명령이 어느 팔레트 버튼에서 왔는지 되짚는다.
+    -- ShakeButton 의 대상 결정 전용 — command.type(+dir)이 버튼과 1:1 이다.
+    if command == nil then return nil end
+    if command.type == "move" then
+        if command.dir == "E" then return self.btnMoveE end
+        if command.dir == "W" then return self.btnMoveW end
+        if command.dir == "N" then return self.btnMoveN end
+        if command.dir == "S" then return self.btnMoveS end
+        return nil
+    elseif command.type == "mine" then
+        return self.btnMine
+    elseif command.type == "load" then
+        return self.btnLoad
+    elseif command.type == "unload" then
+        return self.btnUnload
+    elseif command.type == "repeat" then
+        return self.btnRepeat
+    elseif command.type == "if" then
+        return self.btnIfOre
+    end
+    return nil
+end
+
+@ExecSpace("ClientOnly")
+method void ShakeButton(ButtonComponent button)
+    -- 추가가 거절된 팔레트 버튼을 위아래로 짧게 흔들어 "안 된다"를 시각으로
+    -- 보여 준다 (2026-08-27 오너 — 피드백 텍스트 줄 제거의 대체 신호).
+    -- 실제 진동은 OnUpdate 가 감쇠 sin 파형으로 구동하고 끝나면 원위치한다.
+    if button == nil or button.Entity == nil then return end
+    local transform = button.Entity.UITransformComponent
+    if transform == nil then return end
+    local shake = self._T.shake
+    if shake ~= nil and shake.transform ~= nil then
+        -- 진행 중인 흔들림이 있으면 그 버튼을 원위치로 되돌리고 새로 시작한다.
+        -- 같은 버튼 연타여도 복원 후 baseY 를 다시 잡으므로 기준이 밀리지 않는다.
+        shake.transform.anchoredPosition = Vector2(shake.transform.anchoredPosition.x, shake.baseY)
+    end
+    self._T.shake = { transform = transform, baseY = transform.anchoredPosition.y, elapsed = 0 }
+end
+
+@ExecSpace("ClientOnly")
+method void StepShake(number delta)
+    -- OnUpdate 에서 매 프레임 호출. ±ShakeAmplitude px 를 ShakeDuration 초 동안
+    -- 선형 감쇠시키며 sin(elapsed × ShakeSpeed) 로 위아래 진동한다.
+    local shake = self._T.shake
+    if shake == nil then return end
+    local transform = shake.transform
+    if transform == nil then
+        self._T.shake = nil
+        return
+    end
+    shake.elapsed = shake.elapsed + delta
+    if shake.elapsed >= self.ShakeDuration then
+        transform.anchoredPosition = Vector2(transform.anchoredPosition.x, shake.baseY)
+        self._T.shake = nil
+        return
+    end
+    local decay = 1 - shake.elapsed / self.ShakeDuration
+    local offset = self.ShakeAmplitude * decay * math.sin(shake.elapsed * self.ShakeSpeed)
+    transform.anchoredPosition = Vector2(transform.anchoredPosition.x, shake.baseY + offset)
 end
 
 @ExecSpace("ClientOnly")
@@ -203,7 +273,7 @@ method void OnCellTouchDrag(integer cellIndex, UITouchDragEvent touchEvent)
     if self._T.dragSrc == nil then return end
     if self._T.dragMoved then
         self:MoveDragGhost(touchEvent.TouchPoint)
-        self:UpdateDropLine(touchEvent.TouchPoint)
+        self:UpdateDropPreview(touchEvent.TouchPoint)
         return
     end
     local dx = touchEvent.TouchPoint.x - self._T.dragStart.x
@@ -228,7 +298,7 @@ method void OnCellTouchDrag(integer cellIndex, UITouchDragEvent touchEvent)
     end
     self:ShowDragGhost(token)
     self:MoveDragGhost(touchEvent.TouchPoint)
-    self:UpdateDropLine(touchEvent.TouchPoint)
+    self:UpdateDropPreview(touchEvent.TouchPoint)
     if isControl then
         -- T-18 (2026-08-26 오너 결정): 제어 칸은 "이동"이 아니라 **범위 손잡이**다.
         -- 여는 칸을 앞으로 끌면 그 지점부터, ] 을 뒤로 끌면 그 지점까지가 몸통이 된다.
@@ -248,15 +318,17 @@ method void ShowDragGhost(table token)
     -- 원본 칸은 반투명으로 눌러 "여기서 뽑혀 나왔다"를 보인다 — 원복은 드롭 후
     -- RefreshDisplay 의 전체 재도색이 한다.
     if self.dragGhost == nil then return end
-    local isMove = token.tint == "move"
+    local useIcon = token.tint == "move" or token.tint == "work"
     if self.dragGhostText ~= nil then
-        -- 이동 블록은 문자(E/W/N/S) 대신 방향 아이콘으로 읽게 한다.
-        self.dragGhostText.Text = isMove and "" or token.label
+        -- 이동(E/W/N/S)·작업(M/L/U) 블록은 문자 대신 팔레트 아이콘으로 읽게 한다.
+        self.dragGhostText.Text = useIcon and "" or token.label
     end
     local ghostIcon = self.dragGhost:GetChildByName("Icon", false)
     if ghostIcon ~= nil then
-        ghostIcon.Enable = isMove
-        if isMove then self:ApplyDirectionIcon(ghostIcon, token.label, false) end
+        ghostIcon.Enable = useIcon
+        -- alignCell=true: 고스트도 56px 셀과 같은 크기이므로 팔레트 버튼의
+        -- x(34~46, 묶음 중앙 정렬 값)를 그대로 쓰면 고스트 밖으로 넘친다.
+        if useIcon then self:ApplyCommandIcon(ghostIcon, token.label, true) end
     end
     if self.dragGhostSprite ~= nil then
         if token.tint == "work" then
@@ -271,12 +343,8 @@ method void ShowDragGhost(table token)
     end
     self.dragGhost.Enable = true
     -- 창(UIDraggable)이 잡힐 때마다 SetSiblingIndex(1000000) 으로 맨 앞에 오므로,
-    -- 고스트·안내선도 드래그 시작마다 다시 맨 앞으로 올린다 — 안 하면 창을 한 번
+    -- 고스트도 드래그 시작마다 다시 맨 앞으로 올린다 — 안 하면 창을 한 번
     -- 이라도 옮긴 뒤부터 고스트가 창 뒤로 깔린다 (2026-08-26 오너 보고).
-    -- 순서: 안내선 → 고스트 (고스트가 최상위).
-    if self.dropLine ~= nil and self.dropLine.UITransformComponent ~= nil then
-        _UILogic:SetSiblingIndex(self.dropLine.UITransformComponent, 1000000)
-    end
     if self.dragGhost.UITransformComponent ~= nil then
         _UILogic:SetSiblingIndex(self.dragGhost.UITransformComponent, 1000000)
     end
@@ -362,58 +430,87 @@ method boolean IsControlDrag()
 end
 
 @ExecSpace("ClientOnly")
-method void UpdateDropLine(Vector2 screenPoint)
-    -- T-17c: 삽입 안내선. T-18d 개정 — 선을 세우는 자리와 실제 삽입 자리가
-    -- 반드시 같아야 한다(앞/뒤 경계 동일 판정 + 제자리 경계는 숨김).
-    if self.dropLine == nil then return end
+method void UpdateDropPreview(Vector2 screenPoint)
+    -- T-19: 삽입 미리보기. 판정 결과를 _T.dropPreview 에 저장하고, 드롭
+    -- (OnCellTouchUp)은 이 값을 **그대로** 쓴다 — 놓는 순간 좌표로 다시
+    -- 판정하지 않으므로 "표시된 자리와 실제 삽입 자리가 다른" 사고(2026-08-27
+    -- 오너 보고, 구 안내선 시절)가 구조적으로 불가능하다.
+    -- 시각 표현은 안내선 대신 경계 양옆 칸을 벌리는 갭(ApplyDropGap)이다.
     local target = self:CellIndexAtPoint(screenPoint)
     if target == 0 then
-        self.dropLine.Enable = false
+        self._T.dropPreview = nil
+        self:ClearDropGap()
         return
     end
     local isControl = self:IsControlDrag()
     local insertAfter = false
     if not isControl then
         insertAfter = self:IsPointPastCellCenter(target, screenPoint)
-        if self:IsNoOpBoundary(self._T.dragSrc, target, insertAfter) then
-            self.dropLine.Enable = false
-            return
+    end
+    self._T.dropPreview = { target = target, insertAfter = insertAfter }
+    -- 갭은 실제로 순서가 바뀌는 경계에만 연다 — 제자리 경계에 갭을 열면
+    -- "옮겨진다"로 읽히는데 실제로는 아무 일도 없다 (구 안내선의 숨김 규칙 계승).
+    if (not isControl and self:IsNoOpBoundary(self._T.dragSrc, target, insertAfter))
+        or (isControl and target == self._T.dragSrc) then
+        self:ClearDropGap()
+        return
+    end
+    local leftIndex = target - 1
+    local rightIndex = target
+    if insertAfter then
+        leftIndex = target
+        rightIndex = target + 1
+    end
+    self:ApplyDropGap(leftIndex, rightIndex)
+end
+
+@ExecSpace("ClientOnly")
+method void ApplyDropGap(integer leftIndex, integer rightIndex)
+    -- 경계 왼쪽 칸을 -DropGapSpread, 오른쪽 칸을 +DropGapSpread 로 밀어
+    -- 틈을 연다. 행 경계(왼쪽 = 앞 행 끝, 오른쪽 = 다음 행 처음)에서도 각자
+    -- 제 행 안에서 밀리므로 안전하다. 원위치는 ClearDropGap 이 한다.
+    local gap = self._T.gapShift
+    if gap ~= nil and gap.leftIndex == leftIndex and gap.rightIndex == rightIndex then
+        return  -- 같은 경계면 그대로 둔다 — 매 프레임 재적용하면 떨린다.
+    end
+    self:ClearDropGap()
+    local entries = {}
+    local leftCell = nil
+    if leftIndex >= 1 then leftCell = self._T.cells[leftIndex] end
+    if leftCell ~= nil and leftCell.Enable and leftCell.UITransformComponent ~= nil then
+        local transform = leftCell.UITransformComponent
+        table.insert(entries, { transform = transform, baseX = transform.anchoredPosition.x })
+        transform.anchoredPosition = Vector2(transform.anchoredPosition.x - self.DropGapSpread, transform.anchoredPosition.y)
+    end
+    local rightCell = self._T.cells[rightIndex]
+    if rightCell ~= nil and rightCell.Enable and rightCell.UITransformComponent ~= nil then
+        local transform = rightCell.UITransformComponent
+        table.insert(entries, { transform = transform, baseX = transform.anchoredPosition.x })
+        transform.anchoredPosition = Vector2(transform.anchoredPosition.x + self.DropGapSpread, transform.anchoredPosition.y)
+    end
+    self._T.gapShift = { leftIndex = leftIndex, rightIndex = rightIndex, entries = entries }
+end
+
+@ExecSpace("ClientOnly")
+method void ClearDropGap()
+    -- ApplyDropGap 이 민 칸들을 기록해 둔 baseX 로 되돌린다.
+    local gap = self._T.gapShift
+    if gap == nil then return end
+    for i = 1, #gap.entries do
+        local entry = gap.entries[i]
+        if entry.transform ~= nil then
+            entry.transform.anchoredPosition = Vector2(entry.baseX, entry.transform.anchoredPosition.y)
         end
-    elseif target == self._T.dragSrc then
-        self.dropLine.Enable = false
-        return
     end
-    local cell = self._T.cells[target]
-    if cell == nil or cell.UITransformComponent == nil then
-        self.dropLine.Enable = false
-        return
-    end
-    local corners = cell.UITransformComponent:GetWorldCorners()
-    if corners == nil or corners[1] == nil or corners[2] == nil then
-        -- 그냥 return 하면 안내선이 직전 자리에 남아 엉뚱한 곳을 가리킨다.
-        self.dropLine.Enable = false
-        return
-    end
-    -- 경계 중앙(실창 픽셀) → 루트 코너 정규화 환산. 칸 간격 6px 의 한가운데.
-    -- 뒤에 넣을 때는 **오른쪽** 경계에 세운다 — 안 그러면 선과 결과가 어긋난다.
-    local edgeX = corners[1].x
-    local gap = -3
-    if insertAfter and corners[3] ~= nil then
-        edgeX = corners[3].x
-        gap = 3
-    end
-    local edge = self:WindowToCanvas(Vector2(edgeX, (corners[1].y + corners[2].y) / 2))
-    local transform = self.dropLine.UITransformComponent
-    if transform == nil then return end
-    transform.anchoredPosition = Vector2(edge.x + gap, edge.y)
-    self.dropLine.Enable = true
+    self._T.gapShift = nil
 end
 
 @ExecSpace("ClientOnly")
 method void HideDragGhost()
-    -- 드롭·취소 공용 정리 (안내선 포함).
+    -- 드롭·취소 공용 정리 (삽입 갭·미리보기 포함).
     if self.dragGhost ~= nil then self.dragGhost.Enable = false end
-    if self.dropLine ~= nil then self.dropLine.Enable = false end
+    self:ClearDropGap()
+    self._T.dropPreview = nil
 end
 
 @ExecSpace("ClientOnly")
@@ -421,17 +518,18 @@ method void OnCellTouchUp(integer cellIndex, UITouchUpEvent touchEvent)
     -- T-17: 드래그가 확정된 상태로 놓으면 대상 칸을 찾아 이동을 수행한다.
     -- 확정 전(짧은 탭)은 아무것도 하지 않는다 — 기존 클릭 삭제가 처리한다.
     local src = self._T.dragSrc
+    -- T-19: 놓는 순간 좌표로 다시 판정하지 않는다. 드래그 중 마지막으로
+    -- 보여 준 미리보기(_T.dropPreview)가 곧 드롭 자리다 — TouchUp 좌표가
+    -- 드래그 좌표와 미세하게 어긋나며 갭 표시와 결과가 갈리던 사고를 막는다.
+    local preview = self._T.dropPreview
     self._T.dragSrc = nil
     self:HideDragGhost()
     if src == nil or not self._T.dragMoved then return end
-    local dst = self:CellIndexAtPoint(touchEvent.TouchPoint)
-    -- T-18d: 안내선과 **같은 함수**로 앞/뒤를 정한다 — 두 곳이 각자 판정하면
-    -- 선이 가리킨 자리와 실제 삽입 자리가 갈린다.
-    local insertAfter = false
-    if dst > 0 and not self:IsControlDrag() then
-        insertAfter = self:IsPointPastCellCenter(dst, touchEvent.TouchPoint)
+    if preview == nil then
+        self:MoveStripToken(src, 0, false)
+        return
     end
-    self:MoveStripToken(src, dst, insertAfter)
+    self:MoveStripToken(src, preview.target, preview.insertAfter)
 end
 
 @ExecSpace("ClientOnly")
@@ -719,13 +817,14 @@ method void PaintCell(any cell, string label, string tint)
     -- 셀 하나의 문구·틴트를 칠한다. 문자 + 계열 틴트 병행 (docs/20 §6 —
     -- 색 단독 표기 금지). 배경 파츠는 command-tile-slate-blank 이고 틴트만 바꾼다.
     cell.Enable = true
-    local isMove = tint == "move" and (label == "E" or label == "W" or label == "N" or label == "S")
+    local useIcon = (tint == "move" and (label == "E" or label == "W" or label == "N" or label == "S"))
+        or (tint == "work" and (label == "M" or label == "L" or label == "U"))
     local text = cell.TextGUIRendererComponent
-    if text ~= nil then text.Text = isMove and "" or label end
+    if text ~= nil then text.Text = useIcon and "" or label end
     local icon = cell:GetChildByName("Icon", false)
     if icon ~= nil then
-        icon.Enable = isMove
-        if isMove then self:ApplyDirectionIcon(icon, label, true) end
+        icon.Enable = useIcon
+        if useIcon then self:ApplyCommandIcon(icon, label, true) end
     end
     local sprite = cell.SpriteGUIRendererComponent
     if sprite == nil then return end
@@ -741,31 +840,38 @@ method void PaintCell(any cell, string label, string tint)
 end
 
 @ExecSpace("ClientOnly")
-method Entity DirectionIconSource(string direction)
-    -- 팔레트 버튼의 Icon 자식이 방향별 단일 기준이다. Maker에서 조정한
+method Entity CommandIconSource(string label)
+    -- 팔레트 버튼의 Icon 자식이 명령별 단일 기준이다. Maker에서 조정한
     -- RUID/PosX·PosY/LocalPosition/Flip 값을 그대로 프로그램 셀에 복제한다.
+    -- 방향(E/W/N/S)뿐 아니라 작업 블록(M=채굴 · L=적재 · U=하역)도 같은 방식.
     local button = nil
-    if direction == "E" then
+    if label == "E" then
         button = self.btnMoveE
-    elseif direction == "W" then
+    elseif label == "W" then
         button = self.btnMoveW
-    elseif direction == "N" then
+    elseif label == "N" then
         button = self.btnMoveN
-    elseif direction == "S" then
+    elseif label == "S" then
         button = self.btnMoveS
+    elseif label == "M" then
+        button = self.btnMine
+    elseif label == "L" then
+        button = self.btnLoad
+    elseif label == "U" then
+        button = self.btnUnload
     end
     if button == nil or button.Entity == nil then return nil end
     return button.Entity:GetChildByName("Icon", false)
 end
 
 @ExecSpace("ClientOnly")
-method void ApplyDirectionIcon(Entity targetIcon, string direction, boolean alignCell)
+method void ApplyCommandIcon(Entity targetIcon, string label, boolean alignCell)
     if targetIcon == nil then return end
     local targetTransform = targetIcon.UITransformComponent
     local targetSprite = targetIcon.SpriteGUIRendererComponent
     if targetTransform == nil or targetSprite == nil then return end
 
-    local sourceIcon = self:DirectionIconSource(direction)
+    local sourceIcon = self:CommandIconSource(label)
     if sourceIcon ~= nil then
         local sourceTransform = sourceIcon.UITransformComponent
         local sourceSprite = sourceIcon.SpriteGUIRendererComponent
@@ -780,11 +886,13 @@ method void ApplyDirectionIcon(Entity targetIcon, string direction, boolean alig
             targetTransform.RectSize = sourceTransform.RectSize
             targetTransform.anchoredPosition = sourceTransform.anchoredPosition
             if alignCell and targetIcon.Parent ~= nil and targetIcon.Parent.UITransformComponent ~= nil then
-                -- 버튼의 x=21/22는 136px 팔레트 버튼 기준이다. 56px 셀에서는
-                -- 아이콘(34px)을 셀 중앙에 놓을 수 있도록 x=11로 환산한다.
+                -- 팔레트 원본은 34px 기준이지만 셀에서는 셀 폭에 비례해 키운다
+                -- (68px 셀 → 46px, 2026-08-27 오너 "블록이 너무 작다"). 좌우·상하
+                -- 모두 셀 중앙 — pivot(0,0)+middle anchor 라 y는 -크기/2 가 중앙이다.
                 local cellWidth = targetIcon.Parent.UITransformComponent.RectSize.x
-                local iconWidth = targetTransform.RectSize.x
-                targetTransform.anchoredPosition = Vector2((cellWidth - iconWidth) / 2, targetTransform.anchoredPosition.y)
+                local iconSize = math.floor(cellWidth * 0.68)
+                targetTransform.RectSize = Vector2(iconSize, iconSize)
+                targetTransform.anchoredPosition = Vector2((cellWidth - iconSize) / 2, -iconSize / 2)
             end
             targetTransform.ZRotation = sourceTransform.ZRotation
         end
@@ -1228,11 +1336,17 @@ method void SetWorkerButtonState(TextComponent label, SpriteGUIRendererComponent
     end
     if chip == nil then return end
     if state == "disabled" then
-        chip.ImageRUID = DataRef(self.TabSpriteDisabled)
+        -- 미보유 슬롯 전용 스프라이트를 따로 두지 않고 비선택 스프라이트에
+        -- 회색 틴트만 얹는다 (2026-08-27 오너 지정). 상태가 바뀌는 칩은 같은
+        -- 컴포넌트를 재사용하므로 다른 분기에서 틴트를 흰색으로 되돌린다.
+        chip.ImageRUID = DataRef(self.TabSpriteNormal)
+        chip.Color = Color(0.55, 0.55, 0.55, 1)
     elseif state == "selected" then
         chip.ImageRUID = DataRef(self.TabSpriteSelected)
+        chip.Color = Color(1, 1, 1, 1)
     else
         chip.ImageRUID = DataRef(self.TabSpriteNormal)
+        chip.Color = Color(1, 1, 1, 1)
     end
 end
 
@@ -1370,6 +1484,7 @@ method void OnEndBlockClicked()
     -- Closes the most recently opened repeat or IF block.
     if #self._T.openBodies <= 1 then
         self:SetFeedback("닫을 제어 블록이 없습니다.")
+        self:ShakeButton(self.btnEnd)
         return
     end
     table.remove(self._T.openBodies)
@@ -1520,8 +1635,11 @@ end
 
 @ExecSpace("ClientOnly")
 method void SetFeedback(string message)
-    -- Displays parser or editor feedback without starting execution.
-    self.feedbackText.Text = message
+    -- 패널 하단 피드백 줄(FeedbackText)은 2026-08-27 오너 지시로 제거했다
+    -- ("공간 낭비"). 문구는 디버그 로그로만 남긴다 — 추가 거절 같은 핵심
+    -- 사례는 ShakeButton 의 시각 피드백이 대신한다. 호출부는 문구가 곧 상황
+    -- 설명이라 로그 증거용으로 그대로 둔다.
+    log("[BlockProgram] feedback: " .. message)
 end
 
 @ExecSpace("ClientOnly")
@@ -1541,6 +1659,9 @@ end
 @ExecSpace("ClientOnly")
 method void OnUpdate(number delta)
     -- Mirrors the synchronized worker run state into the Run button label.
+    -- 팔레트 버튼 흔들림은 state 조기 return 과 무관하게 항상 진행돼야 하므로
+    -- 최상단에서 구동한다.
+    self:StepShake(delta)
     -- 보유 일꾼 수 변화를 먼저 본다. 구매 경로(MineSelectController)는 편집기를
     -- 직접 부르지 않으므로, 이 감지가 없으면 방금 산 일꾼의 칩이 잠금 스프라이트로
     -- 남는다. 아래 state 조기 return 보다 앞에 있어야 한다.
