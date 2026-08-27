@@ -126,7 +126,7 @@
           "name": "Root",
           "path": "/ui/TutorialUI/Root",
           "nameEditable": true,
-          "enable": false,
+          "enable": true,
           "visible": true,
           "localize": true,
           "displayOrder": 0,
@@ -1000,7 +1000,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "e1c50c7553614819b54ba237d75fdf8f"
+                "DataId": "db0c502147114dbfb47a5e87322937b4"
               },
               "LocalPosition": {
                 "x": 0.0,
