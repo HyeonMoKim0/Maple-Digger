@@ -357,7 +357,7 @@
               "AnimClipPlayType": 0,
               "EndFrameIndex": 2147483647,
               "ImageRUID": {
-                "DataId": "ec1ee9eef69244f497f96fc87ef24a0f"
+                "DataId": "9233b7bec7c34185aecffe956e6e679a"
               },
               "LocalPosition": {
                 "x": 0.0,
@@ -568,7 +568,7 @@
                 "a": 0.72
               },
               "DropShadowDistance": 32.0,
-              "Font": 0,
+              "Font": 1,
               "FontColor": {
                 "r": 0.23137255,
                 "g": 0.164705887,
@@ -809,7 +809,7 @@
                 "a": 0.72
               },
               "DropShadowDistance": 32.0,
-              "Font": 0,
+              "Font": 1,
               "FontColor": {
                 "r": 0.13333334,
                 "g": 0.1882353,
@@ -1050,7 +1050,7 @@
                 "a": 0.72
               },
               "DropShadowDistance": 32.0,
-              "Font": 0,
+              "Font": 1,
               "FontColor": {
                 "r": 1.0,
                 "g": 1.0,

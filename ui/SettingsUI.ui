@@ -320,7 +320,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.168627456,
                 "g": 0.168627456,
@@ -455,7 +455,7 @@
               "EndFrameIndex": 2147483647,
               "IgnoreMapLayerCheck": false,
               "ImageRUID": {
-                "DataId": "ec1ee9eef69244f497f96fc87ef24a0f"
+                "DataId": "9233b7bec7c34185aecffe956e6e679a"
               },
               "LocalPosition": {
                 "x": 0.0,
@@ -613,7 +613,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.478431374,
                 "g": 0.235294119,
@@ -898,7 +898,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.23137255,
                 "g": 0.164705887,
@@ -1291,7 +1291,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.23137255,
                 "g": 0.164705887,
@@ -1576,7 +1576,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.23137255,
                 "g": 0.164705887,
@@ -1969,7 +1969,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.23137255,
                 "g": 0.164705887,
@@ -2273,7 +2273,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.168627456,
                 "g": 0.168627456,
@@ -2517,7 +2517,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.168627456,
                 "g": 0.168627456,
@@ -2761,7 +2761,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.549019635,
                 "g": 0.184313729,

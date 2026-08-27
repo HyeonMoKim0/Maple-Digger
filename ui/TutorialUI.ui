@@ -611,7 +611,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.29,
                 "g": 0.18,
@@ -805,7 +805,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 0.42,
                 "g": 0.28,
@@ -1109,7 +1109,7 @@
               "BestFit": false,
               "ConstraintX": 100.0,
               "ConstraintY": 100.0,
-              "Font": "Default",
+              "Font": "Maple",
               "FontColor": {
                 "r": 1.0,
                 "g": 1.0,
