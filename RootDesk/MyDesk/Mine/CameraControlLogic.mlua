@@ -21,8 +21,19 @@ property number MaxZoom = 100.0
 property number MinZoom = 33.4
 -- 휠 1노치당 줌 배율 (곱셈 스텝 — 어느 배율에서도 체감이 같다).
 property number ZoomStep = 1.1
--- 팬 한계 (world unit, 카메라 오프셋 절대값 상한 — 맵 밖으로 무한히 나가는 것 방지).
+-- 팬 한계 (world unit). ClampToBackground 가 꺼졌거나 배경을 못 찾았을 때만 쓰는
+-- 폴백이다 — 배경과 무관한 고정값이라 이것만으로는 맵 밖이 보인다.
 property number PanLimit = 30.0
+
+-- 배경(MineBackground) 경계 밖을 보지 않게 줌·팬을 제한한다 (2026-08-27 오너 요청).
+-- 맵마다 배경 자산과 Scale 이 달라 상수를 박을 수 없다 — 2026-08-27 실측:
+--   farm01 41.80x23.52 (필드 10x10 의 4.18배) / deep_mine 19.90x11.20 (14x8 의 1.42배)
+--   gem_mine 27.09x15.24 (20x12 의 1.35배)
+-- 그래서 맵 진입마다 배경 스프라이트에서 월드 AABB 를 다시 계산한다.
+property boolean ClampToBackground = true
+property string BackgroundEntityName = "MineBackground"
+-- 경계에 딱 붙으면 가장자리에 1px 틈이 비칠 수 있어 안쪽으로 살짝 당긴다.
+property number BackgroundInset = 0.02
 
 property any scrollHandler = nil
 property any keyDownHandler = nil
@@ -39,6 +50,23 @@ method void OnBeginPlay()
     self._T.zoomAnchor = nil        -- 연속 휠 세션의 기준 실측 { worldX, worldY, relX, relY, zoom0, offsetX0, offsetY0, timeout }
     self._T.configured = false
     self._T.lastMapName = ""
+    self._T.bgBounds = nil          -- 배경 월드 AABB { minX, maxX, minY, maxY }
+    self._T.bgMapName = ""
+    self._T.viewHalfW100 = nil      -- ZoomRatio 100 기준 화면 반경 (실측 후 캐시)
+    self._T.viewHalfH100 = nil
+    self._T.viewScreenW = 0
+    self._T.camBaseX = nil          -- 오프셋을 뺀 카메라 추종 기준점 (MeasureView 가 유도)
+    self._T.camBaseY = nil
+    self._T.halfW = nil             -- 현재 화면의 월드 반경 (매 프레임 실측)
+    self._T.halfH = nil
+    self._T.viewSpanW = nil         -- half * zoom 불변량 (1회 확정 후 잠금)
+    self._T.viewSpanH = nil
+    self._T.prevZoom = nil
+    self._T.spanCand = nil          -- span 확정 후보 (배율이 다른 두 시점을 비교)
+    self._T.prevOffsetX = 0.0
+    self._T.prevOffsetY = 0.0
+    self._T.zoomFloor = nil         -- 배경이 허용하는 최소 배율
+    self._T.settleFrames = nil      -- GetCamera 설정이 화면에 실릴 때까지의 대기 프레임
     self.scrollHandler = _InputService:ConnectEvent(MouseScrollEvent, self.OnMouseScroll)
     self.keyDownHandler = _InputService:ConnectEvent(KeyDownEvent, self.OnKeyDown)
     self.keyUpHandler = _InputService:ConnectEvent(KeyUpEvent, self.OnKeyUp)
@@ -63,6 +91,11 @@ method CameraComponent GetCamera()
     if not self._T.configured then
         camera.ZoomRatioMax = self.MaxZoom
         camera.ZoomRatioMin = 31.0
+        -- IsAllowZoomInOut 은 켜 둔다. false 로 두면 엔진 휠 줌뿐 아니라
+        -- ZoomRatio 쓰기 자체가 잠겨 스크립트 줌도 죽는다 (2026-08-27 실측 —
+        -- 휠을 12번 굴려도 100 에서 안 움직였다). 엔진 줌이 OnMouseScroll 의
+        -- 배경 클램프를 우회하는 문제는 ZoomRatioMin 을 배경 기준으로 매 프레임
+        -- 조여서 막는다 (UpdateZoomFloor) — 그러면 두 경로 모두 같은 바닥을 만난다.
         camera.IsAllowZoomInOut = true
         -- 추적 감쇠 제거: 기본 Damping(2.5, 5.0)은 y 축이 특히 느려서, 줌·팬이
         -- CameraOffset 을 한 프레임에 써도 렌더 카메라가 세로로 미끄러지며
@@ -70,15 +103,232 @@ method CameraComponent GetCamera()
         -- 이 카메라는 커서 1:1 조작이 목적이므로 둘 다 0 이 맞다.
         camera.Damping = Vector2(0.0, 0.0)
         camera.DeadZone = Vector2(0.0, 0.0)
+        -- 카메라의 실제 배율을 우리가 관리하는 값과 맞춘다. 모델 기본값이 다를 수
+        -- 있어(실측: 첫 프레임 ZoomRatio ≈ 30) 동기화하지 않으면 화면 반경 실측이
+        -- 그 비율만큼 통째로 틀어진다.
+        camera.ZoomRatio = self._T.zoom
         self._T.configured = true
+        -- ZoomRatioMax 를 바꾸면 화면 크기가 실제로 달라지는 데 여러 프레임 걸린다
+        -- (실측: 2 프레임으로는 부족해 반경이 3.33배 과대 측정됐다). MeasureView 가
+        -- 매 프레임 갱신하므로 최종값은 어차피 수렴하지만, 초기 로그·판정이
+        -- 오염되지 않게 넉넉히 기다린다.
+        self._T.settleFrames = 10
         log("[CameraControl] camera configured min=" .. tostring(camera.ZoomRatioMin) .. " max=" .. tostring(camera.ZoomRatioMax))
     end
     return camera
 end
 
 @ExecSpace("ClientOnly")
+method void MeasureView()
+    -- 현재 화면의 월드 반경을 매 프레임 실측한다.
+    --
+    -- ZoomRatio 를 절대 배율로 환산하려던 초기 구현은 실패했다 — 같은
+    -- ZoomRatio=100 이라도 ZoomRatioMax 설정 전후로 화면 크기가 3.33배 달랐다
+    -- (2026-08-27 실측). 즉 "ZoomRatio → 월드 크기" 절대식은 신뢰할 수 없다.
+    -- 반면 **같은 카메라 설정 안에서 반경 ∝ 1/ZoomRatio** 라는 비율 관계는
+    -- 이 파일의 줌 보정이 이미 검증해 쓰고 있다. 그래서 절대 환산을 버리고
+    -- 현재 반경을 실측 + 비율로만 앞을 내다본다.
+    --
+    -- ScreenToWorldPosition 은 카메라 변경을 다음 프레임에 반영하지만, 여기 값은
+    -- 경계 클램프용이라 한 프레임 늦어도 다음 프레임에 보정된다 (커서 1:1 추적에
+    -- 쓰는 값이 아니다 — 그쪽은 종전대로 앵커 방식을 유지한다).
+    local sw = _UILogic.ScreenWidth
+    local sh = _UILogic.ScreenHeight
+    if sw <= 0 or sh <= 0 then return end
+    local cw = _UILogic:ScreenToWorldPosition(Vector2(sw * 0.5, sh * 0.5))
+    -- 반경은 중심↔한쪽 끝이 아니라 **양 끝 차이의 절반**으로 잰다. 한쪽만 재면
+    -- 화면 가장자리 좌표가 잘릴 때 세로가 과대 측정된다 (실측: halfH 가 10.78
+    -- 대신 12.00 으로 나와 종횡비가 1.78 에서 1.60 으로 어긋났다).
+    local left = _UILogic:ScreenToWorldPosition(Vector2(0, sh * 0.5))
+    local right = _UILogic:ScreenToWorldPosition(Vector2(sw, sh * 0.5))
+    local top = _UILogic:ScreenToWorldPosition(Vector2(sw * 0.5, 0))
+    local bottom = _UILogic:ScreenToWorldPosition(Vector2(sw * 0.5, sh))
+    local halfW = math.abs(right.x - left.x) * 0.5
+    local halfH = math.abs(top.y - bottom.y) * 0.5
+    if halfW <= 0 or halfH <= 0 then return end
+    if self._T.halfW == nil then
+        log("[CameraControl] view measured screen=" .. tostring(sw) .. "x" .. tostring(sh)
+            .. " atZoom=" .. string.format("%.2f", self._T.zoom)
+            .. " half=" .. string.format("%.3f", halfW) .. "x" .. string.format("%.3f", halfH))
+    end
+    self._T.halfW = halfW
+    self._T.halfH = halfH
+    -- 카메라 추종 기준점(오프셋 0 일 때의 화면 중심)을 여기서 함께 유도한다.
+    -- "플레이어 대비 고정 델타" 로 캐시하려던 초기 구현은 틀렸다 — 추종 오프셋은
+    -- ScreenOffset 이 화면 크기에 비례해 만들어 내므로 줌이 바뀌면 델타도 바뀐다
+    -- (실측: zoom 100 에서 3.10 이던 값이 축소하면 9 이상으로 커진다).
+    --
+    -- ⚠ base = cw - offset 을 매 프레임 무조건 하면 **발산한다.** cw 는 1프레임
+    -- 지연이라 base(t) = base + offset(t-1) - offset(t) 가 되고, 클램프가 offset 을
+    -- 바꾼 프레임에는 그 델타만큼 base 가 틀어져 다음 클램프를 더 밀어낸다
+    -- (2026-08-27 실측: offset 이 -4.5e8 까지 폭주했다).
+    -- 그래서 **오프셋이 직전 프레임과 같은(=cw 가 그 오프셋에 대응하는) 프레임에만**
+    -- 갱신한다. 드래그 중에는 아예 건드리지 않고 pan.base 를 쓴다.
+    if not self._T.dragging then
+        if self._T.prevOffsetX == self._T.offsetX and self._T.prevOffsetY == self._T.offsetY then
+            self._T.camBaseX = cw.x - self._T.offsetX
+            self._T.camBaseY = cw.y - self._T.offsetY
+        end
+    end
+    self._T.prevOffsetX = self._T.offsetX
+    self._T.prevOffsetY = self._T.offsetY
+    -- 배율 바닥 계산에 쓰는 불변량 span = half * zoom ("반경 ∝ 1/ZoomRatio").
+    -- 화면 해상도가 그대로면 span 도 그대로이므로 **한 번만 확정하고 잠근다.**
+    --
+    -- ⚠ 확정 후에도 계속 덮어쓰면 배율 바닥이 흔들리고, 그 바닥에 맞춰 ZoomRatio 를
+    -- 되돌리는 코드와 엔진 휠 줌이 매 프레임 줄다리기를 해 **화면이 심하게 떨린다**
+    -- (2026-08-27 오너 보고 — 최대 축소에서 휠을 더 굴릴 때). half 는 1프레임 지연
+    -- 이라 줌이 막 바뀐 직후의 "안정" 프레임에서도 옛 카메라 기준 값이 섞인다.
+    --
+    -- 오염 차단이 까다롭다. 초기화가 덜 끝나면 ScreenToWorldPosition 이 월드가
+    -- 아니라 **정규화 좌표**를 돌려주는데(실측: half=1.779x1.000 — 정확히 화면
+    -- 종횡비), 그 값이 여러 프레임 연속으로 안정적이라 "연속 두 프레임 일치"
+    -- 검사를 그대로 통과했다. settleFrames 를 늘려도 마찬가지였다.
+    --
+    -- 판별의 핵심: **정규화 좌표는 ZoomRatio 와 무관하다.** 실제 월드 반경만
+    -- 1/ZoomRatio 에 비례하므로, 배율이 서로 다른 두 시점의 span(= half * zoom)이
+    -- 보존되는지 보면 진짜인지 알 수 있다. 임계값을 눈대중으로 박지 않아도 된다.
+    --
+    -- ⚠ 표본은 **줌이 직전 프레임과 같은(=카메라가 안정된)** 프레임에서만 딴다.
+    -- half 는 1프레임 지연이라 배율이 막 바뀐 프레임에서는 옛 배율 기준 값이
+    -- 섞여 span 이 작게 잡힌다 (실측: 640 이어야 할 값이 605.51 — 5.4% 부족).
+    if self._T.viewSpanW == nil and self._T.prevZoom == self._T.zoom then
+        local spanW = halfW * self._T.zoom
+        local spanH = halfH * self._T.zoom
+        local cand = self._T.spanCand
+        if cand == nil then
+            self._T.spanCand = { z = self._T.zoom, w = spanW, h = spanH }
+        elseif math.abs(cand.z - self._T.zoom) > 0.5 then
+            if math.abs(cand.w - spanW) <= spanW * 0.02
+                and math.abs(cand.h - spanH) <= spanH * 0.02 then
+                self._T.viewSpanW = spanW
+                self._T.viewSpanH = spanH
+                self._T.viewScreenW = sw
+                self._T.spanCand = nil
+                log("[CameraControl] view span locked " .. string.format("%.2f", spanW)
+                    .. "x" .. string.format("%.2f", spanH)
+                    .. " (half=" .. string.format("%.3f", halfW) .. "x" .. string.format("%.3f", halfH)
+                    .. " atZoom=" .. string.format("%.2f", self._T.zoom) .. ")")
+            else
+                -- span 이 배율을 따라오지 않았다 = 아직 진짜 월드 좌표가 아니다.
+                -- 현재 시점을 새 기준으로 삼아 다음 배율 변화를 기다린다.
+                self._T.spanCand = { z = self._T.zoom, w = spanW, h = spanH }
+            end
+        end
+    end
+    -- 창 크기가 바뀌면 span 이 더는 유효하지 않다 — 다시 확정하게 푼다.
+    if self._T.viewSpanW ~= nil and self._T.viewScreenW ~= sw then
+        self._T.viewSpanW = nil
+        self._T.viewSpanH = nil
+        log("[CameraControl] view span released (screen " .. tostring(self._T.viewScreenW)
+            .. " -> " .. tostring(sw) .. ")")
+    end
+    self._T.prevZoom = self._T.zoom
+end
+
+method number BackgroundMinZoom()
+    -- 화면이 배경을 넘지 않는 최소 ZoomRatio. 실측 반경과 현재 배율만 쓰므로
+    -- ZoomRatio→월드 절대 환산이 필요 없다 (MeasureView 주석 참조):
+    --   half(z) = half_now * zoom_now / z  ≤  bgHalf   →   z ≥ half_now * zoom_now / bgHalf
+    local b = self._T.bgBounds
+    if not self.ClampToBackground or b == nil or self._T.viewSpanW == nil then return self.MinZoom end
+    local bgHalfW = (b.maxX - b.minX) * 0.5
+    local bgHalfH = (b.maxY - b.minY) * 0.5
+    if bgHalfW <= 0 or bgHalfH <= 0 then return self.MinZoom end
+    local zx = self._T.viewSpanW / bgHalfW
+    local zy = self._T.viewSpanH / bgHalfH
+    -- 오너 지정(2026-08-27): 기존 MinZoom 을 하한선으로 유지한다 — 배경이 큰
+    -- farm01 에서 종전보다 더 축소되어 필드가 화면 1/4 로 작아지는 것을 막는다.
+    -- MaxZoom 을 넘기면 엔진이 잘라내며 LWA-3017 경고를 내므로 위도 자른다.
+    return math.min(self.MaxZoom, math.max(self.MinZoom, math.max(zx, zy)))
+end
+
+@ExecSpace("ClientOnly")
+method void UpdateZoomFloor(CameraComponent camera)
+    -- 엔진 줌도 같은 바닥을 만나도록 ZoomRatioMin 을 배경 기준으로 조인다.
+    -- 엔진 제약상 30 보다 커야 해서 31 을 절대 하한으로 둔다.
+    local floor = math.max(31.0, self:BackgroundMinZoom())
+    -- span 이 잠기고 배경도 맵당 고정이므로 floor 역시 고정값이다. 값이 실제로
+    -- 달라졌을 때(최초 확정 · 맵 전환)만 손대고, 그 외에는 아무것도 하지 않는다.
+    --
+    -- ⚠ 특히 ZoomRatio 되돌리기를 매 프레임 돌리면 안 된다. 엔진 휠 줌이 바닥까지
+    -- 내리려는 것과 우리가 되올리는 것이 프레임마다 부딪혀 화면이 떨린다
+    -- (2026-08-27 오너 보고). ZoomRatioMin 을 걸어 두면 엔진이 알아서 바닥에서
+    -- 멈추므로, 되돌리기는 바닥이 올라간 순간 한 번이면 충분하다.
+    if self._T.zoomFloor == floor then return end
+    self._T.zoomFloor = floor
+    camera.ZoomRatioMin = floor
+    log("[CameraControl] zoom floor=" .. string.format("%.2f", floor)
+        .. " (span=" .. string.format("%.2f", self._T.viewSpanW or 0)
+        .. "x" .. string.format("%.2f", self._T.viewSpanH or 0)
+        .. " atZoom=" .. string.format("%.2f", self._T.zoom) .. ")")
+    -- 배경이 작은 맵으로 옮겨 바닥이 올라간 경우에만 현재 배율을 끌어올린다.
+    if self._T.zoom < floor then
+        self._T.zoom = floor
+        camera.ZoomRatio = floor
+    end
+end
+
+@ExecSpace("ClientOnly")
+method void EnsureBackgroundBounds(Entity map)
+    -- 맵 배경의 월드 AABB 를 계산해 캐시한다. 맵이 바뀔 때만 다시 잰다.
+    if map == nil then return end
+    if self._T.bgMapName == map.Name then return end
+    self._T.bgMapName = map.Name
+    self._T.bgBounds = nil
+    local bg = map:GetChildByName(self.BackgroundEntityName, false)
+    if bg == nil then
+        log("[CameraControl] background not found name=" .. self.BackgroundEntityName .. " map=" .. map.Name)
+        return
+    end
+    local sr = bg.SpriteRendererComponent
+    local tr = bg.TransformComponent
+    if sr == nil or tr == nil then return end
+    local sp = _ResourceService:LoadSpriteAndWait(sr.SpriteRUID)
+    if sp == nil then
+        log_error("[CameraControl] background sprite load failed ruid=" .. sr.SpriteRUID)
+        return
+    end
+    local w = sp.Width / sp.PixelPerUnit * tr.Scale.x
+    local h = sp.Height / sp.PixelPerUnit * tr.Scale.y
+    -- pivot 이 중앙이 아니면 엔티티 좌표와 그림 중심이 어긋난다 (docs/21 §12.1).
+    -- 현재 두 배경 자산 모두 (0.5, 0.5) 지만 교체될 수 있으므로 일반식으로 둔다.
+    local wp = tr.WorldPosition
+    local cx = wp.x + (0.5 - sp.Pivot.x) * w
+    local cy = wp.y + (0.5 - sp.Pivot.y) * h
+    local inset = self.BackgroundInset
+    self._T.bgBounds = {
+        minX = cx - w * 0.5 + inset, maxX = cx + w * 0.5 - inset,
+        minY = cy - h * 0.5 + inset, maxY = cy + h * 0.5 - inset,
+    }
+    log("[CameraControl] bg bounds map=" .. map.Name
+        .. " size=" .. string.format("%.2f", w) .. "x" .. string.format("%.2f", h)
+        .. " center=(" .. string.format("%.2f", cx) .. "," .. string.format("%.2f", cy) .. ")")
+end
+
+@ExecSpace("ClientOnly")
+method number ClampAxis(number off, number base, number lo, number hi, number half)
+    -- 카메라 중심(base + off)이 [lo + half, hi - half] 안에 있도록 오프셋을 자른다.
+    local lowOff = lo + half - base
+    local highOff = hi - half - base
+    if lowOff > highOff then
+        -- 화면이 배경보다 큰 경우(줌 하한을 못 걸었을 때) — 배경 중앙에 고정한다.
+        return (lo + hi) * 0.5 - base
+    end
+    return math.max(lowOff, math.min(highOff, off))
+end
+
+@ExecSpace("ClientOnly")
 method void ApplyOffset(CameraComponent camera, number ox, number oy)
-    -- 팬 한계로 클램프해 카메라 오프셋을 쓴다.
+    -- 오프셋을 한계로 자른 뒤 카메라에 쓴다. 줌·팬 양쪽이 이 한 곳을 지나므로
+    -- 여기만 막으면 두 경로 모두 배경 안에 갇힌다.
+    local b = self._T.bgBounds
+    if self.ClampToBackground and b ~= nil and self._T.camBaseX ~= nil and self._T.halfW ~= nil then
+        ox = self:ClampAxis(ox, self._T.camBaseX, b.minX, b.maxX, self._T.halfW)
+        oy = self:ClampAxis(oy, self._T.camBaseY, b.minY, b.maxY, self._T.halfH)
+    end
+    -- 안전망: 배경 클램프가 어떤 이유로든 어긋나도 오프셋이 폭주하지 않게
+    -- 절대 상한을 항상 마지막에 한 번 더 건다 (배경을 못 찾은 폴백 경로도 겸한다).
     ox = math.max(-self.PanLimit, math.min(self.PanLimit, ox))
     oy = math.max(-self.PanLimit, math.min(self.PanLimit, oy))
     self._T.offsetX = ox
@@ -102,6 +352,12 @@ method void OnMouseScroll(MouseScrollEvent event)
         zoom = zoom / self.ZoomStep
     end
     zoom = math.max(self.MinZoom, math.min(self.MaxZoom, zoom))
+    -- 축소는 배경이 허용하는 바닥까지만. 이미 바닥이면 노치를 통째로 버린다 —
+    -- 어정쩡하게 조금 줄였다가 되돌리면 그게 곧 화면 떨림이다 (2026-08-27 오너 보고).
+    if zoom < self._T.zoom and self._T.zoomFloor ~= nil then
+        if self._T.zoom <= self._T.zoomFloor then return end
+        zoom = math.max(self._T.zoomFloor, zoom)
+    end
     if zoom == self._T.zoom then return end
     -- 팬 드래그 중에는 배율만 바꾼다 — 오프셋은 OnUpdate ② 의 팬 피드포워드가
     -- 새 줌(zoomScale)까지 반영해 전담 계산하므로, 여기서 또 만지면 이중 보정이다.
@@ -181,6 +437,25 @@ method void OnUpdate(number delta)
         if anchor.timeout <= 0 then self._T.zoomAnchor = nil end
     end
 
+    -- ①-b 배경 경계·화면 반경·카메라 기준점 확보. 클램프의 세 입력이 전부 여기서 산다.
+    --     순서가 중요하다: GetCamera 가 배율·Damping·DeadZone 을 확정하고, 그 설정이
+    --     화면에 실린 뒤(settleFrames)에야 ScreenToWorldPosition 실측이 유효하다.
+    local player = _UserService.LocalPlayer
+    if player == nil or player.CurrentMap == nil then return end
+    camera = self:GetCamera()
+    if camera == nil then return end
+    if self._T.settleFrames ~= nil and self._T.settleFrames > 0 then
+        self._T.settleFrames = self._T.settleFrames - 1
+        return
+    end
+    -- 엔진 휠 줌(IsAllowZoomInOut=true)이 ZoomRatio 를 직접 바꾸므로 우리 값과
+    -- 어긋날 수 있다. 카메라 실제값을 정본으로 삼아야 아래 반경·바닥 계산이 맞다
+    -- (동기화가 없으면 halfW 는 실측이고 zoom 은 옛값이라 곱이 틀어져,
+    --  배율 바닥이 프레임마다 밀려 올라가는 되먹임이 생긴다 — 2026-08-27 실측).
+    self._T.zoom = camera.ZoomRatio
+    self:MeasureView()
+    self:EnsureBackgroundBounds(player.CurrentMap)
+
     -- ② 팬: 드래그 시작점의 월드 지점을 커서에 계속 붙인다 (잡고 끌기 1:1).
     --    시작 프레임에 실측해 둔 배율·기준점으로 목표 오프셋을 직접 계산한다.
     --    ScreenToWorldPosition 을 매 프레임 다시 읽지 않으므로(1프레임 지연 값)
@@ -189,6 +464,10 @@ method void OnUpdate(number delta)
         if camera == nil then camera = self:GetCamera() end
         if camera ~= nil then
             local pan = self._T.dragAnchor
+            -- 드래그 중 클램프 기준점은 드래그 시작 프레임에 실측한 pan.base 다
+            -- (MeasureView 는 드래그 중 갱신을 건너뛴다).
+            self._T.camBaseX = pan.baseX
+            self._T.camBaseY = pan.baseY
             local cursor = _InputService:GetCursorPosition()
             local zoomScale = pan.zoom0 / self._T.zoom
             local relX = (cursor.x - _UILogic.ScreenWidth * 0.5) * pan.kx * zoomScale
@@ -202,8 +481,6 @@ method void OnUpdate(number delta)
     end
 
     -- ③ 맵이 바뀌면 팬 오프셋만 원점으로 되돌린다 (줌 배율은 유지 — 사용자 취향값).
-    local player = _UserService.LocalPlayer
-    if player == nil or player.CurrentMap == nil then return end
     local mapName = player.CurrentMap.Name
     if mapName ~= self._T.lastMapName then
         self._T.lastMapName = mapName
@@ -214,6 +491,22 @@ method void OnUpdate(number delta)
             self._T.dragAnchor = nil
             log("[CameraControl] map changed - pan offset reset map=" .. mapName)
         end
+    end
+
+    -- ④ 경계 재적용. 맵을 옮기면 배경이 바뀌어 줌 하한이 올라갈 수 있고,
+    --    플레이어가 움직이면 같은 오프셋도 경계를 넘게 된다. 드래그 중에는
+    --    ② 가 이미 ApplyOffset 으로 자르므로 건너뛴다.
+    if not self.ClampToBackground or self._T.bgBounds == nil or self._T.halfW == nil then return end
+    -- 배율 바닥을 매 프레임 갱신한다. 맵을 옮기면 배경이 바뀌므로(farm01
+    -- 41.8x23.5 → deep_mine 19.9x11.2) 바닥도 따라 올라가고, 현재 배율이 그보다
+    -- 낮으면 여기서 끌어올린다.
+    self:UpdateZoomFloor(camera)
+    if self._T.dragging or self._T.camBaseX == nil then return end
+    local b = self._T.bgBounds
+    local cx = self:ClampAxis(self._T.offsetX, self._T.camBaseX, b.minX, b.maxX, self._T.halfW)
+    local cy = self:ClampAxis(self._T.offsetY, self._T.camBaseY, b.minY, b.maxY, self._T.halfH)
+    if cx ~= self._T.offsetX or cy ~= self._T.offsetY then
+        self:ApplyOffset(camera, cx, cy)
     end
 end
 
