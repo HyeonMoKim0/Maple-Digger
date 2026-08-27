@@ -757,14 +757,21 @@ method boolean IsSalePanelOpen()
 end
 
 method boolean IsSaleBlockedByProtection(AccountProfileService profile)
-    -- 지금 [선택 수량 판매]를 누르면 반드시 거절되는 상태인가 —
-    -- 보호분 판매가 꺼져 있고 보유량이 전부 보호 수량에 걸린 경우.
-    -- 판정값은 서버가 판매를 거절할 때 쓰는 EffectiveProtection 과 같다.
+    -- 지금 [선택 수량 판매]를 누르면 **반드시 거절되는** 상태인가.
+    -- 판정 기준은 서버가 판매를 거절할 때 쓰는 것과 같다(EconomyService.SellOre).
     -- 소유자(여기)가 답한다 — 다른 스크립트가 `_T.includeProtected` 를 직접
     -- 들여다보지 않게 하기 위한 공개 창구다 (TutorialController 7단계 화살표).
+    --
+    -- 2026-08-27 확장: 예전에는 "보유량이 전부 보호 수량"인 경우만 봤다. 그러면
+    -- 보유 610 · 보호 120 에 수량 610 을 요청한 상태(=거절 확정)가 빠져나가,
+    -- 튜토리얼 7단계에서 화살표는 사라지고 판매는 거절되는 막다른 길이 됐다.
+    -- [전량]이 이제 상한을 넣어 주므로 이 경로는 **직접 타이핑했을 때** 남는다.
     if profile == nil then return false end
     if self._T.includeProtected == true then return false end
-    return self:GetSelectedBalance(profile) <= self:GetSelectedEffectiveProtection(profile)
+    local sellable = self:GetSellableAmount(profile)
+    -- 팔 수 있는 게 아예 없으면 수량과 무관하게 막힌 상태다.
+    if sellable <= 0 then return true end
+    return self:ReadNonNegative(self.saleAmountInput, 0) > sellable
 end
 
 method integer GetSelectedEffectiveProtection(AccountProfileService profile)
