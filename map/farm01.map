@@ -1888,8 +1888,8 @@
                 "w": 1.0
               },
               "Scale": {
-                "x": 1.4,
-                "y": 1.4,
+                "x": 1.25,
+                "y": 1.25,
                 "z": 1.0
               },
               "ZRotation": 0.0,
@@ -1906,7 +1906,7 @@
               "PlayRate": 1.0,
               "RenderSetting": 0,
               "SortingLayer": "MapLayer0",
-              "SpriteRUID": "8de388cb6d594cedaaa45397b9af6f3d",
+              "SpriteRUID": "dca555735eda422cb38b933431b248f9",
               "StartFrameIndex": 0,
               "Color": {
                 "r": 1.0,

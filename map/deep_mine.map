@@ -88,7 +88,7 @@
                 "r": 0.17,
                 "g": 0.22,
                 "b": 0.28,
-                "a": 1
+                "a": 1.0
               },
               "TemplateRUID": "794ad8421e2543d8a6d2c70307637450",
               "Type": 2,
@@ -160,22 +160,22 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 1000
+                "x": 0.0,
+                "y": 0.0,
+                "z": 1000.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -190,7 +190,7 @@
                     "x": -3,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -198,7 +198,7 @@
                     "x": -2,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -206,7 +206,7 @@
                     "x": -1,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -214,7 +214,7 @@
                     "x": 0,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -222,7 +222,7 @@
                     "x": 1,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -230,7 +230,7 @@
                     "x": 2,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -238,7 +238,7 @@
                     "x": 3,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -246,7 +246,7 @@
                     "x": 4,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -254,7 +254,7 @@
                     "x": 5,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -262,7 +262,7 @@
                     "x": 6,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -270,7 +270,7 @@
                     "x": 7,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -278,7 +278,7 @@
                     "x": 8,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -286,7 +286,7 @@
                     "x": 9,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -294,7 +294,7 @@
                     "x": 10,
                     "y": 2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -302,7 +302,7 @@
                     "x": -3,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -310,7 +310,7 @@
                     "x": -2,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -318,7 +318,7 @@
                     "x": -1,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -326,7 +326,7 @@
                     "x": 0,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -334,7 +334,7 @@
                     "x": 1,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -342,7 +342,7 @@
                     "x": 2,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -350,7 +350,7 @@
                     "x": 3,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -358,7 +358,7 @@
                     "x": 4,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -366,7 +366,7 @@
                     "x": 5,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -374,7 +374,7 @@
                     "x": 6,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -382,7 +382,7 @@
                     "x": 7,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -390,7 +390,7 @@
                     "x": 8,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -398,7 +398,7 @@
                     "x": 9,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -406,7 +406,7 @@
                     "x": 10,
                     "y": 1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -414,7 +414,7 @@
                     "x": -3,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -422,7 +422,7 @@
                     "x": -2,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -430,7 +430,7 @@
                     "x": -1,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -438,7 +438,7 @@
                     "x": 0,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -446,7 +446,7 @@
                     "x": 1,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -454,7 +454,7 @@
                     "x": 2,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -462,7 +462,7 @@
                     "x": 3,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -470,7 +470,7 @@
                     "x": 4,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -478,7 +478,7 @@
                     "x": 5,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -486,7 +486,7 @@
                     "x": 6,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -494,7 +494,7 @@
                     "x": 7,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -502,7 +502,7 @@
                     "x": 8,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -510,7 +510,7 @@
                     "x": 9,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -518,7 +518,7 @@
                     "x": 10,
                     "y": 0
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -526,7 +526,7 @@
                     "x": -3,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -534,7 +534,7 @@
                     "x": -2,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -542,7 +542,7 @@
                     "x": -1,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -550,7 +550,7 @@
                     "x": 0,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -558,7 +558,7 @@
                     "x": 1,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -566,7 +566,7 @@
                     "x": 2,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -574,7 +574,7 @@
                     "x": 3,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -582,7 +582,7 @@
                     "x": 4,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -590,7 +590,7 @@
                     "x": 5,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -598,7 +598,7 @@
                     "x": 6,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -606,7 +606,7 @@
                     "x": 7,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -614,7 +614,7 @@
                     "x": 8,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -622,7 +622,7 @@
                     "x": 9,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -630,7 +630,7 @@
                     "x": 10,
                     "y": -1
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -638,7 +638,7 @@
                     "x": -3,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -646,7 +646,7 @@
                     "x": -2,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -654,7 +654,7 @@
                     "x": -1,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -662,7 +662,7 @@
                     "x": 0,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -670,7 +670,7 @@
                     "x": 1,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -678,7 +678,7 @@
                     "x": 2,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -686,7 +686,7 @@
                     "x": 3,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -694,7 +694,7 @@
                     "x": 4,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -702,7 +702,7 @@
                     "x": 5,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -710,7 +710,7 @@
                     "x": 6,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -718,7 +718,7 @@
                     "x": 7,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -726,7 +726,7 @@
                     "x": 8,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -734,7 +734,7 @@
                     "x": 9,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -742,7 +742,7 @@
                     "x": 10,
                     "y": -2
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -750,7 +750,7 @@
                     "x": -3,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -758,7 +758,7 @@
                     "x": -2,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -766,7 +766,7 @@
                     "x": -1,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -774,7 +774,7 @@
                     "x": 0,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -782,7 +782,7 @@
                     "x": 1,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -790,7 +790,7 @@
                     "x": 2,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -798,7 +798,7 @@
                     "x": 3,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -806,7 +806,7 @@
                     "x": 4,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -814,7 +814,7 @@
                     "x": 5,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -822,7 +822,7 @@
                     "x": 6,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -830,7 +830,7 @@
                     "x": 7,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -838,7 +838,7 @@
                     "x": 8,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -846,7 +846,7 @@
                     "x": 9,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -854,7 +854,7 @@
                     "x": 10,
                     "y": -3
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -862,7 +862,7 @@
                     "x": -3,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -870,7 +870,7 @@
                     "x": -2,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -878,7 +878,7 @@
                     "x": -1,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -886,7 +886,7 @@
                     "x": 0,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -894,7 +894,7 @@
                     "x": 1,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -902,7 +902,7 @@
                     "x": 2,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -910,7 +910,7 @@
                     "x": 3,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -918,7 +918,7 @@
                     "x": 4,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -926,7 +926,7 @@
                     "x": 5,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -934,7 +934,7 @@
                     "x": 6,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -942,7 +942,7 @@
                     "x": 7,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -950,7 +950,7 @@
                     "x": 8,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -958,7 +958,7 @@
                     "x": 9,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -966,7 +966,7 @@
                     "x": 10,
                     "y": -4
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -974,7 +974,7 @@
                     "x": -3,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -982,7 +982,7 @@
                     "x": -2,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -990,7 +990,7 @@
                     "x": -1,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -998,7 +998,7 @@
                     "x": 0,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1006,7 +1006,7 @@
                     "x": 1,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1014,7 +1014,7 @@
                     "x": 2,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1022,7 +1022,7 @@
                     "x": 3,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1030,7 +1030,7 @@
                     "x": 4,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1038,7 +1038,7 @@
                     "x": 5,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1046,7 +1046,7 @@
                     "x": 6,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1054,7 +1054,7 @@
                     "x": 7,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1062,7 +1062,7 @@
                     "x": 8,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1070,7 +1070,7 @@
                     "x": 9,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 },
                 {
                   "type": 0,
@@ -1078,7 +1078,7 @@
                     "x": 10,
                     "y": -5
                   },
-                  "tileIndex": 0
+                  "tileIndex": 135
                 }
               ]
             }
@@ -1112,39 +1112,39 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.MovementComponent",
-              "InputSpeed": 3,
+              "InputSpeed": 3.0,
               "Enable": true
             },
             {
               "@type": "MOD.Core.KinematicbodyComponent",
               "MoveVelocity": {
-                "x": 0,
-                "y": 0
+                "x": 0.0,
+                "y": 0.0
               },
               "Enable": true
             },
@@ -1164,7 +1164,7 @@
               "IgnoreMapLayerCheck": false,
               "MaterialId": "",
               "OrderInLayer": 2,
-              "PlayRate": 1,
+              "PlayRate": 1.0,
               "ShowDefaultWeaponEffects": true,
               "SortingLayer": "Default",
               "Enable": true
@@ -1222,27 +1222,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1293,27 +1293,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 1,
-                "y": 0,
-                "z": 0
+                "x": 1.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1364,27 +1364,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 2,
-                "y": -1,
-                "z": 0
+                "x": 2.0,
+                "y": -1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1435,27 +1435,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 3,
-                "y": 1,
-                "z": 0
+                "x": 3.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1506,27 +1506,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 6,
-                "y": 0,
-                "z": 0
+                "x": 6.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1577,27 +1577,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 7,
-                "y": -2,
-                "z": 0
+                "x": 7.0,
+                "y": -2.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1648,27 +1648,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 8,
-                "y": 1,
-                "z": 0
+                "x": 8.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1719,27 +1719,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 10,
-                "y": -1,
-                "z": 0
+                "x": 10.0,
+                "y": -1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1790,27 +1790,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 5,
-                "y": 2,
-                "z": 0
+                "x": 5.0,
+                "y": 2.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1861,27 +1861,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 7,
-                "y": 1,
-                "z": 0
+                "x": 7.0,
+                "y": 1.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -1932,27 +1932,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 9,
-                "y": 0,
-                "z": 0
+                "x": 9.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -2003,27 +2003,27 @@
             {
               "@type": "MOD.Core.TransformComponent",
               "Rotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
               },
               "Position": {
-                "x": 10,
-                "y": -3,
-                "z": 0
+                "x": 10.0,
+                "y": -3.0,
+                "z": 0.0
               },
               "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
               },
               "Scale": {
-                "x": 1,
-                "y": 1,
-                "z": 1
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
               },
-              "ZRotation": 0,
+              "ZRotation": 0.0,
               "Enable": true
             },
             {
@@ -2062,56 +2062,64 @@
           "displayOrder": 16,
           "pathConstraints": "///",
           "revision": 1,
-          "modelId": "minebackground",
-          "@components": [
-            {
-              "@type": "MOD.Core.TransformComponent",
-              "Position": {
-                "x": 4,
-                "y": -1,
-                "z": 1100
-              },
-              "QuaternionRotation": {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "w": 1
-              },
-              "Scale": {
-                "x": 1.19,
-                "y": 1.19,
-                "z": 1
-              },
-              "Enable": true
-            },
-            {
-              "@type": "MOD.Core.SpriteRendererComponent",
-              "SpriteRUID": "8de388cb6d594cedaaa45397b9af6f3d",
-              "Color": {
-                "r": 1,
-                "g": 1,
-                "b": 1,
-                "a": 1
-              },
-              "DrawMode": 0,
-              "FlipX": false,
-              "FlipY": false,
-              "PlayRate": 1,
-              "OrderInLayer": -1,
-              "StartFrameIndex": 0,
-              "EndFrameIndex": 2147483647,
-              "Enable": true,
-              "SortingLayer": "MapLayer0"
-            }
-          ],
-          "@version": 1,
           "origin": {
             "type": "Model",
             "entry_id": "minebackground",
             "sub_entity_id": null,
             "root_entity_id": "cf0a5049-f3b0-4afd-b6cd-db8384f060e9",
             "replaced_model_id": null
-          }
+          },
+          "modelId": "minebackground",
+          "@components": [
+            {
+              "@type": "MOD.Core.TransformComponent",
+              "Rotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+              },
+              "Position": {
+                "x": 4.0,
+                "y": -1.0,
+                "z": 1100.0
+              },
+              "QuaternionRotation": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 1.0
+              },
+              "Scale": {
+                "x": 1.25,
+                "y": 1.25,
+                "z": 1.0
+              },
+              "ZRotation": 0.0,
+              "Enable": true
+            },
+            {
+              "@type": "MOD.Core.SpriteRendererComponent",
+              "ActionSheet": {},
+              "DrawMode": 0,
+              "EndFrameIndex": 2147483647,
+              "FlipX": false,
+              "FlipY": false,
+              "OrderInLayer": -1,
+              "PlayRate": 1.0,
+              "RenderSetting": 0,
+              "SortingLayer": "MapLayer0",
+              "SpriteRUID": "7436f4c7ed07484ba658704c844e726d",
+              "StartFrameIndex": 0,
+              "Color": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
+              },
+              "Enable": true
+            }
+          ],
+          "@version": 1
         }
       }
     ]
