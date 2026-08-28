@@ -11,11 +11,11 @@
 - **플레이어 아바타는 비표시** (2026-08-18, 출시 준비): `Global/DefaultPlayer.model` 에서 `AvatarRenderer`·`AvatarStateAnimation`·`CostumeManager`·`NameTag`·`ChatBalloon` Enable=false + 그림자 off. **키보드 입력도 차단됨 (2026-08-25, docs/16 §60)**: `PlayerControllerComponent Enable=false` — 방향키 이동·Alt 점프 무반응. 카메라 팬은 휠 드래그·줌(§42)이 전담하고, 맵 이동(`PlayerComponent.MoveToMapPosition`)은 살아 있다. 되돌리려면 해당 컴포넌트 Enable=true (docs/16 §33·§60)
 - 동적 일꾼 Body: `KinematicbodyComponent`
 - 시뮬레이션 틱: 0.4초, 틱당 액션 1개
-- 현재 기준: `main`(**`3ea3e85`, 2026-08-27**)에서 **T-17 까지의 MVP 범위 + T-18 제어 블록 범위 조절 + T-19 필드 확장 P0·P1 + 8/27 티켓 미부여 묶음 8건**까지 반영.
-  - **MVP(C212)**: AI 몫의 티켓·기획 공백 0건. 남은 것은 오너 직접 게이트(클릭·청취·미감·실기기 체감)뿐이며 **전량이 `docs/29-최종-검수표.md` 한 장에** 플레이 동선 순서로 모여 있다(A 튜토리얼 A1~A11+A5-R / B 화면·조작 B1~B42 / C 출시 빌드 체감 C1 / D 결정 대기 D1·D3 — **A·B·C 53/54 잔여**). A·B·C 전량 통과 = C212 조건 ② 충족 = MVP 완료 판정.
-  - **post-MVP 진행 중**: **T-19 필드 확장은 P0(서버)·P1(farm01 레벨2 샘플)까지만 완료다.** **P2 구매 UI 가 없어 플레이어가 기능에 닿을 수 없고**(`RequestFieldUpgrade` 호출처 0), P3 나머지 14구간 좌표 저작은 **`docs/29` D3(배율 공식 유지/폐기)이 선행**이다. 게이트는 `docs/29` 가 아니라 **`docs/32` §10**.
-  - **T-15~T-18 은 `docs/18` 티켓 체계 밖에서 오너 직결 요청으로 들어온 작업**이다(`main` 직접 또는 단발 PR). 사후 등재했다 — T-15~T-17 은 2026-08-26, T-18·T-19 는 2026-08-27. 8/27 묶음 8건은 티켓 미부여(`docs/18` 표 아래 절).
-  - ⚠ **새 오너 검수 항목이 생기면 `docs/16` 과 `docs/29` 양쪽에 같은 커밋으로 적는다.** 2026-08-22~25 에 §52·§53·§58~§67 이 `docs/16` 에만 쌓여 검수표가 8건을 놓쳤고, **2026-08-26~27 에도 §71~§79 가 `docs/16` 에조차 없이 커밋만 9건 쌓였다**(2026-08-27 일괄 편입, B34~B42). **두 번 재발한 패턴이므로 착수 시점에 적는다.**
+- 현재 기준: `main`(**`e1c2782`, 2026-08-28**)에서 **T-17 까지의 MVP 범위 + T-18 + T-19 필드 확장 P0·P1·P2 + 8/27 티켓 미부여 묶음 8건 + 8/27 조작법 창·판매 막힘 묶음 8건**까지 반영.
+  - **MVP(C212)**: AI 몫의 티켓·기획 공백 0건. 남은 것은 오너 직접 게이트(클릭·청취·미감·실기기 체감)뿐이며 **전량이 `docs/29-최종-검수표.md` 한 장에** 플레이 동선 순서로 모여 있다(A 튜토리얼 A1~A11+A5-R / B 화면·조작 B1~B50 / C 출시 빌드 체감 C1 / D 결정 대기 D1·D3·D4·D5 — **A·B·C 61/62 잔여**). A·B·C 전량 통과 = C212 조건 ② 충족 = MVP 완료 판정.
+  - **post-MVP 진행 중**: **T-19 필드 확장은 P0(서버)·P1(farm01 레벨2 샘플)·P2(구매 UI)까지 완료다.** **P2 잔여는 성공 경로(`docs/32` §10 E2) 검증뿐** — 오너 잔고가 비용에 못 미쳐 임의 지급 없이 멈췄다(E3·E7 도 미판정). P3 나머지 14구간 좌표 저작은 **`docs/29` D3(배율 공식 유지/폐기)이 선행**이다. 게이트는 `docs/29` 가 아니라 **`docs/32` §10**.
+  - **T-15~T-18 은 `docs/18` 티켓 체계 밖에서 오너 직결 요청으로 들어온 작업**이다(`main` 직접 또는 단발 PR). 사후 등재했다 — T-15~T-17 은 2026-08-26, T-18·T-19 는 2026-08-27. 8/27 묶음 두 건(각 8건)은 티켓 미부여(`docs/18` 표 아래 절).
+  - ⚠ **새 오너 검수 항목이 생기면 `docs/16` 과 `docs/29` 양쪽에 같은 커밋으로 적는다. — 세 번 재발했다.** ① 2026-08-22~25 §52·§53·§58~§67 이 `docs/16` 에만 쌓여 검수표가 8건을 놓침(8/26 편입) ② 2026-08-26~27 §71~§79 가 `docs/16` 에조차 없이 커밋 9건(8/27 편입, B34~B42) ③ **2026-08-27 커밋 8건 — 그중 하나가 신규 화면 1개(조작법 창)** (8/28 편입, B46~B50·D4·D5). **③ 이 가장 나쁘다 — 화면 하나가 통째로 판정선 밖에 있었다.** 이 경고문으로 세 번 다 못 막았으므로 **기계적 게이트가 `docs/29` D5 로 올라가 있다**(오너 결정 대기).
 
 ## 현재 상태
 
@@ -39,7 +39,8 @@
 | F5 연출 (시각) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/VeinMarkerController.mlua`, `MineNoticeController.mlua`, `WorkerVisualController.mlua` | 전부 ClientOnly. 서버는 `@Sync`/이벤트 채널만 내고 RUID 선택·연출은 클라이언트 몫이다(F5 §1). 표시 전용 자식은 `FxSprite.model` / `OreBadge.model`을 런타임 스폰해 붙이므로 **맵 파일에 FX 엔티티가 없다**. **선택 링 오프셋 `RingOffsetY = -0.1`(일꾼 셀 기준 WorldY 0.4)은 2026-08-18 오너 Play 실측값** — 이전 -0.32 는 너무 아래였다. **채굴 먼지 오프셋은 광맥 종류별 오너 실측값**(2026-08-18): 셀 기준 일반 `(-0.75, -0.25)` · 특별 `(-0.75, -0.5)` — 먼지는 광맥의 왼쪽(일꾼 쪽) 아래. 옛 `HitFxOffsetY`+`ShardPivotOffset*` 2계층을 대체했고, pivot 쏠림이 실측값에 포함돼 있어 **자산·`ShardScale` 변경 시 오너와 재측정**. 특별 판정은 marker `MarkerKind=="special"`. ⚠ 오너가 준 원본 수치는 Position 직접 입력한 **맵 절대좌표**였다 — 좌표를 받으면 어느 필드를 읽었는지부터 확인 (docs/16 §32.6) |
 | F5 사운드 (Phase 5) | 클라이언트 `@Component` | `RootDesk/MyDesk/Mine/MineSoundController.mlua` (맵 3개 루트에 부착) | cue 재생과 F5 §4 쿨다운**만** 담당. 이벤트 판별·중복 제거는 위 시각 컨트롤러 3곳이 하고 cue 호출만 얹는다. **RUID 7종은 2026-08-16 오너 청취로 확정**(docs/21 §3 승인 완료 — 2종 유지·5종 교체). ⚠️ `depot_unload` 만 1.52s 로 쿨다운 0.4s 를 넘어 겹칠 수 있다. 재생 가드 2중: `@Sync` settle(접속 시 오재생 방지) + `LocalPlayer.CurrentMap` (타 맵 cue 차단) |
 | BGM · 볼륨 소유자 (T-12-A) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/SoundSettingsController.mlua` | 볼륨 2종의 **단일 소유자** + BGM 재생 주체. `@Logic` 이라 맵 전환에 곡이 끊기지 않는다(F10 §1.1). **BGM 은 `3512470b…`(`sound-604`, 87.3s) 확정**, 기본 볼륨은 **C220 확정 BGM 0.8 · 효과음 0.7**. `PlayBGM` 루프 실측 완료. `SetBgm/SfxVolume` 이 F10 §2.2 경계값(0=Pause, 복귀=Resume — 재`PlayBGM` 금지) 전담 |
-| 설정 패널 (T-12-B) | 클라 `@Logic` + `.ui` + 서버 저장 | `RootDesk/MyDesk/Mine/SettingsPanelController.mlua`, `ui/SettingsUI.ui`, `AccountProfileService.RequestUpdateSoundSettings` | 슬라이더 2종(파츠 `docs/26` §5.3) + 진입 버튼(우측 스택 3번째, U4 확정). **GroupOrder 6 삽입 — Popup 7·Toast 8·Tutorial 9·Recovery 10 (밀집 0..10)**. 저장은 마지막 슬라이더 변경 후 0.6s 디바운스 1회(`RequestUpdateSoundSettings` — 클램프만, 거절 없음). **`settings.tuned` 무버전 확장 필드**: false 면 저장 볼륨 무시하고 C220 기본값(0.8/0.7) — T-02 가 박아 둔 초안값(0.5/1.0) 잔재 차단. 재접속 복원은 @Sync 미러 2종(`SettingsBgmVolume/SettingsSfxVolume`) 감시 + 로컬 편집 1.5s 유예. SFX 0 이면 `PlayCue` 가 재생·쿨다운 원장 모두 스킵. **계정 데이터 초기화 버튼(2026-08-23)**: `_UIPopup` 확인 경유 → `AccountProfileService.ResetProfileToDefault`(아카이브 후 기본 프로필 TransactSet · 잉여 일꾼 3맵 정리 · farm01 복귀 — `docs/25` §10). 검수 `docs/16` §38·§53 |
+| 설정 패널 (T-12-B) | 클라 `@Logic` + `.ui` + 서버 저장 | `RootDesk/MyDesk/Mine/SettingsPanelController.mlua`, `ui/SettingsUI.ui`, `AccountProfileService.RequestUpdateSoundSettings` | 슬라이더 2종(파츠 `docs/26` §5.3) + 진입 버튼(우측 스택 3번째, U4 확정). **GroupOrder 6 삽입** — 당시 밀집 0..10 이었으나 이후 외형 7·조작법 8 이 차례로 끼어들어 **현재 계약은 밀집 0..12 다**(`docs/08` §6.2 가 단일 기준 — 여기 숫자를 인용하지 말 것). 저장은 마지막 슬라이더 변경 후 0.6s 디바운스 1회(`RequestUpdateSoundSettings` — 클램프만, 거절 없음). **`settings.tuned` 무버전 확장 필드**: false 면 저장 볼륨 무시하고 C220 기본값(0.8/0.7) — T-02 가 박아 둔 초안값(0.5/1.0) 잔재 차단. 재접속 복원은 @Sync 미러 2종(`SettingsBgmVolume/SettingsSfxVolume`) 감시 + 로컬 편집 1.5s 유예. SFX 0 이면 `PlayCue` 가 재생·쿨다운 원장 모두 스킵. **계정 데이터 초기화 버튼(2026-08-23)**: `_UIPopup` 확인 경유 → `AccountProfileService.ResetProfileToDefault`(아카이브 후 기본 프로필 TransactSet · 잉여 일꾼 3맵 정리 · farm01 복귀 — `docs/25` §10). 검수 `docs/16` §38·§53 |
+| **조작법 안내 창 (2026-08-27 신설)** | 클라 `@Logic` + `.ui` | `RootDesk/MyDesk/UI/ControlsPanelController.mlua` · `ui/ControlsUI.ui` | 상단 띠 **6번째 버튼**(외형 오른쪽 `x=1310`, 간격 206px, 판 RUID 는 상단 5개 공유 `7691424f…`). 창 스킨·좌표는 `SettingsUI` 실측 복제. **GroupOrder 8** — 그 위 4개를 재매김해 **밀집 0..12**(Popup 9·Toast 10·Tutorial 11·Recovery 12). ⚠️ **안내 4행은 실제 배선을 코드에서 확인해 적었다** — 오너 요청 문구의 "휠 드래그=확대/축소"는 구현과 달라 바로잡았다(줌은 `MouseScrollEvent` 휠 굴리기, 팬은 `KeyboardKey.Mouse2` 드래그). ⚠️ **창이 스스로 "ESC 로 닫는다"고 안내하므로 `UIWindowManager` 등록이 필수다** — 그 분기가 죽으면 안내가 곧바로 거짓말이 된다. 중앙 모달 배타(`docs/08` §6.1)는 **양방향**(이 창이 5개를 닫고, 5개의 열기 경로도 `ClosePanel()` 호출). 창 이동은 공용 `script.UIDraggable`. 검수 `docs/16` §84 → `docs/29` B49·B50 |
 | 카메라 줌·팬 (**2026-08-27 배경 경계 제한**) | 클라이언트 `@Logic` | `RootDesk/MyDesk/Mine/CameraControlLogic.mlua` | 휠 줌(노치당 ×1.1, UI 위 무시, **포토샵식 커서 앵커**) + 휠 버튼 드래그 팬(**드래그 시작점 월드 앵커를 커서에 고정 — 정확 1:1**). `CameraOffset` 만 이동(비표시 플레이어·서버 무변경). 맵 전환 시 팬만 리셋, 줌은 세션 유지.<br>**경계는 배경에서 실측한다** — `EnsureBackgroundBounds` 가 맵 진입마다 배경 스프라이트의 월드 AABB 를 계산(pivot 보정 포함)하고, `ClampAxis` 가 `ApplyOffset` 한 곳에서 줌·팬 두 경로를 함께 자른다. `BackgroundMinZoom`+`UpdateZoomFloor` 로 `ZoomRatioMin` 을 조여 엔진 휠 줌과 스크립트 줌이 같은 바닥을 만난다(하한선 `MinZoom` 33.4 는 오너 지정으로 유지). **옛 `PanLimit 30.0` 고정 상수가 배경 반폭 20.9 를 넘어서던 것이 빈 공간 노출의 주범이었다.**<br>⚠ 플랫폼 함정 4건(전부 주석에 근거 있음): `IsAllowZoomInOut=false` 는 **`ZoomRatio` 쓰기 자체를 잠근다** · `ZoomRatio`→월드 크기 **절대 환산은 신뢰 불가**(비율 관계만 사용) · `base = cw − offset` 매 프레임 유도는 **발산한다**(1프레임 지연 되먹임) · **초기화 중 `ScreenToWorldPosition` 은 정규화 좌표를 돌려준다**(여러 프레임 안정적이라 settle 검사로 안 걸러짐 — `span = half × zoom` 보존 여부로 판별). ⚠ `ScreenToWorldPosition` 은 카메라 변경을 **다음 렌더에야 반영**한다. **farm01 에서만 자동 검증됐다**(J3 대상). 검수 §42·§42.1·§76 → `docs/29` B39 |
 | 성능 계측기 (F9) | 클라이언트+서버 `@Logic` | `RootDesk/MyDesk/Mine/PerfProbeLogic.mlua` | **기본 비활성** — `Active=false` 면 OnUpdate 조기 return 한 줄뿐이라 상시 비용 무시 가능. 측정 세션에서 `maker_execute_script` 로 side 별로 켜서 10s 창 프레임 통계(`[Perf]` 로그)를 얻는다. 판정선·재측정 절차는 `docs/24` 단일 기준 |
 | 진단 로그 스위치 | 클라이언트+서버 `@Logic` | `RootDesk/MyDesk/Mine/MineLogPolicy.mlua` | 매 액션 로그의 **단일 소유자**. `Verbose=false` 기본 — 릴리스는 조용하다. 소비자 4곳(`WorkerController` simTick 13행 · `VeinTickSimulator` 4행 · `WorkerVisualController` 4행 · `MineSoundController` 2행)이 **call-site 가드**(`if ... then log(...) end`)로 쓴다 — 문자열 concat 비용까지 건너뛰기 위해서다. 게이트 밖: log_error/warning · `[Perf]` · `layout loaded` · 특별 스폰 · notice · 수명주기 · 프로그램 수락/거절/완료. **PerfProbeLogic 과 같이 side 별로 켠다.** ⚠️ `docs/24` §5 판정선 5번(cue `play`→`suppressed` 짝)은 이게 켜져 있어야 판정된다 — §6 절차 3번이 그 전제 |
@@ -77,6 +78,9 @@
 | J19 | **배치가 어긋나면 좌표 코드보다 자산 pivot 을 먼저 실측한다.** pivot 은 자산마다 다르고 스프라이트 경계 밖일 수도 있다 — 보정값은 상수로 박지 말고 런타임 실측 캐시로 두고 `Scale` 을 곱한다 | 경로 마커 아이콘 7종이 타일 밖으로 밀림. 문서의 크기 기재가 1~3px 틀려 정규화 pivot 까지 함께 틀어져 있었다 (§73) |
 | J20 | **표시(미리보기)와 실행은 반드시 같은 판정 함수를 지나게 한다.** 두 번 쓰면 언젠가 갈라지고, 사용자에게는 "보이는 대로 안 되는 고장"으로만 보인다 | T-18 안내선이 가리킨 자리와 실제 착지가 달랐다 (§70.3). 8/27 갭 미리보기는 드롭이 마지막 미리보기를 그대로 소비해 구조적으로 재발 불가 |
 | J21 | **오너가 지정한 RUID 도 승인표 대조를 거친다.** 오너는 Maker 리소스 목록에서 고르는데 거기엔 폐기된 구판도 남아 있다 — 승인표의 취소선은 파일 시스템에 반영되지 않는다 | 건너뛰기 버튼에 `docs/26` §5.2 취소선 구판 RUID 가 지정됐다 (§79) |
+| J27 | **클라이언트가 "지금 누르면 되는가"를 판정할 때는 서버의 거절 조건을 통째로 옮긴다.** 부분집합만 보면 남은 경로가 **화살표는 사라지고 버튼은 거절되는 막다른 길**이 된다 | 튜토리얼 7단계 — `[전량]`이 보유량을 넣어 서버가 항상 거절, 구조대 판정은 "보유량 ≤ 보호량"만 봐서 그 경우를 놓쳤다 (§81) |
+| J28 | **승인표도 틀릴 수 있다 — J21 의 반례.** 대조 결과가 오너 지정값과 갈리면 **교체하기 전에** 실물을 띄워 보고(`msw-asset-verify`) 오너에게 되묻는다. 대조는 판정이 아니라 **질문의 근거**다 | §79 에서 "오너 값이 폐기 구판"이라 판정해 교체했더니 오너가 되돌렸다. 확인해 보니 승인표가 **같은 RUID 를 두 파츠에 배정**하고 있었다 (§85 → `docs/29` D4) |
+| J29 | **폭이 항목 수에 비례하는 표기는 항목이 늘면 반드시 프레임을 넘는다.** 나열 단위를 **항목에서 상태·카테고리로** 바꾸면 상한이 생긴다. 그리고 **`TextGUIRendererComponent.BestFit` 은 `Overflow(0)` 에서 무동작이다** — 믿지 말고 폭을 직접 재라 | HUD 실행 상태가 일꾼마다 토큰 하나라 **2명에서 정확히 rect 한계 330px**, 5명 569px (§82) |
 | J22 | **화면 요소를 지우면 그것을 가리키던 스크립트 프로퍼티도 같이 지운다.** `nil` 가드에 걸려 조용히 살아남아 감사 도구 경고를 상시 노이즈로 만들고, 그러면 **진짜 끊긴 바인딩이 그 뒤에 숨는다**(D-11/D-12 계열) | 카드 `NameText` 제거 후 `beginnerText`/`deepText`/`gemText` 3건이 죽은 바인딩으로 남아 `audit_bindings` 가 매번 경고 (§78) |
 
 ---
@@ -86,6 +90,16 @@
 > **최근 구간(2026-08-22~)만 상세를 유지한다.** 그 이전은 마일스톤 요약으로 접었고,
 > 원본 세션 기록은 git 이력(커밋 메시지)·`docs/16`(검수 근거)·`docs/2x`(계약) 에 그대로 있다.
 > 압축 시점 2026-08-26 (878줄 → 이 파일). 압축 전 원본은 커밋 `75a5723` 이전 이력에서 볼 수 있다.
+
+### 2026-08-27 — 조작법 창 · 판매 막힘 · HUD 묶음 8건 (`main` 직접)
+
+검수 `docs/16` §81~§86 → `docs/29` B46~B50 · D4·D5. **또 문서 없이 쌓였다 — 세 번째다**(8/28 일괄 편입).
+
+- **조작법 창 신설(§84)**: 상단 6번째 버튼 + 안내 창. **GroupOrder 8 삽입, 위 4개 재매김 → 밀집 0..12.** 안내 4행은 배선을 코드에서 확인해 적었고 **오너 요청 문구의 줌/팬이 뒤바뀐 것을 바로잡았다.** 창이 "ESC 로 닫는다"고 스스로 안내하므로 `UIWindowManager` 등록이 계약의 일부다.
+- **튜토리얼 7단계 판매 막힘 2건(§81)**: `[전량]`이 **보유량**을 넣어 보호 수량이 있는 계정에서 서버가 항상 거절 → **시킨 대로 눌러도 실패**하고 seq 소진으로 화살표까지 증발. `[전량]`의 뜻을 "지금 팔 수 있는 전량"으로 맞추고(`GetSellableAmount` 단일 경로), 이어서 구조대 판정을 **서버 거절 조건 전체**로 넓혔다(**J27**).
+- **HUD 실행 상태 묶음 표기(§82)**: 폭이 일꾼 수에 비례해 **2명에서 rect 한계 330px** 를 넘었다 → 나열 단위를 상태로 바꿔 상한을 만들었다(**J29**). ⚠️ `BestFit` 은 `Overflow(0)` 에서 **무동작**(실기 확인).
+- **건너뛰기 RUID 되돌림(§85)**: §79 의 "신판 교체"를 오너가 되돌렸다. 확인해 보니 `docs/26` 이 **같은 RUID 를 `tab-worker-normal` 과 `inventory-slot-blank` 둘 다에** 배정하고 있고 **코드 3곳도 갈라져 있다** → 정본 결정은 `docs/29` **D4**(**J28**).
+- 그 밖: HUD 수레 게이지 10px 정렬(§83) · 정규화 재저장 1건(`c85a4ad`, 검수 대상 아님, §86).
 
 ### 2026-08-27 — 티켓 미부여 묶음 8건 (`main` 직접)
 
@@ -107,7 +121,7 @@
 
 - **P1 을 1구간 먼저 검증한 것이 결정적이었다**: `ApplyFieldLevel` 이 `BoxFill` 을 **정수 `tileIndex`** 로 불렀는데 `.map` JSON 의 값과 대응하지 않아 `GetTile` 이 `nil` 을 돌려줬다 — **계정 레벨은 오르는데 타일이 안 열리는 조용한 실패.** 15구간 전부에 퍼지기 전에 잡았다. 수정: Depot 셀의 `GetTile(...).Name` 을 캐시해 **문자열 오버로드**로 호출.
 - **격자 스프라이트가 안 뜬 근본 원인은 자산이 아니라 업로드 경로였다**: `asset_create_account_resource_storage_item` API 로 만든 RUID 는 백엔드·CDN 까지는 생기지만 **Maker 클라이언트의 "내 리소스" 저장소에는 없다**(오너가 이름·RUID 양쪽 검색 0건 확인). Maker **Import Image** 로 재업로드해 해결. **앞으로 커스텀 스프라이트는 전부 이 경로다** — J12 의 두 번째 사례이고, 이번엔 원인이 **저장소 이원화**였다.
-- **남은 것**: **P2 구매 UI 가 없어 `RequestFieldUpgrade` 호출처가 0이다** — 서버는 완성인데 플레이어가 기능에 닿을 수 없다. P3 는 나머지 14구간 좌표 저작이고 **`docs/29` D3 이 선행**이다(폐기 시 `docs/32` §8.1 배율표 전면 재계산).
+- **당시 남은 것**: P2 구매 UI 가 없어 `RequestFieldUpgrade` 호출처가 0이었다. → **✅ P2 는 2026-08-27 구현 완료**(위 현재 상태 표 · `docs/16` §71.1) — 잔여는 성공 경로(`docs/32` §10 E2) 검증뿐. P3 는 나머지 14구간 좌표 저작이고 **`docs/29` D3 이 선행**이다(폐기 시 `docs/32` §8.1 배율표 전면 재계산).
 
 ### 2026-08-26 — T-18 제어 블록 범위 조절 (`main` 직접 4커밋)
 
