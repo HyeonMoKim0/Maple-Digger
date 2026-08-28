@@ -23,6 +23,9 @@ property ButtonComponent btnEnd = "edafbf77-8061-4dcf-a4f2-94d6807482f1"
 property ButtonComponent btnRun = "c8de2465-2f5f-42c7-8fe0-e5511682bdec"
 property ButtonComponent btnStop = "3dab034e-6ad5-4bf7-a996-48e18ba6dbf6"
 property ButtonComponent btnClear = "c93c1752-f4df-4533-a7c4-fd54076c5183"
+-- 2026-08-28: 편집 버퍼를 일꾼별로 나누면서 끊긴 "한 번 조립해 여럿에게 태우기"
+-- 동선을 대신하는 버튼. 현재 일꾼의 블록을 나머지 보유 일꾼 전원에게 복사한다.
+property ButtonComponent btnCopyToWorkers = "da69c849-7f10-462f-9fed-de2c68848d7d"
 -- UIBuilder text renderers on the program, feedback, and button entities.
 property TextGUIRendererComponent repeatButtonText = "b18e993e-4ec7-4ef7-8eb4-34bfdd99527d"
 property TextGUIRendererComponent repeatCountButtonText = "792785ab-3d61-4a96-8ba1-ab1892c4785e"
@@ -98,7 +101,8 @@ method void OnBeginPlay()
     -- 2026-08-25: 재접속 시 마지막 실행 프로그램을 편집기 버퍼로 복원. 프로필
     -- 로드·복구(0.5s)·자동 실행(1.5s)이 비동기라 3s/8s 두 번 요청한다. 서버가
     -- 조건 미충족(튜토리얼 1회차·기록 없음)이면 응답하지 않는다.
-    self._T.editorRestoreDone = false
+    -- 2026-08-28: 복원 완료 플래그는 슬롯별 `restored` 로 옮겼다 (일꾼마다 따로
+    -- 한 번씩 채워야 하므로 컨트롤러 전역 플래그로는 표현할 수 없다).
     self._T.editorRestoreTimers = {
         _TimerService:SetTimerOnce(function() self:RequestEditorRestore() end, 3.0),
         _TimerService:SetTimerOnce(function() self:RequestEditorRestore() end, 8.0),
@@ -118,6 +122,9 @@ method void OnBeginPlay()
     self._T.handlers.run = self.btnRun.Entity:ConnectEvent(ButtonClickEvent, self.OnRunClicked)
     self._T.handlers.stop = self.btnStop.Entity:ConnectEvent(ButtonClickEvent, self.OnStopClicked)
     self._T.handlers.clear = self.btnClear.Entity:ConnectEvent(ButtonClickEvent, self.OnClearClicked)
+    if self.btnCopyToWorkers ~= nil then
+        self._T.handlers.copyToWorkers = self.btnCopyToWorkers.Entity:ConnectEvent(ButtonClickEvent, self.OnCopyToWorkersClicked)
+    end
     self:ConnectStripCells()
     if self.btnWorker1 ~= nil then
         self._T.handlers.worker1 = self.btnWorker1.Entity:ConnectEvent(ButtonClickEvent, self.OnWorker1Clicked)
@@ -772,12 +779,16 @@ method void RefreshDisplay()
     self:FlattenList(self._T.program)
     local total = #self._T.strip
     if self.programLabelText ~= nil then
+        -- 2026-08-28: 버퍼가 일꾼별이 되면서 "공용 프로그램"은 사실과 달라졌다.
+        -- ⚠ 종전 문구보다 **짧게** 유지한다 — 한 줄을 넘기면 2줄로 흘러 셀 첫 행을
+        -- 덮는다(2026-08-26 실측 회귀). "공용 프로그램"(6자) → "일꾼 N"(4자).
+        local who = "일꾼 " .. tostring(self.SelectedWorkerIndex)
         if total == 0 then
-            self.programLabelText.Text = "공용 프로그램 (비어 있음 - 블록을 눌러 추가)"
+            self.programLabelText.Text = who .. " (비어 있음 - 블록을 눌러 추가)"
         else
             -- ⚠ 한 줄을 넘기면 2줄로 흘러 셀 첫 행을 덮는다 (2026-08-26 실측 회귀).
             -- 문구를 늘릴 때는 Play 로 줄바꿈부터 확인할 것.
-            self.programLabelText.Text = "공용 프로그램 (클릭=삭제 · 끌기=이동/범위)"
+            self.programLabelText.Text = who .. " (클릭=삭제 · 끌기=이동/범위)"
         end
     end
     local cellCount = #self._T.cells
@@ -1207,41 +1218,77 @@ end
 method void LoadProgramFromLibrary(table program)
     -- T-05: 라이브러리 → 편집기. 호출자가 사본을 넘긴다 (원본 공유 금지, F7-C §4).
     if type(program) ~= "table" then return end
-    self._T.program = program
-    self._T.openBodies = { self._T.program }
-    self._T.openControls = {}
-    self._T.repeatPreset = 2
-    self:RefreshRepeatButton(2)
+    -- 2026-08-28: 라이브러리는 **선택 중인 일꾼의 슬롯**으로 들어간다.
+    local slot = self:GetSlot(self.SelectedWorkerIndex)
+    if slot == nil then return end
+    slot.program = program
+    slot.openBodies = { program }
+    slot.openControls = {}
+    slot.repeatPreset = 2
+    -- 사용자가 명시적으로 실은 내용이므로 서버 복원이 덮지 않게 잠근다.
+    slot.restored = true
+    self:LoadActiveSlot()
     self:RefreshDisplay()
     self:SetFeedback("라이브러리에서 프로그램을 불러왔습니다. 실행 전 내용을 확인하세요.")
-    log("[BlockProgram] program loaded from library blocks=" .. tostring(self:CountBlocks(self._T.program)))
+    log("[BlockProgram] program loaded from library worker=" .. tostring(self.SelectedWorkerIndex)
+        .. " blocks=" .. tostring(self:CountBlocks(self._T.program)))
 end
 
 @ExecSpace("ClientOnly")
-method void RequestEditorRestore()
-    -- 2026-08-25: 재접속 편집기 복원 요청. 이미 복원했거나 사용자가 편집을
-    -- 시작했으면 건너뛴다 — 버퍼를 덮지 않는다.
-    if self._T.editorRestoreDone then return end
-    if self:CountBlocks(self._T.program) > 0 then return end
+method void EnsureSlotRestored(integer workerIndex)
+    -- 그 일꾼의 슬롯을 서버의 "마지막 유효 프로그램"으로 **한 번만** 채운다.
+    -- 이미 채웠거나(restored) 사용자가 뭔가 짜 뒀으면 덮지 않는다 (F7-C §4 —
+    -- 원본 자동 수정·조용한 덮어쓰기 금지).
+    local slot = self:GetSlot(workerIndex)
+    if slot == nil or slot.restored then return end
+    if self:CountBlocks(slot.program) > 0 then
+        slot.restored = true
+        return
+    end
     local player = _UserService.LocalPlayer
     if player == nil then return end
     ---@type AccountProfileService
     local profile = player:GetComponent("script.AccountProfileService")
     if profile == nil then return end
-    profile:RequestSavedProgram(self:GetSelectedWorkerIndex())
+    -- 서버가 조건 미충족(튜토리얼 1회차·기록 없음)이면 응답하지 않는다. 그래서
+    -- restored 는 여기서 세우지 않고 **응답을 받은 쪽**에서 세운다.
+    profile:RequestSavedProgram(workerIndex)
+end
+
+@ExecSpace("ClientOnly")
+method void RequestEditorRestore()
+    -- 2026-08-25: 재접속 편집기 복원 요청 (로그인 3s·8s 두 번). 프로필 로드·복구·
+    -- 자동 실행이 비동기라 두 번 쏜다.
+    -- 2026-08-28: 선택 중인 일꾼만 미리 채운다. 나머지 일꾼은 그 탭을 처음 열 때
+    -- SelectWorker 가 채운다 — 로그인마다 RPC 5발을 쏘지 않기 위해서다.
+    self:EnsureSlotRestored(self.SelectedWorkerIndex)
 end
 
 @ExecSpace("Client")
 method void DeliverSavedProgram(integer workerIndex, string programJson)
-    -- AccountProfileService.RequestSavedProgram 의 응답. 빈 버퍼일 때만 싣는다.
-    if self._T.editorRestoreDone then return end
-    if self:CountBlocks(self._T.program) > 0 then return end
+    -- AccountProfileService.RequestSavedProgram 의 응답.
+    -- ⚠️ 응답이 오는 사이에 사용자가 탭을 옮겼을 수 있다. **활성 버퍼가 아니라
+    -- workerIndex 슬롯**에 넣는다 — 활성 버퍼에 넣으면 엉뚱한 일꾼에게 실린다.
+    local slot = self:GetSlot(workerIndex)
+    if slot == nil or slot.restored then return end
+    if self:CountBlocks(slot.program) > 0 then
+        slot.restored = true
+        return
+    end
     local ok, parsed = pcall(function() return _HttpService:JSONDecode(programJson) end)
     if not ok or type(parsed) ~= "table" or #parsed == 0 then return end
-    self:LoadProgramFromLibrary(parsed)
-    self:SetFeedback("마지막 실행 프로그램을 불러왔습니다. [실행]으로 이어서 시작하세요.")
-    self._T.editorRestoreDone = true
-    log("[BlockProgram] editor restored from last valid program worker=" .. tostring(workerIndex))
+    slot.program = parsed
+    slot.openBodies = { parsed }
+    slot.openControls = {}
+    slot.repeatPreset = 2
+    slot.restored = true
+    if workerIndex == self.SelectedWorkerIndex then
+        self:LoadActiveSlot()
+        self:RefreshDisplay()
+        self:SetFeedback("일꾼 " .. tostring(workerIndex) .. "의 마지막 실행 프로그램을 불러왔습니다. [실행]으로 이어서 시작하세요.")
+    end
+    log("[BlockProgram] editor restored from last valid program worker=" .. tostring(workerIndex)
+        .. " active=" .. tostring(self.SelectedWorkerIndex))
 end
 
 @ExecSpace("ClientOnly")
@@ -1280,11 +1327,24 @@ method void SelectWorker(integer workerIndex)
         self:SetFeedback("아직 고용하지 않은 일꾼입니다.")
         return
     end
+    if workerIndex == self.SelectedWorkerIndex then
+        -- 같은 칩 재클릭 — 버퍼를 저장·복원할 이유가 없다. 칩 표시만 다시 맞춘다.
+        self:RefreshWorkerButtons()
+        return
+    end
+    -- 2026-08-28: 편집 버퍼는 일꾼별이다. 떠나는 일꾼의 조립 상태(열린 제어 블록
+    -- 스택 포함)를 슬롯에 그대로 남기고, 들어가는 일꾼의 것을 꺼낸다.
+    self:SaveActiveSlot()
     self.SelectedWorkerIndex = workerIndex
+    self:LoadActiveSlot()
     self._T.lastWorkerState = ""
     self:RefreshWorkerButtons()
+    self:RefreshDisplay()
+    -- 이 일꾼 탭을 처음 여는 것이면 서버의 마지막 유효 프로그램으로 한 번 채운다.
+    self:EnsureSlotRestored(workerIndex)
     self:SetFeedback("일꾼 " .. tostring(workerIndex) .. "을(를) 선택했습니다.")
-    log("[BlockProgram] selected worker=" .. tostring(workerIndex))
+    log("[BlockProgram] selected worker=" .. tostring(workerIndex)
+        .. " blocks=" .. tostring(self:CountBlocks(self._T.program)))
 end
 
 @ExecSpace("ClientOnly")
@@ -1370,6 +1430,8 @@ method table GetTutorialButtons()
         run = self.btnRun,
         stop = self.btnStop,
         clear = self.btnClear,
+        -- 2026-08-28: 등재하지 않으면 튜토리얼 중에도 눌려 일꾼 2~5 버퍼가 덮인다.
+        copyToOthers = self.btnCopyToWorkers,
         worker1 = self.btnWorker1,
         worker2 = self.btnWorker2,
         worker3 = self.btnWorker3,
@@ -1412,10 +1474,75 @@ end
 @ExecSpace("ClientOnly")
 method void OnClearClicked()
     -- Clears every assembled block and resets nested editor state.
+    -- 2026-08-28: 활성 일꾼의 슬롯만 비운다 — 다른 일꾼 버퍼는 그대로다.
     self:ResetEditor()
     self:RefreshDisplay()
-    self:SetFeedback("프로그램을 초기화했습니다.")
-    log("[BlockProgram] program cleared")
+    self:SetFeedback("일꾼 " .. tostring(self.SelectedWorkerIndex) .. "의 프로그램을 초기화했습니다.")
+    log("[BlockProgram] program cleared worker=" .. tostring(self.SelectedWorkerIndex))
+end
+
+@ExecSpace("ClientOnly")
+method void OnCopyToWorkersClicked()
+    -- 2026-08-28: 현재 일꾼의 블록을 **나머지 보유 일꾼 전원**의 버퍼로 복사한다.
+    -- 편집 버퍼를 일꾼별로 나누면서 끊긴 "한 번 조립해 여럿에게 태우기" 동선을
+    -- 대신한다. 실행까지 하지는 않는다 — 각 탭에서 [실행]을 누르는 것은 사용자 몫이다.
+    local owned = self:GetOwnedWorkerCount()
+    if owned < 2 then
+        self:SetFeedback("복사할 다른 일꾼이 없습니다.")
+        return
+    end
+    -- ⚠️ 빈 body 제어 블록이 있으면 JSONEncode 가 죽는다 (LEA-3001 UnknownType,
+    -- docs/16 §36). 라이브러리 저장과 **같은 정리 사본 경로**를 지난다.
+    local source = self:GetSanitizedProgram()
+    if source == nil or #source == 0 then
+        self:SetFeedback("복사할 블록이 없습니다. 먼저 블록을 조립하세요.")
+        return
+    end
+    local encoded = ""
+    local encodeOk = pcall(function() encoded = _HttpService:JSONEncode(source) end)
+    if not encodeOk or encoded == "" then
+        self:SetFeedback("블록을 복사하지 못했습니다. [초기화] 후 다시 조립해 주세요.")
+        log_warning("[BlockProgram] copy-to-workers encode failed worker=" .. tostring(self.SelectedWorkerIndex))
+        return
+    end
+    local fromIndex = self.SelectedWorkerIndex
+    -- 남의 버퍼를 덮는 동작이라 확인을 받는다 (설정 창 초기화와 같은 _UIPopup 경유).
+    -- ⚠ `_UIPopup:Open` 은 3인자다 — (message, onOk, onCancel). onCancel 을 빼면
+    -- 빌드가 `LEA-1121` 로 죽는다 (2026-08-28 실측).
+    _UIPopup:Open("일꾼 " .. tostring(fromIndex) .. "의 블록을 나머지 일꾼 "
+        .. tostring(owned - 1) .. "명에게 복사할까요?\n각 일꾼이 짜 두던 블록은 덮어씁니다.",
+        function() self:CopyProgramToOtherWorkers(fromIndex, encoded, owned) end, nil)
+end
+
+@ExecSpace("ClientOnly")
+method void CopyProgramToOtherWorkers(integer fromIndex, string encoded, integer owned)
+    -- 확인 팝업 이후의 실제 복사.
+    -- ⚠️ 일꾼마다 JSONDecode 를 **새로** 돌려 깊은 사본을 만든다. 노드 테이블을
+    -- 공유하면 한 일꾼에게서 T-18 범위 조절(제자리 수술)을 할 때 다른 일꾼의
+    -- 프로그램까지 같이 바뀐다 — 로그에도 안 남는 조용한 오염이다.
+    local copied = 0
+    for i = 1, owned do
+        if i ~= fromIndex then
+            local slot = self:GetSlot(i)
+            if slot ~= nil then
+                local ok, parsed = pcall(function() return _HttpService:JSONDecode(encoded) end)
+                if ok and type(parsed) == "table" then
+                    slot.program = parsed
+                    slot.openBodies = { parsed }
+                    slot.openControls = {}
+                    slot.repeatPreset = 2
+                    -- 사용자가 명시적으로 넣은 내용이므로 서버 복원이 덮지 않게 잠근다.
+                    slot.restored = true
+                    copied = copied + 1
+                end
+            end
+        end
+    end
+    self:RefreshDisplay()
+    self:SetFeedback("일꾼 " .. tostring(fromIndex) .. "의 블록을 " .. tostring(copied)
+        .. "명에게 복사했습니다. 각 일꾼 탭에서 [실행]을 눌러 주세요.")
+    log("[BlockProgram] copied program from worker=" .. tostring(fromIndex)
+        .. " to=" .. tostring(copied) .. " owned=" .. tostring(owned))
 end
 
 @ExecSpace("ClientOnly")
@@ -1506,16 +1633,108 @@ method void CloseAllOpenBlocks()
     self:RefreshDisplay()
 end
 
+-- ─────────────────────────────────────────────────────────────────────────
+-- 일꾼별 편집 버퍼 (2026-08-28 오너 요청)
+--
+-- 종전에는 `_T.program` 하나를 일꾼 5명이 공유해서, 탭을 바꿔도 앞 일꾼에게 짜 둔
+-- 블록이 그대로 남았다. `docs/05` §3 은 "일꾼별 마지막 유효 프로그램"을 일꾼별로
+-- 정의하고 `docs/02` §7 도 "독립 프로그램 대상 선택"이라 적어 뒀으니, **편집기
+-- 버퍼만 공용으로 남아 있던 구현 공백**이었다.
+--
+-- 슬롯 1개 = { program, openBodies, openControls, repeatPreset, conditionPreset, restored }
+-- 활성 슬롯의 값은 `_T.program` 등 **기존 이름 그대로** 별칭으로 꺼내 둔다 — 40곳
+-- 가까운 호출부를 건드리지 않기 위해서다. 대신 `program` 테이블을 **교체**하는
+-- 지점(ResetEditor · LoadProgramFromLibrary · DeliverSavedProgram · 전체복사)은
+-- 반드시 슬롯을 먼저 고치고 LoadActiveSlot 으로 별칭을 다시 잡아야 한다.
+--
+-- ⚠️ 슬롯에는 **테이블 참조를 그대로** 담는다(복사 금지). 복사하면 T-18 범위
+-- 조절이 의존하는 `openControls[k].body == openBodies[k+1]` 동일성이 끊겨
+-- **안 닫은 제어 블록이 조용히 고아**가 된다 (As-built 2026-08-26 T-18 항목).
+-- 반대로 일꾼 사이 복사는 **반드시 깊은 사본**이어야 한다 — 노드를 공유하면
+-- 한쪽의 제자리 수술이 다른 일꾼 프로그램까지 바꾼다.
+-- ─────────────────────────────────────────────────────────────────────────
+
+@ExecSpace("ClientOnly")
+method table NewProgramSlot()
+    -- 빈 슬롯 1개. openBodies[1] 은 반드시 program 과 **같은 테이블**이어야 한다.
+    local program = {}
+    return {
+        program = program,
+        openBodies = { program },
+        openControls = {},
+        repeatPreset = 2,
+        conditionPreset = "ore_present",
+        restored = false,
+    }
+end
+
+@ExecSpace("ClientOnly")
+method void EnsureSlots()
+    -- 5칸 슬롯 지연 생성. 슬롯을 만지는 모든 진입점이 GetSlot 을 통해 부른다.
+    if self._T.slots ~= nil then return end
+    self._T.slots = {}
+    for i = 1, 5 do
+        self._T.slots[i] = self:NewProgramSlot()
+    end
+end
+
+@ExecSpace("ClientOnly")
+method table GetSlot(integer workerIndex)
+    -- 일꾼 슬롯 조회. 범위 밖이면 nil (호출부가 nil 가드를 둔다).
+    self:EnsureSlots()
+    if workerIndex < 1 or workerIndex > 5 then return nil end
+    return self._T.slots[workerIndex]
+end
+
+@ExecSpace("ClientOnly")
+method void SaveActiveSlot()
+    -- 활성 별칭 → 슬롯. 참조를 그대로 옮긴다 (위 ⚠️ 참조).
+    local slot = self:GetSlot(self.SelectedWorkerIndex)
+    if slot == nil then return end
+    slot.program = self._T.program
+    slot.openBodies = self._T.openBodies
+    slot.openControls = self._T.openControls
+    slot.repeatPreset = self._T.repeatPreset
+    slot.conditionPreset = self._T.conditionPreset
+end
+
+@ExecSpace("ClientOnly")
+method void LoadActiveSlot()
+    -- 슬롯 → 활성 별칭 + 팔레트 표시 동기화. 팔레트(횟수·조건)까지 슬롯에 두는 것은
+    -- 열린 제어 블록 스택과 짝이라, 하나만 되살리면 표시와 조립 상태가 갈리기 때문이다.
+    local slot = self:GetSlot(self.SelectedWorkerIndex)
+    if slot == nil then return end
+    self._T.program = slot.program
+    self._T.openBodies = slot.openBodies
+    self._T.openControls = slot.openControls
+    self._T.repeatPreset = slot.repeatPreset
+    self._T.conditionPreset = slot.conditionPreset
+    -- 열린 반복 블록이 있으면 그 값이 표시의 기준이고(편집기가 유지하는 불변식),
+    -- 없으면 이 일꾼이 마지막에 고른 프리셋을 그대로 되살린다.
+    -- ⚠️ RefreshRepeatControlFromOpenStack 을 재사용하면 안 된다 — 열린 블록이
+    -- 없을 때 프리셋을 2 로 **덮어** 저장해 둔 ×10·×∞ 선택이 사라진다.
+    local topControl = self._T.openControls[#self._T.openControls]
+    if topControl ~= nil and topControl.type == "repeat" then
+        self._T.repeatPreset = topControl.count
+    end
+    self:RefreshRepeatButton(self._T.repeatPreset)
+    self:RefreshConditionButton()
+end
+
 @ExecSpace("ClientOnly")
 method void ResetEditor()
-    -- Reinitializes the root program and editor stacks.
-    self._T.program = {}
-    self._T.openBodies = { self._T.program }
-    self._T.openControls = {}
-    self._T.repeatPreset = 2
-    self._T.conditionPreset = "ore_present"
-    self:RefreshRepeatButton(2)
-    self:RefreshConditionButton()
+    -- 활성 일꾼의 슬롯만 비운다 — 다른 일꾼의 버퍼는 건드리지 않는다.
+    self:EnsureSlots()
+    local fresh = self:NewProgramSlot()
+    -- [초기화]는 "비워라"이지 "서버에서 다시 받아 와라"가 아니다 — restored 를
+    -- 세워 서버 복원이 이 슬롯을 다시 채우지 못하게 막는다.
+    -- ⚠️ **날아간 요청도 막아야 한다.** 탭을 처음 열면 EnsureSlotRestored 가 RPC 를
+    -- 쏘는데, 응답이 오기 전에 [초기화]를 누르면 지운 직후 블록이 되살아난다
+    -- (2026-08-28 실측 — 검증 스크립트에서 실제로 재현됐다). DeliverSavedProgram
+    -- 이 restored 를 먼저 보므로 여기서 세워 두면 늦게 온 응답이 버려진다.
+    fresh.restored = true
+    self._T.slots[self.SelectedWorkerIndex] = fresh
+    self:LoadActiveSlot()
 end
 
 @ExecSpace("ClientOnly")
@@ -1726,6 +1945,9 @@ method void OnEndPlay()
     self.btnRun.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.run)
     self.btnStop.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.stop)
     self.btnClear.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.clear)
+    if self.btnCopyToWorkers ~= nil and self._T.handlers.copyToWorkers ~= nil then
+        self.btnCopyToWorkers.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.copyToWorkers)
+    end
     if self.btnWorker1 ~= nil and self._T.handlers.worker1 ~= nil then
         self.btnWorker1.Entity:DisconnectEvent(ButtonClickEvent, self._T.handlers.worker1)
     end
